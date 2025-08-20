@@ -1,0 +1,30 @@
+// backend/src/models/tareas/Tarea.js
+export default (sequelize, DataTypes) => {
+  const Tarea = sequelize.define('Tarea', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    cliente_id: { type: DataTypes.INTEGER, allowNull: false },
+    tarea_padre_id: { type: DataTypes.INTEGER },
+    titulo: { type: DataTypes.STRING(200), allowNull: false },
+    descripcion: { type: DataTypes.TEXT },
+    estado_id: { type: DataTypes.INTEGER, allowNull: false },
+    creado_por_feder_id: { type: DataTypes.INTEGER, allowNull: false },
+    requiere_aprobacion: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    aprobacion_estado_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+    aprobado_por_user_id: { type: DataTypes.INTEGER },
+    aprobado_at: { type: DataTypes.DATE },
+    rechazado_por_user_id: { type: DataTypes.INTEGER },
+    rechazado_at: { type: DataTypes.DATE },
+    rechazo_motivo: { type: DataTypes.TEXT },
+    vencimiento: { type: DataTypes.DATE },
+    impacto_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 2 },
+    urgencia_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
+    prioridad_num: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    cliente_ponderacion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
+    is_archivada: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    finalizada_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
+  }, { tableName: 'Tarea', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
+       indexes: [{ fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }] });
+  return Tarea;
+};

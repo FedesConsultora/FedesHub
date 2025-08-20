@@ -1,0 +1,11 @@
+{
+  "name": "fedes-hub",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run dev",
+    "db:up": "docker compose up -d db adminer",
+    "stack:up": "docker compose up -d",
+    "stack:down": "docker compose down -v"
+  }
+}
