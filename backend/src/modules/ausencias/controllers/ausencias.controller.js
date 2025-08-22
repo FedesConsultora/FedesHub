@@ -4,7 +4,7 @@ import {
   cuotaAssignSchema, cuotasListQuery, saldoQuery,
   ausListQuery, ausenciaCreateSchema, ausenciaDecisionSchema, ausenciaRechazoSchema,
   asignacionSolicitudCreate, asignacionSolicitudList
-} from '../ausencias/validators.js';
+} from '../validators.js';
 
 import {
   catUnidades, catEstados, catMitadDia, tiposList, tipoCreate, tipoUpdate,
@@ -13,7 +13,7 @@ import {
   asignacionSolicitudCreateSvc, asignacionSolicitudListSvc,
   asignacionSolicitudApproveSvc, asignacionSolicitudDenySvc, asignacionSolicitudCancelSvc,
   meFeder
-} from '../ausencias/services/ausencias.service.js';
+} from '../services/ausencias.service.js';
 
 // Health
 export const health = (_req, res) => res.json({ module: 'ausencias', ok: true });

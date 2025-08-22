@@ -49,11 +49,10 @@ module.exports = {
       ['Admin','Administrador'],
       ['CLevel','Dirección (C-Level)'],
       ['RRHH','Capital Humano'],
-      ['CuentasAnalista','Analista de Cuentas'],
 
       // Analistas separados (según Upgrading Fedes)
       ['AnalistaDiseno','Analista de Diseño'],
-      ['AnalistaComunicacion','Analista de Comunicación'],
+      ['CuentasAnalista','Analista de Cuentas'],
       ['AnalistaAudiovisual','Analista Audiovisual'],
 
       // Tridente actualizado

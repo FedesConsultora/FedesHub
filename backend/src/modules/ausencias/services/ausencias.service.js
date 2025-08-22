@@ -5,7 +5,7 @@ import {
   assignCuota, listCuotas, saldoPorTipo,
   listAusencias, getAusenciaById, createAusencia, updateAusencia,
   aprobarAusenciaConConsumo, getEstadoByCodigo, getFederByUser, ensureFeder
-} from './repositories/ausencias.repo.js';
+} from '../repositories/ausencias.repo.js';
 
 const WORKDAY_HOURS = Number(process.env.WORKDAY_HOURS ?? 8);
 
