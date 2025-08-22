@@ -70,16 +70,16 @@ module.exports = {
     ], {});
 
     await queryInterface.bulkInsert('ImpactoTipo', [
-      { codigo: 'alto', nombre: 'Alto', puntos: 30, descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'medio',nombre: 'Medio',puntos: 15, descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'bajo', nombre: 'Bajo', puntos: 0,  descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'alto',  nombre: 'Alto',  puntos: 30, descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'medio', nombre: 'Medio', puntos: 15, descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'bajo',  nombre: 'Bajo',  puntos: 0,  descripcion: null, created_at: now, updated_at: now },
     ], {});
 
     await queryInterface.bulkInsert('UrgenciaTipo', [
-      { codigo: 'lt_24h', nombre: 'Menos de 24h', puntos: 30, created_at: now, updated_at: now },
-      { codigo: 'lt_72h', nombre: 'Menos de 72h', puntos: 20, created_at: now, updated_at: now },
+      { codigo: 'lt_24h', nombre: 'Menos de 24h',  puntos: 30, created_at: now, updated_at: now },
+      { codigo: 'lt_72h', nombre: 'Menos de 72h',  puntos: 20, created_at: now, updated_at: now },
       { codigo: 'lt_7d',  nombre: 'Menos de 7 días', puntos: 10, created_at: now, updated_at: now },
-      { codigo: 'gte_7d', nombre: '7 días o más', puntos: 0, created_at: now, updated_at: now },
+      { codigo: 'gte_7d', nombre: '7 días o más',   puntos: 0,  created_at: now, updated_at: now },
     ], {});
 
     await queryInterface.bulkInsert('ComentarioTipo', [
@@ -105,8 +105,8 @@ module.exports = {
 
     await queryInterface.bulkInsert('AsistenciaCierreMotivoTipo', [
       { codigo: 'olvido_checkout', nombre: 'Olvido de Check-out', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'cierre_admin',    nombre: 'Cierre por Admin', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'fin_jornada',     nombre: 'Fin de Jornada', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'cierre_admin',    nombre: 'Cierre por Admin',    descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'fin_jornada',     nombre: 'Fin de Jornada',      descripcion: null, created_at: now, updated_at: now },
     ], {});
 
     // ===== CALENDARIO
@@ -123,10 +123,10 @@ module.exports = {
     ], {});
 
     await queryInterface.bulkInsert('EventoTipo', [
-      { codigo: 'reunion',  nombre: 'Reunión',  descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'bloqueo',  nombre: 'Bloqueo',  descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'tarea',    nombre: 'Tarea',    descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'otro',     nombre: 'Otro',     descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'reunion', nombre: 'Reunión', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'bloqueo', nombre: 'Bloqueo', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'tarea',   nombre: 'Tarea',   descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'otro',    nombre: 'Otro',    descripcion: null, created_at: now, updated_at: now },
     ], {});
 
     await queryInterface.bulkInsert('SyncDireccionTipo', [
@@ -141,34 +141,25 @@ module.exports = {
       { codigo: 'informativo', nombre: 'Informativo', descripcion: null },
     ], {});
 
-    // ===== NOTIFICACIONES
-    await queryInterface.bulkInsert('NotificacionTipo', [
-      { codigo: 'tarea_asignada',      nombre: 'Tarea asignada',      descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'tarea_comentario',    nombre: 'Comentario en tarea', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'ausencia_aprobada',   nombre: 'Ausencia aprobada',   descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'evento_invitacion',   nombre: 'Invitación a evento', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'recordatorio',        nombre: 'Recordatorio',        descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'sistema',             nombre: 'Sistema',             descripcion: null, created_at: now, updated_at: now },
-    ], {});
-
+    // ===== NOTIFICACIONES (SOLO catálogos que NO dependen de buzon_id)
     await queryInterface.bulkInsert('CanalTipo', [
       { codigo: 'in_app', nombre: 'In-App', descripcion: null },
       { codigo: 'email',  nombre: 'Email',  descripcion: null },
     ], {});
 
     await queryInterface.bulkInsert('ImportanciaTipo', [
-      { codigo: 'alta', nombre: 'Alta', orden: 1 },
-      { codigo: 'media',nombre: 'Media',orden: 2 },
-      { codigo: 'baja', nombre: 'Baja', orden: 3 },
+      { codigo: 'alta',  nombre: 'Alta',  orden: 1 },
+      { codigo: 'media', nombre: 'Media', orden: 2 },
+      { codigo: 'baja',  nombre: 'Baja',  orden: 3 },
     ], {});
 
     await queryInterface.bulkInsert('EstadoEnvio', [
-      { codigo: 'queued',    nombre: 'En cola',     descripcion: null },
-      { codigo: 'sent',      nombre: 'Enviado',     descripcion: null },
-      { codigo: 'delivered', nombre: 'Entregado',   descripcion: null },
-      { codigo: 'opened',    nombre: 'Abierto',     descripcion: null },
-      { codigo: 'read',      nombre: 'Leído',       descripcion: null },
-      { codigo: 'failed',    nombre: 'Fallido',     descripcion: null },
+      { codigo: 'queued',    nombre: 'En cola',   descripcion: null },
+      { codigo: 'sent',      nombre: 'Enviado',   descripcion: null },
+      { codigo: 'delivered', nombre: 'Entregado', descripcion: null },
+      { codigo: 'opened',    nombre: 'Abierto',   descripcion: null },
+      { codigo: 'read',      nombre: 'Leído',     descripcion: null },
+      { codigo: 'failed',    nombre: 'Fallido',   descripcion: null },
     ], {});
 
     await queryInterface.bulkInsert('ProveedorTipo', [
@@ -178,12 +169,12 @@ module.exports = {
     ], {});
   },
 
-  async down (queryInterface, Sequelize) {
+  async down (queryInterface) {
+    // Nota: NO borramos NotificacionTipo aquí (lo crea/borra el seeder 0300)
     await queryInterface.bulkDelete('ProveedorTipo', null, {});
     await queryInterface.bulkDelete('EstadoEnvio', null, {});
     await queryInterface.bulkDelete('ImportanciaTipo', null, {});
     await queryInterface.bulkDelete('CanalTipo', null, {});
-    await queryInterface.bulkDelete('NotificacionTipo', null, {});
 
     await queryInterface.bulkDelete('AsistenteTipo', null, {});
     await queryInterface.bulkDelete('SyncDireccionTipo', null, {});
@@ -207,10 +198,8 @@ module.exports = {
     await queryInterface.bulkDelete('CelulaEstado', null, {});
 
     await queryInterface.bulkDelete('DiaSemana', null, {});
-
     await queryInterface.bulkDelete('ModalidadTrabajoTipo', null, {});
     await queryInterface.bulkDelete('FederEstadoTipo', null, {});
-
     await queryInterface.bulkDelete('CargoAmbito', null, {});
   }
 };

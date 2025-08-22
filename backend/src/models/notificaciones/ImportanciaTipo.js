@@ -1,4 +1,5 @@
 // backend/src/models/notificaciones/ImportanciaTipo.js
+
 export default (sequelize, DataTypes) => {
   const ImportanciaTipo = sequelize.define('ImportanciaTipo', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

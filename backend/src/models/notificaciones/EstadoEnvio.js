@@ -1,4 +1,5 @@
 // backend/src/models/notificaciones/EstadoEnvio.js
+
 export default (sequelize, DataTypes) => {
   const EstadoEnvio = sequelize.define('EstadoEnvio', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

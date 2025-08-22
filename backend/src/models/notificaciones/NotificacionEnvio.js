@@ -13,13 +13,17 @@ export default (sequelize, DataTypes) => {
     tracking_token: { type: DataTypes.STRING(64) },
     intento_count: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     ultimo_error: { type: DataTypes.TEXT },
-    queued_at: { type: DataTypes.DATE },
+    queued_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     enviado_at: { type: DataTypes.DATE },
     entregado_at: { type: DataTypes.DATE },
     abierto_at: { type: DataTypes.DATE },
     leido_at: { type: DataTypes.DATE }
   }, { tableName: 'NotificacionEnvio', underscored: true, timestamps: false,
-       indexes: [{ unique: true, fields: ['destino_id','canal_id'] }, { fields: ['estado_id'] }, { fields: ['provider_msg_id'] }, { fields: ['tracking_token'] }] 
-    });
+       indexes: [
+         { unique: true, fields: ['destino_id','canal_id'] },
+         { fields: ['estado_id'] },
+         { fields: ['provider_msg_id'] },
+         { fields: ['tracking_token'] }
+       ] });
   return NotificacionEnvio;
 };

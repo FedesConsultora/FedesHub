@@ -88,9 +88,15 @@ export const setupAssociations = (m) => {
     m.Cliente.hasMany(m.ClienteContacto, { foreignKey: 'cliente_id', as: 'contactos' });
     m.ClienteContacto.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
   }
+  if (m.ClienteHito && m.Cliente) {
+    m.ClienteHito.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
+    m.Cliente.hasMany(m.ClienteHito, { foreignKey: 'cliente_id', as: 'hitos' });
+  }
 
   // ===== Módulo 8: Tareas =====
   if (m.Tarea && m.Cliente) m.Tarea.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
+  if (m.Tarea && m.ClienteHito) m.Tarea.belongsTo(m.ClienteHito, { foreignKey: 'hito_id', as: 'hito' });
+
   if (m.Tarea) {
     m.Tarea.belongsTo(m.Tarea, { foreignKey: 'tarea_padre_id', as: 'tareaPadre' });
     m.Tarea.hasMany(m.Tarea, { foreignKey: 'tarea_padre_id', as: 'subtareas' });
@@ -104,6 +110,7 @@ export const setupAssociations = (m) => {
   }
   if (m.Tarea && m.ImpactoTipo) m.Tarea.belongsTo(m.ImpactoTipo, { foreignKey: 'impacto_id', as: 'impacto' });
   if (m.Tarea && m.UrgenciaTipo) m.Tarea.belongsTo(m.UrgenciaTipo, { foreignKey: 'urgencia_id', as: 'urgencia' });
+
   if (m.Tarea && m.TareaResponsable && m.Feder) {
     m.Tarea.belongsToMany(m.Feder, { as: 'Responsables', through: m.TareaResponsable, foreignKey: 'tarea_id', otherKey: 'feder_id' });
     m.Feder.belongsToMany(m.Tarea, { as: 'TareasResponsable', through: m.TareaResponsable, foreignKey: 'feder_id', otherKey: 'tarea_id' });
@@ -112,14 +119,51 @@ export const setupAssociations = (m) => {
     m.Tarea.belongsToMany(m.Feder, { as: 'Colaboradores', through: m.TareaColaborador, foreignKey: 'tarea_id', otherKey: 'feder_id' });
     m.Feder.belongsToMany(m.Tarea, { as: 'TareasColaborador', through: m.TareaColaborador, foreignKey: 'feder_id', otherKey: 'tarea_id' });
   }
+
   if (m.Tarea && m.TareaComentario) {
     m.Tarea.hasMany(m.TareaComentario, { foreignKey: 'tarea_id', as: 'comentarios' });
     m.TareaComentario.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
   }
-  if (m.Tarea && m.TareaAdjunto) {
-    m.Tarea.hasMany(m.TareaAdjunto, { foreignKey: 'tarea_id', as: 'adjuntos' });
-    m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  if (m.TareaComentario && m.Feder) m.TareaComentario.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'autor' });
+  if (m.TareaComentario && m.ComentarioTipo) m.TareaComentario.belongsTo(m.ComentarioTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+  if (m.TareaComentarioMencion) {
+    if (m.TareaComentario) m.TareaComentarioMencion.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
+    if (m.Feder) m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
   }
+
+  if (m.TareaAdjunto) {
+    if (m.Tarea) m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+    if (m.TareaComentario) m.TareaAdjunto.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
+    if (m.Feder) m.TareaAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' });
+  }
+
+  if (m.TareaEtiqueta && m.TareaEtiquetaAsig) {
+    if (m.Tarea) m.Tarea.belongsToMany(m.TareaEtiqueta, { through: m.TareaEtiquetaAsig, foreignKey: 'tarea_id', otherKey: 'etiqueta_id', as: 'etiquetas' });
+    m.TareaEtiqueta.belongsToMany(m.Tarea, { through: m.TareaEtiquetaAsig, foreignKey: 'etiqueta_id', otherKey: 'tarea_id', as: 'tareas' });
+  }
+
+  if (m.TareaChecklistItem && m.Tarea) {
+    m.Tarea.hasMany(m.TareaChecklistItem, { foreignKey: 'tarea_id', as: 'checklist' });
+    m.TareaChecklistItem.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  }
+
+  if (m.TareaRelacion && m.TareaRelacionTipo) {
+    if (m.Tarea) {
+      m.Tarea.hasMany(m.TareaRelacion, { foreignKey: 'tarea_id', as: 'relaciones' });
+      m.Tarea.hasMany(m.TareaRelacion, { foreignKey: 'relacionada_id', as: 'relacionesEntrantes' });
+    }
+    m.TareaRelacion.belongsTo(m.TareaRelacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+    m.TareaRelacion.belongsTo(m.Tarea, { foreignKey: 'relacionada_id', as: 'relacionada' });
+  }
+
+  if (m.TareaSeguidor && m.Tarea) {
+    m.Tarea.hasMany(m.TareaSeguidor, { foreignKey: 'tarea_id', as: 'seguidores' });
+    m.TareaSeguidor.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  }
+  if (m.TareaSeguidor && m.User) m.TareaSeguidor.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  if (m.TareaFavorito && m.Tarea) m.TareaFavorito.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  if (m.TareaFavorito && m.User) m.TareaFavorito.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
 
   // ===== Módulo 9: Calendario =====
   if (m.CalendarioLocal && m.CalendarioTipo) m.CalendarioLocal.belongsTo(m.CalendarioTipo, { foreignKey: 'tipo_id', as: 'tipo' });
@@ -155,9 +199,18 @@ export const setupAssociations = (m) => {
   if (m.EventoSync && m.Evento) m.EventoSync.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
   if (m.EventoSync && m.GoogleCalendario) m.EventoSync.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
 
-  // ===== Módulo 10: Notificaciones =====
+    // ===== Módulo 10: Notificaciones =====
   if (m.Notificacion && m.NotificacionTipo) m.Notificacion.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
   if (m.Notificacion && m.ImportanciaTipo) m.Notificacion.belongsTo(m.ImportanciaTipo, { foreignKey: 'importancia_id', as: 'importancia' });
+
+  // NUEVO: buzones y evento
+  if (m.Notificacion && m.BuzonTipo) m.Notificacion.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' });
+  if (m.NotificacionTipo && m.BuzonTipo) m.NotificacionTipo.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' });
+  if (m.Notificacion && m.Evento) m.Notificacion.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
+
+  // (opcional futuro) chat: sólo si tenés modelo
+  if (m.Notificacion && m.ChatCanal) m.Notificacion.belongsTo(m.ChatCanal, { foreignKey: 'chat_canal_id', as: 'chatCanal' });
+
   if (m.Notificacion && m.Tarea) m.Notificacion.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
   if (m.Notificacion && m.Ausencia) m.Notificacion.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
   if (m.Notificacion && m.AsistenciaRegistro) m.Notificacion.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' });
@@ -184,4 +237,4 @@ export const setupAssociations = (m) => {
 
   if (m.PushToken && m.User) m.PushToken.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
   if (m.PushToken && m.ProveedorTipo) m.PushToken.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' });
-};
+}

@@ -1,8 +1,10 @@
 // backend/src/models/tareas/TareaAdjunto.js
+
 export default (sequelize, DataTypes) => {
   const TareaAdjunto = sequelize.define('TareaAdjunto', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tarea_id: { type: DataTypes.INTEGER, allowNull: false },
+    comentario_id: { type: DataTypes.INTEGER },
     nombre: { type: DataTypes.STRING(255) },
     mime: { type: DataTypes.STRING(120) },
     tamano_bytes: { type: DataTypes.BIGINT },

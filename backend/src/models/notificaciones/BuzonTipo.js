@@ -1,11 +1,10 @@
-// backend/src/models/notificaciones/CanalTipo.js
-
+// BuzonTipo.js
 export default (sequelize, DataTypes) => {
-  const CanalTipo = sequelize.define('CanalTipo', {
+  const BuzonTipo = sequelize.define('BuzonTipo', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     codigo: { type: DataTypes.STRING(30), allowNull: false, unique: true },
     nombre: { type: DataTypes.STRING(60), allowNull: false },
     descripcion: { type: DataTypes.TEXT }
-  }, { tableName: 'CanalTipo', underscored: true, timestamps: false });
-  return CanalTipo;
+  }, { tableName: 'BuzonTipo', underscored: true, timestamps: false });
+  return BuzonTipo;
 };
