@@ -1,4 +1,3 @@
-// backend/db/seeders/202508200002-0002-auth-permissions-map.cjs
 'use strict';
 
 module.exports = {
@@ -14,13 +13,12 @@ module.exports = {
     const actId = Object.fromEntries(acts.map(a => [a.codigo, a.id]));
     const roleId = Object.fromEntries(roles.map(r => [r.nombre, r.id]));
 
-    const ALL_ACTS = ['read','create','update','delete','approve','assign'];
+    const ALL_ACTS = Object.keys(actId); // todas las acciones dinámicas
     const READ = ['read'];
     const CRUD = ['create','read','update','delete'];
     const CRU  = ['create','read','update'];
 
-    // 1) Crear todos los permisos (Modulo x Accion) si no existen
-    //    (el índice único (modulo_id, accion_id) evita duplicados si se re-ejecuta accidentalmente).
+    // 1) Crear todos los permisos (Modulo x Accion)
     const permsToInsert = [];
     for (const m of Object.keys(modId)) {
       for (const a of Object.keys(actId)) {
@@ -35,19 +33,14 @@ module.exports = {
     }
     await queryInterface.bulkInsert('Permiso', permsToInsert, { ignoreDuplicates: true });
 
-    // Mapa (modulo -> acciones por rol)
+    // Mapa (rol -> módulos -> acciones)
     const roleMatrix = {
-      Admin: {
-        // Admin: todo en todos
-        '*': ALL_ACTS,
-      },
-      CLevel: {
-        // Dirección: visibilidad global de lectura
-        '*': READ,
-      },
+      Admin: { '*': ALL_ACTS },
+
+      CLevel: { '*': READ },
+
       RRHH: {
-        // RRHH: full en ausencias; lectura en personas/asistencia/calendario/tareas/clientes
-        ausencias: ['read','create','update','delete','approve','assign'],
+        ausencias: ALL_ACTS,
         feders: READ,
         asistencia: READ,
         calendario: READ,
@@ -56,23 +49,69 @@ module.exports = {
         cargos: READ,
         notificaciones: READ,
       },
+
       CuentasAnalista: {
-        // Analista: foco en clientes/tareas (CRUD); calendario libre
         clientes: CRU,
         tareas: CRU,
         calendario: CRU,
         feders: READ,
         ausencias: READ
       },
+
+      // Analistas separados
+      AnalistaDiseno: {
+        tareas: CRU,
+        calendario: CRU,
+        clientes: READ,
+        feders: READ
+      },
+      AnalistaComunicacion: {
+        tareas: CRU,
+        calendario: CRU,
+        clientes: READ,
+        feders: READ
+      },
+      AnalistaAudiovisual: {
+        tareas: CRU,
+        calendario: CRU,
+        clientes: READ,
+        feders: READ
+      },
+
+      // Tridentes (marketing/performance/tecnología)
+      TriMarketing: {
+        tareas: [...CRU,'approve','assign'],
+        calendario: CRU,
+        clientes: CRU,
+        asistencia: ['read','report'],
+        feders: READ,
+        ausencias: READ
+      },
+      TriPerformance: {
+        tareas: [...CRU,'approve','assign'],
+        calendario: CRU,
+        clientes: CRU,
+        asistencia: ['read','report'],
+        feders: READ,
+        ausencias: READ
+      },
+      TriTecnologia: {
+        tareas: [...CRU,'approve','assign'],
+        calendario: CRU,
+        clientes: CRU,
+        asistencia: ['read','report'],
+        feders: READ,
+        ausencias: READ
+      },
+
       Feder: {
-        // Miembro: tareas y calendario (CRU). Puede solicitar ausencias (create) y ver (read).
         tareas: CRU,
         calendario: CRU,
         ausencias: ['create','read'],
         clientes: READ
       },
+
       Onboarding: {
-        // Onboarding: calendario (CRU) y visibilidad básica de lectura
         calendario: CRU,
         tareas: READ,
         clientes: READ,
@@ -80,7 +119,7 @@ module.exports = {
       }
     };
 
-    // Ayuda para obtener id de permiso por modulo/accion
+    // Ayuda para obtener id de permiso
     const [permRows] = await queryInterface.sequelize.query(`SELECT id, modulo_id, accion_id FROM "Permiso"`);
     const permKey = (m,a) => `${m}.${a}`;
     const permIdByKey = {};
@@ -97,10 +136,9 @@ module.exports = {
       if (!rId) continue;
 
       if (matrix['*']) {
-        // todas las acciones para todos los módulos
         for (const m of Object.keys(modId)) {
           for (const a of matrix['*']) {
-            const pid = permIdByKey[permKey(m, a)];
+            const pid = permIdByKey[permKey(m,a)];
             if (pid) rolPermisos.push({ rol_id: rId, permiso_id: pid, created_at: now });
           }
         }
@@ -108,7 +146,7 @@ module.exports = {
       for (const [m, acts] of Object.entries(matrix)) {
         if (m === '*') continue;
         for (const a of acts) {
-          const pid = permIdByKey[permKey(m, a)];
+          const pid = permIdByKey[permKey(m,a)];
           if (pid) rolPermisos.push({ rol_id: rId, permiso_id: pid, created_at: now });
         }
       }

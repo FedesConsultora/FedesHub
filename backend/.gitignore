@@ -1,0 +1,54 @@
+.env# ─── Node.js ──────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Build / cache ────────────────────────
+dist/
+build/
+.cache/
+.tmp/
+
+# ─── Logs ─────────────────────────────────
+logs/
+*.log
+*.log.*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ─── Env / secrets ────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ─── DB / Sequelize ───────────────────────
+/src/migrations/*.js.map
+/src/seeders/*.js.map
+/sequelize-meta.json
+
+# Si usás SQLite (a veces en dev)
+/*.sqlite3
+/*.db
+
+# ─── Coverage / testing ───────────────────
+coverage/
+.nyc_output/
+jest-html-reporters-*.html
+
+# ─── IDE / OS ─────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ─── Docker ───────────────────────────────
+/docker-data/
+/*.pid
+git status

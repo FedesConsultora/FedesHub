@@ -10,14 +10,21 @@
     "db:reset": "sequelize db:migrate:undo:all && sequelize db:migrate && sequelize db:seed:all"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "pino": "^9.3.2",
-    "pino-pretty": "^11.2.2",
+    "express-rate-limit": "^8.0.1",
+    "express-slow-down": "^3.0.0",
+    "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
     "pg": "^8.11.5",
-    "sequelize": "^6.37.3"
+    "pino": "^9.9.0",
+    "pino-pretty": "^11.3.0",
+    "sequelize": "^6.37.3",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",

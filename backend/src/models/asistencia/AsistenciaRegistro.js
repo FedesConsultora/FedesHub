@@ -8,10 +8,21 @@ export default (sequelize, DataTypes) => {
     check_out_at: { type: DataTypes.DATE },
     check_out_origen_id: { type: DataTypes.INTEGER },
     cierre_motivo_id: { type: DataTypes.INTEGER },
+    modalidad_id: { type: DataTypes.INTEGER }, 
     comentario: { type: DataTypes.TEXT },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'AsistenciaRegistro', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
-       indexes: [{ fields: ['feder_id','check_in_at'] }, { fields: ['check_out_at'] }] });
+  }, {
+    tableName: 'AsistenciaRegistro',
+    underscored: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    indexes: [
+      { fields: ['feder_id', 'check_in_at'] },
+      { fields: ['check_out_at'] },
+      { fields: ['modalidad_id'] }
+    ]
+  });
   return AsistenciaRegistro;
 };

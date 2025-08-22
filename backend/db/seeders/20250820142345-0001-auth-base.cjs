@@ -1,4 +1,3 @@
-// backend/db/seeders/202508200001-0001-auth-base.cjs
 'use strict';
 
 module.exports = {
@@ -36,14 +35,14 @@ module.exports = {
       ['update','Editar'],
       ['delete','Eliminar'],
       ['approve','Aprobar'],
-      ['assign','Asignar']
+      ['assign','Asignar'],
+      ['report','Reportes/Indicadores']
     ].map(([codigo, nombre]) => ({
       codigo, nombre, descripcion: null, created_at: now, updated_at: now
     }));
     await queryInterface.bulkInsert('Accion', acciones, {});
 
     // ---- Roles
-    // Nota: "Onboarding" reemplaza al viejo "Invitado".
     const [rolTipoRows] = await queryInterface.sequelize.query(`SELECT id, codigo FROM "RolTipo"`);
     const rolTipoMap = Object.fromEntries(rolTipoRows.map(r => [r.codigo, r.id]));
     const roles = [
@@ -51,6 +50,17 @@ module.exports = {
       ['CLevel','Dirección (C-Level)'],
       ['RRHH','Capital Humano'],
       ['CuentasAnalista','Analista de Cuentas'],
+
+      // Analistas separados (según Upgrading Fedes)
+      ['AnalistaDiseno','Analista de Diseño'],
+      ['AnalistaComunicacion','Analista de Comunicación'],
+      ['AnalistaAudiovisual','Analista Audiovisual'],
+
+      // Tridente actualizado
+      ['TriMarketing','Tridente - Marketing'],
+      ['TriPerformance','Tridente - Performance'],
+      ['TriTecnologia','Tridente - Tecnología'],
+
       ['Feder','Miembro'],
       ['Onboarding','Onboarding']
     ].map(([nombre, desc]) => ({

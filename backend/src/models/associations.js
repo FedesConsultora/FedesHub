@@ -39,6 +39,8 @@ export const setupAssociations = (m) => {
   }
   if (m.AsistenciaRegistro && m.AsistenciaCierreMotivoTipo)
     m.AsistenciaRegistro.belongsTo(m.AsistenciaCierreMotivoTipo, { foreignKey: 'cierre_motivo_id', as: 'cierreMotivo' });
+  if (m.AsistenciaRegistro && m.ModalidadTrabajoTipo)
+    m.AsistenciaRegistro.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' });
 
   // ===== Módulo 5: Ausencias =====
   if (m.Ausencia && m.Feder) m.Ausencia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
