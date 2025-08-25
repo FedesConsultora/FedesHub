@@ -1,0 +1,4 @@
+@use '../styles/variables' as *;
+
+.appLayout { min-height: 100vh; display: flex; flex-direction: column; }
+.appMain   { width: 100%; max-width: 1200px; margin: 0 auto; }

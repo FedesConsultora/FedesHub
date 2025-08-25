@@ -1,0 +1,13 @@
+@use '../../styles/variables' as *;
+
+.card{ background: $fh-card; border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px; }
+.muted{ color:$fh-muted }
+.mt16{ margin-top:16px }
+.error{ margin:8px 0; padding:8px; border:1px solid #5a2d2d; background:#3a1f1f; border-radius:10px; color:#ffb4b4; }
+.ok{ margin:8px 0; padding:8px; border:1px solid #2d5a3a; background:#173423; border-radius:10px; color:#c6f6d5; }
+
+button.primary{ background:$fh-primary; border:none; color:white; padding:.7rem 1rem; border-radius:12px; font-weight:700; }
+input, select{
+  background:#0f141b; color:$fh-text; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:.6rem .8rem; outline:none;
+  &:focus{ border-color:$fh-accent; }
+}

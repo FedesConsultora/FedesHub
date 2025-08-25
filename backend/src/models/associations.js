@@ -239,4 +239,106 @@ export const setupAssociations = (m) => {
 
   if (m.PushToken && m.User) m.PushToken.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
   if (m.PushToken && m.ProveedorTipo) m.PushToken.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' });
+
+    // ===== Módulo 11: Chat =====
+  // Catálogos
+  if (m.ChatCanal && m.ChatCanalTipo) m.ChatCanal.belongsTo(m.ChatCanalTipo, { foreignKey: 'tipo_id', as: 'canalTipo' });
+  if (m.ChatCanalMiembro && m.ChatRolTipo) m.ChatCanalMiembro.belongsTo(m.ChatRolTipo, { foreignKey: 'rol_id', as: 'rol' });
+
+  // ChatCanal ↔ otras entidades
+  if (m.ChatCanal && m.Celula) m.ChatCanal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
+  if (m.ChatCanal && m.Cliente) m.ChatCanal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
+  if (m.ChatCanal && m.User)   m.ChatCanal.belongsTo(m.User,   { foreignKey: 'created_by_user_id', as: 'createdBy' });
+
+  // Membresía
+  if (m.ChatCanal && m.ChatCanalMiembro) {
+    m.ChatCanal.hasMany(m.ChatCanalMiembro, { foreignKey: 'canal_id', as: 'miembros' });
+    m.ChatCanalMiembro.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  }
+  if (m.ChatCanalMiembro && m.User)   m.ChatCanalMiembro.belongsTo(m.User,   { foreignKey: 'user_id', as: 'user' });
+  if (m.ChatCanalMiembro && m.Feder)  m.ChatCanalMiembro.belongsTo(m.Feder,  { foreignKey: 'feder_id', as: 'feder' });
+  if (m.ChatCanalMiembro && m.ChatMensaje)
+    m.ChatCanalMiembro.belongsTo(m.ChatMensaje, { foreignKey: 'last_read_msg_id', as: 'lastReadMsg' });
+
+  // Mensajes
+  if (m.ChatMensaje && m.ChatCanal) m.ChatMensaje.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  if (m.ChatCanal && m.ChatMensaje) m.ChatCanal.hasMany(m.ChatMensaje, { foreignKey: 'canal_id', as: 'mensajes' });
+
+  if (m.ChatMensaje && m.User)   m.ChatMensaje.belongsTo(m.User,   { foreignKey: 'user_id', as: 'autor' });
+  if (m.ChatMensaje && m.Feder)  m.ChatMensaje.belongsTo(m.Feder,  { foreignKey: 'feder_id', as: 'feder' });
+
+  // Hilos (self)
+  if (m.ChatMensaje) {
+    m.ChatMensaje.belongsTo(m.ChatMensaje, { foreignKey: 'parent_id', as: 'parent' });
+    m.ChatMensaje.hasMany(m.ChatMensaje, { foreignKey: 'parent_id', as: 'replies' });
+  }
+
+  // Ediciones / reacciones / adjuntos
+  if (m.ChatMensajeEditHist && m.ChatMensaje) {
+    m.ChatMensajeEditHist.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+    m.ChatMensaje.hasMany(m.ChatMensajeEditHist, { foreignKey: 'mensaje_id', as: 'edits' });
+  }
+  if (m.ChatReaccion && m.ChatMensaje) {
+    m.ChatReaccion.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+    m.ChatMensaje.hasMany(m.ChatReaccion, { foreignKey: 'mensaje_id', as: 'reacciones' });
+  }
+  if (m.ChatReaccion && m.User) m.ChatReaccion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  if (m.ChatAdjunto && m.ChatMensaje) {
+    m.ChatAdjunto.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+    m.ChatMensaje.hasMany(m.ChatAdjunto, { foreignKey: 'mensaje_id', as: 'adjuntos' });
+  }
+
+  // Referencias cruzadas y previews
+  if (m.ChatMensajeRef && m.ChatMensaje) m.ChatMensajeRef.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  if (m.ChatMensajeRef && m.Tarea) m.ChatMensajeRef.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  if (m.ChatMensajeRef && m.Evento) m.ChatMensajeRef.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
+  if (m.ChatMensajeRef && m.Ausencia) m.ChatMensajeRef.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
+  if (m.ChatMensajeRef && m.AsistenciaRegistro) m.ChatMensajeRef.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' });
+  if (m.ChatMensajeRef && m.Cliente) m.ChatMensajeRef.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
+  if (m.ChatMensajeRef && m.Celula) m.ChatMensajeRef.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
+  if (m.ChatMensajeRef && m.Feder) m.ChatMensajeRef.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+
+  if (m.ChatLinkPreview && m.ChatMensaje) {
+    m.ChatLinkPreview.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+    m.ChatMensaje.hasMany(m.ChatLinkPreview, { foreignKey: 'mensaje_id', as: 'linkPreviews' });
+  }
+
+  // Receipts / delivery / guardados / pins
+  if (m.ChatReadReceipt && m.ChatMensaje) m.ChatReadReceipt.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  if (m.ChatReadReceipt && m.User) m.ChatReadReceipt.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  if (m.ChatDelivery && m.ChatMensaje) m.ChatDelivery.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  if (m.ChatDelivery && m.User) m.ChatDelivery.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  if (m.ChatSavedMessage && m.ChatMensaje) m.ChatSavedMessage.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  if (m.ChatSavedMessage && m.User) m.ChatSavedMessage.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  if (m.ChatPin && m.ChatCanal) m.ChatPin.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  if (m.ChatPin && m.ChatMensaje) m.ChatPin.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  if (m.ChatPin && m.User) m.ChatPin.belongsTo(m.User, { foreignKey: 'pinned_by_user_id', as: 'pinnedBy' });
+
+  // Seguimiento de hilos
+  if (m.ChatThreadFollow && m.ChatMensaje) m.ChatThreadFollow.belongsTo(m.ChatMensaje, { foreignKey: 'root_msg_id', as: 'rootMsg' });
+  if (m.ChatThreadFollow && m.User) m.ChatThreadFollow.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
+  // Invitaciones
+  if (m.ChatInvitacion && m.ChatCanal) m.ChatInvitacion.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  if (m.ChatInvitacion && m.User) {
+    m.ChatInvitacion.belongsTo(m.User, { foreignKey: 'invited_by_user_id', as: 'invitedBy' });
+    m.ChatInvitacion.belongsTo(m.User, { foreignKey: 'invited_user_id', as: 'invitedUser' });
+  }
+
+  // Meetings y vínculo con Calendario
+  if (m.ChatMeeting && m.ChatCanal) m.ChatMeeting.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  if (m.ChatMeeting && m.User) m.ChatMeeting.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' });
+  if (m.ChatMeeting && m.Evento) m.ChatMeeting.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
+  if (m.ChatMeeting && m.ChatMensaje) m.ChatMeeting.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+
+  // Presencia & Typing
+  if (m.ChatPresence && m.User) m.ChatPresence.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  if (m.ChatTyping && m.ChatCanal) m.ChatTyping.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
+  if (m.ChatTyping && m.User) m.ChatTyping.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+
 }
+

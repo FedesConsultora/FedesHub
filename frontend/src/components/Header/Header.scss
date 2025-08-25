@@ -1,0 +1,18 @@
+@use '../../styles/variables' as *;
+
+.fhHeader{
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 1rem;
+  padding: .75rem 1rem; backdrop-filter: blur(10px);
+  background: rgba(10,16,23,.4); border-bottom: 1px solid rgba(255,255,255,.05);
+  .brand { font-weight: 800; letter-spacing: .3px; color: $fh-accent; }
+  .spacer { flex: 1; }
+  .userBox{ display:flex; align-items:center; gap:.6rem;
+    .avatar{ width:36px;height:36px;border-radius:50%; object-fit:cover; }
+    .name{ font-size:.9rem; color:$fh-text; }
+    .logout{ background: transparent; border:1px solid rgba(255,255,255,.15);
+      padding:.25rem .6rem; border-radius: 12px; color:$fh-muted;
+      &:hover{ border-color: rgba(255,255,255,.35); color:$fh-text; }
+    }
+  }
+}

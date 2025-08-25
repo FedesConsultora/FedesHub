@@ -1,0 +1,23 @@
+// ── /src/styles/_fonts.scss
+// Registra fonts locales y expone $font-sans / $font-mono
+
+@mixin font($family, $file, $weight: 400, $style: normal) {
+  @font-face {
+    font-family: '#{$family}';
+    src: url('../fonts/#{$file}.woff2') format('woff2');
+    font-weight: $weight;
+    font-style: $style;
+    font-display: swap;
+  }
+}
+
+/* Ajustá los nombres de archivos si tus .woff2 difieren */
+@include font('Fedes Sans', 'FedesSans-Regular', 400);
+@include font('Fedes Sans', 'FedesSans-Medium', 500);
+@include font('Fedes Sans', 'FedesSans-Bold', 700);
+
+@include font('Fedes Mono', 'FedesMono-Regular', 400);
+
+/* Variables de familia tipográfica */
+$font-sans: 'Fedes Sans', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+$font-mono: 'Fedes Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

@@ -168,7 +168,7 @@ backend/
         NotificacionEnvio.js
         NotificacionPreferencia.js
         NotificacionPlantilla.js
-    // controllers/, services/, routes/ (por completar en este MVP)
+    // luego /modules con controladores, servicios, validators y repositorios
 docker/
   // docker-compose.yml, Dockerfile (si aplica en tu repo)
 README.md

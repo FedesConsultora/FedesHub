@@ -1,0 +1,17 @@
+@use '../../styles/variables' as *;
+
+.toolbar{ display:flex; gap:8px; margin: 8px 0 12px; }
+.chipset{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.chip{ background:#0f141b; border:1px solid rgba(255,255,255,.12); color:$fh-text; border-radius:16px; padding:.35rem .6rem; }
+.chip.active{ border-color:$fh-accent; box-shadow:0 0 0 2px rgba(77,208,225,.15) inset; }
+
+.permGrid{
+  display:grid; grid-template-columns: 160px repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-top:12px;
+}
+.pgHead{ font-size:.85rem; color:$fh-muted; padding:6px 8px }
+.pgMod{ font-weight:700; padding:8px }
+.pgCell{
+  height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f141b;
+  &:hover{ border-color:$fh-accent; }
+}
+.pgCell.on{ background: rgba(77,208,225,.15); border-color:$fh-accent; }

@@ -1,0 +1,15 @@
+// ── /src/styles/_variables.scss
+@use './fonts' as fonts; // no re-exporta automáticamente → reasignamos lo que queramos “propagar”
+$font-sans: fonts.$font-sans;
+$font-mono: fonts.$font-mono;
+
+/* Paleta / tokens */
+$fh-primary: #44718D;
+$fh-bg: #0f1720;
+$fh-card: #121a23;
+$fh-text: #e8eef6;
+$fh-muted: #a6b3c3;
+$fh-accent: #4dd0e1;
+
+$radius-2xl: 18px;
+$shadow-soft: 0 10px 30px rgba(0,0,0,.25);
