@@ -1,4 +1,4 @@
-// backend/db/seeders/20250820143036-0200-sample-initial-data.cjs
+// backend/db/seeders/20250820143036-0005-sample-initial-data.cjs
 'use strict';
 /**
  * Seeder 0200 - sample-initial-data

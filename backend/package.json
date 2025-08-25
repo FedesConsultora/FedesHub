@@ -10,6 +10,7 @@
     "db:reset": "sequelize db:migrate:undo:all && sequelize db:migrate && sequelize db:seed:all"
   },
   "dependencies": {
+    "@googleapis/calendar": "^11.0.1",
     "argon2": "^0.44.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -26,8 +27,9 @@
     "pg": "^8.11.5",
     "pino": "^9.9.0",
     "pino-pretty": "^11.3.0",
+    "rrule": "^2.8.1",
     "sequelize": "^6.37.3",
-    "zod": "^4.0.17"
+    "zod": "^4.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",

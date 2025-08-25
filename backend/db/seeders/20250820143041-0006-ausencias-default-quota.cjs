@@ -1,3 +1,4 @@
+// 20250820143041-0006-ausencias-default-quotas copy.cjs
 'use strict';
 
 function yearRange(d = new Date()) {

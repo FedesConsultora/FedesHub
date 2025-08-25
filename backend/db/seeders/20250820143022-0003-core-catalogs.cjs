@@ -1,4 +1,4 @@
-// backend/db/seeders/202508200100-0100-core-catalogs.cjs
+// backend/db/seeders/202508200100-0003-core-catalogs.cjs
 'use strict';
 
 module.exports = {

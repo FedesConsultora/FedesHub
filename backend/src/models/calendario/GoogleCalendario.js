@@ -11,7 +11,17 @@ export default (sequelize, DataTypes) => {
     color_id: { type: DataTypes.STRING(20) },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'GoogleCalendario', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
-       indexes: [{ fields: ['cuenta_id'] }, { fields: ['google_calendar_id'] }] });
+  }, {
+    tableName: 'GoogleCalendario',
+    underscored: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    indexes: [
+      { fields: ['cuenta_id'] },
+      { fields: ['google_calendar_id'] },
+      { unique: true, fields: ['cuenta_id', 'google_calendar_id'] } 
+    ]
+  });
   return GoogleCalendario;
 };

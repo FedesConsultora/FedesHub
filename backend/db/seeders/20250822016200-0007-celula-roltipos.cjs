@@ -1,4 +1,4 @@
-// 0162 — CelulaRolTipo: tridente de Analistas + Miembro
+// 0007 — CelulaRolTipo: tridente de Analistas + Miembro
 'use strict';
 
 module.exports = {

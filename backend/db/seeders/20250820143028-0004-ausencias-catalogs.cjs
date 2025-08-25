@@ -1,4 +1,4 @@
-// backend/db/seeders/202508200150-0150-ausencias-catalogs.cjs
+// backend/db/seeders/202508200150-0004-ausencias-catalogs.cjs
 'use strict';
 
 module.exports = {

@@ -196,6 +196,8 @@ export const setupAssociations = (m) => {
   if (m.CalendarioVinculo && m.GoogleCalendario) m.CalendarioVinculo.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
   if (m.CalendarioVinculo && m.SyncDireccionTipo) m.CalendarioVinculo.belongsTo(m.SyncDireccionTipo, { foreignKey: 'direccion_id', as: 'direccion' });
   if (m.GoogleWebhookCanal && m.GoogleCuenta) m.GoogleWebhookCanal.belongsTo(m.GoogleCuenta, { foreignKey: 'cuenta_id', as: 'cuenta' });
+  if (m.GoogleWebhookCanal && m.GoogleCalendario)
+  m.GoogleWebhookCanal.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
   if (m.EventoSync && m.Evento) m.EventoSync.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
   if (m.EventoSync && m.GoogleCalendario) m.EventoSync.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
 

@@ -1,4 +1,4 @@
-// backend/db/seeders/20250822090045-0180-tareas-extra-catalogs.cjs
+// backend/db/seeders/20250822090045-0008-tareas-extra-catalogs.cjs
 'use strict';
 /**
  * 0180 - Tareas: catálogos extra (idempotente)

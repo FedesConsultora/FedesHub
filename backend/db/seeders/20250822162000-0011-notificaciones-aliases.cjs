@@ -1,3 +1,4 @@
+// 20250822162000-0011-notificaciones-aliases.cjs
 'use strict';
 
 module.exports = {
