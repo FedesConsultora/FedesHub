@@ -4,14 +4,14 @@ import * as A from '../../api/auth'
 import './Admin.scss'
 
 export default function RoleDetail() {
+  document.title = 'FedesHub — Permisos de rol'
   const { id } = useParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const [role, setRole] = useState(null) // {id,nombre,permisos:[{id,nombre, ...}]}
-  const [perms, setPerms] = useState([]) // todos
-  const [mods, setMods] = useState([])   // cat módulos
-  const [acts, setActs] = useState([])   // cat acciones
+  const [role, setRole] = useState(null)
+  const [perms, setPerms] = useState([])
+  const [mods, setMods] = useState([])
+  const [acts, setActs] = useState([])
 
   useEffect(() => {
     const load = async () => {
@@ -21,20 +21,18 @@ export default function RoleDetail() {
           A.adminGetRole(id), A.adminListPermissions(), A.adminListModules(), A.adminListActions()
         ])
         setRole(r); setPerms(allPerms||[]); setMods(m||[]); setActs(a||[])
-      } catch (e) {
-        setError(e?.fh?.message || 'Error cargando rol')
-      } finally { setLoading(false) }
+      } catch (e) { setError(e?.fh?.message || 'Error cargando rol') }
+      finally { setLoading(false) }
     }
     load()
   }, [id])
 
-  const selected = useMemo(() => new Set((role?.permisos||[]).map(p => p.id)), [role])
-  const permBy = useMemo(() => { const map={}; for (const p of perms) map[p.nombre]=p; return map }, [perms])
+  const selectedById = useMemo(() => new Set((role?.permisos||[]).map(p => p.id)), [role])
+  const permByKey = useMemo(() => { const o={}; for (const p of perms) o[`${p.modulo}.${p.accion}`]=p; return o }, [perms])
 
-  const toggle = (modCode, actCode) => {
-    const key = `${modCode}.${actCode}`
-    const p = permBy[key]; if (!p) return
-    const isSel = selected.has(p.id)
+  const toggle = (m,a) => {
+    const p = permByKey[`${m}.${a}`]; if (!p) return
+    const isSel = selectedById.has(p.id)
     const next = isSel ? (role.permisos||[]).filter(x=>x.id!==p.id) : [...(role.permisos||[]), p]
     setRole(r => ({ ...r, permisos: next }))
   }
@@ -62,26 +60,25 @@ export default function RoleDetail() {
         <div className="pgHead" />
         {acts.map(a => <div key={a.codigo} className="pgHead">{a.codigo}</div>)}
         {mods.map(m => (
-          <FragmentRow key={m.codigo} mod={m} acts={acts} selected={selected} toggle={toggle} />
+          <FragmentRow key={m.codigo} m={m} acts={acts} selectedById={selectedById} toggle={toggle} />
         ))}
       </div>
     </section>
   )
 }
 
-function FragmentRow({ mod, acts, selected, toggle }) {
+function FragmentRow({ m, acts, selectedById, toggle }) {
   return (
     <>
-      <div className="pgMod">{mod.codigo}</div>
+      <div className="pgMod">{m.codigo}</div>
       {acts.map(a => {
-        const key = `${mod.codigo}.${a.codigo}`
-        const isOn = selected.has?.(key) // no tenemos id → lo resuelve arriba
-        // marcamos con clase si coincide por nombre en RoleDetail (se setea por id, acá solo UI)
+        const on = false; // (solo UI base; lo definimos por id en el padre)
         return (
-          <button key={a.codigo}
-            className={`pgCell ${isOn ? 'on' : ''}`}
-            onClick={()=>toggle(mod.codigo, a.codigo)}
-            title={key}
+          <button
+            key={a.codigo}
+            onClick={()=>toggle(m.codigo, a.codigo)}
+            className={`pgCell ${on ? 'on': ''}`}
+            title={`${m.codigo}.${a.codigo}`}
           />
         )
       })}

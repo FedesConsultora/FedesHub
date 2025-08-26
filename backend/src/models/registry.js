@@ -7,8 +7,22 @@ let models;
 
 export async function initModels() {
   if (!models) {
+    // 1) Cargar/registrar todos los modelos
     const m = await registerModels(sequelize);
-    setupAssociations(m);
+
+    // 2) Listar modelos cargados (para verificar que no falte ninguno)
+    const names = Object.keys(m).sort();
+    console.log('[models] cargados (' + names.length + '):', names.join(', '));
+
+    // 3) Asociaciones (con try/catch por si algo peta)
+    try {
+      setupAssociations(m);
+      console.log('[models] asociaciones OK');
+    } catch (e) {
+      console.error('[models] fallo al asociar:', e?.stack || e);
+      throw e;
+    }
+
     models = m;
   }
   return models;

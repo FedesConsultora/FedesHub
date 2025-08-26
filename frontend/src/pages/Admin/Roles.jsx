@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as A from '../../api/auth'
 import Table from '../../components/ui/Table'
 import Modal from '../../components/ui/Modal'
 import FormRow from '../../components/ui/FormRow'
-import { useNavigate } from 'react-router-dom'
 import './Admin.scss'
 
 export default function Roles() {
+  document.title = 'FedesHub — Roles'
   const nav = useNavigate()
   const [rows, setRows] = useState([])
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ nombre:'', descripcion:'' })
   const [error, setError] = useState(null)
+
   const load = async () => {
     try { const { data } = await A.adminListRoles(); setRows(data||[]) }
     catch(e){ setError(e?.fh?.message || 'Error cargando roles') }
@@ -23,9 +25,12 @@ export default function Roles() {
     { key:'descripcion', header:'Descripción' },
     { key:'actions', header:'', render:r => (
       <div style={{display:'flex', gap:8}}>
-        <button onClick={()=>nav(`/admin/roles/${r.id}`)}>Permisos</button>
-        <button onClick={()=>{ setForm({ ...r }); setOpen(true) }}>Editar</button>
-        <button onClick={async ()=>{ if(!confirm('Eliminar rol?'))return; try{ await A.adminDeleteRole(r.id); load() }catch(e){ alert(e?.fh?.message||'Error') }}}>Eliminar</button>
+        <button onClick={()=>nav(`/admin/roles/${r.id}`)} title="Permisos del rol">Permisos</button>
+        <button onClick={()=>{ setForm({ ...r }); setOpen(true) }} title="Editar">Editar</button>
+        <button title="Eliminar" onClick={async ()=>{
+          if(!confirm('Eliminar rol?'))return;
+          try{ await A.adminDeleteRole(r.id); load() }catch(e){ alert(e?.fh?.message||'Error') }
+        }}>Eliminar</button>
       </div>
     )},
   ]
@@ -50,8 +55,8 @@ export default function Roles() {
       <Modal open={open} title={form.id ? 'Editar rol' : 'Nuevo rol'} onClose={()=>setOpen(false)} footer={
         <><button onClick={()=>setOpen(false)}>Cancelar</button><button className="primary" onClick={save}>Guardar</button></>
       }>
-        <FormRow label="Nombre"><input value={form.nombre} onChange={e=>setForm(v=>({...v, nombre:e.target.value}))} /></FormRow>
-        <FormRow label="Descripción"><input value={form.descripcion||''} onChange={e=>setForm(v=>({...v, descripcion:e.target.value}))} /></FormRow>
+        <FormRow label="Nombre"><input required title="Nombre del rol" value={form.nombre} onChange={e=>setForm(v=>({...v, nombre:e.target.value}))} /></FormRow>
+        <FormRow label="Descripción"><input title="Descripción" value={form.descripcion||''} onChange={e=>setForm(v=>({...v, descripcion:e.target.value}))} /></FormRow>
       </Modal>
     </section>
   )

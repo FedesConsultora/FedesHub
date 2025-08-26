@@ -1,4 +1,21 @@
 @use '../styles/variables' as *;
 
-.appLayout { min-height: 100vh; display: flex; flex-direction: column; }
-.appMain   { width: 100%; max-width: 1200px; margin: 0 auto; }
+.appLayout{ min-height:100vh; display:flex; flex-direction:column; background:$fh-bg; color:$fh-text }
+.appMain{ width:min(1200px, 96vw); margin:16px auto; display:block }
+.card{ background:$fh-card; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; }
+.toolbar{ display:flex; gap:8px; margin: 8px 0 12px; }
+.chipset{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.chip{ background:#0f141b; border:1px solid rgba(255,255,255,.12); color:$fh-text; border-radius:16px; padding:.35rem .6rem; }
+.chip.active{ border-color:$fh-accent; box-shadow:0 0 0 2px rgba(77,208,225,.15) inset; }
+.error{ margin:8px 0; padding:8px; border:1px solid #5a2d2d; background:#3a1f1f; border-radius:10px; color:#ffb4b4; }
+.primary{ background:$fh-primary; border:none; color:white; padding:.6rem .9rem; border-radius:12px; font-weight:700; }
+.permGrid{
+  display:grid; grid-template-columns: 160px repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-top:12px;
+}
+.pgHead{ font-size:.85rem; color:$fh-muted; padding:6px 8px }
+.pgMod{ font-weight:700; padding:8px }
+.pgCell{
+  height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f141b;
+  &:hover{ border-color:$fh-accent; }
+}
+.pgCell.on{ background: rgba(77,208,225,.15); border-color:$fh-accent; }

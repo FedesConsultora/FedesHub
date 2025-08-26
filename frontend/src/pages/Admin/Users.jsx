@@ -3,13 +3,10 @@ import * as A from '../../api/auth'
 import Table from '../../components/ui/Table'
 import Modal from '../../components/ui/Modal'
 import FormRow from '../../components/ui/FormRow'
-import { useAuthCtx } from '../../context/AuthContext'
 import './Admin.scss'
 
 export default function Users() {
-  const { hasPerm } = useAuthCtx()
-  const canAssign = hasPerm('auth','assign')
-
+  document.title = 'FedesHub — Usuarios'
   const [rows, setRows] = useState([])
   const [roles, setRoles] = useState([])
   const [q, setQ] = useState('')
@@ -19,38 +16,37 @@ export default function Users() {
   const [openNew, setOpenNew] = useState(false)
   const [newData, setNewData] = useState({ email:'', password:'', roles:[], is_activo:true })
 
-  const [editing, setEditing] = useState(null) // {id, roles:[]}
+  const [editing, setEditing] = useState(null)
 
   const load = async () => {
     setLoading(true); setError(null)
     try {
       const [{ data: users }, { data: roles }] = await Promise.all([A.adminListUsers(q), A.adminListRoles()])
-      setRows(users || [])
-      setRoles(roles || [])
-    } catch (e) {
-      setError(e?.fh?.message || 'Error cargando usuarios')
-    } finally { setLoading(false) }
+      setRows(users || []); setRoles(roles || [])
+    } catch (e) { setError(e?.fh?.message || 'Error cargando usuarios') }
+    finally { setLoading(false) }
   }
-
   useEffect(() => { load() }, [])
 
   const columns = useMemo(() => ([
     { key:'email', header:'Email' },
     { key:'is_activo', header:'Activo', render:r => <span>{r.is_activo ? 'Sí' : 'No'}</span> },
     { key:'roles', header:'Roles', render:r => (r.roles || []).map(x => x.nombre).join(', ') },
-    canAssign ? { key:'actions', header:'Acciones', render:r => (
+    { key:'actions', header:'Acciones', render:r => (
       <div style={{display:'flex', gap:8}}>
         <button onClick={()=>setEditing({ id:r.id, email:r.email, roles:(r.roles||[]).map(x=>x.nombre) })}>Editar roles</button>
         <button onClick={async ()=>{
           try { await A.adminPatchUserActive(r.id, !r.is_activo); load() } catch(e) { alert(e?.fh?.message || 'Error') }
         }}>{r.is_activo ? 'Desactivar' : 'Activar'}</button>
       </div>
-    )} : null,
-  ].filter(Boolean)), [canAssign])
+    )}
+  ]), [])
 
   const toggleSel = (name, list, setter) => setter(list.includes(name) ? list.filter(n=>n!==name) : [...list, name])
 
   const createUser = async () => {
+    if (!/@fedes\.ai$/i.test(newData.email.trim())) { alert('Sólo @fedes.ai'); return }
+    if (newData.password.length < 10) { alert('La contraseña debe tener al menos 10 caracteres'); return }
     try {
       await A.adminCreateUser(newData)
       setOpenNew(false); setNewData({ email:'', password:'', roles:[], is_activo:true })
@@ -69,31 +65,38 @@ export default function Users() {
     <section className="card">
       <h2>Usuarios</h2>
       <div className="toolbar">
-        <input placeholder="Buscar..." value={q} onChange={e=>setQ(e.target.value)} />
-        <button onClick={load}>Buscar</button>
-        {canAssign && <button className="primary" onClick={()=>setOpenNew(true)}>+ Nuevo</button>}
+        <input title="Búsqueda" placeholder="Buscar..." value={q} onChange={e=>setQ(e.target.value)} />
+        <button onClick={load} title="Buscar">Buscar</button>
+        <button className="primary" onClick={()=>setOpenNew(true)} title="Nuevo usuario">+ Nuevo</button>
       </div>
 
       {error && <div className="error">{error}</div>}
-      {loading ? <div>Cargando…</div> : (
-        <Table columns={columns} rows={rows} keyField="id" empty="Sin usuarios" />
-      )}
+      {loading ? <div>Cargando…</div> : <Table columns={columns} rows={rows} keyField="id" empty="Sin usuarios" />}
 
       <Modal open={openNew} title="Nuevo usuario" onClose={()=>setOpenNew(false)} footer={
         <><button onClick={()=>setOpenNew(false)}>Cancelar</button><button className="primary" onClick={createUser}>Crear</button></>
       }>
-        <FormRow label="Email"><input value={newData.email} onChange={e=>setNewData(v=>({...v, email:e.target.value}))} placeholder="usuario@fedes.ai" /></FormRow>
-        <FormRow label="Contraseña"><input type="password" value={newData.password} onChange={e=>setNewData(v=>({...v, password:e.target.value}))} /></FormRow>
+        <FormRow label="Email">
+          <input required title="Email corporativo" type="email" value={newData.email}
+                 onChange={e=>setNewData(v=>({...v, email:e.target.value}))}
+                 placeholder="usuario@fedes.ai" autoComplete="email" />
+        </FormRow>
+        <FormRow label="Contraseña">
+          <input required title="Mínimo 10 caracteres" type="password" value={newData.password}
+                 onChange={e=>setNewData(v=>({...v, password:e.target.value}))}
+                 placeholder="••••••••••" autoComplete="new-password" />
+        </FormRow>
         <FormRow label="Activo">
           <select value={String(newData.is_activo)} onChange={e=>setNewData(v=>({...v, is_activo: e.target.value==='true'}))}>
             <option value="true">Sí</option><option value="false">No</option>
           </select>
         </FormRow>
-        <div className="chipset">
+        <div className="chipset" aria-label="Roles disponibles">
           {(roles||[]).map(r => (
             <button key={r.id}
               className={newData.roles.includes(r.nombre) ? 'chip active' : 'chip'}
               onClick={()=>toggleSel(r.nombre, newData.roles, (x)=>setNewData(v=>({...v, roles:x})))}
+              title={r.descripcion || r.nombre}
             >{r.nombre}</button>
           ))}
         </div>

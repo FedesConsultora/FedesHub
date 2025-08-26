@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
  */
 export const registerModels = async (sequelize) => {
   const models = {};
+  const LOG_FILES = process.env.LOG_MODELS === '1';
 
   const load = async (dir) => {
     const abs = path.join(__dirname, dir);
@@ -27,12 +28,19 @@ export const registerModels = async (sequelize) => {
       }
       if (!file.endsWith('.js')) continue;
       if (file === 'index.js' || file === 'associations.js') continue;
+
       const url = pathToFileURL(full).href;
       const mod = await import(url);
       const def = mod.default;
       if (typeof def !== 'function') continue;
+
       const model = def(sequelize, DataTypes);
       models[model.name] = model;
+
+      if (LOG_FILES) {
+        const rel = path.relative(__dirname, full);
+        console.log('[models] registrado', model.name, '←', rel);
+      }
     }
   };
 

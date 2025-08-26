@@ -1,11 +1,16 @@
-// src/api/auth.js
+// /frontend/src/api/auth.js
+
 import { api, ensureCsrf } from './client'
 
 // =======================
 // Core Auth
 // =======================
 export const health       = ()            => api.get('/auth/health')
-export const getSession   = ()            => api.get('/auth/me')
+export const getSession = () =>
+  api.get('/auth/me', {
+    validateStatus: (s) => s === 200 || s === 401
+  });
+
 export const login        = async (email, password) => {
   await ensureCsrf()
   return api.post('/auth/login', { email, password })

@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { logger } from './core/logger.js';
-import apiRoutes from './routes.js';
+import apiRoutes from './router.js';
 
 const app = express();
 
@@ -32,13 +32,23 @@ app.use('/api', apiRoutes);
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 
-// errores (incluye zod → 400)
-app.use((err, _req, res, _next) => {
+// errores (incluye zod → 400) — VERBOSO EN DEV
+app.use((err, req, res, _next) => {
   if (err?.name === 'ZodError') {
     return res.status(400).json({ error: 'ValidationError', details: err.issues });
   }
-  logger.error({ err }, 'UnhandledError');
-  res.status(err.status || 500).json({ error: err.message || 'Internal Error' });
+  const status = err.status || 500;
+  const payload = { error: err.message || 'Internal Error' };
+
+  if (process.env.NODE_ENV !== 'production') {
+    payload.stack = err.stack;
+    payload.path = req.path;
+    payload.method = req.method;
+  }
+
+  logger.error({ err, path: req.path, method: req.method }, 'UnhandledError');
+  res.status(status).json(payload);
 });
+
 
 export default app;

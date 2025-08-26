@@ -1,344 +1,599 @@
 // backend/src/models/associations.js
 export const setupAssociations = (m) => {
-    
+  // Activa logs verbosos si LOG_ASSOC=1 (por defecto encendido para depurar)
+  const VERBOSE = (process.env.LOG_ASSOC ?? '1') === '1';
+  const ok   = (...a) => { if (VERBOSE) console.log(...a); };
+  const skip = (...a) => { if (VERBOSE) console.warn(...a); };
+  const err  = (...a) => {              console.error(...a); };
+
+  const link = (present, desc, fn) => {
+    if (!present) { skip('[assoc:skip]', desc); return; }
+    try {
+      fn();
+      ok('[assoc:ok]  ', desc);
+    } catch (e) {
+      err('[assoc:err] ', desc, e?.stack || e);
+      throw e;
+    }
+  };
+
+  ok('[assoc] start');
+
   // ===== Módulo 1: Auth =====
-  if (m.User && m.AuthEmailDominio) m.User.belongsTo(m.AuthEmailDominio, { foreignKey: 'email_dominio_id', as: 'emailDominio' });
-  if (m.User && m.Rol && m.UserRol) {
+  link(m.User && m.AuthEmailDominio, 'User → AuthEmailDominio (email_dominio_id)', () =>
+    m.User.belongsTo(m.AuthEmailDominio, { foreignKey: 'email_dominio_id', as: 'emailDominio' })
+  );
+
+  link(m.User && m.Rol && m.UserRol, 'User ↔ Rol (UserRol)', () => {
     m.User.belongsToMany(m.Rol, { through: m.UserRol, foreignKey: 'user_id', otherKey: 'rol_id', as: 'roles' });
     m.Rol.belongsToMany(m.User, { through: m.UserRol, foreignKey: 'rol_id', otherKey: 'user_id', as: 'users' });
-  }
-  if (m.Rol && m.RolTipo) m.Rol.belongsTo(m.RolTipo, { foreignKey: 'rol_tipo_id', as: 'tipo' });
-  if (m.Permiso && m.Modulo) m.Permiso.belongsTo(m.Modulo, { foreignKey: 'modulo_id', as: 'modulo' });
-  if (m.Permiso && m.Accion) m.Permiso.belongsTo(m.Accion, { foreignKey: 'accion_id', as: 'accion' });
-  if (m.Rol && m.Permiso && m.RolPermiso) {
+  });
+
+  link(m.Rol && m.RolTipo, 'Rol → RolTipo (rol_tipo_id)', () =>
+    m.Rol.belongsTo(m.RolTipo, { foreignKey: 'rol_tipo_id', as: 'tipo' })
+  );
+
+  link(m.Permiso && m.Modulo, 'Permiso → Modulo (modulo_id)', () =>
+    m.Permiso.belongsTo(m.Modulo, { foreignKey: 'modulo_id', as: 'modulo' })
+  );
+  link(m.Permiso && m.Accion, 'Permiso → Accion (accion_id)', () =>
+    m.Permiso.belongsTo(m.Accion, { foreignKey: 'accion_id', as: 'accion' })
+  );
+
+  link(m.Rol && m.Permiso && m.RolPermiso, 'Rol ↔ Permiso (RolPermiso)', () => {
     m.Rol.belongsToMany(m.Permiso, { through: m.RolPermiso, foreignKey: 'rol_id', otherKey: 'permiso_id', as: 'permisos' });
     m.Permiso.belongsToMany(m.Rol, { through: m.RolPermiso, foreignKey: 'permiso_id', otherKey: 'rol_id', as: 'roles' });
-  }
-  if (m.JwtRevocacion && m.User) m.JwtRevocacion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  });
+
+  link(m.JwtRevocacion && m.User, 'JwtRevocacion → User (user_id)', () =>
+    m.JwtRevocacion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
   // ===== Módulo 2: Cargos =====
-  if (m.Cargo && m.CargoAmbito) m.Cargo.belongsTo(m.CargoAmbito, { foreignKey: 'ambito_id', as: 'ambito' });
-  if (m.Feder && m.Cargo && m.FederCargo) {
+  link(m.Cargo && m.CargoAmbito, 'Cargo → CargoAmbito (ambito_id)', () =>
+    m.Cargo.belongsTo(m.CargoAmbito, { foreignKey: 'ambito_id', as: 'ambito' })
+  );
+
+  link(m.Feder && m.Cargo && m.FederCargo, 'Feder ↔ Cargo (FederCargo)', () => {
     m.Feder.belongsToMany(m.Cargo, { through: m.FederCargo, foreignKey: 'feder_id', otherKey: 'cargo_id', as: 'cargos' });
     m.Cargo.belongsToMany(m.Feder, { through: m.FederCargo, foreignKey: 'cargo_id', otherKey: 'feder_id', as: 'feders' });
-  }
+  });
 
   // ===== Módulo 3: Feders =====
-  if (m.Feder && m.User) m.Feder.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.Feder && m.Celula) m.Feder.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.Feder && m.FederEstadoTipo) m.Feder.belongsTo(m.FederEstadoTipo, { foreignKey: 'estado_id', as: 'estado' });
-  if (m.FederModalidadDia && m.Feder) m.FederModalidadDia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-  if (m.FederModalidadDia && m.DiaSemana) m.FederModalidadDia.belongsTo(m.DiaSemana, { foreignKey: 'dia_semana_id', as: 'diaSemana' });
-  if (m.FederModalidadDia && m.ModalidadTrabajoTipo) m.FederModalidadDia.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' });
+  link(m.Feder && m.User, 'Feder → User (user_id)', () =>
+    m.Feder.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.Feder && m.Celula, 'Feder → Celula (celula_id)', () =>
+    m.Feder.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.Feder && m.FederEstadoTipo, 'Feder → FederEstadoTipo (estado_id)', () =>
+    m.Feder.belongsTo(m.FederEstadoTipo, { foreignKey: 'estado_id', as: 'estado' })
+  );
+  link(m.FederModalidadDia && m.Feder, 'FederModalidadDia → Feder (feder_id)', () =>
+    m.FederModalidadDia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.FederModalidadDia && m.DiaSemana, 'FederModalidadDia → DiaSemana (dia_semana_id)', () =>
+    m.FederModalidadDia.belongsTo(m.DiaSemana, { foreignKey: 'dia_semana_id', as: 'diaSemana' })
+  );
+  link(m.FederModalidadDia && m.ModalidadTrabajoTipo, 'FederModalidadDia → ModalidadTrabajoTipo (modalidad_id)', () =>
+    m.FederModalidadDia.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' })
+  );
 
   // ===== Módulo 4: Asistencia =====
-  if (m.AsistenciaRegistro && m.Feder) m.AsistenciaRegistro.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-  if (m.AsistenciaRegistro && m.AsistenciaOrigenTipo) {
+  link(m.AsistenciaRegistro && m.Feder, 'AsistenciaRegistro → Feder (feder_id)', () =>
+    m.AsistenciaRegistro.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.AsistenciaRegistro && m.AsistenciaOrigenTipo, 'AsistenciaRegistro → OrigenTipo (check_in/out)', () => {
     m.AsistenciaRegistro.belongsTo(m.AsistenciaOrigenTipo, { foreignKey: 'check_in_origen_id', as: 'checkInOrigen' });
     m.AsistenciaRegistro.belongsTo(m.AsistenciaOrigenTipo, { foreignKey: 'check_out_origen_id', as: 'checkOutOrigen' });
-  }
-  if (m.AsistenciaRegistro && m.AsistenciaCierreMotivoTipo)
-    m.AsistenciaRegistro.belongsTo(m.AsistenciaCierreMotivoTipo, { foreignKey: 'cierre_motivo_id', as: 'cierreMotivo' });
-  if (m.AsistenciaRegistro && m.ModalidadTrabajoTipo)
-    m.AsistenciaRegistro.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' });
+  });
+  link(m.AsistenciaRegistro && m.AsistenciaCierreMotivoTipo, 'AsistenciaRegistro → CierreMotivo (cierre_motivo_id)', () =>
+    m.AsistenciaRegistro.belongsTo(m.AsistenciaCierreMotivoTipo, { foreignKey: 'cierre_motivo_id', as: 'cierreMotivo' })
+  );
+  link(m.AsistenciaRegistro && m.ModalidadTrabajoTipo, 'AsistenciaRegistro → ModalidadTrabajoTipo (modalidad_id)', () =>
+    m.AsistenciaRegistro.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' })
+  );
 
   // ===== Módulo 5: Ausencias =====
-  if (m.Ausencia && m.Feder) m.Ausencia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-  if (m.Ausencia && m.AusenciaTipo) m.Ausencia.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.Ausencia && m.AusenciaEstado) m.Ausencia.belongsTo(m.AusenciaEstado, { foreignKey: 'estado_id', as: 'estado' });
-  if (m.Ausencia && m.MitadDiaTipo) m.Ausencia.belongsTo(m.MitadDiaTipo, { foreignKey: 'mitad_dia_id', as: 'mitadDia' });
-  if (m.Ausencia && m.User) m.Ausencia.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
+  link(m.Ausencia && m.Feder, 'Ausencia → Feder (feder_id)', () =>
+    m.Ausencia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.Ausencia && m.AusenciaTipo, 'Ausencia → AusenciaTipo (tipo_id)', () =>
+    m.Ausencia.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.Ausencia && m.AusenciaEstado, 'Ausencia → AusenciaEstado (estado_id)', () =>
+    m.Ausencia.belongsTo(m.AusenciaEstado, { foreignKey: 'estado_id', as: 'estado' })
+  );
+  link(m.Ausencia && m.MitadDiaTipo, 'Ausencia → MitadDiaTipo (mitad_dia_id)', () =>
+    m.Ausencia.belongsTo(m.MitadDiaTipo, { foreignKey: 'mitad_dia_id', as: 'mitadDia' })
+  );
+  link(m.Ausencia && m.User, 'Ausencia → User (aprobado_por_user_id)', () =>
+    m.Ausencia.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' })
+  );
 
-  // — Ampliaciones: cuotas, consumos y solicitudes de asignación —
-  if (m.AusenciaTipo && m.AusenciaUnidadTipo)
-    m.AusenciaTipo.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
+  link(m.AusenciaTipo && m.AusenciaUnidadTipo, 'AusenciaTipo → AusenciaUnidadTipo (unidad_id)', () =>
+    m.AusenciaTipo.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' })
+  );
 
-  if (m.AusenciaCuota) {
-    if (m.Feder) m.AusenciaCuota.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-    if (m.AusenciaTipo) m.AusenciaCuota.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-    if (m.AusenciaUnidadTipo) m.AusenciaCuota.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
-    if (m.User) m.AusenciaCuota.belongsTo(m.User, { foreignKey: 'asignado_por_user_id', as: 'asignadoPor' });
-  }
-
-  if (m.AusenciaCuotaConsumo) {
+  link(m.AusenciaCuota, 'AusenciaCuota → varias', () => {
+    if (m.Feder)               m.AusenciaCuota.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+    if (m.AusenciaTipo)        m.AusenciaCuota.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+    if (m.AusenciaUnidadTipo)  m.AusenciaCuota.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
+    if (m.User)                m.AusenciaCuota.belongsTo(m.User, { foreignKey: 'asignado_por_user_id', as: 'asignadoPor' });
+  });
+  link(m.AusenciaCuotaConsumo, 'AusenciaCuotaConsumo → (cuota, ausencia)', () => {
     if (m.AusenciaCuota) m.AusenciaCuotaConsumo.belongsTo(m.AusenciaCuota, { foreignKey: 'cuota_id', as: 'cuota' });
-    if (m.Ausencia) m.AusenciaCuotaConsumo.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
-  }
-
-  if (m.AusenciaAsignacionSolicitud) {
-    if (m.Feder) m.AusenciaAsignacionSolicitud.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-    if (m.AusenciaTipo) m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-    if (m.AusenciaUnidadTipo) m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
+    if (m.Ausencia)      m.AusenciaCuotaConsumo.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
+  });
+  link(m.AusenciaAsignacionSolicitud, 'AusenciaAsignacionSolicitud → varias', () => {
+    if (m.Feder)               m.AusenciaAsignacionSolicitud.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+    if (m.AusenciaTipo)        m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+    if (m.AusenciaUnidadTipo)  m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
     if (m.AsignacionSolicitudEstado) m.AusenciaAsignacionSolicitud.belongsTo(m.AsignacionSolicitudEstado, { foreignKey: 'estado_id', as: 'estado' });
-    if (m.User) m.AusenciaAsignacionSolicitud.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
-  }
-
+    if (m.User)                m.AusenciaAsignacionSolicitud.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
+  });
 
   // ===== Módulo 6: Células =====
-  if (m.Celula && m.CelulaEstado) m.Celula.belongsTo(m.CelulaEstado, { foreignKey: 'estado_id', as: 'estado' });
-  if (m.CelulaRolAsignacion && m.Celula) m.CelulaRolAsignacion.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.CelulaRolAsignacion && m.Feder) m.CelulaRolAsignacion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-  if (m.CelulaRolAsignacion && m.CelulaRolTipo) m.CelulaRolAsignacion.belongsTo(m.CelulaRolTipo, { foreignKey: 'rol_tipo_id', as: 'rolTipo' });
+  link(m.Celula && m.CelulaEstado, 'Celula → CelulaEstado (estado_id)', () =>
+    m.Celula.belongsTo(m.CelulaEstado, { foreignKey: 'estado_id', as: 'estado' })
+  );
+  link(m.CelulaRolAsignacion && m.Celula, 'CelulaRolAsignacion → Celula (celula_id)', () =>
+    m.CelulaRolAsignacion.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.CelulaRolAsignacion && m.Feder, 'CelulaRolAsignacion → Feder (feder_id)', () =>
+    m.CelulaRolAsignacion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.CelulaRolAsignacion && m.CelulaRolTipo, 'CelulaRolAsignacion → CelulaRolTipo (rol_tipo_id)', () =>
+    m.CelulaRolAsignacion.belongsTo(m.CelulaRolTipo, { foreignKey: 'rol_tipo_id', as: 'rolTipo' })
+  );
 
   // ===== Módulo 7: Clientes =====
-  if (m.Cliente && m.Celula) m.Cliente.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.Cliente && m.ClienteTipo) m.Cliente.belongsTo(m.ClienteTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.Cliente && m.ClienteEstado) m.Cliente.belongsTo(m.ClienteEstado, { foreignKey: 'estado_id', as: 'estado' });
-  if (m.Cliente && m.ClienteContacto) {
+  link(m.Cliente && m.Celula, 'Cliente → Celula (celula_id)', () =>
+    m.Cliente.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.Cliente && m.ClienteTipo, 'Cliente → ClienteTipo (tipo_id)', () =>
+    m.Cliente.belongsTo(m.ClienteTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.Cliente && m.ClienteEstado, 'Cliente → ClienteEstado (estado_id)', () =>
+    m.Cliente.belongsTo(m.ClienteEstado, { foreignKey: 'estado_id', as: 'estado' })
+  );
+  link(m.Cliente && m.ClienteContacto, 'Cliente ↔ ClienteContacto', () => {
     m.Cliente.hasMany(m.ClienteContacto, { foreignKey: 'cliente_id', as: 'contactos' });
     m.ClienteContacto.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
-  }
-  if (m.ClienteHito && m.Cliente) {
+  });
+  link(m.ClienteHito && m.Cliente, 'ClienteHito ↔ Cliente', () => {
     m.ClienteHito.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
     m.Cliente.hasMany(m.ClienteHito, { foreignKey: 'cliente_id', as: 'hitos' });
-  }
+  });
 
   // ===== Módulo 8: Tareas =====
-  if (m.Tarea && m.Cliente) m.Tarea.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
-  if (m.Tarea && m.ClienteHito) m.Tarea.belongsTo(m.ClienteHito, { foreignKey: 'hito_id', as: 'hito' });
-
-  if (m.Tarea) {
+  link(m.Tarea && m.Cliente, 'Tarea → Cliente (cliente_id)', () =>
+    m.Tarea.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
+  );
+  link(m.Tarea && m.ClienteHito, 'Tarea → ClienteHito (hito_id)', () =>
+    m.Tarea.belongsTo(m.ClienteHito, { foreignKey: 'hito_id', as: 'hito' })
+  );
+  link(m.Tarea, 'Tarea ↔ Tarea (self)', () => {
     m.Tarea.belongsTo(m.Tarea, { foreignKey: 'tarea_padre_id', as: 'tareaPadre' });
     m.Tarea.hasMany(m.Tarea, { foreignKey: 'tarea_padre_id', as: 'subtareas' });
-  }
-  if (m.Tarea && m.TareaEstado) m.Tarea.belongsTo(m.TareaEstado, { foreignKey: 'estado_id', as: 'estado' });
-  if (m.Tarea && m.Feder) m.Tarea.belongsTo(m.Feder, { foreignKey: 'creado_por_feder_id', as: 'creadoPor' });
-  if (m.Tarea && m.TareaAprobacionEstado) m.Tarea.belongsTo(m.TareaAprobacionEstado, { foreignKey: 'aprobacion_estado_id', as: 'aprobacionEstado' });
-  if (m.Tarea && m.User) {
+  });
+  link(m.Tarea && m.TareaEstado, 'Tarea → TareaEstado (estado_id)', () =>
+    m.Tarea.belongsTo(m.TareaEstado, { foreignKey: 'estado_id', as: 'estado' })
+  );
+  link(m.Tarea && m.Feder, 'Tarea → Feder (creado_por_feder_id)', () =>
+    m.Tarea.belongsTo(m.Feder, { foreignKey: 'creado_por_feder_id', as: 'creadoPor' })
+  );
+  link(m.Tarea && m.TareaAprobacionEstado, 'Tarea → TareaAprobacionEstado (aprobacion_estado_id)', () =>
+    m.Tarea.belongsTo(m.TareaAprobacionEstado, { foreignKey: 'aprobacion_estado_id', as: 'aprobacionEstado' })
+  );
+  link(m.Tarea && m.User, 'Tarea → User (aprobado_por/rechazado_por)', () => {
     m.Tarea.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
     m.Tarea.belongsTo(m.User, { foreignKey: 'rechazado_por_user_id', as: 'rechazadoPor' });
-  }
-  if (m.Tarea && m.ImpactoTipo) m.Tarea.belongsTo(m.ImpactoTipo, { foreignKey: 'impacto_id', as: 'impacto' });
-  if (m.Tarea && m.UrgenciaTipo) m.Tarea.belongsTo(m.UrgenciaTipo, { foreignKey: 'urgencia_id', as: 'urgencia' });
+  });
+  link(m.Tarea && m.ImpactoTipo, 'Tarea → ImpactoTipo (impacto_id)', () =>
+    m.Tarea.belongsTo(m.ImpactoTipo, { foreignKey: 'impacto_id', as: 'impacto' })
+  );
+  link(m.Tarea && m.UrgenciaTipo, 'Tarea → UrgenciaTipo (urgencia_id)', () =>
+    m.Tarea.belongsTo(m.UrgenciaTipo, { foreignKey: 'urgencia_id', as: 'urgencia' })
+  );
 
-  if (m.Tarea && m.TareaResponsable && m.Feder) {
+  link(m.Tarea && m.TareaResponsable && m.Feder, 'Tarea ↔ Feder (Responsables)', () => {
     m.Tarea.belongsToMany(m.Feder, { as: 'Responsables', through: m.TareaResponsable, foreignKey: 'tarea_id', otherKey: 'feder_id' });
     m.Feder.belongsToMany(m.Tarea, { as: 'TareasResponsable', through: m.TareaResponsable, foreignKey: 'feder_id', otherKey: 'tarea_id' });
-  }
-  if (m.Tarea && m.TareaColaborador && m.Feder) {
+  });
+  link(m.Tarea && m.TareaColaborador && m.Feder, 'Tarea ↔ Feder (Colaboradores)', () => {
     m.Tarea.belongsToMany(m.Feder, { as: 'Colaboradores', through: m.TareaColaborador, foreignKey: 'tarea_id', otherKey: 'feder_id' });
     m.Feder.belongsToMany(m.Tarea, { as: 'TareasColaborador', through: m.TareaColaborador, foreignKey: 'feder_id', otherKey: 'tarea_id' });
-  }
+  });
 
-  if (m.Tarea && m.TareaComentario) {
+  link(m.Tarea && m.TareaComentario, 'Tarea ↔ TareaComentario', () => {
     m.Tarea.hasMany(m.TareaComentario, { foreignKey: 'tarea_id', as: 'comentarios' });
     m.TareaComentario.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  }
-  if (m.TareaComentario && m.Feder) m.TareaComentario.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'autor' });
-  if (m.TareaComentario && m.ComentarioTipo) m.TareaComentario.belongsTo(m.ComentarioTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.TareaComentarioMencion) {
+  });
+  link(m.TareaComentario && m.Feder, 'TareaComentario → Feder (feder_id)', () =>
+    m.TareaComentario.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'autor' })
+  );
+  link(m.TareaComentario && m.ComentarioTipo, 'TareaComentario → ComentarioTipo (tipo_id)', () =>
+    m.TareaComentario.belongsTo(m.ComentarioTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.TareaComentarioMencion, 'TareaComentarioMencion → (comentario, feder)', () => {
     if (m.TareaComentario) m.TareaComentarioMencion.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
-    if (m.Feder) m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
-  }
+    if (m.Feder)          m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
+  });
 
-  if (m.TareaAdjunto) {
-    if (m.Tarea) m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  link(m.TareaAdjunto, 'TareaAdjunto → (tarea, comentario, feder)', () => {
+    if (m.Tarea)           m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
     if (m.TareaComentario) m.TareaAdjunto.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
-    if (m.Feder) m.TareaAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' });
-  }
+    if (m.Feder)           m.TareaAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' });
+  });
 
-  if (m.TareaEtiqueta && m.TareaEtiquetaAsig) {
+  link(m.TareaEtiqueta && m.TareaEtiquetaAsig, 'Tarea ↔ TareaEtiqueta (TareaEtiquetaAsig)', () => {
     if (m.Tarea) m.Tarea.belongsToMany(m.TareaEtiqueta, { through: m.TareaEtiquetaAsig, foreignKey: 'tarea_id', otherKey: 'etiqueta_id', as: 'etiquetas' });
     m.TareaEtiqueta.belongsToMany(m.Tarea, { through: m.TareaEtiquetaAsig, foreignKey: 'etiqueta_id', otherKey: 'tarea_id', as: 'tareas' });
-  }
+  });
 
-  if (m.TareaChecklistItem && m.Tarea) {
+  link(m.TareaChecklistItem && m.Tarea, 'Tarea ↔ TareaChecklistItem', () => {
     m.Tarea.hasMany(m.TareaChecklistItem, { foreignKey: 'tarea_id', as: 'checklist' });
     m.TareaChecklistItem.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  }
+  });
 
-  if (m.TareaRelacion && m.TareaRelacionTipo) {
+  link(m.TareaRelacion && m.TareaRelacionTipo, 'Tarea ↔ TareaRelacion (varias)', () => {
     if (m.Tarea) {
       m.Tarea.hasMany(m.TareaRelacion, { foreignKey: 'tarea_id', as: 'relaciones' });
       m.Tarea.hasMany(m.TareaRelacion, { foreignKey: 'relacionada_id', as: 'relacionesEntrantes' });
     }
     m.TareaRelacion.belongsTo(m.TareaRelacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
     m.TareaRelacion.belongsTo(m.Tarea, { foreignKey: 'relacionada_id', as: 'relacionada' });
-  }
+  });
 
-  if (m.TareaSeguidor && m.Tarea) {
+  link(m.TareaSeguidor && m.Tarea, 'Tarea ↔ TareaSeguidor', () => {
     m.Tarea.hasMany(m.TareaSeguidor, { foreignKey: 'tarea_id', as: 'seguidores' });
     m.TareaSeguidor.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  }
-  if (m.TareaSeguidor && m.User) m.TareaSeguidor.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  });
+  link(m.TareaSeguidor && m.User, 'TareaSeguidor → User (user_id)', () =>
+    m.TareaSeguidor.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-  if (m.TareaFavorito && m.Tarea) m.TareaFavorito.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  if (m.TareaFavorito && m.User) m.TareaFavorito.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.TareaFavorito && m.Tarea, 'TareaFavorito → Tarea (tarea_id)', () =>
+    m.TareaFavorito.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' })
+  );
+  link(m.TareaFavorito && m.User, 'TareaFavorito → User (user_id)', () =>
+    m.TareaFavorito.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
   // ===== Módulo 9: Calendario =====
-  if (m.CalendarioLocal && m.CalendarioTipo) m.CalendarioLocal.belongsTo(m.CalendarioTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.CalendarioLocal && m.VisibilidadTipo) m.CalendarioLocal.belongsTo(m.VisibilidadTipo, { foreignKey: 'visibilidad_id', as: 'visibilidad' });
-  if (m.CalendarioLocal && m.Feder) m.CalendarioLocal.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-  if (m.CalendarioLocal && m.Celula) m.CalendarioLocal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.CalendarioLocal && m.Cliente) m.CalendarioLocal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
+  link(m.CalendarioLocal && m.CalendarioTipo, 'CalendarioLocal → CalendarioTipo (tipo_id)', () =>
+    m.CalendarioLocal.belongsTo(m.CalendarioTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.CalendarioLocal && m.VisibilidadTipo, 'CalendarioLocal → VisibilidadTipo (visibilidad_id)', () =>
+    m.CalendarioLocal.belongsTo(m.VisibilidadTipo, { foreignKey: 'visibilidad_id', as: 'visibilidad' })
+  );
+  link(m.CalendarioLocal && m.Feder, 'CalendarioLocal → Feder (feder_id)', () =>
+    m.CalendarioLocal.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.CalendarioLocal && m.Celula, 'CalendarioLocal → Celula (celula_id)', () =>
+    m.CalendarioLocal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.CalendarioLocal && m.Cliente, 'CalendarioLocal → Cliente (cliente_id)', () =>
+    m.CalendarioLocal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
+  );
 
-  if (m.Evento && m.CalendarioLocal) {
+  link(m.Evento && m.CalendarioLocal, 'Evento ↔ CalendarioLocal', () => {
     m.Evento.belongsTo(m.CalendarioLocal, { foreignKey: 'calendario_local_id', as: 'calendarioLocal' });
     m.CalendarioLocal.hasMany(m.Evento, { foreignKey: 'calendario_local_id', as: 'eventos' });
-  }
-  if (m.Evento && m.EventoTipo) m.Evento.belongsTo(m.EventoTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.Evento && m.VisibilidadTipo) m.Evento.belongsTo(m.VisibilidadTipo, { foreignKey: 'visibilidad_id', as: 'visibilidad' });
-  if (m.Evento && m.AsistenciaRegistro) m.Evento.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' });
-  if (m.Evento && m.Ausencia) m.Evento.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
-  if (m.Evento && m.Tarea) m.Evento.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  if (m.Evento && m.User) {
+  });
+  link(m.Evento && m.EventoTipo, 'Evento → EventoTipo (tipo_id)', () =>
+    m.Evento.belongsTo(m.EventoTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.Evento && m.VisibilidadTipo, 'Evento → VisibilidadTipo (visibilidad_id)', () =>
+    m.Evento.belongsTo(m.VisibilidadTipo, { foreignKey: 'visibilidad_id', as: 'visibilidad' })
+  );
+  link(m.Evento && m.AsistenciaRegistro, 'Evento → AsistenciaRegistro (asistencia_registro_id)', () =>
+    m.Evento.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' })
+  );
+  link(m.Evento && m.Ausencia, 'Evento → Ausencia (ausencia_id)', () =>
+    m.Evento.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' })
+  );
+  link(m.Evento && m.Tarea, 'Evento → Tarea (tarea_id)', () =>
+    m.Evento.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' })
+  );
+  link(m.Evento && m.User, 'Evento → User (created_by/updated_by)', () => {
     m.Evento.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' });
     m.Evento.belongsTo(m.User, { foreignKey: 'updated_by_user_id', as: 'updatedBy' });
-  }
-  if (m.Evento && m.EventoAsistente) {
+  });
+  link(m.Evento && m.EventoAsistente, 'Evento ↔ EventoAsistente', () => {
     m.Evento.hasMany(m.EventoAsistente, { foreignKey: 'evento_id', as: 'asistentes' });
     m.EventoAsistente.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
-  }
+  });
 
-  if (m.GoogleCuenta && m.User) m.GoogleCuenta.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.GoogleCalendario && m.GoogleCuenta) m.GoogleCalendario.belongsTo(m.GoogleCuenta, { foreignKey: 'cuenta_id', as: 'cuenta' });
-  if (m.CalendarioVinculo && m.CalendarioLocal) m.CalendarioVinculo.belongsTo(m.CalendarioLocal, { foreignKey: 'calendario_local_id', as: 'calendarioLocal' });
-  if (m.CalendarioVinculo && m.GoogleCalendario) m.CalendarioVinculo.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
-  if (m.CalendarioVinculo && m.SyncDireccionTipo) m.CalendarioVinculo.belongsTo(m.SyncDireccionTipo, { foreignKey: 'direccion_id', as: 'direccion' });
-  if (m.GoogleWebhookCanal && m.GoogleCuenta) m.GoogleWebhookCanal.belongsTo(m.GoogleCuenta, { foreignKey: 'cuenta_id', as: 'cuenta' });
-  if (m.GoogleWebhookCanal && m.GoogleCalendario)
-  m.GoogleWebhookCanal.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
-  if (m.EventoSync && m.Evento) m.EventoSync.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
-  if (m.EventoSync && m.GoogleCalendario) m.EventoSync.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' });
+  link(m.GoogleCuenta && m.User, 'GoogleCuenta → User (user_id)', () =>
+    m.GoogleCuenta.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.GoogleCalendario && m.GoogleCuenta, 'GoogleCalendario → GoogleCuenta (cuenta_id)', () =>
+    m.GoogleCalendario.belongsTo(m.GoogleCuenta, { foreignKey: 'cuenta_id', as: 'cuenta' })
+  );
+  link(m.CalendarioVinculo && m.CalendarioLocal, 'CalendarioVinculo → CalendarioLocal (calendario_local_id)', () =>
+    m.CalendarioVinculo.belongsTo(m.CalendarioLocal, { foreignKey: 'calendario_local_id', as: 'calendarioLocal' })
+  );
+  link(m.CalendarioVinculo && m.GoogleCalendario, 'CalendarioVinculo → GoogleCalendario (google_cal_id)', () =>
+    m.CalendarioVinculo.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' })
+  );
+  link(m.CalendarioVinculo && m.SyncDireccionTipo, 'CalendarioVinculo → SyncDireccionTipo (direccion_id)', () =>
+    m.CalendarioVinculo.belongsTo(m.SyncDireccionTipo, { foreignKey: 'direccion_id', as: 'direccion' })
+  );
+  link(m.GoogleWebhookCanal && m.GoogleCuenta, 'GoogleWebhookCanal → GoogleCuenta (cuenta_id)', () =>
+    m.GoogleWebhookCanal.belongsTo(m.GoogleCuenta, { foreignKey: 'cuenta_id', as: 'cuenta' })
+  );
+  link(m.GoogleWebhookCanal && m.GoogleCalendario, 'GoogleWebhookCanal → GoogleCalendario (google_cal_id)', () =>
+    m.GoogleWebhookCanal.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' })
+  );
+  link(m.EventoSync && m.Evento, 'EventoSync → Evento (evento_id)', () =>
+    m.EventoSync.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' })
+  );
+  link(m.EventoSync && m.GoogleCalendario, 'EventoSync → GoogleCalendario (google_cal_id)', () =>
+    m.EventoSync.belongsTo(m.GoogleCalendario, { foreignKey: 'google_cal_id', as: 'googleCalendario' })
+  );
 
-    // ===== Módulo 10: Notificaciones =====
-  if (m.Notificacion && m.NotificacionTipo) m.Notificacion.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.Notificacion && m.ImportanciaTipo) m.Notificacion.belongsTo(m.ImportanciaTipo, { foreignKey: 'importancia_id', as: 'importancia' });
+  // ===== Módulo 10: Notificaciones =====
+  link(m.Notificacion && m.NotificacionTipo, 'Notificacion → NotificacionTipo (tipo_id)', () =>
+    m.Notificacion.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.Notificacion && m.ImportanciaTipo, 'Notificacion → ImportanciaTipo (importancia_id)', () =>
+    m.Notificacion.belongsTo(m.ImportanciaTipo, { foreignKey: 'importancia_id', as: 'importancia' })
+  );
 
-  // NUEVO: buzones y evento
-  if (m.Notificacion && m.BuzonTipo) m.Notificacion.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' });
-  if (m.NotificacionTipo && m.BuzonTipo) m.NotificacionTipo.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' });
-  if (m.Notificacion && m.Evento) m.Notificacion.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
+  link(m.Notificacion && m.BuzonTipo, 'Notificacion → BuzonTipo (buzon_id)', () =>
+    m.Notificacion.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' })
+  );
+  link(m.NotificacionTipo && m.BuzonTipo, 'NotificacionTipo → BuzonTipo (buzon_id)', () =>
+    m.NotificacionTipo.belongsTo(m.BuzonTipo, { foreignKey: 'buzon_id', as: 'buzon' })
+  );
+  link(m.Notificacion && m.Evento, 'Notificacion → Evento (evento_id)', () =>
+    m.Notificacion.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' })
+  );
+  link(m.Notificacion && m.ChatCanal, 'Notificacion → ChatCanal (chat_canal_id)', () =>
+    m.Notificacion.belongsTo(m.ChatCanal, { foreignKey: 'chat_canal_id', as: 'chatCanal' })
+  );
+  link(m.Notificacion && m.Tarea, 'Notificacion → Tarea (tarea_id)', () =>
+    m.Notificacion.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' })
+  );
+  link(m.Notificacion && m.Ausencia, 'Notificacion → Ausencia (ausencia_id)', () =>
+    m.Notificacion.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' })
+  );
+  link(m.Notificacion && m.AsistenciaRegistro, 'Notificacion → AsistenciaRegistro (asistencia_registro_id)', () =>
+    m.Notificacion.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' })
+  );
+  link(m.Notificacion && m.User, 'Notificacion → User (created_by_user_id)', () =>
+    m.Notificacion.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' })
+  );
 
-  // (opcional futuro) chat: sólo si tenés modelo
-  if (m.Notificacion && m.ChatCanal) m.Notificacion.belongsTo(m.ChatCanal, { foreignKey: 'chat_canal_id', as: 'chatCanal' });
-
-  if (m.Notificacion && m.Tarea) m.Notificacion.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  if (m.Notificacion && m.Ausencia) m.Notificacion.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
-  if (m.Notificacion && m.AsistenciaRegistro) m.Notificacion.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' });
-  if (m.Notificacion && m.User) m.Notificacion.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' });
-
-  if (m.Notificacion && m.NotificacionDestino) {
+  link(m.Notificacion && m.NotificacionDestino, 'Notificacion ↔ NotificacionDestino', () => {
     m.Notificacion.hasMany(m.NotificacionDestino, { foreignKey: 'notificacion_id', as: 'destinos' });
     m.NotificacionDestino.belongsTo(m.Notificacion, { foreignKey: 'notificacion_id', as: 'notificacion' });
-  }
-  if (m.NotificacionDestino && m.User) m.NotificacionDestino.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.NotificacionDestino && m.Feder) m.NotificacionDestino.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+  });
+  link(m.NotificacionDestino && m.User, 'NotificacionDestino → User (user_id)', () =>
+    m.NotificacionDestino.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.NotificacionDestino && m.Feder, 'NotificacionDestino → Feder (feder_id)', () =>
+    m.NotificacionDestino.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
 
-  if (m.NotificacionEnvio && m.NotificacionDestino) m.NotificacionEnvio.belongsTo(m.NotificacionDestino, { foreignKey: 'destino_id', as: 'destino' });
-  if (m.NotificacionEnvio && m.CanalTipo) m.NotificacionEnvio.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.NotificacionEnvio && m.ProveedorTipo) m.NotificacionEnvio.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' });
-  if (m.NotificacionEnvio && m.EstadoEnvio) m.NotificacionEnvio.belongsTo(m.EstadoEnvio, { foreignKey: 'estado_id', as: 'estado' });
+  link(m.NotificacionEnvio && m.NotificacionDestino, 'NotificacionEnvio → NotificacionDestino (destino_id)', () =>
+    m.NotificacionEnvio.belongsTo(m.NotificacionDestino, { foreignKey: 'destino_id', as: 'destino' })
+  );
+  link(m.NotificacionEnvio && m.CanalTipo, 'NotificacionEnvio → CanalTipo (canal_id)', () =>
+    m.NotificacionEnvio.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.NotificacionEnvio && m.ProveedorTipo, 'NotificacionEnvio → ProveedorTipo (proveedor_id)', () =>
+    m.NotificacionEnvio.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' })
+  );
+  link(m.NotificacionEnvio && m.EstadoEnvio, 'NotificacionEnvio → EstadoEnvio (estado_id)', () =>
+    m.NotificacionEnvio.belongsTo(m.EstadoEnvio, { foreignKey: 'estado_id', as: 'estado' })
+  );
 
-  if (m.NotificacionPreferencia && m.User) m.NotificacionPreferencia.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.NotificacionPreferencia && m.NotificacionTipo) m.NotificacionPreferencia.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.NotificacionPreferencia && m.CanalTipo) m.NotificacionPreferencia.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' });
+  link(m.NotificacionPreferencia && m.User, 'NotificacionPreferencia → User (user_id)', () =>
+    m.NotificacionPreferencia.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.NotificacionPreferencia && m.NotificacionTipo, 'NotificacionPreferencia → NotificacionTipo (tipo_id)', () =>
+    m.NotificacionPreferencia.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.NotificacionPreferencia && m.CanalTipo, 'NotificacionPreferencia → CanalTipo (canal_id)', () =>
+    m.NotificacionPreferencia.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' })
+  );
 
-  if (m.NotificacionPlantilla && m.NotificacionTipo) m.NotificacionPlantilla.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-  if (m.NotificacionPlantilla && m.CanalTipo) m.NotificacionPlantilla.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' });
+  link(m.NotificacionPlantilla && m.NotificacionTipo, 'NotificacionPlantilla → NotificacionTipo (tipo_id)', () =>
+    m.NotificacionPlantilla.belongsTo(m.NotificacionTipo, { foreignKey: 'tipo_id', as: 'tipo' })
+  );
+  link(m.NotificacionPlantilla && m.CanalTipo, 'NotificacionPlantilla → CanalTipo (canal_id)', () =>
+    m.NotificacionPlantilla.belongsTo(m.CanalTipo, { foreignKey: 'canal_id', as: 'canal' })
+  );
 
-  if (m.PushToken && m.User) m.PushToken.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.PushToken && m.ProveedorTipo) m.PushToken.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' });
+  link(m.PushToken && m.User, 'PushToken → User (user_id)', () =>
+    m.PushToken.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.PushToken && m.ProveedorTipo, 'PushToken → ProveedorTipo (proveedor_id)', () =>
+    m.PushToken.belongsTo(m.ProveedorTipo, { foreignKey: 'proveedor_id', as: 'proveedor' })
+  );
 
-    // ===== Módulo 11: Chat =====
+  // ===== Módulo 11: Chat =====
   // Catálogos
-  if (m.ChatCanal && m.ChatCanalTipo) m.ChatCanal.belongsTo(m.ChatCanalTipo, { foreignKey: 'tipo_id', as: 'canalTipo' });
-  if (m.ChatCanalMiembro && m.ChatRolTipo) m.ChatCanalMiembro.belongsTo(m.ChatRolTipo, { foreignKey: 'rol_id', as: 'rol' });
+  link(m.ChatCanal && m.ChatCanalTipo, 'ChatCanal → ChatCanalTipo (tipo_id)', () =>
+    m.ChatCanal.belongsTo(m.ChatCanalTipo, { foreignKey: 'tipo_id', as: 'canalTipo' })
+  );
+  link(m.ChatCanalMiembro && m.ChatRolTipo, 'ChatCanalMiembro → ChatRolTipo (rol_id)', () =>
+    m.ChatCanalMiembro.belongsTo(m.ChatRolTipo, { foreignKey: 'rol_id', as: 'rol' })
+  );
 
   // ChatCanal ↔ otras entidades
-  if (m.ChatCanal && m.Celula) m.ChatCanal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.ChatCanal && m.Cliente) m.ChatCanal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
-  if (m.ChatCanal && m.User)   m.ChatCanal.belongsTo(m.User,   { foreignKey: 'created_by_user_id', as: 'createdBy' });
+  link(m.ChatCanal && m.Celula, 'ChatCanal → Celula (celula_id)', () =>
+    m.ChatCanal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.ChatCanal && m.Cliente, 'ChatCanal → Cliente (cliente_id)', () =>
+    m.ChatCanal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
+  );
+  link(m.ChatCanal && m.User, 'ChatCanal → User (created_by_user_id)', () =>
+    m.ChatCanal.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' })
+  );
 
   // Membresía
-  if (m.ChatCanal && m.ChatCanalMiembro) {
+  link(m.ChatCanal && m.ChatCanalMiembro, 'ChatCanal ↔ ChatCanalMiembro', () => {
     m.ChatCanal.hasMany(m.ChatCanalMiembro, { foreignKey: 'canal_id', as: 'miembros' });
     m.ChatCanalMiembro.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  }
-  if (m.ChatCanalMiembro && m.User)   m.ChatCanalMiembro.belongsTo(m.User,   { foreignKey: 'user_id', as: 'user' });
-  if (m.ChatCanalMiembro && m.Feder)  m.ChatCanalMiembro.belongsTo(m.Feder,  { foreignKey: 'feder_id', as: 'feder' });
-  if (m.ChatCanalMiembro && m.ChatMensaje)
-    m.ChatCanalMiembro.belongsTo(m.ChatMensaje, { foreignKey: 'last_read_msg_id', as: 'lastReadMsg' });
+  });
+  link(m.ChatCanalMiembro && m.User, 'ChatCanalMiembro → User (user_id)', () =>
+    m.ChatCanalMiembro.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.ChatCanalMiembro && m.Feder, 'ChatCanalMiembro → Feder (feder_id)', () =>
+    m.ChatCanalMiembro.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.ChatCanalMiembro && m.ChatMensaje, 'ChatCanalMiembro → ChatMensaje (last_read_msg_id)', () =>
+    m.ChatCanalMiembro.belongsTo(m.ChatMensaje, { foreignKey: 'last_read_msg_id', as: 'lastReadMsg' })
+  );
 
   // Mensajes
-  if (m.ChatMensaje && m.ChatCanal) m.ChatMensaje.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.ChatCanal && m.ChatMensaje) m.ChatCanal.hasMany(m.ChatMensaje, { foreignKey: 'canal_id', as: 'mensajes' });
+  link(m.ChatMensaje && m.ChatCanal, 'ChatMensaje → ChatCanal (canal_id)', () =>
+    m.ChatMensaje.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.ChatCanal && m.ChatMensaje, 'ChatCanal ↔ ChatMensaje', () =>
+    m.ChatCanal.hasMany(m.ChatMensaje, { foreignKey: 'canal_id', as: 'mensajes' })
+  );
 
-  if (m.ChatMensaje && m.User)   m.ChatMensaje.belongsTo(m.User,   { foreignKey: 'user_id', as: 'autor' });
-  if (m.ChatMensaje && m.Feder)  m.ChatMensaje.belongsTo(m.Feder,  { foreignKey: 'feder_id', as: 'feder' });
+  link(m.ChatMensaje && m.User, 'ChatMensaje → User (user_id)', () =>
+    m.ChatMensaje.belongsTo(m.User, { foreignKey: 'user_id', as: 'autor' })
+  );
+  link(m.ChatMensaje && m.Feder, 'ChatMensaje → Feder (feder_id)', () =>
+    m.ChatMensaje.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
 
   // Hilos (self)
-  if (m.ChatMensaje) {
+  link(m.ChatMensaje, 'ChatMensaje ↔ ChatMensaje (self)', () => {
     m.ChatMensaje.belongsTo(m.ChatMensaje, { foreignKey: 'parent_id', as: 'parent' });
     m.ChatMensaje.hasMany(m.ChatMensaje, { foreignKey: 'parent_id', as: 'replies' });
-  }
+  });
 
   // Ediciones / reacciones / adjuntos
-  if (m.ChatMensajeEditHist && m.ChatMensaje) {
+  link(m.ChatMensajeEditHist && m.ChatMensaje, 'ChatMensajeEditHist ↔ ChatMensaje', () => {
     m.ChatMensajeEditHist.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
     m.ChatMensaje.hasMany(m.ChatMensajeEditHist, { foreignKey: 'mensaje_id', as: 'edits' });
-  }
-  if (m.ChatReaccion && m.ChatMensaje) {
+  });
+  link(m.ChatReaccion && m.ChatMensaje, 'ChatReaccion ↔ ChatMensaje', () => {
     m.ChatReaccion.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
     m.ChatMensaje.hasMany(m.ChatReaccion, { foreignKey: 'mensaje_id', as: 'reacciones' });
-  }
-  if (m.ChatReaccion && m.User) m.ChatReaccion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  });
+  link(m.ChatReaccion && m.User, 'ChatReaccion → User (user_id)', () =>
+    m.ChatReaccion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-  if (m.ChatAdjunto && m.ChatMensaje) {
+  link(m.ChatAdjunto && m.ChatMensaje, 'ChatAdjunto ↔ ChatMensaje', () => {
     m.ChatAdjunto.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
     m.ChatMensaje.hasMany(m.ChatAdjunto, { foreignKey: 'mensaje_id', as: 'adjuntos' });
-  }
+  });
 
   // Referencias cruzadas y previews
-  if (m.ChatMensajeRef && m.ChatMensaje) m.ChatMensajeRef.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
-  if (m.ChatMensajeRef && m.Tarea) m.ChatMensajeRef.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
-  if (m.ChatMensajeRef && m.Evento) m.ChatMensajeRef.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
-  if (m.ChatMensajeRef && m.Ausencia) m.ChatMensajeRef.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
-  if (m.ChatMensajeRef && m.AsistenciaRegistro) m.ChatMensajeRef.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' });
-  if (m.ChatMensajeRef && m.Cliente) m.ChatMensajeRef.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
-  if (m.ChatMensajeRef && m.Celula) m.ChatMensajeRef.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' });
-  if (m.ChatMensajeRef && m.Feder) m.ChatMensajeRef.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+  link(m.ChatMensajeRef && m.ChatMensaje, 'ChatMensajeRef → ChatMensaje (mensaje_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
+  link(m.ChatMensajeRef && m.Tarea, 'ChatMensajeRef → Tarea (tarea_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' })
+  );
+  link(m.ChatMensajeRef && m.Evento, 'ChatMensajeRef → Evento (evento_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' })
+  );
+  link(m.ChatMensajeRef && m.Ausencia, 'ChatMensajeRef → Ausencia (ausencia_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' })
+  );
+  link(m.ChatMensajeRef && m.AsistenciaRegistro, 'ChatMensajeRef → AsistenciaRegistro (asistencia_registro_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.AsistenciaRegistro, { foreignKey: 'asistencia_registro_id', as: 'asistenciaRegistro' })
+  );
+  link(m.ChatMensajeRef && m.Cliente, 'ChatMensajeRef → Cliente (cliente_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
+  );
+  link(m.ChatMensajeRef && m.Celula, 'ChatMensajeRef → Celula (celula_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
+  );
+  link(m.ChatMensajeRef && m.Feder, 'ChatMensajeRef → Feder (feder_id)', () =>
+    m.ChatMensajeRef.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
 
-  if (m.ChatLinkPreview && m.ChatMensaje) {
+  link(m.ChatLinkPreview && m.ChatMensaje, 'ChatLinkPreview ↔ ChatMensaje', () => {
     m.ChatLinkPreview.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
     m.ChatMensaje.hasMany(m.ChatLinkPreview, { foreignKey: 'mensaje_id', as: 'linkPreviews' });
-  }
+  });
 
   // Receipts / delivery / guardados / pins
-  if (m.ChatReadReceipt && m.ChatMensaje) m.ChatReadReceipt.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
-  if (m.ChatReadReceipt && m.User) m.ChatReadReceipt.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.ChatReadReceipt && m.ChatMensaje, 'ChatReadReceipt → ChatMensaje (mensaje_id)', () =>
+    m.ChatReadReceipt.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
+  link(m.ChatReadReceipt && m.User, 'ChatReadReceipt → User (user_id)', () =>
+    m.ChatReadReceipt.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-  if (m.ChatDelivery && m.ChatMensaje) m.ChatDelivery.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
-  if (m.ChatDelivery && m.User) m.ChatDelivery.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.ChatDelivery && m.ChatMensaje, 'ChatDelivery → ChatMensaje (mensaje_id)', () =>
+    m.ChatDelivery.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
+  link(m.ChatDelivery && m.User, 'ChatDelivery → User (user_id)', () =>
+    m.ChatDelivery.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-  if (m.ChatSavedMessage && m.ChatMensaje) m.ChatSavedMessage.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
-  if (m.ChatSavedMessage && m.User) m.ChatSavedMessage.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.ChatSavedMessage && m.ChatMensaje, 'ChatSavedMessage → ChatMensaje (mensaje_id)', () =>
+    m.ChatSavedMessage.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
+  link(m.ChatSavedMessage && m.User, 'ChatSavedMessage → User (user_id)', () =>
+    m.ChatSavedMessage.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-  if (m.ChatPin && m.ChatCanal) m.ChatPin.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.ChatPin && m.ChatMensaje) m.ChatPin.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
-  if (m.ChatPin && m.User) m.ChatPin.belongsTo(m.User, { foreignKey: 'pinned_by_user_id', as: 'pinnedBy' });
+  link(m.ChatPin && m.ChatCanal, 'ChatPin → ChatCanal (canal_id)', () =>
+    m.ChatPin.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.ChatPin && m.ChatMensaje, 'ChatPin → ChatMensaje (mensaje_id)', () =>
+    m.ChatPin.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
+  link(m.ChatPin && m.User, 'ChatPin → User (pinned_by_user_id)', () =>
+    m.ChatPin.belongsTo(m.User, { foreignKey: 'pinned_by_user_id', as: 'pinnedBy' })
+  );
 
   // Seguimiento de hilos
-  if (m.ChatThreadFollow && m.ChatMensaje) m.ChatThreadFollow.belongsTo(m.ChatMensaje, { foreignKey: 'root_msg_id', as: 'rootMsg' });
-  if (m.ChatThreadFollow && m.User) m.ChatThreadFollow.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.ChatThreadFollow && m.ChatMensaje, 'ChatThreadFollow → ChatMensaje (root_msg_id)', () =>
+    m.ChatThreadFollow.belongsTo(m.ChatMensaje, { foreignKey: 'root_msg_id', as: 'rootMsg' })
+  );
+  link(m.ChatThreadFollow && m.User, 'ChatThreadFollow → User (user_id)', () =>
+    m.ChatThreadFollow.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
   // Invitaciones
-  if (m.ChatInvitacion && m.ChatCanal) m.ChatInvitacion.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.ChatInvitacion && m.User) {
+  link(m.ChatInvitacion && m.ChatCanal, 'ChatInvitacion → ChatCanal (canal_id)', () =>
+    m.ChatInvitacion.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.ChatInvitacion && m.User, 'ChatInvitacion → User (invited_by/invited_user)', () => {
     m.ChatInvitacion.belongsTo(m.User, { foreignKey: 'invited_by_user_id', as: 'invitedBy' });
     m.ChatInvitacion.belongsTo(m.User, { foreignKey: 'invited_user_id', as: 'invitedUser' });
-  }
+  });
 
   // Meetings y vínculo con Calendario
-  if (m.ChatMeeting && m.ChatCanal) m.ChatMeeting.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.ChatMeeting && m.User) m.ChatMeeting.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' });
-  if (m.ChatMeeting && m.Evento) m.ChatMeeting.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' });
-  if (m.ChatMeeting && m.ChatMensaje) m.ChatMeeting.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+  link(m.ChatMeeting && m.ChatCanal, 'ChatMeeting → ChatCanal (canal_id)', () =>
+    m.ChatMeeting.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.ChatMeeting && m.User, 'ChatMeeting → User (created_by_user_id)', () =>
+    m.ChatMeeting.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'createdBy' })
+  );
+  link(m.ChatMeeting && m.Evento, 'ChatMeeting → Evento (evento_id)', () =>
+    m.ChatMeeting.belongsTo(m.Evento, { foreignKey: 'evento_id', as: 'evento' })
+  );
+  link(m.ChatMeeting && m.ChatMensaje, 'ChatMeeting → ChatMensaje (mensaje_id)', () =>
+    m.ChatMeeting.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
+  );
 
   // Presencia & Typing
-  if (m.ChatPresence && m.User) m.ChatPresence.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
-  if (m.ChatTyping && m.ChatCanal) m.ChatTyping.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' });
-  if (m.ChatTyping && m.User) m.ChatTyping.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+  link(m.ChatPresence && m.User, 'ChatPresence → User (user_id)', () =>
+    m.ChatPresence.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.ChatTyping && m.ChatCanal, 'ChatTyping → ChatCanal (canal_id)', () =>
+    m.ChatTyping.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
+  );
+  link(m.ChatTyping && m.User, 'ChatTyping → User (user_id)', () =>
+    m.ChatTyping.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
 
-}
-
+  
+  ok('[assoc] done');
+};

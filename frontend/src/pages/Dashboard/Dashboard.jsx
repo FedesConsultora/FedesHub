@@ -1,18 +1,19 @@
-import AppGrid from '../../components/AppGrid/AppGrid.jsx'
+import AppGrid from '../../components/AppGrid/AppGrid'
 
-/** Catálogo de apps (módulos) – código visible y path destino */
 const APPS = [
-  { code: 'feders',       name: 'Feders',        path: '/feders',       emoji: '👥' },
-  { code: 'cargos',       name: 'Cargos',        path: '/cargos',       emoji: '🧭' },
-  { code: 'asistencia',   name: 'Asistencia',    path: '/asistencia',   emoji: '🟢', disabled: true },
-  { code: 'ausencias',    name: 'Ausencias',     path: '/ausencias',    emoji: '🏝️', disabled: true },
-  { code: 'celulas',      name: 'Células',       path: '/celulas',      emoji: '🧩', disabled: true },
-  { code: 'clientes',     name: 'Clientes',      path: '/clientes',     emoji: '🏢', disabled: true },
-  { code: 'tareas',       name: 'Tareas',        path: '/tareas',       emoji: '✅', disabled: true },
-  { code: 'calendario',   name: 'Calendario',    path: '/calendario',   emoji: '📆', disabled: true },
-  { code: 'notificaciones', name: 'Notificaciones', path: '/notificaciones', emoji: '🔔', disabled: true },
+  { code:'feders',  name:'Feders',        emoji:'👤', path:'/feders' },
+  { code:'cargos',  name:'Cargos',        emoji:'🧭', path:'/cargos' },
+  { code:'tareas',  name:'Tareas',        emoji:'✅', path:'/tareas',  disabled:true },
+  { code:'clientes',name:'Clientes',      emoji:'🤝', path:'/clientes',disabled:true },
+  { code:'auth',    name:'Admin (Auth)',  emoji:'🛡️', path:'/admin/usuarios' },
 ]
 
 export default function Dashboard() {
-  return <AppGrid apps={APPS} />
+  document.title = 'FedesHub — Inicio'
+  return (
+    <section className="card">
+      <h2 style={{marginBottom:8}}>Inicio</h2>
+      <AppGrid apps={APPS} />
+    </section>
+  )
 }

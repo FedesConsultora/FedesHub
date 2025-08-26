@@ -11,13 +11,12 @@ import Dashboard from '../pages/Dashboard/Dashboard.jsx'
 import FedersList from '../pages/Feders/FedersList.jsx'
 import CargosList from '../pages/Cargos/CargosList.jsx'
 
-// Estas están en /pages/Auth y /pages/Admin (pueden ser placeholders al inicio)
-import Profile from '../pages/Auth/Profile.jsx'
+// Admin/Auth
 import Users from '../pages/Admin/Users.jsx'
 import Roles from '../pages/Admin/Roles.jsx'
 import RoleDetail from '../pages/Admin/RoleDetail.jsx'
+import Diag from '../pages/Diag.jsx'
 
-// Loader global opcional
 function FullPageLoader() {
   return (
     <div style={{ display:'grid', placeItems:'center', minHeight:'100vh' }}>
@@ -31,60 +30,32 @@ export default function AppRouter() {
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<Login />} />
-
+      <Route path="/diag" element={<Diag />} />
       {/* Privadas */}
       <Route element={<PrivateRoute fallback={<FullPageLoader />} />}>
         <Route element={<AppLayout />}>
-          {/* Home */}
           <Route index element={<Dashboard />} />
 
-          {/* Módulos */}
           <Route
             path="feders"
-            element={
-              <RequirePerm modulo="feders" accion="read">
-                <FedersList />
-              </RequirePerm>
-            }
+            element={<RequirePerm modulo="feders" accion="read"><FedersList /></RequirePerm>}
           />
           <Route
             path="cargos"
-            element={
-              <RequirePerm modulo="cargos" accion="read">
-                <CargosList />
-              </RequirePerm>
-            }
+            element={<RequirePerm modulo="cargos" accion="read"><CargosList /></RequirePerm>}
           />
-
-          {/* Perfil */}
-          <Route path="perfil" element={<Profile />} />
 
           {/* Admin Auth (requiere auth.assign) */}
           <Route path="admin">
-            <Route
-              path="usuarios"
-              element={
-                <RequirePerm modulo="auth" accion="assign">
-                  <Users />
-                </RequirePerm>
-              }
-            />
-            <Route
-              path="roles"
-              element={
-                <RequirePerm modulo="auth" accion="assign">
-                  <Roles />
-                </RequirePerm>
-              }
-            />
-            <Route
-              path="roles/:id"
-              element={
-                <RequirePerm modulo="auth" accion="assign">
-                  <RoleDetail />
-                </RequirePerm>
-              }
-            />
+            <Route path="usuarios" element={
+              <RequirePerm modulo="auth" accion="assign"><Users /></RequirePerm>
+            } />
+            <Route path="roles" element={
+              <RequirePerm modulo="auth" accion="assign"><Roles /></RequirePerm>
+            } />
+            <Route path="roles/:id" element={
+              <RequirePerm modulo="auth" accion="assign"><RoleDetail /></RequirePerm>
+            } />
           </Route>
         </Route>
       </Route>

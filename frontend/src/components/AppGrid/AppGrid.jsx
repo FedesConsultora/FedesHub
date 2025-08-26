@@ -9,31 +9,23 @@ export default function AppGrid({ apps }) {
   const nav = useNavigate()
   const storageKey = `fh_app_order_${user?.id || 'anon'}`
 
-  // Filtrar apps por permisos (muestra si tiene al menos read/create/update/delete)
   const allowed = useMemo(() => {
     const ACCS = ['read','create','update','delete','approve','assign','report']
     return apps.filter(a => ACCS.some(ac => hasPerm(a.code, ac)))
   }, [apps, hasPerm])
 
-  // Orden local (drag&drop simple con HTML5 y persistencia en localStorage)
   const [order, setOrder] = useState(() => {
     const raw = localStorage.getItem(storageKey)
     if (!raw) return allowed.map(a => a.code)
     const saved = JSON.parse(raw)
-    // mantener sólo las que siguen existiendo
     const set = new Set(allowed.map(a => a.code))
     return saved.filter(c => set.has(c)).concat(allowed.map(a => a.code).filter(c => !saved.includes(c)))
   })
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(order))
-  }, [order])
+  useEffect(() => { localStorage.setItem(storageKey, JSON.stringify(order)) }, [order])
 
   const sorted = order.map(code => allowed.find(a => a.code === code)).filter(Boolean)
 
-  const onDrag = (evt, code) => {
-    evt.dataTransfer.setData('text/plain', code)
-  }
+  const onDrag = (evt, code) => { evt.dataTransfer.setData('text/plain', code) }
   const onDrop = (evt, code) => {
     evt.preventDefault()
     const dragged = evt.dataTransfer.getData('text/plain')
@@ -41,8 +33,7 @@ export default function AppGrid({ apps }) {
     const next = [...order]
     const from = next.indexOf(dragged)
     const to = next.indexOf(code)
-    next.splice(from, 1)
-    next.splice(to, 0, dragged)
+    next.splice(from, 1); next.splice(to, 0, dragged)
     setOrder(next)
   }
 
@@ -56,11 +47,7 @@ export default function AppGrid({ apps }) {
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => onDrop(e, app.code)}
         >
-          <AppTile
-            app={app}
-            onClick={() => !app.disabled && nav(app.path)}
-            disabled={app.disabled}
-          />
+          <AppTile app={app} onClick={() => !app.disabled && nav(app.path)} disabled={app.disabled} />
         </div>
       ))}
     </div>
