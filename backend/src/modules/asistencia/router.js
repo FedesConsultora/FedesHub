@@ -14,7 +14,9 @@ import {
   // me
   meOpen, meToggle, meCheckIn, meCheckOut,
   // reportes
-  resumenPeriodo
+  resumenPeriodo,
+  timelineDia,
+  meTimelineDia
 } from './controllers/asistencia.controller.js';
 
 const router = Router();
@@ -36,6 +38,9 @@ router.get('/registros/:id',           requireAuth, requirePermission('asistenci
 
 // Abierto por feder
 router.get('/open',                    requireAuth, requirePermission('asistencia','read'),    getOpen);
+
+router.get('/timeline-dia',    requireAuth, requirePermission('asistencia','report'), timelineDia);
+router.get('/me/timeline-dia', requireAuth, requirePermission('asistencia','read'),   meTimelineDia);
 
 // Acciones estándar
 router.post('/check-in',               requireAuth, requirePermission('asistencia','checkin'), postCheckIn);

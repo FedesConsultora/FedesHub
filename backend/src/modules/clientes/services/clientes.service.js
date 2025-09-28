@@ -5,8 +5,15 @@ import {
   getClienteTipoBy, getClienteEstadoBy, listClientes, countClientes, getClienteById,
   createCliente, updateCliente, softDeleteCliente, hardDeleteCliente,
   listContactos, createContacto, updateContacto, deleteContacto,
-  resumenPorEstado, resumenPorPonderacion, resumenPorCelula
+  resumenPorEstado, resumenPorPonderacion, resumenPorCelula, listClienteTipos, listClienteEstados, listCelulasLite
 } from '../repositories/clientes.repo.js';
+
+export const svcCatalog = async () => {
+  const [tipos, estados, celulas] = await Promise.all([
+    listClienteTipos(), listClienteEstados(), listCelulasLite()
+  ]);
+  return { tipos, estados, celulas, ponderaciones: [1,2,3,4,5] };
+};
 
 const resolveTipoId = async ({ tipo_id, tipo_codigo }) => {
   if (tipo_id) return tipo_id;

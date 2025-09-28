@@ -1,0 +1,101 @@
+@use '../../../styles/variables' as v;
+
+.pfFirma{
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: v.$radius-2xl;
+  padding:14px;
+  box-shadow: v.$shadow-soft;
+  color: v.$fh-text;
+
+  .headRow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;
+    h3{ margin:0 }
+    .tools{ display:flex; gap:8px; flex-wrap:wrap }
+  }
+
+  .btn{
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.16);
+    padding:10px 14px; border-radius:12px; cursor:pointer;
+    font-weight:800; letter-spacing:.2px; color:v.$fh-text;
+    &:hover{ background: rgba(255,255,255,.1) }
+    &.small{ padding:8px 10px; font-size:.92rem }
+    &.tiny{ padding:6px 10px; font-size:.86rem }
+    &:disabled{ opacity:.65; cursor:not-allowed }
+  }
+
+  /* ===== Campo único (fix label) ===== */
+  .field{
+    display:flex; flex-direction:column; gap:0; align-items: start;
+    margin:10px 0 12px;
+  }
+
+  .lbl{
+    display:inline-flex; align-items:start;
+    font-weight:800; font-size:12px; letter-spacing:.2px;
+    color:v.$fh-muted;
+    line-height:1.1;
+    margin:0 0 6px 0;
+    white-space:nowrap;   
+    padding-left: 1rem;            /* ← evita el salto “Nombre↵completo” */
+  }
+  .lbl.firma{
+    padding-left: 0 !important;
+  }
+  /* permitir wrap sólo en pantallas angostas */
+  @media (max-width: 480px){
+    .lbl{ white-space: normal; }
+  }
+
+  .hint{ color:v.$fh-muted; font-size:12px; margin-top:6px }
+
+  .control{
+    width:100%; background:#0f141b; color:v.$fh-text;
+    border:1px solid rgba(255,255,255,.12);
+    padding:12px 14px; border-radius:12px; outline:none; font-size:1rem; min-height:48px;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    &::placeholder{ color: rgba(255,255,255,.45) }
+    &:focus{ border-color: rgba(v.$fh-primary,.85); box-shadow:0 0 0 2px rgba(v.$fh-primary,.28); background:#111823; }
+  }
+
+  .optsRow{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:8px 0 12px;
+    .opt{ display:flex; align-items:center; gap:10px; }
+    input[type="range"]{ width:260px; max-width:100% }
+    .valTag{ font-size:12px; color:v.$fh-muted }
+  }
+
+  .sigGrid{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+    @media (max-width: 960px){ grid-template-columns:1fr; }
+  }
+  .sigCard{
+    background:#0f141b; border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:10px;
+    .sigHead{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+    .inlineBtns{ display:flex; gap:6px; flex-wrap:wrap }
+    .svgWrap{
+      width:100%; border:1px dashed rgba(255,255,255,.14);
+      background:#0b0f15; border-radius:12px; overflow:hidden;
+      aspect-ratio: 860 / 260;
+      & > svg{ display:block; width:100%; height:100% }
+      &.initials{ aspect-ratio: 640 / 220; }
+    }
+  }
+
+  .rowEnd{ display:flex; justify-content:flex-end; gap:8px }
+  .actions{ margin-top:12px }
+  .cta{
+    background:v.$fh-primary; border:none; color:white; padding:.92rem 1rem; border-radius:12px; font-weight:800; letter-spacing:.3px;
+    box-shadow:0 8px 20px rgba(68,113,141,.35);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+    &:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 12px 26px rgba(68,113,141,.5); filter:brightness(1.04) }
+    &:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none }
+  }
+
+  .error{
+    color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f;
+    padding:8px 10px; border-radius:12px; margin:8px 0;
+  }
+}

@@ -1,0 +1,71 @@
+@use '../../styles/variables' as *;
+
+/* Fallbacks por si algún token no existe */
+$fh-primary:  if(global-variable-exists(fh-primary),  $fh-primary,  #44718D);
+$fh-accent:   if(global-variable-exists(fh-accent),   $fh-accent,   #4dd0e1);
+$fh-card:     if(global-variable-exists(fh-card),     $fh-card,     #121a23);
+$fh-text:     if(global-variable-exists(fh-text),     $fh-text,     #e8eef6);
+$fh-muted:    if(global-variable-exists(fh-muted),    $fh-muted,    #a6b3c3);
+$shadow-soft: if(global-variable-exists(shadow-soft), $shadow-soft, 0 10px 30px rgba(0,0,0,.25));
+
+.users-page{
+  display:flex; flex-direction:column; min-height:60dvh;
+
+  /* === Toolbar de búsqueda === */
+  .toolbar{
+    display:grid; grid-template-columns: 1fr auto auto; gap:10px;
+    margin-bottom:12px;
+    input{
+      min-width:0; padding:.65rem .75rem; height:42px;
+      border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background:#0f141b; color:$fh-text;
+      &::placeholder{ color: rgba(255,255,255,.45) }
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      &:focus{ border-color:$fh-primary; background:#0f1823; box-shadow:0 0 0 2px rgba($fh-primary,.28) }
+    }
+    button{ height:42px }
+  }
+  @media (max-width: 720px){
+    .toolbar{ grid-template-columns: 1fr; }
+  }
+
+  /* === Tabla === */
+  .tableWrap{
+    min-height:260px; border-radius:14px;
+    background: rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.06);
+    padding:6px;
+
+    .loading{ margin:auto; padding:16px; color:$fh-muted }
+
+    /* Columna Activo centrada */
+    .table tbody td:nth-child(2){ text-align:center; }
+
+    /* Columna Roles: que no desborde */
+    .table tbody td:nth-child(3){
+      color: lighten($fh-text, 2%);
+      max-width: 560px; white-space: normal; word-break: break-word;
+    }
+
+    /* Acciones compactas */
+    .table tbody td:last-child{ width:1%; white-space:nowrap; }
+    .row-actions{ display:flex; gap:8px; }
+  }
+}
+
+/* === Badges Activo/Inactivo === */
+.badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:.2rem .5rem; border-radius:999px; font-weight:700; font-size:.82rem;
+  border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04);
+  &.ok{
+    background: rgba($fh-accent,.22);
+    color:#ffffff; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(77,208,225,.15);
+  }
+  &.off{
+    color:#ffd6d6; background: rgba(140,40,40,.22);
+    border-color: rgba(255,120,120,.22);
+    text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  }
+}

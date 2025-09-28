@@ -61,3 +61,15 @@ export const updateRoleBodySchema = z.object({
 export const setRolePermsBodySchema = z.object({
   permisos: z.array(z.number().int().positive()).default([]),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email()
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(32),
+  new_password: z.string()
+    .min(10)
+    .max(200)
+    .refine(s => /[a-z]/.test(s) && /[A-Z]/.test(s) && /\d/.test(s), 'Debe tener mayúscula, minúscula y número'),
+});

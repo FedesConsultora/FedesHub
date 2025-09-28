@@ -1,12 +1,16 @@
-// backend/src/modules/auth/services/auth.service.js
+// src/modules/auth/services/auth.service.js
+import crypto from 'crypto';
+
 import { hashPassword, verifyPassword } from '../password.js';
 import { signAccess, signRefresh, newJti, verifyRefresh, decodeUnsafe, verifyAccess } from '../token.js';
 import { COOKIE, COOKIE_OPTS } from '../constants.js';
+
 import {
   getActiveEmailDomain, getUserByEmail, createUser, setUserPassword,
   getUserRoles, assignRoles, getPermisosByUserId, getUserById,
   setUserActive, listUsersWithRoles
 } from '../repositories/user.repo.js';
+
 import { listAllRoles } from '../repositories/role.repo.js';
 import { isRevoked, revokeJti } from '../repositories/jwtRevocation.repo.js';
 import {
@@ -17,8 +21,13 @@ import {
   listRoleTypes, getRoleById, createRole, updateRole, deleteRole, isSystemRole
 } from '../repositories/role.repo.js';
 
-import crypto from 'crypto';
+// IMPORTANTE: sequelize se importa desde core/db.js (NO desde initModels)
+import { sequelize } from '../../../core/db.js';
+import { initModels } from '../../../models/registry.js';
+const models = await initModels();
 
+import { createPasswordResetToken, usePasswordResetToken } from '../repositories/passwordReset.repo.js';
+import { sendNotificationEmails } from '../../notificaciones/services/email.service.js';
 
 const emailDomain = (email) => String(email).split('@')[1]?.toLowerCase();
 
@@ -39,10 +48,9 @@ const issueSession = async (res, { user, roles, permisos }) => {
   // CSRF doble cookie
   const csrf = crypto.randomBytes(24).toString('base64url');
 
-  // Nota: podés agregar maxAge si querés persistencia entre reinicios del browser
-  res.cookie(COOKIE.ACCESS, access, { ...COOKIE_OPTS.base /*, maxAge: 15*60*1000 */ });
+  res.cookie(COOKIE.ACCESS,  access,  { ...COOKIE_OPTS.base /*, maxAge: 15*60*1000 */ });
   res.cookie(COOKIE.REFRESH, refresh, { ...COOKIE_OPTS.base /*, maxAge: 7*24*60*60*1000 */ });
-  res.cookie(COOKIE.CSRF, csrf, { ...COOKIE_OPTS.csrf });
+  res.cookie(COOKIE.CSRF,    csrf,    { ...COOKIE_OPTS.csrf });
 
   return { access, refresh, csrf };
 };
@@ -82,9 +90,9 @@ export const refreshSession = async (req, res) => {
   return { ok: true };
 };
 
-export const logoutAll = async (req, res) => {
-  const at = req.cookies[COOKIE.ACCESS];
-  const rt = req.cookies[COOKIE.REFRESH];
+export const logoutAll = async (_req, res) => {
+  const at = res.req?.cookies?.[COOKIE.ACCESS];
+  const rt = res.req?.cookies?.[COOKIE.REFRESH];
 
   try {
     if (rt) {
@@ -101,9 +109,9 @@ export const logoutAll = async (req, res) => {
     }
   } catch {}
 
-  res.clearCookie(COOKIE.ACCESS, { ...COOKIE_OPTS.base });
+  res.clearCookie(COOKIE.ACCESS,  { ...COOKIE_OPTS.base });
   res.clearCookie(COOKIE.REFRESH, { ...COOKIE_OPTS.base });
-  res.clearCookie(COOKIE.CSRF, { ...COOKIE_OPTS.csrf });
+  res.clearCookie(COOKIE.CSRF,    { ...COOKIE_OPTS.csrf });
   return { ok: true };
 };
 
@@ -131,19 +139,17 @@ export const changePassword = async (userId, { old_password, new_password }) => 
   return { ok: true };
 };
 
-// admin/helpers
+// ===== Admin: helpers & catálogos =====
 export const adminListRoles = () => listAllRoles();
 export const adminListUsers = (q) => listUsersWithRoles(q);
 export const adminAssignUserRoles = (userId, roles) => assignRoles(userId, roles);
 export const adminSetUserActive = (userId, is_activo) => setUserActive(userId, is_activo);
 
-// ===== Admin: catálogos permisos =====
 export const adminListPermissions = (q) => listPermissions(q);
 export const adminListModules = () => listModules();
 export const adminListActions = () => listActions();
 export const adminListRoleTypes = () => listRoleTypes();
 
-// ===== Admin: roles & permisos =====
 export const adminGetRole = async (id) => {
   const role = await getRoleById(id);
   if (!role) throw Object.assign(new Error('Rol no encontrado'), { status: 404 });
@@ -178,4 +184,82 @@ export const adminRemoveRolePermissions = async (id, permisoIds) => {
     throw Object.assign(new Error('No se pueden modificar permisos de un rol del sistema'), { status: 400 });
   }
   return removeRolePermissions(id, permisoIds);
+};
+
+// ===== Forgot / Reset password =====
+export const forgotPassword = async (email) => {
+  const user = await getUserByEmail(email);
+  if (!user || !user.is_activo) return { ok: true }; // no revelar existencia
+
+  const { token } = await createPasswordResetToken(user.id);
+  const link_url = `${process.env.WEB_ORIGIN || 'http://localhost:3000'}/auth/reset?token=${encodeURIComponent(token)}`;
+
+  try {
+    const notifId = await _queueResetEmailNotification(user.id, link_url);
+    await sendNotificationEmails(notifId); // dispara envío (fuera de transacción)
+    return { ok: true, emailed: true };
+  } catch (e) {
+    console.error('[forgotPassword] email fail:', e?.message || e);
+    return { ok: true, emailed: false };
+  }
+};
+
+// helper: crea Notificación + Destino con tipo 'reset_password'
+async function _queueResetEmailNotification(user_id, link_url) {
+  const t = await sequelize.transaction();
+  try {
+    // 1) Asegurar buzón 'notificaciones'
+    let buz = await models.BuzonTipo.findOne({ where: { codigo: 'notificaciones' }, transaction: t });
+    if (!buz) {
+      buz = await models.BuzonTipo.create(
+        { codigo: 'notificaciones', nombre: 'Notificaciones del sistema' },
+        { transaction: t }
+      );
+    }
+
+    // 2) Asegurar NotificacionTipo 'reset_password'
+    let tipo = await models.NotificacionTipo.findOne({ where: { codigo: 'reset_password' }, transaction: t });
+    if (!tipo) {
+      tipo = await models.NotificacionTipo.create({
+        codigo: 'reset_password',
+        nombre: 'Recuperar contraseña',
+        buzon_id: buz.id,
+        canales_default_json: ['email']
+      }, { transaction: t });
+    } else if (tipo.buzon_id !== buz.id) {
+      await tipo.update({ buzon_id: buz.id }, { transaction: t });
+    }
+
+    // 3) Importancia (fallback a 'media')
+    let imp = await models.ImportanciaTipo.findOne({ where: { codigo: 'media' }, transaction: t });
+    if (!imp) {
+      imp = await models.ImportanciaTipo.create({ codigo: 'media', nombre: 'Media', orden: 2 }, { transaction: t });
+    }
+
+    // 4) Crear la notificación con buzon_id obligatorio
+    const notif = await models.Notificacion.create({
+      tipo_id: tipo.id,
+      importancia_id: imp.id,
+      buzon_id: tipo.buzon_id,
+      titulo: 'Recuperación de contraseña',
+      mensaje: null,
+      link_url,
+      data_json: JSON.stringify({ link: link_url })
+    }, { transaction: t });
+
+    await models.NotificacionDestino.create({ notificacion_id: notif.id, user_id }, { transaction: t });
+
+    await t.commit();
+    return notif.id;
+  } catch (e) {
+    await t.rollback();
+    throw e;
+  }
+}
+
+export const resetPasswordByToken = async ({ token, new_password }) => {
+  const { user_id } = await usePasswordResetToken(token); // valida y consume
+  const password_hash = await hashPassword(new_password);
+  await setUserPassword(user_id, password_hash);
+  return { ok: true };
 };

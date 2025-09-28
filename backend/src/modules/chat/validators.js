@@ -53,7 +53,8 @@ export const updateCanalSettingsSchema = z.object({
   only_mods_can_post: z.boolean().optional(),
   slowmode_seconds: z.number().int().min(0).max(86400).optional(),
   topic: z.string().max(240).optional(),
-  is_privado: z.boolean().optional()
+  is_privado: z.boolean().optional(),
+  imagen_url: z.string().min(1).optional()
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para actualizar' });
 
 export const memberUpsertSchema = z.object({
@@ -88,9 +89,17 @@ export const postMessageSchema = z.object({
     width: z.coerce.number().int().optional(),
     height: z.coerce.number().int().optional(),
     duration_sec: z.coerce.number().int().optional()
-  })).optional().default([])
-}).refine(v => (v.body_text?.trim()?.length ?? 0) > 0 || !!v.body_json || (v.attachments?.length ?? 0) > 0,
-  { message: 'mensaje vacío' });
+  })).optional().default([]),
+
+  // 👇 campo interno solo para validar (no se persiste)
+  __has_files: z.coerce.boolean().optional().default(false)
+}).refine(v =>
+  (v.body_text?.trim()?.length ?? 0) > 0
+  || !!v.body_json
+  || (v.attachments?.length ?? 0) > 0
+  || v.__has_files === true
+, { message: 'mensaje vacío' });
+
 
 export const editMessageSchema = z.object({
   body_text: z.string().optional(),

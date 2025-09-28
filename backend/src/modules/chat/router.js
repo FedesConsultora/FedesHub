@@ -11,6 +11,7 @@ const requirePermission = (mod, act) => requirePermissionFactory(mod, act);
 // Controllers
 import * as chat from './controllers/chat.controller.js';
 import { ping } from './controllers/health.controller.js';
+import { uploadFiles, uploadSingle, multerErrorHandler } from '../../infra/uploads/multer.js';
 
 const router = Router();
 
@@ -22,6 +23,8 @@ const router = Router();
 // Health
 router.get('/health', ping);
 
+router.get('/dms', requireAuth, requirePermission('chat','read'), chat.getDmCandidates);
+
 // Catálogos
 router.get('/catalog', requireAuth, requirePermission('chat','read'), chat.getCatalog);
 
@@ -31,7 +34,15 @@ router.post('/channels',       requireAuth, requirePermission('chat','create'), 
 router.put('/channels/:id',    requireAuth, requirePermission('chat','update'), chat.putCanal);
 router.patch('/channels/:id/archive',  requireAuth, requirePermission('chat','update'), chat.patchArchiveCanal);
 router.patch('/channels/:id/settings', requireAuth, requirePermission('chat','update'), chat.patchCanalSettings);
-
+// Avatar (file upload)
+router.patch(
+  '/channels/:id/avatar',
+  requireAuth,
+  requirePermission('chat','update'),
+  uploadSingle,            
+  multerErrorHandler,
+  chat.patchCanalAvatar
+)
 // Miembros
 router.get('/channels/:id/members',             requireAuth, requirePermission('chat','read'),   chat.getMiembros);
 router.post('/channels/:id/members',            requireAuth, requirePermission('chat','update'), chat.postMiembro);
@@ -41,8 +52,15 @@ router.post('/channels/:id/join',               requireAuth, requirePermission('
 router.post('/channels/:id/leave',              requireAuth, requirePermission('chat','update'), chat.postLeave);
 
 // Mensajes (timeline del canal)
-router.get('/channels/:id/messages', requireAuth, requirePermission('chat','read'),   chat.getMessages);
-router.post('/channels/:id/messages',requireAuth, requirePermission('chat','create'), chat.postMessage);
+router.get('/channels/:id/messages', requireAuth, requirePermission('chat','read'), chat.getMessages);
+router.post(
+  '/channels/:id/messages',
+  requireAuth,
+  requirePermission('chat','create'),
+  uploadFiles,
+  multerErrorHandler,
+  chat.postMessage
+);
 
 // Mensaje by id
 router.put('/messages/:id',          requireAuth, requirePermission('chat','update'), chat.putMessage);
@@ -66,5 +84,7 @@ router.post('/invitations/:token/decline', requireAuth, requirePermission('chat'
 
 // Meetings desde el canal
 router.post('/channels/:id/meetings', requireAuth, requirePermission('chat','create'), chat.postMeeting);
+
+router.get('/channels/:id/attachments', requireAuth, chat.listAttachments)
 
 export default router;

@@ -115,3 +115,67 @@ export const svcGetMyFeder = async (user_id) => {
 
 // Reportes
 export const svcResumenPeriodo = (q) => resumenPorPeriodo(q);
+
+export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min = 480 }) => {
+  // día completo (UTC o zona de tu DB):
+  const desde = new Date(`${fecha}T00:00:00.000Z`).toISOString();
+  const hasta = new Date(`${fecha}T23:59:59.999Z`).toISOString();
+
+  // traemos registros del periodo (ya tenés listRegistros)
+  const rows = await listRegistros({ desde, hasta, celula_id, feder_id, order: 'asc', limit: 2000 });
+
+  // Agrupar por feder
+  const byFeder = new Map();
+  for (const r of rows) {
+    if (!byFeder.has(r.feder_id)) {
+      byFeder.set(r.feder_id, {
+        feder_id: r.feder_id,
+        feder_nombre: r.feder_nombre,
+        feder_apellido: r.feder_apellido,
+        bloques: []
+      });
+    }
+    const start = new Date(r.check_in_at);
+    const end   = r.check_out_at ? new Date(r.check_out_at) : null;
+
+    // recortar al día
+    const dayStart = new Date(`${fecha}T00:00:00.000Z`);
+    const dayEnd   = new Date(`${fecha}T24:00:00.000Z`);
+    const s = new Date(Math.max(dayStart.getTime(), start.getTime()));
+    const e = new Date(Math.min(dayEnd.getTime(), (end ?? new Date()).getTime()));
+    if (e > s) {
+      const minutes = Math.round((e - s) / 60000);
+      byFeder.get(r.feder_id).bloques.push({
+        id: r.id,
+        start: s.toISOString(),
+        end: e.toISOString(),
+        minutes,
+        abierto: !r.check_out_at
+      });
+    }
+  }
+
+  // Resumen por persona (progreso a la jornada objetivo)
+  const out = [];
+  for (const v of byFeder.values()) {
+    const worked = v.bloques.reduce((acc,b) => acc + b.minutes, 0);
+    out.push({
+      ...v,
+      resumen: {
+        jornada_min,                // objetivo (default 8h = 480)
+        worked_min: worked,
+        remaining_min: Math.max(0, jornada_min - worked),
+        pct: Math.min(1, worked / jornada_min)
+      }
+    });
+  }
+
+  // Orden por apellido, nombre
+  out.sort((a, b) => {
+    const A = `${a.feder_apellido} ${a.feder_nombre}`.toLowerCase();
+    const B = `${b.feder_apellido} ${b.feder_nombre}`.toLowerCase();
+    return A.localeCompare(B);
+  });
+
+  return { fecha, jornada_min, items: out };
+};

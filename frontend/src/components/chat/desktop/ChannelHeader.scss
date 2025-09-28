@@ -1,0 +1,28 @@
+@use '../../../styles/variables' as *;
+
+.panel-header{
+  position:relative;
+  padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; gap:10px;
+
+  .avatarChan{
+    width:34px; height:34px; border-radius:50%; object-fit:cover;
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .titleBtn{
+    display:inline-flex; gap:6px; align-items:center; font-weight:800; letter-spacing:.2px;
+    background:transparent; color:$fh-text; border:0; padding:4px 6px; border-radius:8px; cursor:pointer;
+    .hash{ opacity:.7 }
+    &:hover{ background:rgba(255,255,255,.06) }
+  }
+
+  .topic{ color:$fh-muted; font-size:.9rem }
+  .spacer{ flex:1 1 auto }
+
+  .btnGhost{
+    display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border-radius:8px;
+    background:transparent; color:$fh-text; border:1px solid rgba(255,255,255,.08); cursor:pointer;
+    &:hover{ background:rgba(255,255,255,.05) }
+    &.active{ color:$fh-text; border-color: rgba(255,255,255,.18) }
+  }
+}

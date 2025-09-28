@@ -9,11 +9,14 @@ import {
 import {
   svcList, svcDetail, svcCreate, svcUpdate, svcDelete, svcAssignCelula,
   svcListContactos, svcCreateContacto, svcUpdateContacto, svcDeleteContacto,
-  svcResumenEstado, svcResumenPonderacion, svcResumenCelula
+  svcResumenEstado, svcResumenPonderacion, svcResumenCelula, svcCatalog
 } from '../services/clientes.service.js';
 
 export const health = (_req, res) => res.json({ module: 'clientes', ok: true });
 
+export const catalog = async (_req, res, next) => {
+  try { res.json(await svcCatalog()); } catch (e) { next(e); }
+};
 // Listado / detalle
 export const list = async (req, res, next) => {
   try { res.json(await svcList(listQuerySchema.parse(req.query))); } catch (e) { next(e); }

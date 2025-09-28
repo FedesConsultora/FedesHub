@@ -1,5 +1,6 @@
 .env# ─── Node.js ──────────────────────────────
 node_modules/
+secrets/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

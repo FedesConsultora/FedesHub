@@ -67,3 +67,9 @@ export const resumenQuerySchema = z.object({
   celula_id: id.optional(),
   feder_id: id.optional()
 });
+export const timelineQuerySchema = z.object({
+  fecha: z.string().date(),      // ISO-8601 'YYYY-MM-DD'
+  celula_id: id.optional(),
+  feder_id: id.optional(),
+  jornada_min: z.coerce.number().int().min(60).max(24*60).optional() 
+});

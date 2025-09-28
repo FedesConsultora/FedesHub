@@ -1,0 +1,71 @@
+@use '../../styles/variables' as v;
+
+.fhFedersList{
+  .listFilters{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;
+
+    input, select, button{
+      border-radius:12px; padding:10px 12px; outline:none;
+      border:1px solid rgba(255,255,255,.12);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, filter .18s ease;
+    }
+
+    input, select{
+      background: v.$fh-card; color: v.$fh-text;
+      &::placeholder{ color: rgba(255,255,255,.45) }
+      &:focus{
+        border-color: rgba(v.$fh-primary,.85);
+        box-shadow: 0 0 0 2px rgba(v.$fh-primary,.28);
+        background: mix(v.$fh-card, v.$fh-bg, 50%);
+      }
+    }
+
+    button{
+      background: v.$fh-primary; color:white; border:none; font-weight:800; letter-spacing:.2px;
+      box-shadow: 0 8px 20px rgba(68,113,141,.35);
+      &:hover{ filter: brightness(1.05) }
+      &:active{ transform: translateY(1px) }
+      &:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none }
+    }
+  }
+
+  .counter{ opacity:.75; margin:6px 0 }
+
+  .cards{
+    display:grid; gap:12px; list-style:none; padding:0; margin:0;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .card{
+    background: v.$fh-card;
+    border-radius: v.$radius-2xl;
+    padding:12px;
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow: v.$shadow-soft;
+  }
+
+  .row{ display:flex; gap:10px; align-items:center }
+  .row img{
+    width:40px; height:40px; border-radius:50%; object-fit:cover;
+    background: lighten(v.$fh-card, 8%); border:1px solid rgba(255,255,255,.06)
+  }
+
+  .name{ font-weight:800; letter-spacing:.2px }
+  .sub{ color: v.$fh-muted; font-size:.92em }
+
+  .pager{
+    display:flex; gap:10px; align-items:center; justify-content:center; margin:12px 0;
+    button{
+      border-radius:12px; padding:8px 12px; border:1px solid rgba(255,255,255,.12);
+      background: lighten(v.$fh-card, 4%); color: v.$fh-text;
+      &:disabled{ opacity:.55; cursor:not-allowed }
+      &:not(:disabled):hover{ background: lighten(v.$fh-card, 8%) }
+    }
+  }
+
+  .loading{ opacity:.85 }
+  .error{
+    color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f;
+    padding:10px; border-radius:12px;
+  }
+}

@@ -1,0 +1,6 @@
+/* src/components/calendario/CalendarBoard.scss */
+@use '../../styles/variables' as *;
+
+.cal-board{
+  display: grid; gap: 14px;
+}

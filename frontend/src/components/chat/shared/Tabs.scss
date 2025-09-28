@@ -1,0 +1,16 @@
+@use '../../../styles/variables' as *;
+
+.chatTabs{
+  display:flex; align-items:center; gap:8px; margin-bottom:8px;
+  .tab{
+    position:relative; padding:.45rem .8rem; border-radius:10px;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+    color:$fh-text; cursor:pointer;
+    &.active{ background:rgba($fh-primary,.12); border-color:rgba($fh-primary,.35) }
+    .dot{
+      position:absolute; width:8px; height:8px; border-radius:50%;
+      right:8px; top:8px; background:#ff5757;
+    }
+  }
+  .spacer{ flex:1 }
+}

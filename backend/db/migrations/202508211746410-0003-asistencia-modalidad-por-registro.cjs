@@ -1,6 +1,7 @@
 'use strict';
 
-/**
+/** 202508211746410-0003-asistencia-modalidad-por-registro.cjs
+ * 
  * Agrega modalidad_id a AsistenciaRegistro y hace backfill
  * desde el plan semanal (FederModalidadDia). Seed básico:
  * 'presencial' y 'home'.

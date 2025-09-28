@@ -1,0 +1,145 @@
+@use '../../styles/variables' as *;
+
+/* evitar selección durante drag globalmente */
+.fh-noselect {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* --- Kanban board --- */
+.fh-k-board{
+  display: grid;
+  grid-auto-flow: column;
+  /* columnas “cards” horizontales */
+  grid-auto-columns: minmax(84vw, 1fr);
+
+  gap: 12px;
+
+  /* scroll horizontal visible (pero SIN barra) */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;  /* iOS suave */
+
+  /* ocultar barra en todos los navegadores */
+  scrollbar-width: none;              /* Firefox */
+  -ms-overflow-style: none;           /* IE/Edge legado */
+}
+.fh-k-board::-webkit-scrollbar{       /* Chrome/Safari/Edge Chromium */
+  width: 0;
+  height: 0;
+}
+
+/* Si hay container queries, que mida por el ancho del .appMain */
+@supports (width: 1cqw) {
+  .fh-k-board{ grid-auto-columns: minmax(86cqw, 1fr); }
+}
+
+/* breakpoints previos (los mantenemos) */
+@media (min-width: 900px){ .fh-k-board{ grid-auto-columns: minmax(320px, 1fr); } }
+@media (min-width: 1200px){ .fh-k-board{ grid-auto-columns: minmax(340px, 1fr); } }
+
+
+.fh-k-col{
+  scroll-snap-align: start;
+  border-radius: 14px;
+  display: flex; flex-direction: column;
+  min-height: 58vh;
+}
+
+.fh-k-head{
+  position: sticky; top: 0; z-index: 2;
+  padding: 12px 12px 10px;
+  display:flex; align-items:center; gap:8px;
+  .fh-k-titleCol{ font-weight: 800; font-size: 1rem; letter-spacing:.2px; }
+  .fh-k-count{ margin-left:auto; background: rgba(0,0,0,.08); border-radius: 999px; padding: 2px 8px; font-size: .82rem; }
+}
+.fh-k-body{
+  padding: 10px;
+  padding-top: 6px;
+  display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; min-height: 0;
+}
+
+/* Task Card (más grande + info) */
+.fh-k-task{
+  background: rgba(36, 34, 34, 0.467);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 12px 12px 10px;
+  cursor: pointer; touch-action: none;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  transition: transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+
+  &:hover{ border-color: rgba(255,255,255,.12); box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  &:active{ cursor: grabbing; }
+
+  .fh-k-row{ display:flex; gap:8px; align-items:center; color:$fh-muted; font-size:.86rem; }
+  .fh-k-client{ font-weight: 700; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fh-k-date{ margin-left: auto; font-variant-numeric: tabular-nums; opacity:.9; }
+
+  .fh-k-title{ margin-top:6px; font-weight: 800; font-size: .98rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .fh-k-people{
+    margin-top: 10px;
+    display:flex; gap:12px; align-items:center; justify-content: space-between;
+  }
+  .fh-k-role{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .fh-k-roleLabel{
+    display:inline-block; min-width:38px;
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.6px; color:$fh-muted; opacity:.9;
+  }
+}
+
+/* Ghost y placeholder */
+.fh-k-ghost{
+  position: fixed; top: 0; left: 0;
+  transform: translate(-9999px,-9999px);
+  pointer-events: none; z-index: 60;
+  border-radius: 12px; overflow:hidden;
+  box-shadow: 0 14px 30px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.1);
+  opacity: .96; filter: saturate(1.02);
+}
+
+.fh-k-placeholder{
+  border: 2px dashed rgba(255,255,255,.18);
+  border-radius: 12px;
+  background: transparent;
+}
+
+/* Badges simples reusables */
+.fh-badge{ background: rgba(255,255,255,.06); padding: 3px 10px; border:1px solid rgba(0,0,0,.28); border-radius:999px; color:$fh-muted; font-weight:700; font-size:.78rem; }
+.fh-badge--secondary{ background: rgba(255,255,255,.08); }
+
+/* Avatares */
+.fh-avatars{ display:flex; align-items:center; gap:0; }
+.fh-avatar{
+  width: var(--av-size, 22px); height: var(--av-size, 22px);
+  border-radius: 999px; border:1px solid rgba(0,0,0,.25);
+  background: linear-gradient(180deg, #1a2732, #14202a);
+  display:grid; place-items:center; font-weight:800; font-size: .66rem; color:#dce7f3;
+  box-shadow: 0 1px 2px rgba(0,0,0,.18);
+  margin-left: -6px; /* stack */
+  overflow: hidden;
+  img{ width:100%; height:100%; object-fit:cover; display:block; }
+}
+.fh-avatar:first-child{ margin-left: 0; }
+.fh-avatar--more{ background:#0a1118; color:$fh-muted; }
+.fh-k-board.is-compact {
+  gap: 10px; padding: 0; border-radius: 0;
+}
+
+.fh-k-board.is-compact .fh-k-col{
+  border: 0;
+  box-shadow: none;
+  min-height: auto;
+}
+
+.fh-k-board.is-compact .fh-k-head{
+  position: static;
+  padding: 0 2px 6px;
+}
+
+.fh-k-board.is-compact .fh-k-body{
+  padding: 0;
+  gap: 8px;
+}

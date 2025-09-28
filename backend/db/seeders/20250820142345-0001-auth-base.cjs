@@ -1,3 +1,5 @@
+// auth-base 0001
+
 'use strict';
 
 module.exports = {
@@ -21,7 +23,8 @@ module.exports = {
       ['clientes','Clientes'],
       ['tareas','Tareas'],
       ['calendario','Calendario'],
-      ['notificaciones','Notificaciones']
+      ['notificaciones','Notificaciones'],
+      ['chat','Chat']           // 👈👈👈 AGREGADO
     ].map(([codigo, nombre]) => ({
       codigo, nombre,
       descripcion: null, created_at: now, updated_at: now
@@ -42,7 +45,7 @@ module.exports = {
     }));
     await queryInterface.bulkInsert('Accion', acciones, {});
 
-    // ---- Roles
+    // ---- Roles (incluye AnalistaComunicacion)
     const [rolTipoRows] = await queryInterface.sequelize.query(`SELECT id, codigo FROM "RolTipo"`);
     const rolTipoMap = Object.fromEntries(rolTipoRows.map(r => [r.codigo, r.id]));
     const roles = [
@@ -50,12 +53,11 @@ module.exports = {
       ['CLevel','Dirección (C-Level)'],
       ['RRHH','Capital Humano'],
 
-      // Analistas separados (según Upgrading Fedes)
       ['AnalistaDiseno','Analista de Diseño'],
       ['CuentasAnalista','Analista de Cuentas'],
       ['AnalistaAudiovisual','Analista Audiovisual'],
+      ['AnalistaComunicacion','Analista de Comunicación'],
 
-      // Tridente actualizado
       ['TriMarketing','Tridente - Marketing'],
       ['TriPerformance','Tridente - Performance'],
       ['TriTecnologia','Tridente - Tecnología'],

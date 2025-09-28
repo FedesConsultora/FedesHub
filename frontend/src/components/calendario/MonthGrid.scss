@@ -1,0 +1,32 @@
+/* src/components/calendario/MonthGrid.scss */
+@use '../../styles/variables' as *;
+
+.cal-month{
+  background:$fh-card; border:1px solid $border; border-radius:14px; padding:12px;
+
+  .title{ font-weight:800; margin-bottom:8px; text-transform:capitalize; letter-spacing:.2px; }
+  .dow{ display:grid; grid-template-columns: repeat(7,1fr); gap:4px; margin-bottom:6px; color:$fh-muted; font-size:.84rem; }
+  .grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:4px; }
+
+  .day{
+    text-align:left; min-height:110px; padding:6px; position:relative;
+    background:$fh-card; border:1px solid $border; border-radius:12px;
+    transition: background .18s ease, border-color .18s ease;
+    &:hover{ background:rgba(255,255,255,.06); }
+    &.wknd{ background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 45%), $fh-card; }
+    &.today{ box-shadow:0 0 0 2px rgba($fh-accent,.55) inset; }
+    .num{ font-size:.82rem; opacity:.85; }
+
+    .evt{
+      margin-top:4px; font-size:.86rem; padding:2px 6px; border-radius:8px; width:100%;
+      border-left:3px solid rgba(136,136,187,.8);
+      background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10);
+      display:flex; gap:8px; align-items:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      .when{ font-size:.78rem; color:$fh-muted; }
+      .ttl{ overflow:hidden; text-overflow:ellipsis; }
+    }
+    .more{ margin-top:4px; font-size:.82rem; color:$fh-muted; }
+  }
+
+  .empty{ background:transparent; border:none; }
+}

@@ -1,0 +1,35 @@
+// /src/pages/Tareas/components/estado-bar.scss
+.estadoBar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  align-items: center;
+
+  &__step {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 10px;
+
+    &:hover { background: rgba(0,0,0,.04); }
+
+    &.is-active .estadoBar__dot { background: #6b5; border-color: #6b5; }
+    &.is-active .estadoBar__label { font-weight: 600; }
+  }
+
+  &__dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid #999; background: #fff;
+  }
+  &__label { white-space: nowrap; }
+
+  &__line {
+    display: inline-block;
+    width: 28px; height: 2px; background: #ddd; margin-left: 6px;
+  }
+}

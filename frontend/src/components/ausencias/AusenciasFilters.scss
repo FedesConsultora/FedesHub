@@ -1,0 +1,40 @@
+/* src/components/ausencias/AusenciasFilters.scss */
+@use '../../styles/variables' as *;
+
+.aus-filters{
+  display:flex; align-items:center; gap:14px; padding:10px 12px;
+  border:1px solid $border; border-radius:14px; background:$fh-card;
+
+  .group{ display:grid; gap:6px; min-width: 220px; }
+  label{ color:$fh-muted; font-size:.9rem; }
+
+  .segmented{
+    display:inline-flex; gap:6px;
+    .seg{
+      padding:.42rem .62rem; border:1px solid $border; background:$fh-card; color:$fh-text;
+      border-radius:10px; cursor:pointer; user-select:none;
+      &.active{ font-weight:800; background:rgba($fh-primary,.18); border-color:rgba($fh-primary,.45); }
+      &.aprobada  { }
+      &.pendiente { }
+      &.denegada  { }
+      &.cancelada { }
+    }
+    &.small .seg{ padding:.36rem .5rem; }
+  }
+
+  .switch{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    input{ appearance:none; width:36px; height:20px; border-radius:999px; position:relative; outline:none;
+      border:1px solid $border; background:rgba(255,255,255,.06);
+    }
+    input::after{
+      content:''; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:999px;
+      background:#fff; transition: transform .18s ease;
+    }
+    input:checked{ background:rgba($fh-accent,.35); border-color:rgba($fh-accent,.6) }
+    input:checked::after{ transform: translateX(16px); }
+    span{ color:$fh-text }
+  }
+
+  .spacer{ flex:1 1 auto }
+}

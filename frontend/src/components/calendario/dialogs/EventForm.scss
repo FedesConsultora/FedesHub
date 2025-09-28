@@ -1,0 +1,33 @@
+@use '../../../styles/variables' as *;
+
+.cal-event-form{
+  display:grid; gap:14px;
+
+  .grid{
+    display:grid; gap:12px;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    .full{ grid-column: 1 / -1; }
+    label{ display:flex; flex-direction:column; gap:6px; }
+    span{ font-size:.85rem; color:$fh-muted; }
+    .chk{ flex-direction:row; align-items:flex-end; gap:8px; padding-bottom:8px; }
+  }
+
+  .fh-input{ width:100%; }
+
+  .form-error{
+    padding:10px 12px; border-radius:10px;
+    background:rgba(255,80,80,.10); border:1px solid rgba(255,80,80,.45);
+    color:#ff9f9f; font-size:.9rem;
+  }
+
+  .footer{
+    display:flex; align-items:center; gap:10px;
+    .spacer{ flex:1 1 auto; }
+    .fh-btn.outline{ background:transparent; border:1px solid rgba(255,100,100,.55); color:#ff7070; padding-top:.3rem; }
+    .fh-btn.outline:hover{ background:rgba(255,100,100,.08); }
+  }
+}
+
+@media (max-width: 720px){
+  .cal-event-form .grid{ grid-template-columns: 1fr; }
+}

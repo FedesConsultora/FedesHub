@@ -1,3 +1,6 @@
+/** 202508211812250-0004-asistencia-constraints.cjs
+
+*/
 'use strict';
 module.exports = {
   async up(queryInterface) {

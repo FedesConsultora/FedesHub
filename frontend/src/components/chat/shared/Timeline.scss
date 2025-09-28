@@ -1,0 +1,111 @@
+@use '../../../styles/variables' as v;
+
+.chat-timeline{
+  position: relative; /* para el botón flotante */
+  flex:1 1 auto; overflow:auto; padding:14px 16px; display:flex; flex-direction:column; gap:12px;
+  min-height: 0; /* clave para que scrollee dentro del panel */
+
+  .loading, .empty{ color:v.$fh-muted; text-align:center; padding:24px; }
+
+  .dayGroup{ display:grid; gap:10px; }
+  .daySep{ display:flex; justify-content:center; text-transform:capitalize; color:#9ca3af; margin: 6px 0 10px; }
+
+  .bubble{
+    position:relative; max-width:80%;
+    border:1px solid rgba(255,255,255,.12); border-radius:14px;
+    background:#ffffff; color:#0d1117; padding:12px 14px;
+    align-self:flex-start;
+    box-sizing: border-box;     
+    overflow: visible;           
+    min-width: 0;                
+    .txt{ max-width: 100%; }
+    .meta{ display:flex; align-items:center; gap:8px; color:#6b7280; font-size:.9rem; }
+    .author{ color:#0d1117; font-weight:900; }
+    .avatar{ width:28px; height:28px; border-radius:50%; }
+    .dot{ color:#6b7280 }
+    .txt{ margin-top:6px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+
+    .replyPreview{
+      display:flex; align-items:center; gap:6px;
+      margin:6px 0 2px; padding:6px 8px;
+      border:1px dashed rgba(0,0,0,.12); border-radius:8px; background:rgba(0,0,0,.02);
+
+      /* 🔒 UNA SOLA LÍNEA */
+      white-space: nowrap;
+      overflow: hidden;       /* recorte del conjunto */
+      min-width: 0;           /* permite que los hijos se encojan en flex */
+      .label{
+        font-size:.75rem; font-weight:800; letter-spacing:.02em;
+        color:v.$fh-primary; background:rgba(v.$fh-primary,.12);
+        border:1px solid rgba(v.$fh-primary,.35); padding:.08rem .35rem; border-radius:6px;
+        text-transform:uppercase;
+      }
+      .replyAuthor{
+        flex:0 1 auto;        
+        min-width:0;
+        color:#0d1117; 
+        font-weight:700;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .muted{ flex:0 0 auto; color:#6b7280; }
+      .replyExcerpt{
+        flex:1 1 auto;
+        min-width:0;                    /* clave para ellipsis en flex */
+        overflow:hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;                 /* asegura ellipsis */
+      }
+    }
+
+    .replyIco{
+      position:absolute; top:8px; right:8px;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:34px; height:34px;
+      background:transparent; color:#6b7280; cursor:pointer; padding:0;
+      border-radius:10px; transition: transform .06s ease;
+      &:hover{ background:rgba(0,0,0,.06); transform: translateY(-1px); }
+    }
+
+    .visto{ margin-top:6px; font-size:.85rem; color:#6b7280; }
+
+    &.mine{
+      align-self:flex-end; margin-left:auto; text-align:left;
+      background:#eff9ff; border-color: rgba(v.$fh-primary,.35); width: 100%;
+    }
+  }
+
+  /* flechita abajo-derecha */
+  .scrollToBottom{
+    position: sticky; /* se pega al viewport del contenedor scrolleable */
+    margin-left: auto; /* empuja a la derecha */
+    bottom: 12px;
+    align-self: flex-end;
+    transform: translateY(calc(100% - 2px));
+    display:grid; place-items:center;
+    width:40px; height:40px; border-radius:12px;
+    background:#0f1720; color:#fff; border:1px solid rgba(255,255,255,.16);
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    cursor:pointer;
+    &:hover{ filter:brightness(1.1) }
+    svg{ width:18px; height:18px }
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .msgFooter{
+    margin-top:8px;
+    display:flex; align-items:center; gap:10px;
+    justify-content:space-between; 
+    flex-wrap: wrap;
+  }
+}
+.hi-lite{ box-shadow: 0 0 0 3px rgba(77,208,225,.45); transition: box-shadow .2s ease; }
+.chat-timeline .bubble .txt .mentions,
+.chat-timeline .replyPreview .mentions {
+  color: #1d4ed8;       /* azul */
+  font-weight: 800;     /* negrita */
+  background: rgba(29,78,216,.08);
+  border-radius: 6px;
+  padding: 0 .18em;
+}

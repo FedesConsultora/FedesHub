@@ -1,0 +1,66 @@
+/* src/components/ausencias/YearCalendar.scss */
+@use '../../styles/variables' as v;
+
+.aus-year {
+  display: grid;
+  gap: 18px;
+}
+
+.aus-month {
+  background: rgba(10,14,19,0.7);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: v.$radius-2xl;
+  padding: 10px 12px 12px;
+  box-shadow: v.$shadow-soft;
+
+  .hdr { color: v.$fh-text; font-weight: 700; margin: 4px 2px 8px; text-transform: capitalize; }
+  .dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin: 0 2px 6px; color: v.$fh-muted; font-size: 12px; }
+  .grid{ display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+
+  .day {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    border-radius: 10px;
+    color: v.$fh-text;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+
+    &.empty { background: transparent; border: none; }
+
+    &.wknd { opacity: .8; }
+
+    .num { font-size: 12px; line-height: 1; }
+
+    .dots {
+      position: absolute;
+      bottom: 4px; right: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: v.$fh-primary; // default
+      color: #0b1118;
+      border: 1px solid rgba(0,0,0,.25);
+    }
+
+    &.busy { border-color: rgba(255,255,255,0.14); }
+
+    /* Prioridad: pendiente > denegada > cancelada > aprobada */
+    &.st-pendiente  .dots { background: #f59e0b; } // amber-500
+    &.st-denegada   .dots { background: #ef4444; } // red-500
+    &.st-cancelada  .dots { background: #94a3b8; } // slate-400
+    &.st-aprobada   .dots { background: #22c55e; } // green-500
+
+    /* borde amarillo cuando hay pendiente */
+    &.has-pending { box-shadow: inset 0 0 0 2px rgba(245,158,11,.35); }
+
+    /* hoy: mantiene borde/acento primario y fuerza el dot celeste */
+    &.today {
+      box-shadow: inset 0 0 0 2px rgba(77,208,225,.35);
+      .dots { background: v.$fh-accent; }
+    }
+  }
+}

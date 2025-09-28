@@ -1,4 +1,3 @@
-// backend/src/models/notificaciones/NotificacionEnvio.js
 export default (sequelize, DataTypes) => {
   const NotificacionEnvio = sequelize.define('NotificacionEnvio', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -18,12 +17,16 @@ export default (sequelize, DataTypes) => {
     entregado_at: { type: DataTypes.DATE },
     abierto_at: { type: DataTypes.DATE },
     leido_at: { type: DataTypes.DATE }
-  }, { tableName: 'NotificacionEnvio', underscored: true, timestamps: false,
-       indexes: [
-         { unique: true, fields: ['destino_id','canal_id'] },
-         { fields: ['estado_id'] },
-         { fields: ['provider_msg_id'] },
-         { fields: ['tracking_token'] }
-       ] });
+  }, {
+    tableName: 'NotificacionEnvio',
+    underscored: true,
+    timestamps: false,
+    indexes: [
+      { fields: ['destino_id', 'canal_id', 'proveedor_id'] },
+      { fields: ['estado_id'] },
+      { fields: ['provider_msg_id'] },
+      { unique: true, fields: ['tracking_token'] }
+    ]
+  });
   return NotificacionEnvio;
 };

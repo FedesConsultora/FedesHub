@@ -1,0 +1,40 @@
+// src/components/modal/modal-provider.scss
+@use '../../styles/variables' as *;
+
+.fh-modal-layer{
+  position: fixed; inset:0; z-index: 80;
+  display:grid; place-items:center;
+  padding: 24px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(77,208,225,.10), transparent 60%),
+    linear-gradient(180deg, rgba(8,12,18,.55), rgba(8,12,18,.80));
+  backdrop-filter: blur(6px);
+}
+
+.fh-modal{
+  background: $fh-card; color: $fh-text;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: $radius-2xl;
+  box-shadow: $shadow-soft;
+  padding: 18px 18px 14px;
+  max-height: 90vh; overflow:auto;
+  position: relative;
+
+  .x{
+    position:absolute; top:10px; right:10px;
+    width:32px; height:32px; display:grid; place-items:center;
+    border:1px solid rgba(255,255,255,.12); border-radius: 10px;
+    background: rgba(255,255,255,.03); color: $fh-muted; cursor: pointer;
+    &:hover{ background: rgba(255,255,255,.07); }
+    padding: 0;
+  }
+  .head{ display:flex; align-items:center; gap:12px; padding-right:40px;
+    .title{ font-weight:800; letter-spacing:.2px; font-size:1.05rem; }
+  }
+  .body{ margin-top:10px; line-height:1.45; color:$fh-muted; }
+  .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+  .btn{ appearance:none; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.03);
+    color:$fh-text; padding:.66rem .9rem; border-radius:12px; font-weight:700; cursor:pointer;
+  }
+  .btn.primary{ background:$fh-primary; border-color:rgba(68,113,141,.6); }
+}

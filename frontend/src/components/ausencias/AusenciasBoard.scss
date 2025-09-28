@@ -1,0 +1,12 @@
+/* src/components/ausencias/AusenciasBoard.scss */
+@use '../../styles/variables' as *;
+
+.aus-board{
+  display:grid; gap: 14px; color:$fh-text;
+}
+
+.aus-cal{
+  display:grid; gap: 10px; align-items:start;
+  /* deja aire entre saldos, filtros y calendario */
+  margin-top: 2px;
+}

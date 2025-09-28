@@ -1,0 +1,13 @@
+.taskDetail .comments{
+  .attachList{ display:grid; gap:6px; margin-top:8px; }
+  .attachItem{
+    display:flex; align-items:center; gap:10px; padding:8px 10px;
+    border:1px solid rgba(0,0,0,.08); border-radius:10px; background:#fff;
+    text-decoration:none; color:#0d1117;
+    img{ height:44px; width:44px; object-fit:cover; border-radius:6px; border:1px solid rgba(0,0,0,.06); }
+    .ico{ width:22px; height:22px; opacity:.85; }
+    .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .muted{ margin-left:auto; color:#6b7280; font-size:.86rem; }
+    &:hover{ background:rgba(0,0,0,.02); }
+  }
+}

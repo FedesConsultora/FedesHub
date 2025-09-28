@@ -1,0 +1,35 @@
+@use '../../styles/variables' as *;
+
+.lbOverlay{
+  position: fixed; inset: 0; z-index: 1500; /* por debajo del share modal */
+  background: rgba(0,0,0,.78);
+  display: grid; grid-template-rows: auto 1fr; align-items: stretch;
+}
+
+.lbTopbar{
+  display:flex; gap:8px; align-items:center; padding:10px 12px;
+  background: rgba(15,23,32,.85); border-bottom:1px solid rgba(255,255,255,.08);
+  .title{ font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60vw }
+  .sp{ flex:1 }
+  .btn{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#eaf2ff; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); cursor:pointer; -webkit-border-radius:10px; -moz-border-radius:10px; -ms-border-radius:10px; -o-border-radius:10px; padding: 0 !important;
+  }
+  .close{ background:transparent; border:0 }
+}
+
+.lbStage{
+  position: relative; display:grid; place-items:center; padding:16px;
+  img, iframe{
+    max-width: min(98vw, 1200px);
+    max-height: calc(96vh - 70px);
+    width: auto; height: auto; border-radius: 12px; background:#0f1720;
+    border:1px solid rgba(255,255,255,.08);
+  }
+}
+
+.navBtn{
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 1; width:44px; height:44px; border-radius:12px; cursor:pointer;
+  background: rgba(15,23,32,.85); color:#fff; border:1px solid rgba(255,255,255,.12);
+}
+.navBtn.left{ left: 14px }
+.navBtn.right{ right: 14px }

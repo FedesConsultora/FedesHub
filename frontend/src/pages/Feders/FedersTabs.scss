@@ -1,0 +1,30 @@
+@use '../../styles/variables' as v;
+
+.fhFedersTabs{
+  .tabsBar{
+    display:flex; gap:8px; align-items:center; margin-bottom:10px;
+  }
+
+  .tab{
+    display:inline-flex; gap:8px; align-items:center;
+    padding:6px 12px; border-radius:999px;
+    background: lighten(v.$fh-card, 3%);
+    color: v.$fh-text; text-decoration:none;
+    border:1px solid rgba(255,255,255,.08);
+    transition: background .18s ease, color .18s ease, transform .06s ease;
+
+    svg{ width:16px; height:16px; opacity:.9 }
+    &:hover{ background: lighten(v.$fh-card, 6%); }
+    &:active{ transform: translateY(1px); }
+  }
+
+  // NavLink activo
+  a.tab.active,
+  a.tab[aria-current="page"]{
+    background: rgba(v.$fh-primary, .18);
+    box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    font-weight: 600;
+  }
+
+  .tabBody{ /* wrapper del <Outlet/> */ }
+}

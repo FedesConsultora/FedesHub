@@ -16,12 +16,24 @@ import {
   svcReact, svcPin, svcSave, svcFollowThread, svcSetRead,
   svcSetPresence, svcTyping,
   svcInvite, svcAcceptInvitation, svcDeclineInvitation,
-  svcScheduleMeeting
+  svcScheduleMeeting, svcListDmCandidates
 } from '../services/chat.service.js';
+
+import { saveUploadedFiles } from '../../../infra/storage/index.js'
+
+import { listChannelAttachments } from '../repositories/attachments.repo.js'
+const m = await initModels();
 
 await initModels();
 
 export const health = (_req, res) => res.json({ module: 'chat', ok: true });
+
+export const getDmCandidates = async (req, res, next) => {
+  try {
+    const rows = await svcListDmCandidates(req.user);
+    res.json(rows);
+  } catch (e) { next(e); }
+};
 
 // ------ Catálogo
 export const getCatalog = async (_req, res, next) => {
@@ -66,6 +78,25 @@ export const patchCanalSettings = async (req, res, next) => {
     res.json(await svcUpdateCanalSettings(id, body));
   } catch (e) { next(e); }
 };
+
+
+export const patchCanalAvatar = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params)
+    const file = req.file || (req.files || [])[0]             // acepta single o array
+    if (!file) return res.status(400).json({ error: 'Falta archivo (field "file")' })
+
+    // 👉 guardar en LOCAL (dominio chat)
+    const metas = await saveUploadedFiles([file], ['chat', `canal-${id}`, 'avatar'], 'chat')
+    const meta = metas?.[0]
+    const imagen_url = meta?.webContentLink || meta?.webViewLink
+    if (!imagen_url) throw Object.assign(new Error('Error al subir avatar'), { status: 500 })
+
+    const row = await svcUpdateCanalSettings(id, { imagen_url })
+    res.json(row)
+  } catch (e) { next(e) }
+}
+
 
 // ------ Miembros
 export const getMiembros = async (req, res, next) => {
@@ -124,11 +155,24 @@ export const getMessages = async (req, res, next) => {
 export const postMessage = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
-    const body = postMessageSchema.parse(req.body);
-    const row = await svcPostMessage(id, body, req.user);
+
+    const body = postMessageSchema.parse({
+      ...req.body,
+      __has_files: (req.files?.length || 0) > 0,  // 👈 clave
+      ...(typeof req.body?.body_json === 'string'
+        ? { body_json: safeParseJSON(req.body.body_json) }
+        : {})
+    });
+
+    const row = await svcPostMessage(id, body, req.user, req.files || []);
     res.status(201).json(row);
   } catch (e) { next(e); }
 };
+
+
+function safeParseJSON(s) {
+  try { return JSON.parse(s); } catch { return undefined; }
+}
 
 export const putMessage = async (req, res, next) => {
   try {
@@ -157,8 +201,9 @@ export const postPin = async (req, res, next) => {
   try {
     const { id } = midParam.parse(req.params); // mensaje_id
     const { on, orden } = pinSchema.parse(req.body);
-    const { canal_id } = req.body; // evitar otra query
-    res.json(await svcPin(Number(canal_id), id, on, orden, req.user));
+    // ✅ permitimos que canal_id no venga; el servicio resuelve por mensaje
+    const canal_id = req.body?.canal_id ? Number(req.body.canal_id) : null;
+    res.json(await svcPin(canal_id, id, on, orden, req.user));
   } catch (e) { next(e); }
 };
 
@@ -235,3 +280,24 @@ export const postMeeting = async (req, res, next) => {
     res.status(201).json(r);
   } catch (e) { next(e); }
 };
+
+export async function   listAttachments(req, res, next) {
+  try {
+    const canal_id = Number(req.params.id)
+    const user = req.user || {}
+    const t = req.t // si tu middleware de tx la inyecta
+
+    if (!canal_id) return res.status(400).json({ error: 'canal_id inválido' })
+    if (!user?.id)  return res.status(401).json({ error: 'No autenticado' })
+
+    // Debe ser miembro del canal
+    const me = await m.ChatCanalMiembro.findOne({
+      where: { canal_id, user_id: user.id },
+      transaction: t
+    })
+    if (!me) return res.status(403).json({ error: 'No sos miembro del canal' })
+
+    const items = await listChannelAttachments(canal_id, req.query || {}, t)
+    return res.json(items)
+  } catch (e) { next(e) }
+}

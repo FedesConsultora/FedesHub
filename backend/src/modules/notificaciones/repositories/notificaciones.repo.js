@@ -1,32 +1,35 @@
-import { Op } from 'sequelize';
+// backend/src/modules/notificaciones/repositories/notificaciones.repo.js
+import { Op, fn, col } from 'sequelize';
 import { initModels } from '../../../models/registry.js';
+import crypto from 'crypto';
 
 const m = await initModels();
 
+/* ========== Helpers ========== */
 const _buzonIdByCodigo = async (codigo, t) => {
   const row = await m.BuzonTipo.findOne({ where: { codigo }, transaction: t });
   return row?.id ?? null;
 };
-
 const _estadoEnvioByCodigo = async (codigo, t) => {
   const row = await m.EstadoEnvio.findOne({ where: { codigo }, transaction: t });
   return row?.id ?? null;
 };
-
 const _tipoByCodigo = async (codigo, t) => {
   const row = await m.NotificacionTipo.findOne({ where: { codigo }, transaction: t });
   return row;
 };
-
 const _importanciaByCodigo = async (codigo, t) => {
   const row = await m.ImportanciaTipo.findOne({ where: { codigo }, transaction: t });
   return row?.id ?? null;
 };
 
-// ----------- Catálogos -----------
+/* ========== Catálogos ========== */
 export const listCatalogos = async () => {
   const [tipos, canales, importancias, estadosEnvio, proveedores, buzones] = await Promise.all([
-    m.NotificacionTipo.findAll({ attributes: ['id','codigo','nombre','buzon_id','canales_default_json'], order: [['codigo','ASC']] }),
+    m.NotificacionTipo.findAll({
+      attributes: ['id','codigo','nombre','buzon_id','canales_default_json'],
+      order: [['codigo','ASC']]
+    }),
     m.CanalTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
     m.ImportanciaTipo.findAll({ attributes: ['id','codigo','nombre','orden'], order: [['orden','ASC']] }),
     m.EstadoEnvio.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
@@ -36,19 +39,25 @@ export const listCatalogos = async () => {
   return { tipos, canales, importancias, estadosEnvio, proveedores, buzones };
 };
 
-// ----------- Inbox / ventanas -----------
-const _baseInboxQuery = ({ user_id, q, only_unread, include_archived, buzon_id, chat_canal_id, tarea_id, evento_id, importancia_id, tipo_codigo, hilo_key }) => {
+/* ========== Inbox / Ventanas ========== */
+function _buildInboxFilters(params, { buzon_id, user_id }) {
+  const only_unread       = !!params.only_unread;
+  const include_archived  = !!params.include_archived;
+  const include_dismissed = !!params.include_dismissed;
+  const q                 = params.q?.trim();
+
   const whereNotif = {};
   if (buzon_id) whereNotif.buzon_id = buzon_id;
-  if (chat_canal_id) whereNotif.chat_canal_id = chat_canal_id;
-  if (tarea_id) whereNotif.tarea_id = tarea_id;
-  if (evento_id) whereNotif.evento_id = evento_id;
-  if (importancia_id) whereNotif.importancia_id = importancia_id;
-  if (hilo_key) whereNotif.hilo_key = hilo_key;
+  if (params.chat_canal_id) whereNotif.chat_canal_id = params.chat_canal_id;
+  if (params.tarea_id) whereNotif.tarea_id = params.tarea_id;
+  if (params.evento_id) whereNotif.evento_id = params.evento_id;
+  if (params.importancia_id) whereNotif.importancia_id = params.importancia_id;
+  if (params.hilo_key) whereNotif.hilo_key = params.hilo_key;
 
   const whereDest = { user_id };
-  if (only_unread) whereDest.read_at = null;
-  if (!include_archived) whereDest.archived_at = null;
+  if (only_unread) whereDest.read_at = { [Op.is]: null };
+  if (!include_archived) whereDest.archived_at = { [Op.is]: null };
+  if (!include_dismissed) whereDest.dismissed_at = { [Op.is]: null };
 
   const whereQ = q ? {
     [Op.or]: [
@@ -58,30 +67,15 @@ const _baseInboxQuery = ({ user_id, q, only_unread, include_archived, buzon_id, 
   } : {};
 
   return { whereNotif, whereDest, whereQ };
-};
-
-export const countByVentana = async (user_id, t) => {
-  const [chatId, tareasId, calId] = await Promise.all([
-    _buzonIdByCodigo('chat', t),
-    _buzonIdByCodigo('tareas', t),
-    _buzonIdByCodigo('calendario', t)
-  ]);
-
-  const base = { user_id, archived_at: null };
-  const [chat, tareas, calendario, notificaciones, unread_total] = await Promise.all([
-    m.NotificacionDestino.count({ where: { ...base }, include: [{ model: m.Notificacion, as: 'notificacion', required: true, where: { buzon_id: chatId } }] }),
-    m.NotificacionDestino.count({ where: { ...base }, include: [{ model: m.Notificacion, as: 'notificacion', required: true, where: { buzon_id: tareasId } }] }),
-    m.NotificacionDestino.count({ where: { ...base }, include: [{ model: m.Notificacion, as: 'notificacion', required: true, where: { buzon_id: calId } }] }),
-    m.NotificacionDestino.count({ where: { ...base } }),
-    m.NotificacionDestino.count({ where: { ...base, read_at: null } })
-  ]);
-
-  return { chat, tareas, calendario, notificaciones, unread_total };
-};
+}
 
 export const listInbox = async (params, user, t) => {
+  const limit  = Math.min(Number(params.limit ?? 25), 100);
+  const offset = Math.max(Number(params.offset ?? 0), 0);
   const buzon_id = params.buzon ? await _buzonIdByCodigo(params.buzon, t) : null;
-  const { whereNotif, whereDest, whereQ } = _baseInboxQuery({ ...params, buzon_id, user_id: user.id });
+
+  const { whereNotif, whereDest, whereQ } =
+    _buildInboxFilters(params, { buzon_id, user_id: user.id });
 
   const order =
     params.sort === 'oldest'
@@ -93,46 +87,85 @@ export const listInbox = async (params, user, t) => {
         ]
       : [[{ model: m.Notificacion, as: 'notificacion' }, 'created_at', 'DESC']];
 
-  const rows = await m.NotificacionDestino.findAll({
-    where: { ...whereDest, ...whereQ },
+  const includeNotif = {
+    model: m.Notificacion, as: 'notificacion', required: true, where: whereNotif,
     include: [
-      { model: m.Notificacion, as: 'notificacion', required: true, where: whereNotif,
-        include: [
-          { model: m.NotificacionTipo, as: 'tipo', attributes: ['id','codigo','nombre','buzon_id'] },
-          { model: m.ImportanciaTipo, as: 'importancia', attributes: ['id','codigo','nombre','orden'] },
-          { model: m.Tarea, as: 'tarea', attributes: ['id','titulo','cliente_id'] },
-          { model: m.Evento, as: 'evento', attributes: ['id','titulo','starts_at','ends_at'] },
-          { model: m.ChatCanal, as: 'chatCanal', attributes: ['id','tipo','nombre','slug'] }
-        ]
+      { model: m.NotificacionTipo, as: 'tipo', attributes: ['id','codigo','nombre','buzon_id'] },
+      { model: m.ImportanciaTipo, as: 'importancia', attributes: ['id','codigo','nombre','orden'] },
+      { model: m.Tarea, as: 'tarea', attributes: ['id','titulo','cliente_id'],
+        include: [{ model: m.Cliente, as: 'cliente', attributes: ['id','nombre'] }]
+      },
+      { model: m.Evento, as: 'evento', attributes: ['id','titulo','starts_at','ends_at'] },
+      { model: m.ChatCanal, as: 'chatCanal', attributes: ['id','nombre','slug'],
+        include: [{ model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] }]
       }
-    ],
-    order,
-    limit: params.limit,
-    offset: params.offset
-  });
+    ]
+  };
 
-  const total = await m.NotificacionDestino.count({
-    where: { ...whereDest, ...whereQ },
-    include: [{ model: m.Notificacion, as: 'notificacion', required: true, where: whereNotif }]
-  });
+  const [rows, total] = await Promise.all([
+    m.NotificacionDestino.findAll({
+      where: { ...whereDest, ...whereQ },
+      include: [includeNotif],
+      order, limit, offset
+    }),
+    m.NotificacionDestino.count({
+      where: { ...whereDest, ...whereQ },
+      include: [includeNotif]
+    })
+  ]);
 
   return { total, rows };
 };
 
+export const countByVentana = async (user_id, t) => {
+  // Contamos **no leídas y visibles** por buzón
+  const [chatId, tareasId, calId] = await Promise.all([
+    _buzonIdByCodigo('chat', t),
+    _buzonIdByCodigo('tareas', t),
+    _buzonIdByCodigo('calendario', t)
+  ]);
+
+  const baseUnreadVisible = {
+    user_id,
+    read_at:      { [Op.is]: null },
+    archived_at:  { [Op.is]: null },
+    dismissed_at: { [Op.is]: null },
+  };
+
+  const countFor = (buzId) => m.NotificacionDestino.count({
+    where: baseUnreadVisible,
+    include: [{
+      model: m.Notificacion, as: 'notificacion', required: true, where: { buzon_id: buzId }
+    }]
+  });
+
+  const [chat, tareas, calendario, unread_total] = await Promise.all([
+    countFor(chatId),
+    countFor(tareasId),
+    countFor(calId),
+    m.NotificacionDestino.count({ where: baseUnreadVisible })
+  ]);
+
+  return { chat, tareas, calendario, unread_total };
+};
+
 export const listChatCanalesForUser = async (user_id) => {
   const rows = await m.ChatCanal.findAll({
-    attributes: ['id','tipo','nombre','slug','is_archivado','created_at'],
-    include: [{
-      model: m.Notificacion, as: 'notificaciones', required: false,
-      where: { chat_canal_id: { [Op.ne]: null } },
-      include: [{ model: m.NotificacionDestino, as: 'destinos', where: { user_id }, required: true }]
-    }],
+    attributes: ['id','nombre','slug','is_archivado','created_at'],
+    include: [
+      { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] },
+      {
+        model: m.Notificacion, as: 'notificaciones', required: false,
+        where: { chat_canal_id: { [Op.ne]: null } },
+        include: [{ model: m.NotificacionDestino, as: 'destinos', where: { user_id }, required: true }]
+      }
+    ],
     order: [['updated_at','DESC']]
   });
   return rows;
 };
 
-// ----------- Preferencias -----------
+/* ========== Preferencias ========== */
 export const getPreferences = async (user_id) => {
   const rows = await m.NotificacionPreferencia.findAll({
     where: { user_id },
@@ -157,7 +190,7 @@ export const setPreferences = async (user_id, items, t) => {
   return getPreferences(user_id);
 };
 
-// ----------- Crear notificación -----------
+/* ========== Crear notificación ========== */
 export const createNotificacion = async (payload, destinos, created_by_user_id, t) => {
   let tipo_id = payload.tipo_id;
   if (!tipo_id && payload.tipo_codigo) {
@@ -167,8 +200,6 @@ export const createNotificacion = async (payload, destinos, created_by_user_id, 
   }
 
   const importancia_id = payload.importancia_id ?? await _importanciaByCodigo('media', t);
-
-  // Determinar buzon por tipo
   const tipo = await m.NotificacionTipo.findByPk(tipo_id, { transaction: t });
   const buzon_id = tipo.buzon_id;
 
@@ -191,50 +222,53 @@ export const createNotificacion = async (payload, destinos, created_by_user_id, 
   }, { transaction: t });
 
   const ds = destinos.map(d => ({
-    notificacion_id: n.id, user_id: d.user_id, feder_id: d.feder_id ?? null
+    notificacion_id: n.id,
+    user_id: d.user_id,
+    feder_id: d.feder_id ?? null
   }));
   await m.NotificacionDestino.bulkCreate(ds, { transaction: t, ignoreDuplicates: true });
 
   return n;
 };
 
-// ----------- Marcas -----------
-export const setSeen = async (id, user_id) => {
-  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id: id, user_id } });
+/* ========== Marcas (por destino de usuario) ========== */
+async function _destForUpdate(notificacion_id, user_id) {
+  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id, user_id } });
   if (!row) throw Object.assign(new Error('Destino no encontrado'), { status: 404 });
+  return row;
+}
+
+export const setSeen = async (id, user_id) => {
+  const row = await _destForUpdate(id, user_id);
   if (!row.in_app_seen_at) await row.update({ in_app_seen_at: new Date() });
   return row;
 };
 
 export const setRead = async (id, user_id, on) => {
-  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id: id, user_id } });
-  if (!row) throw Object.assign(new Error('Destino no encontrado'), { status: 404 });
+  const row = await _destForUpdate(id, user_id);
   await row.update({ read_at: on ? new Date() : null });
   return row;
 };
 
 export const setDismiss = async (id, user_id, on) => {
-  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id: id, user_id } });
-  if (!row) throw Object.assign(new Error('Destino no encontrado'), { status: 404 });
+  const row = await _destForUpdate(id, user_id);
   await row.update({ dismissed_at: on ? new Date() : null });
   return row;
 };
 
 export const setArchive = async (id, user_id, on) => {
-  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id: id, user_id } });
-  if (!row) throw Object.assign(new Error('Destino no encontrado'), { status: 404 });
+  const row = await _destForUpdate(id, user_id);
   await row.update({ archived_at: on ? new Date() : null });
   return row;
 };
 
 export const setPin = async (id, user_id, orden) => {
-  const row = await m.NotificacionDestino.findOne({ where: { notificacion_id: id, user_id } });
-  if (!row) throw Object.assign(new Error('Destino no encontrado'), { status: 404 });
+  const row = await _destForUpdate(id, user_id);
   await row.update({ pin_orden: orden ?? null });
   return row;
 };
 
-// ----------- Email: envíos y tracking -----------
+/* ========== Email queue & tracking ========== */
 export const queueEmailEnvio = async ({ destino_id, canal_id, proveedor_id, asunto, cuerpo_html, data_render_json }, t) => {
   const estadoQueued = await _estadoEnvioByCodigo('queued', t);
   const tracking_token = cryptoRandomToken();
@@ -268,8 +302,6 @@ export const markEnvioOpenedByToken = async (token) => {
   return row;
 };
 
-function cryptoRandomToken(len = 32) {
-  const buf = Buffer.alloc(len);
-  for (let i=0; i<len; i++) buf[i] = Math.floor(Math.random()*256);
-  return buf.toString('hex');
+function cryptoRandomToken(len = 16) {
+  return crypto.randomBytes(len).toString('hex'); // 32 hex chars
 }

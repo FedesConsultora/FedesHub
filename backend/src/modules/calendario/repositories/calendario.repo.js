@@ -52,6 +52,9 @@ export async function listCalendarsForQuery(q, user, t) {
     case 'global':
       where.tipo_id = await idByCodigo(m.CalendarioTipo, 'global', t);
       break;
+    case 'all':
+    // sin filtro extra → devuelve todos los visibles según visibilidad
+    break;
   }
 
   return m.CalendarioLocal.findAll({

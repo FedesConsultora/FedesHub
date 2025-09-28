@@ -1,0 +1,32 @@
+    // /frontend/src/components/dashboard/tasks.scss
+
+    @use '../../styles/variables' as *;
+
+    .fh-tasksGrid{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:12px;
+      @media (max-width: 920px){ grid-template-columns: 1fr; }
+    }
+    .fh-tasksCol{
+      background:$fh-card;
+      backdrop-filter: blur(3px);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:12px;
+      padding:10px;
+      &__head{ font-weight: 600; margin-bottom:8px; }
+      &__body{ display:flex; flex-direction:column; gap:8px; }
+    }
+    .fh-taskItem{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:10px;
+      padding:10px;
+      display:flex; flex-direction:column; gap:6px;
+      &__title{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      &__meta{ display:flex; gap:8px; align-items:center; font-size:.85rem; color:$fh-muted; }
+    }
+    .fh-badge{ background:rgba(0,0,0,.08); padding:2px 6px; border-radius:8px; }
+    .fh-stars{ letter-spacing:1px; font-size:.9rem; }
+    .fh-date{ margin-left:auto; font-variant-numeric: tabular-nums; }
+    .cardHeader{ display:flex; align-items:center; justify-content:space-between; }

@@ -1,5 +1,5 @@
 // backend/src/modules/feders/repositories/feders.repo.js
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
 import { initModels } from '../../../models/registry.js';
 
@@ -16,6 +16,13 @@ export const listDiasSemana = () =>
   models.DiaSemana.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] });
 
 // --------- Helpers de existencia
+export const ensureFederExists = async (feder_id) => {
+  if (feder_id == null) {
+    throw Object.assign(new Error('feder_id requerido'), { status: 400 });
+  }
+  const f = await models.Feder.findByPk(feder_id, { attributes: ['id'] });
+  if (!f) throw Object.assign(new Error('Feder no encontrado'), { status: 404 });
+};
 export const ensureUserExists = async (user_id) => {
   if (!user_id) return;
   const u = await models.User.findByPk(user_id, { attributes: ['id'] });
@@ -35,6 +42,14 @@ export const ensureEstadoExists = async (estado_id) => {
 export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_id, is_activo } = {}) => {
   const repl = { limit, offset };
   const where = [];
+
+  // coerción robusta para is_activo
+  const toBool = (v) => (v === true || v === 'true' || v === 1 || v === '1') ? true
+                    : (v === false || v === 'false' || v === 0 || v === '0') ? false
+                    : undefined;
+
+  let is_activo_bool = toBool(is_activo);
+
   let sql = `
     SELECT
       f.id, f.nombre, f.apellido, f.telefono, f.avatar_url,
@@ -42,36 +57,68 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
       u.id AS user_id, u.email AS user_email,
       ce.id AS celula_id, ce.nombre AS celula_nombre,
       est.id AS estado_id, est.codigo AS estado_codigo, est.nombre AS estado_nombre,
+
+      -- cargo principal como en overview (con ámbito)
+      c.cargo_id, c.cargo_nombre, c.ambito_codigo, c.ambito_nombre,
+
+      -- roles del usuario (para chips y orden)
       (
-        SELECT c.nombre
-        FROM "FederCargo" fc
-        JOIN "Cargo" c ON c.id = fc.cargo_id
-        WHERE fc.feder_id = f.id
-          AND fc.es_principal = true
-          AND (fc.hasta IS NULL OR fc.hasta >= CURRENT_DATE)
-        ORDER BY fc.desde DESC, fc.id DESC
-        LIMIT 1
-      ) AS cargo_principal
+        SELECT array_agg(r2.nombre ORDER BY r2.nombre)
+        FROM "UserRol" ur2 JOIN "Rol" r2 ON r2.id = ur2.rol_id
+        WHERE ur2.user_id = u.id
+      ) AS roles,
+
+      -- bandera C-level para ordenar
+      CASE WHEN EXISTS (
+        SELECT 1 FROM "UserRol" urx
+        JOIN "Rol" rx ON rx.id = urx.rol_id
+        WHERE urx.user_id = u.id AND rx.nombre = 'CLevel'
+      ) THEN 1 ELSE 0 END AS is_clevel
     FROM "Feder" f
     JOIN "FederEstadoTipo" est ON est.id = f.estado_id
     LEFT JOIN "User" u ON u.id = f.user_id
     LEFT JOIN "Celula" ce ON ce.id = f.celula_id
+    LEFT JOIN LATERAL (
+      SELECT
+        c2.id      AS cargo_id,
+        c2.nombre  AS cargo_nombre,
+        ca.codigo  AS ambito_codigo,
+        ca.nombre  AS ambito_nombre
+      FROM "FederCargo" fc2
+      JOIN "Cargo"       c2 ON c2.id = fc2.cargo_id
+      JOIN "CargoAmbito" ca ON ca.id = c2.ambito_id
+      WHERE fc2.feder_id = f.id
+        AND fc2.es_principal = true
+        AND (fc2.hasta IS NULL OR fc2.hasta >= CURRENT_DATE)
+      ORDER BY fc2.desde DESC, fc2.id DESC
+      LIMIT 1
+    ) AS c ON TRUE
   `;
+
   if (q) {
     where.push(`(f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
     repl.q = `%${q}%`;
   }
   if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
-  if (typeof is_activo === 'boolean') { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo; }
+  if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
+
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-  sql += ` ORDER BY f.apellido ASC, f.nombre ASC LIMIT :limit OFFSET :offset`;
+
+  // C-level primero, luego apellido/nombre
+  sql += ` ORDER BY is_clevel DESC, f.apellido ASC, f.nombre ASC LIMIT :limit OFFSET :offset`;
+
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
 };
 
 export const countFeders = async ({ q, celula_id, estado_id, is_activo } = {}) => {
   const repl = {};
   const where = [];
+  const toBool = (v) => (v === true || v === 'true' || v === 1 || v === '1') ? true
+                    : (v === false || v === 'false' || v === 0 || v === '0') ? false
+                    : undefined;
+  const is_activo_bool = toBool(is_activo);
+
   let sql = `
     SELECT COUNT(*)::int AS cnt
     FROM "Feder" f
@@ -80,12 +127,12 @@ export const countFeders = async ({ q, celula_id, estado_id, is_activo } = {}) =
   if (q) { where.push(`(f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`); repl.q = `%${q}%`; }
   if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
-  if (typeof is_activo === 'boolean') { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo; }
+  if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
+
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
   const rows = await sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
   return rows[0]?.cnt ?? 0;
 };
-
 // --------- Detalle / CRUD básico
 export const getFederById = async (id) => {
   const rows = await sequelize.query(`
@@ -201,4 +248,245 @@ export const bulkSetFederModalidad = async (feder_id, items = []) => {
 export const removeFederModalidad = async (feder_id, dia_semana_id) => {
   await models.FederModalidadDia.destroy({ where: { feder_id, dia_semana_id } });
   return listFederModalidad(feder_id);
+};
+
+// ———— /feders/overview ————
+export const repoOverview = async ({
+  // prioAmbitos queda para compat, ya no se usa para C-level
+  prioAmbitos = ['c_level','direccion'],
+  celulasEstado = 'activa',
+  limitCelulas = 200
+} = {}) => {
+  // 1) C-LEVEL por RBAC (rol CLevel) + cargo principal vigente
+  const cLevel = await sequelize.query(`
+    SELECT
+      f.id     AS feder_id,
+      f.nombre, f.apellido, f.avatar_url,
+      u.email  AS user_email,
+      ce.id    AS celula_id,
+      ce.nombre AS celula_nombre,
+      c.cargo_id,
+      c.cargo_nombre,
+      c.ambito_codigo,
+      c.ambito_nombre
+    FROM "UserRol" ur
+    JOIN "Rol"   r   ON r.id = ur.rol_id AND r.nombre = 'CLevel'
+    JOIN "User"  u   ON u.id = ur.user_id
+    JOIN "Feder" f   ON f.user_id = u.id
+    LEFT JOIN "Celula" ce ON ce.id = f.celula_id
+    LEFT JOIN LATERAL (
+      SELECT
+        c2.id      AS cargo_id,
+        c2.nombre  AS cargo_nombre,
+        ca.codigo  AS ambito_codigo,
+        ca.nombre  AS ambito_nombre
+      FROM "FederCargo" fc2
+      JOIN "Cargo"       c2 ON c2.id = fc2.cargo_id
+      JOIN "CargoAmbito" ca ON ca.id = c2.ambito_id
+      WHERE fc2.feder_id = f.id
+        AND fc2.es_principal = true
+        AND (fc2.hasta IS NULL OR fc2.hasta >= CURRENT_DATE)
+      ORDER BY fc2.desde DESC, fc2.id DESC
+      LIMIT 1
+    ) AS c ON TRUE
+    ORDER BY f.apellido ASC, f.nombre ASC
+  `, { type: QueryTypes.SELECT });
+
+  // 2) TRIDENTE GLOBAL por RBAC
+  const triRows = await sequelize.query(`
+    SELECT
+      CASE r.nombre
+        WHEN 'TriTecnologia' THEN 'tecnologia'
+        WHEN 'TriPerformance' THEN 'performance'
+        WHEN 'TriMarketing'   THEN 'marketing'
+      END AS area,
+      f.id   AS feder_id,
+      f.nombre, f.apellido, f.avatar_url,
+      u.email AS user_email,
+      (
+        SELECT c2.nombre
+        FROM "FederCargo" fc2
+        JOIN "Cargo" c2 ON c2.id = fc2.cargo_id
+        WHERE fc2.feder_id = f.id
+          AND fc2.es_principal = true
+          AND (fc2.hasta IS NULL OR fc2.hasta >= CURRENT_DATE)
+        ORDER BY fc2.desde DESC, fc2.id DESC
+        LIMIT 1
+      ) AS cargo_nombre,
+      (
+        SELECT array_agg(r2.nombre ORDER BY r2.nombre)
+        FROM "UserRol" ur2 JOIN "Rol" r2 ON r2.id = ur2.rol_id
+        WHERE ur2.user_id = u.id
+      ) AS roles
+    FROM "UserRol" ur
+    JOIN "Rol"  r  ON r.id = ur.rol_id
+    JOIN "User" u  ON u.id = ur.user_id
+    JOIN "Feder" f ON f.user_id = u.id
+    WHERE r.nombre IN ('TriTecnologia','TriPerformance','TriMarketing')
+    ORDER BY area, f.apellido, f.nombre
+  `, { type: QueryTypes.SELECT });
+
+  const tri = { tecnologia: [], performance: [], marketing: [] };
+  for (const row of triRows) {
+    if (!row.area) continue;
+    tri[row.area].push({
+      feder_id: row.feder_id,
+      nombre: row.nombre,
+      apellido: row.apellido,
+      avatar_url: row.avatar_url,
+      user_email: row.user_email,
+      cargo_nombre: row.cargo_nombre,
+      roles: row.roles || []
+    });
+  }
+
+  // 3) CÉLULAS (miembros activos; sin tridente por célula)
+  const celulas = await sequelize.query(`
+    SELECT c.id, c.nombre, c.avatar_url, c.cover_url,
+           ce.codigo AS estado_codigo, ce.nombre AS estado_nombre,
+           COALESCE((
+             SELECT jsonb_agg(s.obj ORDER BY s.es_principal DESC, s.apellido ASC, s.nombre ASC)
+             FROM (
+               SELECT
+                 jsonb_build_object(
+                   'feder_id', f.id,
+                   'nombre', f.nombre,
+                   'apellido', f.apellido,
+                   'avatar_url', f.avatar_url,
+                   'es_principal', a.es_principal,
+                   'desde', a.desde,
+                   'hasta', a.hasta,
+                   'cargo_nombre',
+                     (SELECT c3.nombre
+                      FROM "FederCargo" fc3
+                      JOIN "Cargo" c3 ON c3.id = fc3.cargo_id
+                      WHERE fc3.feder_id = f.id
+                        AND fc3.es_principal = true
+                        AND (fc3.hasta IS NULL OR fc3.hasta >= CURRENT_DATE)
+                      ORDER BY fc3.desde DESC, fc3.id DESC
+                      LIMIT 1)
+                 ) AS obj,
+                 a.es_principal,
+                 f.apellido,
+                 f.nombre
+               FROM "CelulaRolAsignacion" a
+               JOIN "CelulaRolTipo" rt ON rt.id = a.rol_tipo_id
+               JOIN "Feder" f ON f.id = a.feder_id
+               WHERE a.celula_id = c.id
+                 AND rt.codigo = 'miembro'
+                 AND a.desde <= CURRENT_DATE
+                 AND (a.hasta IS NULL OR a.hasta >= CURRENT_DATE)
+               GROUP BY
+                 f.id, f.nombre, f.apellido, f.avatar_url,
+                 a.es_principal, a.desde, a.hasta
+             ) s
+           ), '[]'::jsonb) AS miembros
+    FROM "Celula" c
+    JOIN "CelulaEstado" ce ON ce.id = c.estado_id
+    WHERE ce.codigo = :celulasEstado
+    ORDER BY c.nombre ASC
+    LIMIT :limitCelulas
+  `, { type: QueryTypes.SELECT, replacements: { celulasEstado, limitCelulas } });
+
+  return { c_level: cLevel, tri, celulas };
+};
+
+// ========== Firma de perfil ==========
+export const getFirmaPerfil = async (feder_id) => {
+  await ensureFederExists(feder_id);
+  const row = await models.FirmaPerfil.findOne({ where: { feder_id } });
+  // respuesta consistente
+  return row || { feder_id, firma_textual: null, dni_tipo: null, dni_numero_enc: null, firma_iniciales_svg: null, firma_iniciales_png_url: null, pin_hash: null, is_activa: null, created_at: null, updated_at: null };
+};
+
+export const upsertFirmaPerfil = async (feder_id, payload) => {
+  await ensureFederExists(feder_id);
+  const [row, created] = await models.FirmaPerfil.findOrCreate({
+    where: { feder_id },
+    defaults: { feder_id, ...payload }
+  });
+  if (!created) { Object.assign(row, payload); await row.save(); }
+  return row;
+};
+
+// ========== Bancos ==========
+export const listBancos = async (feder_id) => {
+  await ensureFederExists(feder_id);
+  return models.FederBanco.findAll({
+    where: { feder_id },
+    order: [['es_principal','DESC'], ['id','ASC']]
+  });
+};
+
+export const createBanco = async (feder_id, payload) => {
+  await ensureFederExists(feder_id);
+  return sequelize.transaction(async (t) => {
+    // si viene es_principal=true => apago los demás
+    if (payload.es_principal) {
+      await models.FederBanco.update(
+        { es_principal: false },
+        { where: { feder_id, id: { [Op.ne]: bank_id } }, transaction: t }
+      );
+    }
+    const row = await models.FederBanco.create({ feder_id, ...payload }, { transaction: t });
+    return row;
+  });
+};
+
+export const updateBanco = async (feder_id, bank_id, payload) => {
+  await ensureFederExists(feder_id);
+  const row = await models.FederBanco.findOne({ where: { id: bank_id, feder_id } });
+  if (!row) throw Object.assign(new Error('Banco no encontrado'), { status: 404 });
+  return sequelize.transaction(async (t) => {
+    if (payload.es_principal) {
+      await models.FederBanco.update({ es_principal: false }, { where: { feder_id, id: { [models.Sequelize.Op.ne]: bank_id } }, transaction: t });
+    }
+    Object.assign(row, payload);
+    await row.save({ transaction: t });
+    return row;
+  });
+};
+
+export const deleteBanco = async (feder_id, bank_id) => {
+  await ensureFederExists(feder_id);
+  const n = await models.FederBanco.destroy({ where: { feder_id, id: bank_id } });
+  if (!n) throw Object.assign(new Error('Banco no encontrado'), { status: 404 });
+  return { ok: true };
+};
+
+// ========== Contactos de emergencia ==========
+export const listEmergencias = async (feder_id) => {
+  await ensureFederExists(feder_id);
+  return models.FederEmergencia.findAll({ where: { feder_id }, order: [['id','ASC']] });
+};
+
+export const createEmergencia = async (feder_id, payload) => {
+  await ensureFederExists(feder_id);
+  return models.FederEmergencia.create({ feder_id, ...payload });
+};
+
+export const updateEmergencia = async (feder_id, contacto_id, payload) => {
+  await ensureFederExists(feder_id);
+  const row = await models.FederEmergencia.findOne({ where: { id: contacto_id, feder_id } });
+  if (!row) throw Object.assign(new Error('Contacto no encontrado'), { status: 404 });
+  Object.assign(row, payload);
+  await row.save();
+  return row;
+};
+
+export const deleteEmergencia = async (feder_id, contacto_id) => {
+  await ensureFederExists(feder_id);
+  const n = await models.FederEmergencia.destroy({ where: { feder_id, id: contacto_id } });
+  if (!n) throw Object.assign(new Error('Contacto no encontrado'), { status: 404 });
+  return { ok: true };
+};
+
+
+export const getFederByUserId = async (user_id) => {
+  const row = await sequelize.query(
+    `SELECT id FROM "Feder" WHERE user_id = :uid LIMIT 1`,
+    { type: QueryTypes.SELECT, replacements: { uid: user_id } }
+  );
+  if (!row[0]?.id) return null;
+  return getFederById(row[0].id); // reuse del SELECT detallado
 };

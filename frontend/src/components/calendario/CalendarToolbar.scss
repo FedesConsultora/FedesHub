@@ -1,0 +1,63 @@
+/* src/components/calendario/CalendarToolbar.scss */
+@use '../../styles/variables' as *;
+
+.cal-toolbar{
+  display:flex; flex-direction:column; gap:10px; padding:10px 12px;
+  border:1px solid $border; border-radius:14px; background:$fh-card;
+
+  .row{ display:flex; align-items:center; gap:10px; }
+  .row.top { padding-bottom:4px; border-bottom:1px dashed $border; }
+  .row.bottom {
+    padding-top:2px;
+    flex-wrap:wrap;
+    /* grid mental: chips ocupan todo el ancho disponible y las acciones quedan a la derecha */
+    display:grid;
+    grid-template-columns: 1fr auto;
+    align-items:start;
+    gap:10px;
+  }
+
+  .when{ display:inline-flex; align-items:center; gap:10px; }
+  .year{ font-weight:800; letter-spacing:.4px; }
+  .spacer{ flex:1 1 auto }
+
+  .segmented{ display:inline-flex; gap:6px; margin-right:8px; }
+  .segmented .seg{
+    padding:.42rem .62rem; border:1px solid $border; background:$fh-card; color:$fh-text;
+    border-radius:10px; cursor:pointer; user-select:none;
+  }
+  .segmented .seg.active{ font-weight:800; background:rgba($fh-primary,.18); border-color:rgba($fh-primary,.45); }
+
+  .cal-select{
+    display:flex; gap:8px; flex-wrap:wrap; align-content:flex-start;
+    min-width:0; /* permite shrink */
+  }
+  .cal-chip{
+    display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:12px;
+    border:1px solid $border; background:rgba(255,255,255,.02); cursor:pointer;
+    input{ display:none; }
+    .avatar { display:flex; align-items:center; }
+    .dot{ width:10px; height:10px; border-radius:999px; border:1px solid rgba(0,0,0,.2) }
+    .name{ max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    &.on{ background:rgba($fh-primary,.14); border-color:rgba($fh-primary,.35); }
+  }
+
+  /* cuando la fila hace wrap, que los chips ocupen toda la línea posible */
+  @media (max-width: 1200px) {
+    .cal-select { grid-column: 1 / 2; }
+    .cal-chip { flex: 0 1 auto; }
+  }
+
+  .actions-right{
+    display:flex; gap:8px; justify-self:end;
+    /* si los chips ocupan varias filas, apilar acciones verticalmente */
+    align-items:stretch; flex-direction:column;
+  }
+
+  .fh-avatar{
+    width:18px; height:18px; border-radius:999px; object-fit:cover; border:1px solid rgba(0,0,0,.2);
+    &.initials{
+      display:flex; align-items:center; justify-content:center; font-size:.68rem; font-weight:800; background:#456; color:#fff;
+    }
+  }
+}

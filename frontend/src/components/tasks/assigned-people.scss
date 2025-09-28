@@ -1,0 +1,49 @@
+@use '../../styles/variables' as *;
+
+/* ===== Personas asignadas (modo Ver) ===== */
+$surface: rgba(14,18,26,.78);
+$border: rgba(255,255,255,.08);
+$border-strong: rgba(255,255,255,.14);
+$muted: $fh-muted;
+$text: $fh-text;
+
+.peopleGrid{ display:grid; gap: 8px; }
+
+.peopleGroup{
+  padding:10px; border-radius:14px;
+  background:$surface; border:1px solid $border;
+}
+
+.pgHead{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; font-weight:800; color:$text;
+}
+
+/* pequeño espacio entre personas */
+.peopleList{ display:grid; gap:6px; }
+
+.person{
+  display:grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items:center; gap:10px;
+  padding:6px 8px; border-radius:12px;
+  border:1px solid $border; background:rgba(255,255,255,.03);
+
+  img, .fhAvatar{ width:36px; height:36px; border-radius:999px; object-fit:cover; border:1px solid $border }
+
+  .info{
+    display:grid; gap:2px; min-width:0;
+    .name{ font-weight:700; color:$text; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .role{ color:$muted; font-size:.86rem }
+  }
+
+  .badge:empty{ display:none; }
+  .badge{
+    margin-left:auto; display:inline-flex; align-items:center; gap:6px;
+    padding:4px 8px; border-radius:999px; font-size:.78rem; font-weight:700;
+    color:#f6e7b1; background:rgba(245,184,0,.12); border:1px solid rgba(245,184,0,.35);
+    .crown{ color:#f5b800 }
+  }
+}
+
+.empty{ color:$muted; }

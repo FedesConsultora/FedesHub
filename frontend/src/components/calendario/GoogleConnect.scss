@@ -1,0 +1,13 @@
+/* src/components/calendario/GoogleConnect.scss */
+@use '../../styles/variables' as *;
+
+.gc-dd{ display:inline-block; }
+.gc-dd > summary{ cursor:pointer; }
+.gc-card{
+  min-width:520px; margin-top:8px; padding:10px; border:1px solid $border; border-radius:12px; background:$fh-card;
+  display:grid; gap:10px;
+  .row{ display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center; }
+  .label{ color:$fh-muted }
+  .val{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tiny{ padding:.3rem .6rem; }
+}

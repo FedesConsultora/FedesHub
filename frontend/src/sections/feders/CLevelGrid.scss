@@ -1,0 +1,17 @@
+@use '../../styles/variables' as v;
+
+.fhCLevel{
+  h3{ margin:14px 0 10px }
+  .grid{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+  .card{
+    background: v.$fh-card; border:1px solid rgba(255,255,255,.08);
+    border-radius: v.$radius-2xl; box-shadow: v.$shadow-soft; padding:12px;
+  }
+  .userEmail{ color: v.$fh-muted; font-size:.92em; margin-top:6px }
+  .celulaTag{
+    display:inline-block; margin-top:6px; font-size:.82em;
+    border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:2px 8px;
+    color: v.$fh-muted;
+  }
+  .empty{ color: v.$fh-muted }
+}

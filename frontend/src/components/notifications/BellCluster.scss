@@ -1,0 +1,77 @@
+@use '../../styles/variables' as v;
+
+.fhBellCluster{
+  display:flex; gap:10px; align-items:center;
+
+  .bell{ position:relative; }
+
+  .iconBtn{
+    position: relative; /* 👈 necesario para posicionar badge/dot */
+    display:inline-grid; place-items:center;
+    width:28px; height:28px;
+    padding:0;
+    border:none;
+    background:transparent;
+    color:v.$fh-text;
+    cursor:pointer;
+
+    /* 🔴 puntito rojo cuando no hay número pero sí unread local */
+    .dot{
+      position:absolute;
+      top:-2px; right:-2px;
+      width:8px; height:8px; border-radius:999px;
+      background:#ff5151;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
+      pointer-events: none; /* no tapa el click */
+    }
+  }
+
+  .iconBtn:hover{ background: lighten(v.$fh-card, 6%) }
+  .iconBtn:active{ transform: translateY(1px) }
+
+  .badge{
+    position:absolute;
+    top:-4px; right:-4px; /* 👈 mejor alineado que con transform */
+    min-width:16px; height:16px; border-radius:999px;
+    font-size:.7rem; line-height:16px; text-align:center;
+    background:#ff5151; color:white; padding:0 4px;
+    pointer-events: none; /* no tapa el click */
+  }
+  .eyeNotif{ padding: 0 !important; }
+
+  .panel{
+    position:absolute; right:0; top:36px; /* 28px btn + aire */
+    width:380px; max-height:70vh; overflow:auto;
+    background: v.$fh-card; border:1px solid rgba(255,255,255,.1); border-radius: v.$radius-2xl;
+    box-shadow: v.$shadow-soft; z-index: 50;
+  }
+  .panelHead{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08);
+    .lbl{ display:flex; align-items:center; gap:8px; opacity:.9; font-weight:700; }
+    .seeAll{
+      margin-left:auto; display:inline-flex; gap:6px; align-items:center;
+      border-radius:12px; padding:6px 10px;
+      background: rgba(v.$fh-primary,.18); color: v.$fh-text; border:1px solid rgba(255,255,255,.1);
+      &:hover{ filter: brightness(1.07) }
+      svg{ width:14px; height:14px }
+    }
+  }
+
+  .list{ display:flex; flex-direction:column; gap:8px; padding:8px; }
+  .item{
+    display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+    background: lighten(v.$fh-card, 2%); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:8px 10px;
+    &.read{ opacity:.8; }
+    .ttl{ font-weight:700; letter-spacing:.2px }
+    .msg{ color: v.$fh-muted; font-size:.92em }
+    .act{ display:flex; gap:8px; align-items:center }
+    .lnk{
+      color: v.$fh-text; text-decoration:none; border-bottom:1px dashed rgba(255,255,255,.35);
+      &:hover{ color: white }
+    }
+    .muted{
+      display:grid; place-items:center; width:28px; height:28px; border-radius:8px;
+      background: transparent; color: v.$fh-muted;
+    }
+  }
+}

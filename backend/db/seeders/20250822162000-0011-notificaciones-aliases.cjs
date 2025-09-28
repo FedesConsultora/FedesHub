@@ -3,7 +3,7 @@
 
 module.exports = {
   async up (queryInterface) {
-    // Proveedores que el código usa
+    // Proveedores
     await queryInterface.sequelize.query(`
       INSERT INTO "ProveedorTipo"(codigo,nombre,descripcion)
       VALUES ('gmail_smtp','Gmail SMTP',NULL)
@@ -15,14 +15,18 @@ module.exports = {
       ON CONFLICT (codigo) DO NOTHING;
     `);
 
-    // Estado que el push.service usa
+    // Estados usados por email/push
     await queryInterface.sequelize.query(`
       INSERT INTO "EstadoEnvio"(codigo,nombre,descripcion)
-      VALUES ('error','Error',NULL)
+      VALUES
+        ('queued','En cola',NULL),
+        ('sent','Enviado',NULL),
+        ('opened','Abierto',NULL),
+        ('error','Error',NULL)
       ON CONFLICT (codigo) DO NOTHING;
     `);
 
-    // Por si a esta altura no existiera (lo asegura otra migración, pero es barato)
+    // Asegurar canal push
     await queryInterface.sequelize.query(`
       INSERT INTO "CanalTipo"(codigo,nombre,descripcion)
       VALUES ('push','Push',NULL)
@@ -32,7 +36,7 @@ module.exports = {
 
   async down (queryInterface) {
     await queryInterface.bulkDelete('ProveedorTipo', { codigo: ['gmail_smtp','fcm'] }, {});
-    await queryInterface.bulkDelete('EstadoEnvio', { codigo: ['error'] }, {});
+    await queryInterface.bulkDelete('EstadoEnvio', { codigo: ['queued','sent','opened','error'] }, {});
     // No borramos 'push' para no romper datos existentes.
   }
 };

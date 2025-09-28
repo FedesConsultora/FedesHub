@@ -1,12 +1,13 @@
 // backend/src/modules/auth/controllers/auth.controller.js
 import { loginSchema, createUserSchema, changePasswordSchema,
   listUsersQuerySchema, assignUserRolesSchema, setUserActiveSchema, listPermsQuerySchema, roleIdParamSchema,
-  createRoleBodySchema, updateRoleBodySchema, setRolePermsBodySchema } from '../validators.js';
+  createRoleBodySchema, updateRoleBodySchema, setRolePermsBodySchema, forgotPasswordSchema, resetPasswordSchema } from '../validators.js';
 import {
   loginWithPassword, refreshSession, logoutAll, createUserWithRoles, changePassword,
   adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive,  adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
   adminGetRole, adminCreateRole, adminUpdateRole, adminDeleteRole,
-  adminSetRolePermissions, adminAddRolePermissions, adminRemoveRolePermissions
+  adminSetRolePermissions, adminAddRolePermissions, adminRemoveRolePermissions,
+  forgotPassword, resetPasswordByToken
 } from '../services/auth.service.js';
 
 
@@ -158,5 +159,21 @@ export const removeRolePermissionsCtrl = async (req, res, next) => {
     const { id } = roleIdParamSchema.parse(req.params);
     const { permisos } = setRolePermsBodySchema.parse(req.body);
     res.json({ rol_id: id, permisos: await adminRemoveRolePermissions(id, permisos) });
+  } catch (e) { next(e); }
+};
+
+export const postForgotPassword = async (req, res, next) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+    await forgotPassword(email);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
+export const postResetPassword = async (req, res, next) => {
+  try {
+    const body = resetPasswordSchema.parse(req.body);
+    await resetPasswordByToken(body);
+    res.json({ ok: true });
   } catch (e) { next(e); }
 };

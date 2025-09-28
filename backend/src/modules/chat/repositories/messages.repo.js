@@ -1,6 +1,7 @@
 // /backend/src/modules/chat/repositories/messages.repo.js
-import { Op, fn, col, literal } from 'sequelize';
+import { Op } from 'sequelize';
 import { initModels } from '../../../models/registry.js';
+import { sequelize } from '../../../core/db.js'; // 👈 usar este
 const m = await initModels();
 
 async function _canalMember(canal_id, user_id, t) {
@@ -12,11 +13,41 @@ async function _rolCodigoById(rol_id, t) {
   return row?.codigo ?? null;
 }
 
+/**
+ * Lista mensajes de un canal.
+ * - Paginación por before_id / after_id.
+ * - Modo hilo: si viene thread_root_id, por defecto incluye el root (id === thread_root_id) + replies (parent_id === thread_root_id),
+ *   ordenados ASC para facilitar append en el frontend. Si NO querés el root, pasá include_root=false en params.
+ */
 export async function listMessages(canal_id, params, user, t) {
   const where = { canal_id };
+
+  // --- Filtros de timeline
   if (params.before_id) where.id = { [Op.lt]: params.before_id };
-  if (params.after_id) where.id = { [Op.gt]: params.after_id };
-  if (params.thread_root_id) where.parent_id = params.thread_root_id ?? null;
+  if (params.after_id)  where.id = { ...(where.id || {}), [Op.gt]: params.after_id };
+
+  let orderDir = 'DESC';
+
+  // --- Modo hilo
+  if (params.thread_root_id) {
+    const includeRoot = params.include_root !== false; // default: true
+    orderDir = 'ASC'; // en hilos devolvemos en orden cronológico
+
+    if (includeRoot) {
+      // Traer root + replies
+      // NOTA: si también viene before_id / after_id, la condición de id se respeta arriba.
+      where[Op.or] = [
+        { id: params.thread_root_id },
+        { parent_id: params.thread_root_id }
+      ];
+    } else {
+      // Sólo replies
+      where.parent_id = params.thread_root_id ?? null;
+    }
+  } else if (params.thread_root_id === null) {
+    // explícito: sólo mensajes "de raíz" (no replies)
+    where.parent_id = null;
+  }
 
   const rows = await m.ChatMensaje.findAll({
     where,
@@ -26,15 +57,18 @@ export async function listMessages(canal_id, params, user, t) {
       { model: m.ChatAdjunto, as: 'adjuntos' },
       { model: m.ChatReaccion, as: 'reacciones' },
       { model: m.ChatLinkPreview, as: 'linkPreviews' },
-      { model: m.ChatMensaje, as: 'parent', attributes: ['id'] }
+      // ✅ preview del parent para UI (texto y autor)
+      { model: m.ChatMensaje, as: 'parent', attributes: ['id','body_text'], include: [{ model: m.User, as:'autor', attributes: ['id','email'] }] }
     ],
-    order: [['id','DESC']],
+    order: [['id', orderDir]],
     limit: params.limit,
     transaction: t
   });
 
-  // Marcar "delivered" para este usuario
-  await markDelivered(rows.map(r => r.id), user.id, t);
+  // delivered (sin romper el GET)
+  try {
+    await markDelivered(rows.map(r => r.id), user.id, t);
+  } catch (e) { console.error('markDelivered error:', e?.message || e); }
 
   return rows;
 }
@@ -78,6 +112,7 @@ export async function createMessage(canal, payload, user, t) {
   }, { transaction: t });
 
   if (Array.isArray(payload.attachments) && payload.attachments.length) {
+    // Frontend manda cada item con { file_url, file_name, mime_type, size_bytes, width?, height?, duration_sec? }
     const items = payload.attachments.map(a => ({ ...a, mensaje_id: row.id }));
     await m.ChatAdjunto.bulkCreate(items, { transaction: t });
   }
@@ -220,12 +255,22 @@ export async function setRead(canal_id, user_id, last_read_msg_id, t) {
 }
 
 export async function markDelivered(mensaje_ids, user_id, t) {
-  if (!Array.isArray(mensaje_ids) || !mensaje_ids.length) return 0;
-  const values = mensaje_ids.map(id => ({ mensaje_id: id, user_id, delivered_at: new Date() }));
-  // Insert ignore duplicates (postgres: ON CONFLICT DO NOTHING)
-  const table = m.ChatDelivery.getTableName();
-  await m.sequelize.getQueryInterface().bulkInsert(table, values, { transaction: t, ignoreDuplicates: true });
-  return values.length;
+  if (!Array.isArray(mensaje_ids) || mensaje_ids.length === 0) return 0;
+  const values = mensaje_ids
+    .filter((id) => Number.isFinite(Number(id)))
+    .map((id) => `(${Number(id)}, ${Number(user_id)}, now())`)
+    .join(',');
+
+  if (!values) return 0;
+
+  try {
+    await sequelize.query(`
+      INSERT INTO "ChatDelivery"(mensaje_id, user_id, delivered_at)
+      VALUES ${values}
+      ON CONFLICT (mensaje_id, user_id) DO NOTHING;
+    `, { transaction: t });
+  } catch (e) { console.error('markDelivered error:', e?.message || e); }
+  return mensaje_ids.length;
 }
 
 export function extractUrls(text) {

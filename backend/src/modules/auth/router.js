@@ -5,7 +5,9 @@ import {
   adminCreateUser, postChangePassword,
   listRoles, listUsers, patchUserRoles, patchUserActive, listPermissionsCtrl, listModulesCtrl, listActionsCtrl, listRoleTypesCtrl,
   getRoleCtrl, createRoleCtrl, updateRoleCtrl, deleteRoleCtrl,
-  setRolePermissionsCtrl, addRolePermissionsCtrl, removeRolePermissionsCtrl
+  setRolePermissionsCtrl, addRolePermissionsCtrl, removeRolePermissionsCtrl,
+  postForgotPassword,
+  postResetPassword
 } from './controllers/auth.controller.js';
 import { requireAuth } from './middlewares/requireAuth.js';
 import { requirePermission } from './middlewares/requirePermission.js';
@@ -21,9 +23,12 @@ router.get('/health', health);
 // csrf helper (frontend hace POST /csrf al boot y guarda el valor para header X-CSRF-Token)
 router.post('/csrf', issueCsrf);
 
+router.post('/forgot-password', postForgotPassword);
+router.post('/reset-password',  postResetPassword);
+
 // auth core (con CSRF en login/refresh)
 router.post('/login', loginLimiter, loginSlowdown, requireCsrf, login);
-router.post('/refresh', refreshLimiter, requireCsrf, refresh);
+router.post('/refresh', refreshLimiter, refresh);
 router.post('/logout', requireAuth, logout);
 router.get('/me', requireAuth, me);
 router.post('/change-password', requireAuth, postChangePassword);

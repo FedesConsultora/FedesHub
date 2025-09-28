@@ -1,0 +1,28 @@
+// src/components/common/EmojiPicker.jsx
+import { useEffect, useRef } from 'react'
+import EmojiPickerLib from 'emoji-picker-react'
+import './EmojiPicker.scss'
+
+export default function EmojiPicker({ onSelect, theme='dark', onClickOutside }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const onDoc = (e) => { if (!ref.current) return; if (!ref.current.contains(e.target)) onClickOutside?.() }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [onClickOutside])
+
+  return (
+    <div ref={ref} className="fh-emojiPicker-pop">
+      <EmojiPickerLib
+        theme={theme}
+        lazyLoadEmojis
+        previewConfig={{ showPreview: false }}
+        searchDisabled={false}
+        skinTonesDisabled={false}
+        suggestedEmojisMode="recent"
+        onEmojiClick={(e) => onSelect?.(e?.emoji)}
+      />
+    </div>
+  )
+}

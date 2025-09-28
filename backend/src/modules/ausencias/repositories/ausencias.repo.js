@@ -149,11 +149,12 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
   if (hasta) { where.push('a.fecha_hasta <= :hasta'); repl.hasta = hasta; }
 
   const sql = `
-    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo
+    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, f.nombre  AS feder_nombre, f.apellido AS feder_apellido, f.avatar_url AS feder_avatar_url
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
+    JOIN "Feder" f          ON f.id = a.feder_id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY a.fecha_desde DESC, a.id DESC
     LIMIT :limit OFFSET :offset
@@ -163,11 +164,12 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
 
 export const getAusenciaById = async (id) => {
   const rows = await sequelize.query(`
-    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo
+    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, f.nombre  AS feder_nombre, f.apellido AS feder_apellido, f.avatar_url AS feder_avatar_url
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
+    JOIN "Feder" f          ON f.id = a.feder_id
     WHERE a.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });
   return rows[0] || null;

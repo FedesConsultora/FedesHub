@@ -1,0 +1,15 @@
+@use '../../styles/variables' as v;
+
+.fhTriGlobal{
+  h3{ margin:14px 0 10px }
+  .grid{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+  .triCard{
+    background: v.$fh-card; border:1px solid rgba(255,255,255,.08);
+    border-radius: v.$radius-2xl; box-shadow: v.$shadow-soft; padding:12px;
+  }
+  .triHead{ display:flex; align-items:center; gap:10px; margin-bottom:8px; padding-bottom: 1rem;
+    h4{ margin:0; font-weight:800; letter-spacing:.2px }
+  }
+  .triBody{ display:flex; flex-direction:column; gap:8px }
+  .empty{ color: v.$fh-muted }
+}

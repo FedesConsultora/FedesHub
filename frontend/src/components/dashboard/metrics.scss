@@ -1,0 +1,16 @@
+// /frontend/src/components/dashboard/metrics.scss
+
+@use '../../styles/variables' as *;
+
+.metricsGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap:12px;
+}
+
+.metricCard{
+  background:#0f141b; border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px;
+  .mcValue{ font-size:1.6rem; font-weight:800; }
+  .mcTitle{ color:$fh-muted; margin-top:2px }
+  .mcHint{ margin-top:8px; font-size:.8rem; color:$fh-muted; opacity:.8 }
+}

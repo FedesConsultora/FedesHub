@@ -1,6 +1,13 @@
 // backend/src/modules/feders/validators.js
 import { z } from 'zod';
 
+export const updateFederSelfSchema = z.object({
+  nombre:   z.string().min(2).max(120).optional(),
+  apellido: z.string().min(2).max(120).optional(),
+  telefono: z.string().max(30).nullish().optional(),
+  // avatar_url NO lo actualizamos desde aquí por UX (se sube por /avatar)
+}).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
+
 export const listFedersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
@@ -65,3 +72,60 @@ export const bulkModalidadSchema = z.object({
 export const diaParamSchema = z.object({
   diaId: z.coerce.number().int().min(1).max(7)
 });
+
+// ==== Helpers comunes
+const encJson = z.union([z.string().min(1), z.record(z.any())]).nullish(); // string cifrado o objeto (lo serializamos luego)
+const jsonObj = z.record(z.any()).nullish();
+
+// ==== Firma de perfil
+export const upsertFirmaPerfilSchema = z.object({
+  firma_textual: z.string().max(220).nullish(),
+  dni_tipo: z.string().max(20).nullish(),
+  dni_numero_enc: encJson.optional(),
+  firma_iniciales_svg: z.string().nullish(),
+  firma_iniciales_png_url: z.string().url().max(512).nullish(),
+  pin_hash: z.string().max(255).nullish(),
+  is_activa: z.boolean().optional()
+});
+
+// ==== Bancos
+export const bankIdParamSchema = z.object({
+  bankId: z.coerce.number().int().positive()
+});
+export const createFederBancoSchema = z.object({
+  banco_nombre: z.string().max(120).nullish(),
+  cbu_enc: encJson, // requerido
+  alias_enc: encJson,
+  titular_nombre: z.string().max(180).nullish(),
+  es_principal: z.boolean().optional().default(true)
+}).refine(v => !!v.cbu_enc, { message: 'cbu_enc es requerido' });
+
+export const updateFederBancoSchema = z.object({
+  banco_nombre: z.string().max(120).nullish().optional(),
+  cbu_enc: encJson.optional(),
+  alias_enc: encJson.optional(),
+  titular_nombre: z.string().max(180).nullish().optional(),
+  es_principal: z.boolean().optional()
+}).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
+
+// ==== Contactos de emergencia
+export const contactoIdParamSchema = z.object({
+  contactoId: z.coerce.number().int().positive()
+});
+export const createEmergenciaSchema = z.object({
+  nombre: z.string().min(2).max(180),
+  parentesco: z.string().max(80).nullish(),
+  telefono: z.string().max(40).nullish(),
+  email: z.string().email().max(180).nullish()
+});
+export const updateEmergenciaSchema = z.object({
+  nombre: z.string().min(2).max(180).optional(),
+  parentesco: z.string().max(80).nullish().optional(),
+  telefono: z.string().max(40).nullish().optional(),
+  email: z.string().email().max(180).nullish().optional()
+}).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
+
+export const uploadAvatarSchema = z.object({
+  mimetype: z.string().refine(v => /^image\//.test(v), 'Debe ser una imagen'),
+  size: z.number().max(10 * 1024 * 1024, 'Máx 10MB') // cliente=10MB; servidor permite 25MB
+})

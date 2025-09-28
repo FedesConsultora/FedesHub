@@ -1,0 +1,13 @@
+.taskDetail .comments{
+  .replyPreview{
+    display:flex; align-items:center; gap:6px;
+    margin:6px 0 2px; padding:6px 8px;
+    border:1px dashed rgba(0,0,0,.12); border-radius:8px;
+    background:rgba(0,0,0,.02);
+    .label{ color:#6b7280; }
+    .replyAuthor{ color:#0d1117; }
+    .muted{ color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .replyExcerpt{ min-width:0; }
+    .ico{ width:14px; height:14px; color:#6b7280; }
+  }
+}

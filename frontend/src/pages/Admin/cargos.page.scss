@@ -1,0 +1,129 @@
+@use '../../styles/variables' as *;
+
+/* ====== Fallbacks (por si un token no existe) ====== */
+$fh-primary:  if(global-variable-exists(fh-primary),  $fh-primary,  #44718D);
+$fh-accent:   if(global-variable-exists(fh-accent),   $fh-accent,   #4dd0e1);
+$fh-bg:       if(global-variable-exists(fh-bg),       $fh-bg,       #0f1720);
+$fh-card:     if(global-variable-exists(fh-card),     $fh-card,     #121a23);
+$fh-text:     if(global-variable-exists(fh-text),     $fh-text,     #e8eef6);
+$fh-muted:    if(global-variable-exists(fh-muted),    $fh-muted,    #a6b3c3);
+$radius-2xl:  if(global-variable-exists(radius-2xl),  $radius-2xl,  18px);
+$shadow-soft: if(global-variable-exists(shadow-soft), $shadow-soft, 0 10px 30px rgba(0,0,0,.25));
+
+/* ====== Página de Cargos ====== */
+.cargos-page{
+  display:flex; flex-direction:column; min-height:60dvh;
+
+  /* Toolbar “card” sticky y responsiva */
+  .toolbar{
+    position: sticky; top: 64px; z-index: 5;
+    background: linear-gradient(180deg, rgba($fh-card,.96), rgba($fh-card,.92));
+    backdrop-filter: blur(8px);
+    padding:10px; border:1px solid rgba(255,255,255,.06);
+    border-radius:14px; margin-bottom:12px;
+    box-shadow: $shadow-soft;
+
+    display:grid; grid-template-columns: repeat(12,1fr); gap:10px; align-items:center;
+
+    input, select{
+      grid-column: span 3; min-width:0; height:42px;
+      padding:.6rem .75rem; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:#0f141b; color:$fh-text; outline:none;
+      &::placeholder{ color: rgba(255,255,255,.45) }
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      &:focus{
+        border-color: $fh-primary;
+        background: #111823;
+        box-shadow: 0 0 0 2px rgba($fh-primary,.28);
+      }
+    }
+
+    button{
+      grid-column: span 3; height:42px;
+      padding:.6rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03); color:$fh-text; cursor:pointer;
+      transition: background .15s ease, transform .06s ease, box-shadow .2s ease, filter .15s ease;
+      &:hover{ background: rgba(255,255,255,.06) }
+      &:active{ transform: translateY(1px) }
+      &.primary{
+        background: $fh-primary; border-color: rgba(68,113,141,.6);
+        box-shadow: 0 10px 22px rgba(68,113,141,.35);
+        &:hover{ filter: brightness(1.05); box-shadow:0 12px 28px rgba(68,113,141,.45); }
+      }
+    }
+  }
+
+  /* breakpoint: 2 col + full width */
+  @media (max-width: 880px){
+    .toolbar{ grid-template-columns: 1fr 1fr;
+      input, select, button{ grid-column: span 1 }
+    }
+  }
+  @media (max-width: 560px){
+    .toolbar{ grid-template-columns: 1fr;
+      input, select, button{ grid-column: span 1 }
+    }
+  }
+
+  /* Tabla y acciones */
+  .tableWrap{
+    border-radius:14px; background: rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.06); padding:6px; min-height:260px;
+
+    .loading{ margin:auto; padding:16px; color:$fh-muted }
+
+    /* acciones compactas, sin romper layout */
+    td:last-child{ width:1%; white-space: nowrap }
+    .row-actions{
+      display:flex; gap:8px;
+      button{ padding:.5rem .7rem }
+    }
+  }
+}
+
+/* ====== Contenido del Modal de Cargos ======
+   Inspirado en el “loginCard”: foco lindo y bloques limpios. */
+.cargos-modal{
+  /* espacio entre filas de FormRow */
+  > * + *{ margin-top:10px }
+
+  input, select{
+    width:100%; min-width:0; height:42px;
+    border-radius:12px; padding:.65rem .75rem;
+    background:#0f141b; color:$fh-text;
+    border:1px solid rgba(255,255,255,.12);
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    &::placeholder{ color: rgba(255,255,255,.45) }
+    &:focus{
+      border-color: $fh-primary;
+      background:#111823;
+      box-shadow: 0 0 0 2px rgba($fh-primary,.3);
+      outline: none;
+    }
+  }
+
+  /* hints y errores coherentes con el resto de Admin */
+  .hint{ font-size:12px; color: lighten($fh-muted, 8%) }
+  .error{
+    margin-top:8px; padding:10px; border:1px solid #5a2d2d;
+    background:#3a1f1f; border-radius:12px; color:#ffb4b4;
+  }
+}
+
+/* Pequeñas animaciones/feedback */
+.cargos-page .toolbar:focus-within{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 10px 24px rgba(0,0,0,.25);
+}
+
+/* Safari/Chrome autofill sin overlay celeste */
+.cargos-modal input:-webkit-autofill,
+.cargos-modal input:-webkit-autofill:hover,
+.cargos-modal input:-webkit-autofill:focus{
+  -webkit-text-fill-color: $fh-text;
+  transition: background-color 9999s ease-out 0s;
+  box-shadow: 0 0 0px 1000px #0f141b inset !important;
+  caret-color: $fh-text;
+}

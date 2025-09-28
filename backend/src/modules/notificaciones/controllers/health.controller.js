@@ -1,20 +1,23 @@
 import { transporter } from '../services/mailer.js';
-import { checkFCM } from '../../../lib/push/fcm.js';
+import { initModels } from '../../../models/registry.js';
+
+await initModels();
 
 export const smtp = async (_req, res) => {
   try {
     await transporter.verify();
-    res.json({ smtp: 'ok' });
+    res.json({ ok: true, transport: 'smtp' });
   } catch (e) {
-    res.status(500).json({ smtp: 'fail', error: e?.message });
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 };
 
 export const push = async (_req, res) => {
-  try {
-    const info = await checkFCM();
-    res.json({ push: 'ok', ...info });
-  } catch (e) {
-    res.status(500).json({ push: 'fail', error: e?.message });
-  }
+  const provider = process.env.PUSH_PROVIDER || 'fcm';
+  const hasKey = !!process.env.FCM_SERVER_KEY || !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  res.json({
+    ok: hasKey,
+    provider,
+    configured: hasKey
+  });
 };

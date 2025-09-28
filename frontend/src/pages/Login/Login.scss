@@ -1,17 +1,207 @@
 @use '../../styles/variables' as *;
 
-.loginWrap{ min-height:100vh; display:grid; place-items:center; background:$fh-bg; color:$fh-text }
-.loginCard{
-  width:min(420px, 92vw); background:$fh-card; padding:22px; border-radius:16px;
-  border:1px solid rgba(255,255,255,.1);
-  h1{ margin:0 0 6px 0 }
-  .muted{ color:$fh-muted; margin:0 0 14px 0 }
-  label{ display:block; margin:8px 0 6px }
-  input{ width:100%; background:#0f141b; color:$fh-text; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:.6rem .8rem; outline:none; }
-  input:focus{ border-color:$fh-accent }
-  .row{ display:flex; justify-content:space-between; align-items:center; margin:8px 0 0 }
-  .passRow{ display:flex; gap:8px; align-items:center }
-  .ghost{ background:transparent; border:1px solid rgba(255,255,255,.15); color:$fh-text; padding:.45rem .7rem; border-radius:10px }
-  .error{ margin:10px 0; padding:8px; border:1px solid #5a2d2d; background:#3a1f1f; border-radius:10px; color:#ffb4b4 }
-  button[type=submit]{ width:100%; margin-top:10px; background:$fh-primary; border:none; color:white; padding:.7rem 1rem; border-radius:12px; font-weight:700; }
+// Fallbacks suaves por si alguna var no existe
+$fh-primary: if(global-variable-exists(fh-primary), $fh-primary, #3ea0ff);
+$fh-accent: if(global-variable-exists(fh-accent), $fh-accent, #4dd0e1);
+$fh-text:   if(global-variable-exists(fh-text),   $fh-text,   #e8f0ff);
+$fh-muted:  if(global-variable-exists(fh-muted),  $fh-muted,  #a9b7c7);
+$shadow-soft: 0 10px 35px rgba(0,0,0,.35);
+
+.loginWrap{
+  min-height:100vh; display:grid; place-items:center; color:$fh-text;
+  background:
+    linear-gradient(180deg, rgba(8,12,18,.55), rgba(8,12,18,.82)),
+    var(--fh-login-bg, none) center/cover no-repeat fixed;
+  padding: 28px 16px;
 }
+
+.loginCard{
+  width:min(480px, 92vw);
+  backdrop-filter: blur(18px);
+  background: rgba(12,16,23,.65);
+  padding:26px 24px; border-radius:18px;
+  border:1px solid rgba(255,255,255,.08); 
+  box-shadow:$shadow-soft;
+
+  .brand{
+    text-align:center; margin-bottom:18px;
+    .logo{
+      font-weight:900; font-size:34px; letter-spacing:.6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.2);
+      background: linear-gradient(90deg, #fff, #8fd3ff);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 3px 18px rgba(77,208,225,.12));
+    }
+    .subtitle{ color:$fh-muted; margin-top:2px; font-size:12px }
+  }
+
+  .lbl{ display:block; margin:10px 0 6px; font-weight:600; font-size:13px }
+
+  .field{
+    position:relative;
+    display:flex; flex-direction: row; align-items:center;
+    gap:8px; padding:12px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:#0f141b;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+
+    // Ícono a la izquierda
+    .ico{ opacity:.8; width:1em; height:1em }
+
+    // Input sin color/fondo; sólo foco en el contenedor
+    input{ background: none !important;  color:$fh-text; border:0; outline:none; padding:0; height:22px;
+      font-size:.98rem; width: 100% !important;
+
+      &::placeholder { color: rgba(255,255,255,.4) }
+      &:focus { outline:none }
+    }
+
+    // Botón ojo
+    .eye{
+      border:0; background:transparent; color:$fh-muted; font-size:18px; position: absolute; right: 40px; place-items:center;
+      width:28px; height:28px; border-radius:8px; cursor:pointer;
+      transition: background .2s ease, transform .06s ease;
+      padding: 0 !important;
+      &:hover{ background:rgba(255,255,255,.06) }
+      &:active{ transform: scale(.98) }
+    }
+
+    // Hint/errores
+    .hint{ grid-column: 1 / -1; margin-top:6px; font-size:12px; color:#ffb4b4 }
+
+    // Efecto focus (en todo el bloque, no en el input)
+    &:focus-within{
+      border-color: $fh-primary;
+      box-shadow: 0 0 0 2px rgba($fh-primary, .3);
+      background: #111823;
+    }
+
+    &.is-error{
+      border-color:#5a2d2d; box-shadow:0 0 0 2px rgba(255, 88, 88, .15) inset;
+    }
+  }
+
+  /* Ocultar ojo nativo (Edge/IE) */
+  input::-ms-reveal,
+  input::-ms-clear{ display:none; }
+
+  .error{
+    margin:12px 0; padding:10px; border:1px solid #5a2d2d; background:#3a1f1f; border-radius:12px; color:#ffb4b4;
+  }
+
+  .submit{
+    width:100%; margin-top:10px; background:$fh-primary; border:none; color:white; padding:.92rem 1rem;
+    border-radius:12px; font-weight:800; letter-spacing:.3px;
+    box-shadow: 0 8px 20px rgba(68,113,141,.35);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+
+    &:hover:not(:disabled){
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(68,113,141,.5);
+      filter: brightness(1.04);
+    }
+    &:active:not(:disabled){
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(68,113,141,.3);
+    }
+    &:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none }
+  }
+
+  .linksRow{
+    margin-top:12px; display:flex; justify-content:center; gap:16px;
+    a{ color:$fh-accent; font-size:13px; opacity:.9; text-decoration:none; transition: color .2s ease, opacity .2s ease;
+      &:hover{ color: lighten($fh-accent, 10%); opacity:1; text-decoration:underline }
+    }
+  }
+}
+
+/* Pequeñas mejoras en móviles */
+@media (max-width: 420px){
+  .loginCard{
+    padding:22px 18px;
+    .logo{ font-size:30px }
+  }
+}
+
+/* ===== Fix autofill azul de Chrome/Safari y foco accesible ===== */
+
+/* Quita el recuadro/overlay azul del autofill y mantiene tus colores */
+.loginCard .field input:-webkit-autofill,
+.loginCard .field input:-webkit-autofill:hover,
+.loginCard .field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: $fh-text !important;
+  caret-color: $fh-text;
+  /* Pinta el fondo con tu color, tapando el azul del navegador */
+  -webkit-box-shadow: 0 0 0px 1000px #0f141b inset !important;
+  box-shadow: 0 0 0px 1000px #0f141b inset !important;
+  transition: background-color 9999s ease-in-out 0s; /* truco para WebKit */
+}
+
+/* Quita el outline nativo del input, usamos el foco del wrapper */
+.loginCard .field input:focus,
+.loginCard .field input:focus-visible {
+  outline: none;
+}
+
+/* Foco personalizado en todo el campo para accesibilidad */
+.loginCard .field:focus-within {
+  border-color: rgba(111,168,255,.9);
+  box-shadow:
+    0 0 0 2px rgba(111,168,255,.20),
+    0 0 0 2px rgba(111,168,255,.12) inset;
+}
+
+/* Evita highlight azul al tocar en iOS */
+.loginCard { -webkit-tap-highlight-color: transparent; }
+/* ==== Reutilizables Forgot/Reset y fixes ==== */
+.loginCard {
+  .success{
+    text-align:center;
+    color:#cde7ff;
+    background: rgba(40,80,120,.18);
+    border:1px solid rgba(160,200,255,.18);
+    padding:12px; border-radius:12px; margin-top:6px;
+  }
+  /* hint también fuera de .field si lo usamos suelto */
+  .hint{ font-size:12px; color:#ffb4b4; }
+}
+
+/* Quita focus ring nativo y pinta nuestro focus bonito */
+.loginCard .field input { outline: none; }
+.loginCard .field:focus-within{
+  border-color: rgba(120,180,255,.45);
+  box-shadow:
+    0 0 0 2px rgba(120,180,255,.12) inset,
+    0 10px 24px rgba(0,0,0,.25);
+}
+
+/* Autocomplete Safari/Chrome sin “fondo celeste/amarillo” */
+.loginCard .field input:-webkit-autofill,
+.loginCard .field input:-webkit-autofill:hover,
+.loginCard .field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: $fh-text;
+  transition: background-color 9999s ease-out 0s;
+  box-shadow: 0 0 0px 1000px #0f141b inset !important; /* mismo bg de .field */
+  caret-color: $fh-text;
+}
+
+/* ===== Loader para botones ===== */
+.submit.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.submit.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  animation: fh-spin .8s linear infinite;
+  -webkit-animation: fh-spin .8s linear infinite;
+}
+@keyframes fh-spin { to { transform: rotate(360deg); } }

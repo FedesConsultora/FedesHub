@@ -1,19 +1,26 @@
-import AppGrid from '../../components/AppGrid/AppGrid'
-
-const APPS = [
-  { code:'feders',  name:'Feders',        emoji:'👤', path:'/feders' },
-  { code:'cargos',  name:'Cargos',        emoji:'🧭', path:'/cargos' },
-  { code:'tareas',  name:'Tareas',        emoji:'✅', path:'/tareas',  disabled:true },
-  { code:'clientes',name:'Clientes',      emoji:'🤝', path:'/clientes',disabled:true },
-  { code:'auth',    name:'Admin (Auth)',  emoji:'🛡️', path:'/admin/usuarios' },
-]
+import { useState } from 'react'
+import TaskSummary from '../../components/dashboard/TaskSummary'
+import MetricsGrid from '../../components/dashboard/MetricsGrid'
+import CreateTaskModal from '../../components/tasks/CreateTaskModal'
+import './dashboard.scss'
 
 export default function Dashboard() {
+  const [showCreate, setShowCreate] = useState(false)
   document.title = 'FedesHub — Inicio'
+
   return (
-    <section className="card">
-      <h2 style={{marginBottom:8}}>Inicio</h2>
-      <AppGrid apps={APPS} />
-    </section>
+    <div className="dashboardWrap">
+      <div className="dashCols">
+        <TaskSummary onCreate={() => setShowCreate(true)} />
+        <MetricsGrid />
+      </div>
+
+      {showCreate && (
+        <CreateTaskModal
+          onClose={() => setShowCreate(false)}
+          onCreated={() => setShowCreate(false)}
+        />
+      )}
+    </div>
   )
 }

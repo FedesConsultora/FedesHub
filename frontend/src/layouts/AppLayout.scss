@@ -1,21 +1,52 @@
 @use '../styles/variables' as *;
 
-.appLayout{ min-height:100vh; display:flex; flex-direction:column; background:$fh-bg; color:$fh-text }
-.appMain{ width:min(1200px, 96vw); margin:16px auto; display:block }
-.card{ background:$fh-card; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; }
-.toolbar{ display:flex; gap:8px; margin: 8px 0 12px; }
-.chipset{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-.chip{ background:#0f141b; border:1px solid rgba(255,255,255,.12); color:$fh-text; border-radius:16px; padding:.35rem .6rem; }
-.chip.active{ border-color:$fh-accent; box-shadow:0 0 0 2px rgba(77,208,225,.15) inset; }
-.error{ margin:8px 0; padding:8px; border:1px solid #5a2d2d; background:#3a1f1f; border-radius:10px; color:#ffb4b4; }
-.primary{ background:$fh-primary; border:none; color:white; padding:.6rem .9rem; border-radius:12px; font-weight:700; }
-.permGrid{
-  display:grid; grid-template-columns: 160px repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-top:12px;
+.appShell{
+  min-height: 100dvh;
+  background: #44718D;
+  background: radial-gradient(circle, rgba(68, 113, 141, 1) 0%, rgba(2, 0, 36, 1) 100%);
+  background-position: center;
+  color: $fh-text;
 }
-.pgHead{ font-size:.85rem; color:$fh-muted; padding:6px 8px }
-.pgMod{ font-weight:700; padding:8px }
-.pgCell{
-  height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f141b;
-  &:hover{ border-color:$fh-accent; }
+
+/* Contenedor centrado, con sidebar más angosto */
+.appBody{
+  /* contenedor centrado y acotado */
+  width: 100%;
+
+  display: grid;
+  /* sidebar + contenido (sidebar angosto y fluido) */
+  grid-template-columns: clamp(160px, 8vw, 200px) 1fr;
+  gap: 10px;
+
+  /* respiración en los bordes */
+  padding: 16px 12px 0;
+  align-items: start;
 }
-.pgCell.on{ background: rgba(77,208,225,.15); border-color:$fh-accent; }
+
+/* El main NO se sale: margen a la derecha + recorte del overflow */
+.appMain{
+  min-height: calc(100vh - 120px);
+  background: $fh-card;
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: $shadow-soft;
+
+  /* clave para evitar desbordes */
+  max-width: 100%;
+  min-width: 0;
+
+  /* define un “container” para poder usar cqw en hijos (kanban, etc.) */
+  container-type: inline-size;
+}
+
+@media (max-width: 980px){
+  .appBody{
+    grid-template-columns: 1fr;
+    padding: 12px 10px 0;
+  }
+  .appMain{
+    margin-right: 0; /* en móvil no dejamos margen extra */
+  }
+}

@@ -5,9 +5,10 @@ export default (sequelize, DataTypes) => {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tipo_id: { type: DataTypes.INTEGER, allowNull: false },
     nombre: { type: DataTypes.STRING(120) },
-    slug: { type: DataTypes.STRING(120) },
+    slug: { type: DataTypes.STRING(120), unique: true },
     topic: { type: DataTypes.STRING(240) },
     descripcion: { type: DataTypes.TEXT },
+    imagen_url: { type: DataTypes.TEXT },
     is_privado: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     is_archivado: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     only_mods_can_post: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
@@ -21,7 +22,13 @@ export default (sequelize, DataTypes) => {
     tableName: 'ChatCanal',
     underscored: true,
     createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    updatedAt: 'updated_at',
+    indexes: [
+      { name: 'IX_ChatCanal_archivado', fields: ['is_archivado'] },
+      { name: 'IX_ChatCanal_tipo_id', fields: ['tipo_id'] },
+      { name: 'IX_ChatCanal_celula', fields: ['celula_id'] },
+      { name: 'IX_ChatCanal_cliente', fields: ['cliente_id'] },
+    ]
   });
   return ChatCanal;
 };

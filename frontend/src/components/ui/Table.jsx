@@ -1,3 +1,5 @@
+// /frontend/src/components/ui/Table.jsx
+
 export default function Table({ columns = [], rows = [], keyField = 'id', empty = 'Sin datos' }) {
   return (
     <div style={{ overflowX: 'auto' }}>

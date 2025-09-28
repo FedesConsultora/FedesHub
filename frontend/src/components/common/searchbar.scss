@@ -1,0 +1,65 @@
+@use '../../styles/variables' as *;
+
+// fallbacks suaves
+$fh-primary:  if(global-variable-exists(fh-primary),  $fh-primary,  #44718D);
+$fh-text:     if(global-variable-exists(fh-text),     $fh-text,     #e8eef6);
+$fh-muted:    if(global-variable-exists(fh-muted),    $fh-muted,    #a6b3c3);
+
+.fh-searchbar{
+  min-width: 0;
+    
+  .barra_busqueda{
+    position:relative; min-width:0;
+    padding:.65rem .65rem; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:#0f141b; color:$fh-text;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    display: flex;
+    .ico{ opacity:.8; width:1em; height:1em }
+
+    input{
+      min-width:0; width:100%;
+      color:$fh-text; background:transparent; border:0; outline:0; height:22px;
+      &::placeholder{ color: rgba(255,255,255,.45) }
+    }
+
+    .clear{
+      border:0; background:transparent; color:$fh-muted;
+      width:28px; height:28px; display:grid; place-items:center; border-radius:8px; cursor:pointer;
+      transition: background .15s ease, transform .06s ease;
+      &:hover{ background:rgba(255,255,255,.06) }
+      &:active{ transform: scale(.96) }
+      svg{ width:14px; height:14px }
+    }
+
+    &:focus-within{
+      border-color:$fh-primary;
+      background:#101a25;
+      box-shadow:0 0 0 2px rgba($fh-primary,.26);
+    }
+  }
+
+  .submit{
+    display:inline-flex; align-items:center; gap:8px;
+    height:42px; padding:0 .9rem;
+    border-radius:12px; color:#fff; background:$fh-primary; border:1px solid transparent;
+    font-weight:700; cursor:pointer;
+    box-shadow: 0 10px 24px rgba(68,113,141,.25);
+    transition: filter .18s ease, transform .12s ease, box-shadow .18s ease;
+
+    &:hover{ filter:brightness(1.06) }
+    &:active{ transform: translateY(1px) }
+
+    &[disabled]{ opacity:.65; cursor:not-allowed; box-shadow:none }
+    svg{ width:14px; height:14px }
+  }
+}
+
+/* Variante compacta opcional */
+.fh-searchbar.compact{
+  .field{ padding:.5rem .55rem; }
+  .submit{ height:38px }
+}
+
+@media (max-width: 560px){
+}

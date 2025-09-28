@@ -13,7 +13,12 @@ export default (sequelize, DataTypes) => {
   }, {
     tableName: 'ChatLinkPreview',
     underscored: true,
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      { name: 'IX_ChatLinkPreview_msg', fields: ['mensaje_id'] },
+      { name: 'IX_ChatLinkPreview_url', fields: ['url'] },
+      { name: 'UQ_ChatLinkPreview_msg_url', unique: true, fields: ['mensaje_id','url'] }
+    ]
   });
   return ChatLinkPreview;
 };

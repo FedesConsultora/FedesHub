@@ -1,0 +1,21 @@
+@use '../../../styles/variables' as *;
+
+.cal-day-details{
+  display:grid; gap:10px;
+  .actions{ display:flex; justify-content:flex-end; }
+  .empty{ padding:20px; text-align:center; color:$fh-muted; }
+  .item{
+    display:grid; grid-template-columns: 6px 1fr auto; gap:10px; align-items:center;
+    padding:10px; border:1px solid $border; border-radius:12px; background:rgba(255,255,255,.02);
+    .bar{ width:6px; height:100%; border-radius:6px; }
+    .ttl{ font-weight:800; }
+    .meta{ color:$fh-muted; font-size:.9rem; }
+    .asist{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;
+      .chip{ font-size:.8rem; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid $border; }
+    }
+    .ops{ display:flex; gap:8px; align-items:center;
+      .fh-btn.outline{ background:transparent; border:1px solid rgba(255,100,100,.45); color:#ff7070; padding-top: 0.3rem; }
+      .fh-btn.outline:hover{ background:rgba(255,100,100,.06); }
+    }
+  }
+}

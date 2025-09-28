@@ -8,7 +8,7 @@ export default (sequelize, DataTypes) => {
     invited_email: { type: DataTypes.STRING(255) },
     invited_by_user_id: { type: DataTypes.INTEGER, allowNull: false },
     status: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'pending' },
-    token: { type: DataTypes.STRING(64) },
+    token: { type: DataTypes.STRING(64), unique: true },
     expires_at: { type: DataTypes.DATE },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     responded_at: { type: DataTypes.DATE }
@@ -16,7 +16,12 @@ export default (sequelize, DataTypes) => {
     tableName: 'ChatInvitacion',
     underscored: true,
     createdAt: 'created_at',
-    updatedAt: false
+    updatedAt: false,
+    indexes: [
+      { name: 'IX_ChatInvitacion_canal', fields: ['canal_id'] },
+      { name: 'IX_ChatInvitacion_user', fields: ['invited_user_id'] },
+      { name: 'IX_ChatInvitacion_email', fields: ['invited_email'] }
+    ]
   });
   return ChatInvitacion;
 };

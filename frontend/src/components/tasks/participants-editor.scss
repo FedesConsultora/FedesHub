@@ -1,0 +1,112 @@
+@use '../../styles/variables' as *;
+
+/* ===== Editor de participantes (compacto + acordeón) ===== */
+$surface: rgba(14,18,26,.78);
+$border: rgba(255,255,255,.08);
+$border-strong: rgba(255,255,255,.14);
+$muted: $fh-muted;
+$text: $fh-text;
+
+.participantsEditor{
+  display:grid; gap:12px; /* más apretado */
+}
+
+/* ---- Acordeón ---- */
+.pe-accordion{
+  background:$surface; border:1px solid $border; border-radius:14px;
+}
+
+.pe-headBtn{
+  width:100%; background:transparent; border:0; color:$text; cursor:pointer;
+  display:grid; grid-template-columns: auto 1fr auto; align-items:center; gap:10px;
+  padding:10px 12px;
+
+  .pe-title{ display:flex; align-items:center; gap:8px; font-weight:800; }
+  .pe-count{
+    font-size:.82rem; font-weight:800; padding:2px 8px; border-radius:999px;
+    color:$text; background:rgba(255,255,255,.06); border:1px solid $border;
+  }
+
+  .chev{ transition: transform .18s ease; opacity:.9; }
+  &[aria-expanded="true"] .chev{ transform: rotate(180deg); }
+}
+
+/* fila de avatares resumen */
+.pe-avatars{
+  display:flex; align-items:center; gap:6px;
+  .fhAvatar{ width:28px; height:28px; border-radius:999px; border:1px solid $border; }
+  .pe-more{ font-size:.8rem; color:$muted; }
+}
+
+.pe-body{
+  display:grid; gap:10px; padding: 0 12px 12px;
+  border-top:1px solid $border;
+}
+
+/* Buscar + candidatos */
+.pe-addRow{ display:grid; gap:8px; }
+.pe-addRow input{
+  width:100%; padding:10px 12px; border-radius:10px;
+  border:1px solid $border; background:#0f1419; color:$text; outline:none;
+  &:focus{ border-color: rgba($fh-primary,.7); box-shadow:0 0 0 3px rgba($fh-primary,.18); }
+}
+.pe-candidates{ display:grid; gap:6px; }
+.pe-candidate{
+  display:grid; grid-template-columns: 24px 1fr auto;
+  align-items:center; gap:10px;
+  padding:8px 10px; border-radius:12px;
+  background:#151b22; border:1px solid $border;
+  color:$text; cursor:pointer;
+  > span:last-child{ font-weight:900; font-size:18px; line-height:0; opacity:.9; }
+  &:hover{ background:#1a2028; border-color: rgba($fh-primary,.6); }
+}
+.pe-moreBtn{
+  border:1px dashed $border-strong; background:transparent; color:$text;
+  padding:6px 10px; border-radius:10px; cursor:pointer; justify-self:start;
+}
+
+/* Lista actual más densa + espacio pequeño entre tarjetas */
+.pe-list{ display:grid; gap:6px; }
+.pe-item{
+  display:grid; grid-template-columns: 32px 1fr auto;
+  align-items:center; gap:8px;
+  padding:8px 10px; border-radius:12px;
+  background:#0f151b; border:1px solid $border;
+
+  &.dense{ padding:6px 8px; }
+
+  img, .fhAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:1px solid $border; }
+
+  .pe-info{ min-width:0; }
+  .pe-name{ font-weight:700; color:$text; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .pe-actions{
+    display:flex; align-items:center; gap:8px;
+
+    .leaderToggle{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; cursor:pointer;
+      color:#e3cf8a; background:transparent; border:1px solid rgba(245,184,0,.25);
+      font-weight:700;
+      .crown{ color:#f5b800; }
+      &.on{ background:rgba(245,184,0,.12); border-color:rgba(245,184,0,.5); }
+    }
+
+    .pe-rol{
+      min-width: 140px;
+      padding:6px 10px; border-radius:8px;
+      border:1px solid $border; background:#0f1419; color:$text; font-size:.9rem;
+      outline:none;
+      &:focus{ border-color: rgba($fh-primary,.7); box-shadow:0 0 0 3px rgba($fh-primary,.18); }
+    }
+
+    .link.danger{
+      color:#f87171; background:transparent; border:none; cursor:pointer; font-weight:700;
+      padding:6px 8px; border-radius:8px;
+      &:hover{ background:rgba(248,113,113,.12); }
+    }
+  }
+}
+
+.muted{ color:$muted; }
+.empty{ color:$muted; padding:4px 0; }

@@ -1,4 +1,3 @@
-// backend/src/modules/clientes/repositories/clientes.repo.js
 // ───────────────────────────────────────────────────────────────────────────────
 // Repos de bajo nivel (Sequelize + SQL) para clientes, contactos y resúmenes.
 import { QueryTypes } from 'sequelize';
@@ -39,21 +38,47 @@ const baseSelect = `
 `;
 
 const metricsCTE = `
-  WITH t AS (
-    SELECT t.cliente_id,
-           COUNT(*)::int AS total_tareas,
-           SUM(CASE WHEN te.codigo IN ('finalizada','cancelada') THEN 0 ELSE 1 END)::int AS tareas_abiertas
+  WITH mx AS (
+    SELECT
+      t.cliente_id,
+      COUNT(*)::int AS total_tareas,
+      SUM(
+        CASE
+          WHEN te.codigo IN ('finalizada','cancelada')
+               OR t.is_archivada = true
+            THEN 0
+          ELSE 1
+        END
+      )::int AS tareas_abiertas
     FROM "Tarea" t
     JOIN "TareaEstado" te ON te.id = t.estado_id
     GROUP BY t.cliente_id
   )
 `;
 
+export const listClienteTipos = async () =>
+  models.ClienteTipo.findAll({
+    attributes: ['id','codigo','nombre','ponderacion'],
+    order: [['ponderacion','DESC'], ['nombre','ASC']]
+  });
+
+export const listClienteEstados = async () =>
+  models.ClienteEstado.findAll({
+    attributes: ['id','codigo','nombre'],
+    order: [['nombre','ASC']]
+  });
+
+export const listCelulasLite = async () =>
+  models.Celula.findAll({
+    attributes: ['id','nombre','slug'],
+    order: [['nombre','ASC']]
+  });
+
 // Listado con filtros + métricas opcionales
 export const listClientes = async (q) => {
   const {
     q: search, celula_id, tipo_id, tipo_codigo, estado_id, estado_codigo,
-    ponderacion_min, ponderacion_max, limit, offset, order_by, order, with_metrics
+    ponderacion_min, ponderacion_max, limit=50, offset=0, order_by, order, with_metrics
   } = q;
 
   const repl = { limit, offset };
@@ -80,11 +105,17 @@ export const listClientes = async (q) => {
   sql += ` ORDER BY ${allowed[order_by] ?? 'c.nombre'} ${order?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'}`;
   sql += ` LIMIT :limit OFFSET :offset`;
 
-  // Métricas
+  // Métricas (inyectamos columnas desde el CTE envolviendo la query)
   if (with_metrics) {
-    const rows = await sequelize.query(`${metricsCTE} ${sql.replace('FROM "Cliente" c', 'FROM "Cliente" c LEFT JOIN t ON t.cliente_id = c.id')}
-      `, { type: QueryTypes.SELECT, replacements: repl });
-    return rows.map(r => ({ ...r, total_tareas: r.total_tareas ?? 0, tareas_abiertas: r.tareas_abiertas ?? 0 }));
+    const wrapped = `
+      ${metricsCTE}
+      SELECT q.*,
+             COALESCE(mx.total_tareas,0)::int    AS total_tareas,
+             COALESCE(mx.tareas_abiertas,0)::int AS tareas_abiertas
+      FROM ( ${sql} ) q
+      LEFT JOIN mx ON mx.cliente_id = q.id
+    `;
+    return sequelize.query(wrapped, { type: QueryTypes.SELECT, replacements: repl });
   }
 
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
@@ -115,18 +146,18 @@ export const countClientes = async (q) => {
 
 // Detalle con contactos + métricas + “gerentes” (roles activos de la célula)
 export const getClienteById = async (id) => {
-  const [rows] = await sequelize.query(`
+  const rows = await sequelize.query(`
     ${metricsCTE}
     SELECT c.*, ct.codigo AS tipo_codigo, ct.nombre AS tipo_nombre,
            es.codigo AS estado_codigo, es.nombre AS estado_nombre,
            ce.nombre AS celula_nombre,
-           COALESCE(t.total_tareas,0)::int AS total_tareas,
-           COALESCE(t.tareas_abiertas,0)::int AS tareas_abiertas
+           COALESCE(mx.total_tareas,0)::int    AS total_tareas,
+           COALESCE(mx.tareas_abiertas,0)::int AS tareas_abiertas
     FROM "Cliente" c
     JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
     JOIN "ClienteEstado" es ON es.id = c.estado_id
     JOIN "Celula" ce ON ce.id = c.celula_id
-    LEFT JOIN t ON t.cliente_id = c.id
+    LEFT JOIN mx ON mx.cliente_id = c.id
     WHERE c.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });
 
@@ -138,7 +169,7 @@ export const getClienteById = async (id) => {
   });
 
   // Gerentes de la célula: asignaciones activas (hasta null o >= hoy)
-  const [mgrs] = await sequelize.query(`
+  const mgrs = await sequelize.query(`
     SELECT a.id, a.feder_id, a.rol_tipo_id, a.es_principal,
            f.nombre, f.apellido, f.avatar_url,
            crt.codigo AS rol_codigo, crt.nombre AS rol_nombre

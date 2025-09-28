@@ -1,0 +1,13 @@
+@use '../../styles/variables' as *;
+
+/* Estilos comunes usados dentro de los modals de Usuarios */
+.fh-list{
+  margin-top:8px; max-height:220px; overflow:auto;
+  border:1px solid rgba(255,255,255,.10); border-radius:12px; padding:6px;
+  .item{ display:flex; align-items:center; gap:10px; padding:8px 6px; border-radius:10px; cursor:pointer;
+    &:hover{ background: rgba(255,255,255,.04); }
+  }
+}
+
+/* Radios y chipsets uniformes */
+label input[type="radio"]{ transform: translateY(1px); margin-right:6px; }

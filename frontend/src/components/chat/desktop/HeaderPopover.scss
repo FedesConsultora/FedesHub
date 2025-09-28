@@ -1,0 +1,148 @@
+@use '../../../styles/variables' as *;
+
+/* Capa invisible para cerrar al click-afuera (fuera del header también) */
+.hdrPop_scrim{
+  position: fixed; inset: 0; z-index: 950;
+  background: transparent;
+}
+
+/* Anclado al header (lado panel de mensajes) */
+.hdrPop_panel{
+  position: absolute; /* clave: anclado al .panel-header */
+  z-index: 960;
+  right: 12px; left: auto;
+  top: calc(100% + 8px);
+  width: min(560px, calc(100% - 24px));
+
+  background: $fh-bg; /* primario sólido */
+  color: #fff;
+  border-radius: $radius-2xl; box-shadow: $shadow-soft;
+  padding: 12px;
+
+  .hdrPop_header{
+    display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+    .avaWrap{
+      position:relative;
+      img{ width:48px; height:48px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,255,255,.22) }
+      .editBtn{
+        position:absolute; right:-6px; bottom:-6px; width:28px; height:28px;
+        display:grid; place-items:center; border-radius:999px; cursor:pointer;
+        background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35); color:#fff;
+        input{ display:none }
+        &:hover{ background:rgba(0,0,0,.26) }
+      }
+      .uploading{
+        position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
+        text-align:center; font-size:10px; font-weight:800; color:#fff;
+        text-shadow:0 1px 0 rgba(0,0,0,.5);
+      }
+    }
+    .meta{
+      min-width:0;
+      .title{ font-weight:900; font-size:1.05rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .row{ display:flex; gap:6px; align-items:center; color:rgba(255,255,255,.9); margin-top:4px; &.small{ font-size:.86rem } }
+    }
+    .actions{
+      display:flex; gap:8px; align-items:center;
+      .chip{
+        display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; cursor:pointer;
+        &.ghost{ background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35); color:#fff }
+        &.primary{ background:#0f1720; border:0; color:#fff }
+      }
+    }
+  }
+
+  /* Form de edición */
+  .editForm{
+    margin-top:8px;
+    padding:8px; border-radius:12px;
+    background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35);
+    .fLbl{ display:block; margin:8px 0 6px; font-weight:800; }
+    .fField{
+      position:relative; display:grid; grid-template-columns:22px 1fr; align-items:center;
+      gap:8px; padding:10px; border-radius:10px; margin-bottom:8px;
+      background:#0f141b; border:1px solid rgba(255,255,255,.28);
+      .ico{ opacity:.95 }
+      input{ background:transparent; border:0; outline:none; color:$fh-text; font-size:.98rem; }
+      &:focus-within{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.2) }
+    }
+    .fChecks{
+      display:flex; flex-wrap:wrap; gap:12px; margin:6px 0 2px;
+      .check{ display:inline-flex; align-items:center; gap:8px; font-weight:700;
+        input{ accent-color:#fff }
+      }
+    }
+    .editActions{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px;
+      .chip{
+        display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; cursor:pointer;
+        &.ghost{ background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35); color:#fff }
+        &.primary{ background:#0f1720; border:0; color:#fff }
+      }
+    }
+  }
+
+  /* DM card */
+  .dmCard{
+    margin-top:8px; display:grid; gap:6px;
+    .row{
+      display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center;
+      padding:8px 10px; border-radius:10px; background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35);
+      .lab{ font-weight:800; }
+      .val{ display:flex; align-items:center; gap:8px }
+      .dot{ width:8px; height:8px; border-radius:50% }
+    }
+  }
+
+  /* Tabs + listas */
+  .hdrPop_tabs{
+    display:flex; gap:6px; align-items:center; margin:10px 0 10px;
+    button{
+      padding:6px 10px; border-radius:8px; background:rgba(0,0,0,.18); color:#fff;
+      border:1px solid rgba(255,255,255,.35); cursor:pointer; font-weight:700;
+      &.active{ background:#0f1720; border-color: transparent }
+    }
+  }
+
+  .list{ display:grid; gap:6px; max-height:260px; overflow:auto; }
+  .row{
+    display:flex; gap:10px; align-items:center; padding:6px 8px; border-radius:10px;
+    background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35);
+    .ava{
+      width:28px; height:28px; border-radius:50%; background:#192130; color:#fff; display:grid; place-items:center; font-weight:800;
+      border:1px solid rgba(255,255,255,.35);
+    }
+    .meta{ display:flex; flex-direction:column; }
+    .name{ font-weight:700; margin-bottom:2px; color:#fff }
+    .sub{ display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.9); font-size:.86rem; }
+    .rol{ padding:2px 6px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(0,0,0,.2); font-size:.78rem; }
+  }
+
+  .placeholder{ color:#fff; opacity:.9; padding:.6rem }
+
+  .fileList{ display:grid; gap:6px; max-height:260px; overflow:auto; }
+  .fileRow{
+    display:grid; grid-template-columns: 28px 1fr auto; align-items:center; gap:10px;
+    padding:6px 8px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.35);
+    color:#fff; text-decoration:none;
+    .ico{ display:grid; place-items:center; width:22px; height:22px; opacity:.95; }
+    .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .muted{ opacity:.9; font-size:.86rem; }
+    &:hover{ background:rgba(0,0,0,.24) }
+  }
+
+  .imgGrid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(92px,1fr)); gap:8px;
+    max-height:260px; overflow:auto;
+    .placeholder{ grid-column:1/-1 }
+  }
+  .imgCell{
+    display:block; border-radius:10px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.35);
+    img{ display:block; width:100%; height:100%; object-fit:cover; }
+    &:hover{ filter:brightness(1.05) }
+  }
+}
+.roleSelect select{
+  background:#0f141b; color:#fff; border:1px solid rgba(255,255,255,.35);
+  border-radius:8px; padding:2px 8px; font-weight:800; font-size:.82rem;
+}

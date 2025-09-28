@@ -1,0 +1,27 @@
+@use '../../styles/variables' as v;
+
+.fhCelulas{
+  margin-top:18px;
+  h3{ margin:0 0 10px }
+  .grid{
+    display:grid; gap:12px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+.celCard{
+  background: v.$fh-card; border-radius: v.$radius-2xl; padding:12px;
+  border:1px solid rgba(255,255,255,.08); box-shadow: v.$shadow-soft;
+  .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
+  .chip{
+    margin-left:auto;
+    padding:2px 8px; border-radius:999px; font-size:.8em; text-transform:capitalize;
+    border:1px solid rgba(255,255,255,.12); background: lighten(v.$fh-card, 4%);
+    &.activa{ color:#a3ffcf; border-color: rgba(69,173,124,.35) }
+    &.pausada{ color:#ffd59d }
+    &.cerrada{ color:#ffb4b4 }
+  }
+  .miembros{ display:flex; flex-direction:column; gap:8px }
+  .empty{
+    opacity:.75; text-align:center; padding:6px 0;
+  }
+}

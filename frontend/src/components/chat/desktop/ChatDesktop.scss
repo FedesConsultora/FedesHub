@@ -1,0 +1,43 @@
+@use '../../../styles/variables' as *;
+
+.chat-desktop{
+  /* altura consistente: panel scrollea, no la página */
+  height: calc(100vh - 160px);
+  display:flex;
+  gap:0;
+  position: relative;
+  .dock{
+    width:340px; 
+    border-right:1px solid rgba(255,255,255,.06);
+    padding:10px;
+    .addBtn{
+      width:28px; height:28px; 
+      border-radius:10px; 
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.05); 
+      color:$fh-text; cursor:pointer; 
+      padding: 0;
+      &:hover{ filter: brightness(1.15) }
+    }
+  }
+  .panel{
+    position: relative;
+    flex:1 1 auto; 
+    display:flex; 
+    flex-direction:column; 
+    min-width:0; 
+  }
+
+  .chat-dropzone{
+    position: relative;
+    flex:1 1 auto; display:flex; flex-direction:column; min-height:0;
+  }
+}
+
+.composeArea {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: linear-gradient(to top, rgba(15,23,32,0.95) 60%, rgba(15,23,32,0));
+  padding-top: 4px; 
+}

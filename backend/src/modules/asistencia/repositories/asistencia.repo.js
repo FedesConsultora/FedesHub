@@ -82,7 +82,8 @@ const baseSelect = `
     ar.cierre_motivo_id, cm.codigo as cierre_motivo_codigo, cm.nombre as cierre_motivo_nombre,
     ar.modalidad_id, mt.codigo AS modalidad_codigo, mt.nombre AS modalidad_nombre,
     ar.comentario, ar.created_at, ar.updated_at,
-    EXTRACT(EPOCH FROM (COALESCE(ar.check_out_at, NOW()) - ar.check_in_at))/60.0 AS minutos_trabajados
+    EXTRACT(EPOCH FROM (COALESCE(ar.check_out_at, NOW()) - ar.check_in_at))/60.0 AS minutos_trabajados,
+    EXTRACT(EPOCH FROM (COALESCE(ar.check_out_at, NOW()) - ar.check_in_at))::int    AS segundos_trabajados
   FROM "AsistenciaRegistro" ar
   JOIN "Feder" f ON f.id = ar.feder_id
   LEFT JOIN "AsistenciaOrigenTipo" oin  ON oin.id  = ar.check_in_origen_id
@@ -283,4 +284,49 @@ export const resumenPorPeriodo = async ({ desde, hasta, celula_id, feder_id }) =
     ORDER BY fecha ASC, apellido ASC, nombre ASC
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
+};
+export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
+  // día en límites [00:00, 24:00) del servidor
+  const sql = `
+    WITH bounds AS (
+      SELECT
+        (:fecha::date)::timestamptz             AS day_start,
+        (:fecha::date + INTERVAL '1 day')::timestamptz AS day_end
+    )
+    SELECT
+      ar.id,
+      f.id      AS feder_id,
+      f.nombre  AS feder_nombre,
+      f.apellido AS feder_apellido,
+      mt.codigo AS modalidad_codigo,
+      mt.nombre AS modalidad_nombre,
+
+      GREATEST(ar.check_in_at,  (SELECT day_start FROM bounds))   AS seg_start_at,
+      LEAST  (COALESCE(ar.check_out_at, NOW()), (SELECT day_end FROM bounds)) AS seg_end_at,
+
+      -- offsets relativos al inicio del día (para dibujar)
+      FLOOR(EXTRACT(EPOCH FROM (GREATEST(ar.check_in_at, (SELECT day_start FROM bounds)) - (SELECT day_start FROM bounds)))/60.0)::int AS start_min,
+      CEIL (EXTRACT(EPOCH FROM (LEAST  (COALESCE(ar.check_out_at, NOW()), (SELECT day_end FROM bounds)) - (SELECT day_start FROM bounds)))/60.0)::int AS end_min,
+
+      EXTRACT(EPOCH FROM (
+        LEAST  (COALESCE(ar.check_out_at, NOW()), (SELECT day_end FROM bounds)) -
+        GREATEST(ar.check_in_at, (SELECT day_start FROM bounds))
+      ))::int AS segundos
+
+    FROM "AsistenciaRegistro" ar
+    JOIN "Feder" f ON f.id = ar.feder_id
+    LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
+    WHERE
+      -- que el tramo se superponga con el día
+      ar.check_in_at <  (SELECT day_end   FROM bounds)
+      AND COALESCE(ar.check_out_at, NOW()) > (SELECT day_start FROM bounds)
+      -- filtros opcionales
+      AND (:feder_id::int IS NULL OR ar.feder_id = :feder_id)
+      AND (:celula_id::int IS NULL OR f.celula_id = :celula_id)
+    ORDER BY f.apellido ASC, f.nombre ASC, seg_start_at ASC
+  `;
+  return sequelize.query(sql, {
+    type: QueryTypes.SELECT,
+    replacements: { fecha, feder_id: feder_id ?? null, celula_id: celula_id ?? null }
+  });
 };

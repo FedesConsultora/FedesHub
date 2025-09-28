@@ -1,4 +1,3 @@
-// backend/src/modules/tareas/repositories/tareas.repo.js
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
 import { initModels } from '../../../models/registry.js';
@@ -39,52 +38,133 @@ export const calcPrioridad = (ponderacion, puntosImpacto, puntosUrgencia) =>
   (ponderacion * 100) + (puntosImpacto || 0) + (puntosUrgencia || 0);
 
 // ---- Scoping (básico): si solo_mias=true limita a creador/responsable/colaborador
+// ---- EXTENDIDO: + filtros múltiples, flags, rango de prioridad y todos los rangos de fecha
 export const buildListSQL = (params = {}, currentUser) => {
   const {
-    q, cliente_id, hito_id, estado_id, responsable_feder_id, colaborador_feder_id,
-    etiqueta_id, solo_mias, include_archivadas, vencimiento_from, vencimiento_to,
+    q,
+    // unitarios
+    cliente_id, hito_id, estado_id, responsable_feder_id, colaborador_feder_id,
+    tarea_padre_id,
+    etiqueta_id, impacto_id, urgencia_id, aprobacion_estado_id,
+    // múltiples
+    cliente_ids = [], estado_ids = [], etiqueta_ids = [],
+    // flags
+    solo_mias, include_archivadas, is_favorita, is_seguidor,
+    // fechas
+    vencimiento_from, vencimiento_to,
+    inicio_from, inicio_to,
+    created_from, created_to,
+    updated_from, updated_to,
+    finalizada_from, finalizada_to,
+    // prioridad
+    prioridad_min, prioridad_max,
+    // orden/paginación
     orden_by='prioridad', sort='desc', limit=50, offset=0
   } = params;
 
   const repl = { limit, offset };
   const where = [];
 
-  let sql = `
+    let sql = `
     SELECT
-      t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id,
+      t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id, t.tarea_padre_id,
       t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       t.impacto_id, it.puntos AS impacto_puntos, t.urgencia_id, ut.puntos AS urgencia_puntos,
-      t.prioridad_num, t.vencimiento, t.fecha_inicio, t.is_archivada,
-      t.progreso_pct, t.orden_kanban, t.created_at, t.updated_at,
+      t.aprobacion_estado_id,
+      t.prioridad_num, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
+      t.progreso_pct, t.created_at, t.updated_at,
+      tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.nombre AS cliente_nombre,
       h.nombre AS hito_nombre,
-      (SELECT json_agg(json_build_object('feder_id',tr.feder_id,'es_lider',tr.es_lider))
-         FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id) AS responsables,
+
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tr.feder_id,
+                  'es_lider', tr.es_lider,
+                  'feder', json_build_object(
+                    'id', f.id, 'user_id', f.user_id, 'nombre', f.nombre, 'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaResponsable" tr
+         JOIN "Feder" f ON f.id = tr.feder_id
+        WHERE tr.tarea_id = t.id) AS responsables,
+
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tc.feder_id,
+                  'rol', tc.rol,
+                  'feder', json_build_object(
+                    'id', f.id, 'user_id', f.user_id, 'nombre', f.nombre, 'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaColaborador" tc
+         JOIN "Feder" f ON f.id = tc.feder_id
+        WHERE tc.tarea_id = t.id) AS colaboradores,
+
       (SELECT json_agg(json_build_object('etiqueta_id',tea.etiqueta_id))
          FROM "TareaEtiquetaAsig" tea WHERE tea.tarea_id = t.id) AS etiquetas,
+
       EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid) AS is_favorita,
       EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid) AS is_seguidor
+
     FROM "Tarea" t
     JOIN "TareaEstado" te ON te.id = t.estado_id
     LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
     LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
   `;
+
 
   repl.uid = currentUser?.id ?? 0;
 
-  if (q) { where.push(`(t.titulo ILIKE :q OR COALESCE(t.descripcion,'') ILIKE :q)`); repl.q = `%${q}%`; }
-  if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
-  if (hito_id) { where.push(`t.hito_id = :hito_id`); repl.hito_id = hito_id; }
-  if (estado_id) { where.push(`t.estado_id = :estado_id`); repl.estado_id = estado_id; }
-  if (include_archivadas !== true) where.push(`t.is_archivada = false`);
-  if (vencimiento_from) { where.push(`t.vencimiento >= :vfrom`); repl.vfrom = vencimiento_from; }
-  if (vencimiento_to) { where.push(`t.vencimiento <= :vto`); repl.vto = vencimiento_to; }
-  if (responsable_feder_id) { where.push(`EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:rf)`); repl.rf = responsable_feder_id; }
-  if (colaborador_feder_id) { where.push(`EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:cf)`); repl.cf = colaborador_feder_id; }
-  if (etiqueta_id) { where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id=:et)`); repl.et = etiqueta_id; }
+  // Helper: IN dinámico con placeholders seguros
+  const addIn = (column, values, keyPrefix) => {
+    if (!values || !values.length) return;
+    const keys = values.map((_, i) => `${keyPrefix}${i}`);
+    where.push(`${column} IN (${keys.map(k => ':' + k).join(',')})`);
+    keys.forEach((k, i) => { repl[k] = values[i]; });
+  };
 
+  // Búsqueda
+  if (q) {
+    where.push(`(t.titulo ILIKE :q OR COALESCE(t.descripcion,'') ILIKE :q OR c.nombre ILIKE :q OR COALESCE(h.nombre,'') ILIKE :q)`);
+    repl.q = `%${q}%`;
+  }
+
+  // Filtros simples
+  if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
+  if (hito_id)    { where.push(`t.hito_id = :hito_id`);       repl.hito_id    = hito_id; }
+  if (estado_id)  { where.push(`t.estado_id = :estado_id`);   repl.estado_id  = estado_id; }
+  if (tarea_padre_id) { where.push(`t.tarea_padre_id = :parent_id`); repl.parent_id = tarea_padre_id; }
+  if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
+  if (urgencia_id){ where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
+  if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
+
+  // Filtros múltiples
+  addIn('t.cliente_id', cliente_ids, 'cids_');
+  addIn('t.estado_id',  estado_ids,  'eids_');
+
+  if (etiqueta_ids?.length) {
+    const keys = etiqueta_ids.map((_, i) => `et${i}`);
+    where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id IN (${keys.map(k => ':' + k).join(',')}))`);
+    keys.forEach((k, i) => { repl[k] = etiqueta_ids[i]; });
+  }
+
+  if (etiqueta_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id=:et)`);
+    repl.et = etiqueta_id;
+  }
+
+  // Flags
+  if (include_archivadas !== true) where.push(`t.is_archivada = false`);
+  if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);
+  if (is_seguidor === true) where.push(`EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid)`);
+
+  // Scoping personal
   if (solo_mias === true && currentUser) {
     const fid = currentUser.feder_id || -1;
     repl.fid = fid; repl.uid2 = currentUser.id;
@@ -96,15 +176,49 @@ export const buildListSQL = (params = {}, currentUser) => {
     )`);
   }
 
+  // Relacionales (responsables/colaboradores)
+  if (responsable_feder_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:rf)`);
+    repl.rf = responsable_feder_id;
+  }
+  if (colaborador_feder_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:cf)`);
+    repl.cf = colaborador_feder_id;
+  }
+
+  // Rangos de fechas
+  if (vencimiento_from) { where.push(`t.vencimiento >= :vfrom`); repl.vfrom = vencimiento_from; }
+  if (vencimiento_to)   { where.push(`t.vencimiento <= :vto`);   repl.vto   = vencimiento_to; }
+  if (inicio_from)      { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
+  if (inicio_to)        { where.push(`t.fecha_inicio <= :ito`);   repl.ito   = inicio_to; }
+  if (created_from)     { where.push(`t.created_at >= :cfrom`);   repl.cfrom = created_from; }
+  if (created_to)       { where.push(`t.created_at <= :cto`);     repl.cto   = created_to; }
+  if (updated_from)     { where.push(`t.updated_at >= :ufrom`);   repl.ufrom = updated_from; }
+  if (updated_to)       { where.push(`t.updated_at <= :uto`);     repl.uto   = updated_to; }
+  if (finalizada_from)  { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
+  if (finalizada_to)    { where.push(`t.finalizada_at <= :fto`);   repl.fto   = finalizada_to; }
+
+  // Prioridad
+  if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
+  if (typeof prioridad_max === 'number') { where.push(`t.prioridad_num <= :pmax`); repl.pmax = prioridad_max; }
+
   if (where.length) sql += ` WHERE ${where.join(' AND ')}\n`;
 
-  const orderCol = orden_by === 'vencimiento' ? 't.vencimiento'
-                  : orden_by === 'created_at' ? 't.created_at'
-                  : 't.prioridad_num';
+  // Orden
+  const orderCol =
+      orden_by === 'vencimiento'   ? 't.vencimiento'
+    : orden_by === 'fecha_inicio'  ? 't.fecha_inicio'
+    : orden_by === 'created_at'    ? 't.created_at'
+    : orden_by === 'updated_at'    ? 't.updated_at'
+    : orden_by === 'cliente'       ? 'cliente_nombre'
+    : orden_by === 'titulo'        ? 't.titulo'
+    : 't.prioridad_num'; // default
+
   sql += ` ORDER BY ${orderCol} ${sort.toUpperCase()} NULLS LAST, t.id DESC LIMIT :limit OFFSET :offset`;
 
   return { sql, repl };
 };
+
 
 export const listTasks = async (params, currentUser) => {
   const { sql, repl } = buildListSQL(params, currentUser);
@@ -124,43 +238,107 @@ export const getTaskById = async (id, currentUser) => {
       t.*,
       te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
+      tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.id AS cliente_id, c.nombre AS cliente_nombre,
       h.id AS hito_id, h.nombre AS hito_nombre,
-      (SELECT json_agg(json_build_object('feder_id',tr.feder_id,'es_lider',tr.es_lider))
-         FROM "TareaResponsable" tr WHERE tr.tarea_id=t.id) AS responsables,
-      (SELECT json_agg(json_build_object('feder_id',tc.feder_id,'rol',tc.rol,'created_at',tc.created_at))
-         FROM "TareaColaborador" tc WHERE tc.tarea_id=t.id) AS colaboradores,
-      (SELECT json_agg(json_build_object('id',ti.id,'titulo',ti.titulo,'is_done',ti.is_done,'orden',ti.orden))
-         FROM "TareaChecklistItem" ti WHERE ti.tarea_id=t.id ORDER BY ti.orden ASC, ti.id ASC) AS checklist,
+
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tr.feder_id,
+                  'es_lider', tr.es_lider,
+                  'feder', json_build_object(
+                    'id', f.id, 'user_id', f.user_id, 'nombre', f.nombre, 'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaResponsable" tr
+         JOIN "Feder" f ON f.id = tr.feder_id
+        WHERE tr.tarea_id = t.id) AS responsables,
+
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tc.feder_id,
+                  'rol', tc.rol,
+                  'created_at', tc.created_at,
+                  'feder', json_build_object(
+                    'id', f.id, 'user_id', f.user_id, 'nombre', f.nombre, 'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaColaborador" tc
+         JOIN "Feder" f ON f.id = tc.feder_id
+        WHERE tc.tarea_id = t.id) AS colaboradores,
+
+      (SELECT json_agg(
+                json_build_object('id',ti.id,'titulo',ti.titulo,'is_done',ti.is_done,'orden',ti.orden)
+                ORDER BY ti.orden, ti.id
+              )
+         FROM "TareaChecklistItem" ti
+        WHERE ti.tarea_id = t.id) AS checklist,
+
       (SELECT json_agg(json_build_object('id',te.id,'codigo',te.codigo,'nombre',te.nombre))
          FROM "TareaEtiquetaAsig" tea
          JOIN "TareaEtiqueta" te ON te.id = tea.etiqueta_id
-         WHERE tea.tarea_id=t.id) AS etiquetas,
-      (SELECT json_agg(json_build_object(
-              'id', cm.id, 'feder_id', cm.feder_id, 'tipo_id', cm.tipo_id, 'contenido', cm.contenido,
-              'created_at', cm.created_at, 'updated_at', cm.updated_at,
-              'menciones', (SELECT COALESCE(json_agg(m.feder_id), '[]'::json) FROM "TareaComentarioMencion" m WHERE m.comentario_id=cm.id),
-              'adjuntos', (SELECT COALESCE(json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url)), '[]'::json)
-                           FROM "TareaAdjunto" a WHERE a.comentario_id=cm.id)
-          ))
-         FROM "TareaComentario" cm WHERE cm.tarea_id=t.id ORDER BY cm.created_at ASC) AS comentarios,
+        WHERE tea.tarea_id = t.id) AS etiquetas,
+
+      /* ===== Comentarios con datos del autor (user_id + nombre/apellido) ===== */
+      (SELECT json_agg(
+                json_build_object(
+                  'id', cm.id,
+                  'feder_id', cm.feder_id,
+                  'autor_feder_id', f.id,
+                  'autor_user_id', f.user_id,
+                  'autor_nombre',  f.nombre,
+                  'autor_apellido',f.apellido,
+                  'tipo_id',   cm.tipo_id,
+                  'contenido', cm.contenido,
+                  'created_at',cm.created_at,
+                  'updated_at',cm.updated_at,
+                  'menciones', (
+                    SELECT COALESCE(json_agg(m.feder_id), '[]'::json)
+                    FROM "TareaComentarioMencion" m
+                    WHERE m.comentario_id = cm.id
+                  ),
+                  'adjuntos', (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url
+                    )), '[]'::json)
+                    FROM "TareaAdjunto" a
+                    WHERE a.comentario_id = cm.id
+                  )
+                )
+                ORDER BY cm.created_at
+              )
+         FROM "TareaComentario" cm
+         JOIN "Feder" f ON f.id = cm.feder_id
+        WHERE cm.tarea_id = t.id) AS comentarios,
+
       (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'created_at',a.created_at))
-         FROM "TareaAdjunto" a WHERE a.tarea_id=t.id AND a.comentario_id IS NULL) AS adjuntos,
+         FROM "TareaAdjunto" a
+        WHERE a.tarea_id = t.id AND a.comentario_id IS NULL) AS adjuntos,
+
       (SELECT json_agg(json_build_object('id',r.id,'relacionada_id',r.relacionada_id,'tipo_id',r.tipo_id))
-         FROM "TareaRelacion" r WHERE r.tarea_id=t.id) AS relaciones,
-      EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid) AS is_favorita,
-      EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid) AS is_seguidor
+         FROM "TareaRelacion" r
+        WHERE r.tarea_id = t.id) AS relaciones,
+
+      EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id = t.id AND tf.user_id = :uid) AS is_favorita,
+      EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id = t.id AND ts.user_id = :uid) AS is_seguidor
+
     FROM "Tarea" t
-    JOIN "TareaEstado" te ON te.id=t.estado_id
-    LEFT JOIN "ImpactoTipo" it ON it.id=t.impacto_id
-    LEFT JOIN "UrgenciaTipo" ut ON ut.id=t.urgencia_id
-    LEFT JOIN "Cliente" c ON c.id=t.cliente_id
-    LEFT JOIN "ClienteHito" h ON h.id=t.hito_id
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
+    LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
+    LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
     WHERE t.id = :id
     LIMIT 1
-  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 }});
+  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 } });
+
   return rows[0] || null;
 };
+
+
 
 // ---------- CRUD de Tarea ----------
 export const createTask = async (payload, currentFederId) => {
@@ -308,12 +486,25 @@ export const reorderChecklist = async (tarea_id, ordenPairs=[]) =>
 // ---------- Comentarios / menciones / adjuntos ----------
 export const listComentarios = async (tarea_id) =>
   sequelize.query(`
-    SELECT cm.*, f.nombre AS autor_nombre, f.apellido AS autor_apellido, ct.codigo AS tipo_codigo,
-           COALESCE((SELECT json_agg(m.feder_id) FROM "TareaComentarioMencion" m WHERE m.comentario_id=cm.id),'[]'::json) AS menciones,
-           COALESCE((SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url))
-                    FROM "TareaAdjunto" a WHERE a.comentario_id=cm.id),'[]'::json) AS adjuntos
+    SELECT
+      cm.*,
+      f.id       AS autor_feder_id,
+      f.user_id  AS autor_user_id,
+      f.nombre   AS autor_nombre,
+      f.apellido AS autor_apellido,
+      ct.codigo  AS tipo_codigo,
+      COALESCE((
+        SELECT json_agg(m.feder_id)
+        FROM "TareaComentarioMencion" m
+        WHERE m.comentario_id = cm.id
+      ), '[]'::json) AS menciones,
+      COALESCE((
+        SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url))
+        FROM "TareaAdjunto" a
+        WHERE a.comentario_id = cm.id
+      ), '[]'::json) AS adjuntos
     FROM "TareaComentario" cm
-    JOIN "Feder" f ON f.id = cm.feder_id
+    JOIN "Feder" f         ON f.id = cm.feder_id
     JOIN "ComentarioTipo" ct ON ct.id = cm.tipo_id
     WHERE cm.tarea_id = :id
     ORDER BY cm.created_at ASC
@@ -395,8 +586,26 @@ export const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_m
   return { ok: true };
 };
 
-export const moveKanban = async (id, { estado_id, orden_kanban=0 }) => {
-  await ensureExists(models.TareaEstado, estado_id, 'Estado inválido');
-  await models.Tarea.update({ estado_id, orden_kanban }, { where: { id } });
+export const moveKanban = async (tarea_id, user_id, { stage, orden=0 }) => {
+  if (!user_id) {
+    throw Object.assign(new Error('Usuario no autenticado'), { status: 401 });
+  }
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+
+  const now = new Date();
+  const [row, created] = await models.TareaKanbanPos.findOrCreate({
+    where: { tarea_id, user_id },
+    defaults: { tarea_id, user_id, stage_code: stage, pos: orden, updated_at: now }
+  });
+
+  if (!created) {
+    row.stage_code = stage;
+    row.pos = orden;
+    row.updated_at = now;
+    await row.save();
+  }
+
   return { ok: true };
 };
+
+

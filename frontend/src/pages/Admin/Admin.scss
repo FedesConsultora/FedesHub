@@ -1,17 +1,151 @@
+/* /frontend/src/pages/Admin/Admin.scss */
 @use '../../styles/variables' as *;
 
-.toolbar{ display:flex; gap:8px; margin: 8px 0 12px; }
-.chipset{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-.chip{ background:#0f141b; border:1px solid rgba(255,255,255,.12); color:$fh-text; border-radius:16px; padding:.35rem .6rem; }
-.chip.active{ border-color:$fh-accent; box-shadow:0 0 0 2px rgba(77,208,225,.15) inset; }
+/* ===== Reset suave para Admin ===== */
+.adminWrap, .adminCard {
+  ul, ol { list-style: none; margin: 0; padding-left: 0; } /* sin puntos */
+}
+hr { border: 0; height: 1px; background: rgba(255,255,255,.08); }
 
+/* Botones sobrios reutilizables */
+button{
+  font: inherit; color: $fh-text;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px; padding: .62rem .9rem; cursor: pointer;
+  transition: transform .12s ease, background .18s ease, filter .18s ease, border-color .18s ease;
+  &:hover{ background: rgba(255,255,255,.08); }
+  &:active{ transform: translateY(1px); }
+  &.primary{ background:$fh-primary; color:#fff; border-color:transparent;
+    box-shadow: 0 10px 24px rgba(68,113,141,.25);
+    &:hover{ filter: brightness(1.06); }
+  }
+}
+
+/* ===== Layout / Cards ===== */
+.adminWrap{
+  display:flex; flex-direction:column; gap:10px; color:$fh-text;
+  background: linear-gradient(180deg, rgba(10,14,20,.35), rgba(10,14,20,.65));
+  border-radius:$radius-2xl; box-shadow:$shadow-soft; overflow: hidden;
+}
+.adminCard{
+  backdrop-filter: blur(3px);
+  background:$fh-card;  border:1px solid rgba(255,255,255,.06); backdrop-filter: blur(12px);
+}
+.adminTabBody{ padding:10px; &.fill{ min-height:60dvh; display:flex; flex-direction:column; } }
+.tableWrap{ flex:1 1 auto; border-radius:12px; overflow:auto; padding:2px; }
+
+/* ===== Tabs superiores ===== */
+.adminTabs{
+  position: sticky; top: 0; z-index: 6;
+  display:flex; gap:.5rem; padding:8px; overflow:auto hidden; overscroll-behavior-x: contain;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba($fh-card,.98), rgba($fh-card,.92));
+  .tab{
+    white-space:nowrap; padding:.58rem .9rem; border-radius:12px; text-decoration:none;
+    color:$fh-text; opacity:.9; border:1px solid transparent; transition: all .18s ease;
+    &:hover{ opacity:1; background: rgba(255,255,255,.05); }
+    &.active{ opacity:1; background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12);
+      box-shadow: inset 0 -2px 0 rgba($fh-primary,.6); }
+  }
+}
+
+/* ===== Toolbar de filtros/acciones ===== */
+.toolbar{
+  display:grid; grid-template-columns: repeat(12,1fr); gap:10px; align-items:center; margin-bottom:12px;
+
+  input, select{
+    grid-column: span 3; min-width:0; padding:.6rem .75rem; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12); background:#0f141b; color:$fh-text; outline:none;
+    &::placeholder{ color: rgba(255,255,255,.45) }
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    &:focus{ border-color:$fh-primary; background:#0f1823; box-shadow:0 0 0 2px rgba($fh-primary,.28); }
+  }
+  button{ grid-column: span 2 }
+}
+@media (max-width: 880px){
+  .toolbar{ grid-template-columns: 1fr 1fr; input,select{grid-column:span 2} button{grid-column:span 1} }
+}
+@media (max-width: 520px){
+  .toolbar{ grid-template-columns: 1fr; input,select,button{grid-column:span 1} }
+}
+
+/* ===== Formularios / helpers ===== */
+.lbl{ display:block; margin:10px 0 6px; font-weight:600; font-size:.92rem }
+.hint{ font-size:.82rem; color: lighten($fh-muted, 8%) }
+.error{
+  margin:8px 0 12px; padding:10px; border:1px solid #5a2d2d; background:#3a1f1f;
+  border-radius:12px; color:#ffb4b4;
+}
+.success{
+  margin:8px 0 12px; padding:10px; border:1px solid rgba(160,200,255,.18);
+  background: rgba(40,80,120,.18); border-radius:12px; color:#cde7ff;
+}
+input, select, textarea{
+  width:100%; min-width:0; padding:.65rem .75rem; border-radius:12px;
+  border:1px solid rgba(255,255,255,.12); background:#0f141b; color:$fh-text; outline:none;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  &::placeholder{ color: rgba(255,255,255,.45) }
+  &:focus{ border-color:$fh-primary; background:#101a25; box-shadow:0 0 0 2px rgba($fh-primary,.25) }
+}
+.twoCols{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width: 720px){ .twoCols{ grid-template-columns:1fr } }
+
+/* ===== Chips (Roles, etc.) ===== */
+.chipset{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px }
+.chip{
+  border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04);
+  padding:.42rem .7rem; border-radius:999px; font-size:.92rem; color:$fh-text; cursor:pointer;
+  transition: all .16s ease;
+  &:hover{ background:rgba(255,255,255,.08) }
+  &.active{ background:$fh-accent; color:#001018; border-color:transparent; font-weight:700;
+    box-shadow: 0 6px 18px rgba(77,208,225,.20); }
+}
+
+/* ===== Tabla genérica ===== */
+.table{
+  width:100%; border-collapse:separate; border-spacing:0; color:$fh-text;
+  thead th{
+    position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, rgba($fh-card,.98), rgba($fh-card,.92));
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    text-align:left; padding:10px 12px; font-weight:700;
+  }
+  tbody td{
+    padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); vertical-align:middle;
+  }
+  tr:hover td{ background: rgba(255,255,255,.03); }
+  .col-grow{ width:100% }
+  .empty{ color:$fh-muted; padding:24px 8px; text-align:center }
+}
+
+/* ===== Grilla de permisos ===== */
 .permGrid{
-  display:grid; grid-template-columns: 160px repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-top:12px;
+  display:grid; gap:8px; margin-top:10px; overflow:auto; padding-bottom:8px;
+  .pgHead{
+    font-weight:700; text-align:center; color:$fh-text; opacity:.9;
+    position: sticky; top: 0; z-index: 3;
+    background: linear-gradient(180deg, rgba($fh-card,.98), rgba($fh-card,.92));
+    border-bottom: 1px solid rgba(255,255,255,.08); padding:6px 0;
+  }
+  .pgMod{
+    font-weight:700; color:$fh-text; opacity:.9; display:flex; align-items:center; padding:0 6px;
+    position: sticky; left: 0; z-index: 2;
+    background: linear-gradient(90deg, rgba($fh-card,.97), rgba($fh-card,.92));
+    border-right:1px solid rgba(255,255,255,.06); border-radius:8px;
+  }
+  .pgCell{
+    min-width:96px; height:36px; border:1px solid rgba(255,255,255,.14); border-radius:10px;
+    background: rgba(255,255,255,.03); cursor:pointer; transition: all .12s ease;
+    &:hover{ background: rgba(255,255,255,.06) }
+    &.on{ outline:2px solid $fh-primary; background: rgba($fh-primary,.14); box-shadow: inset 0 0 0 1px rgba($fh-primary,.25) }
+    &.disabled{ opacity:.45; cursor:not-allowed; background: rgba(255,255,255,.02) }
+  }
 }
-.pgHead{ font-size:.85rem; color:$fh-muted; padding:6px 8px }
-.pgMod{ font-weight:700; padding:8px }
-.pgCell{
-  height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f141b;
-  &:hover{ border-color:$fh-accent; }
-}
-.pgCell.on{ background: rgba(77,208,225,.15); border-color:$fh-accent; }
+@media (max-width: 920px){ .permGrid .pgCell{ min-width:76px; height:34px } }
+
+/* ===== Utilidades ===== */
+.sticky{ position:sticky; top:0; z-index:5; background: linear-gradient(180deg, rgba($fh-card,.98), rgba($fh-card,.92)) }
+.muted{ color:$fh-muted }
+.center{ text-align:center }
+.right{ text-align:right }

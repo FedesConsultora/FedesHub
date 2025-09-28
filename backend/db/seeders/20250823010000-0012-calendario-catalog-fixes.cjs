@@ -1,111 +1,86 @@
+// 0015 - Cargos core (idempotente)
 'use strict';
 
 /**
- * 0012 - Calendario: parches de catálogos y defaults
- * - Agrega CalendarioTipo.global
- * - Agrega EventoTipo para overlays: interno, asistencia, ausencia, tarea_vencimiento
- * - Normaliza SyncDireccionTipo a: pull / push / both / none (renombra si hay códigos viejos)
- * - Asegura AsistenteTipo: feder / externo (sin borrar los existentes)
- * - Cambia a "organizacion" la visibilidad de calendarios personales sembrados como privados
+ * 0015 - Cargos core (idempotente)
+ * Actualizado: usa "Desarrollador Fullstack" (en vez de "Desarrollador").
  */
+
+async function ensureAmbitos(queryInterface, t) {
+  await queryInterface.sequelize.query(`
+    INSERT INTO "CargoAmbito"(codigo, nombre, descripcion, created_at, updated_at)
+    VALUES
+      ('organico','Orgánico',NULL, now(), now()),
+      ('cliente','Cliente',NULL, now(), now())
+    ON CONFLICT (codigo) DO NOTHING;
+  `, { transaction: t });
+
+  const [rows] = await queryInterface.sequelize.query(
+    `SELECT id, codigo FROM "CargoAmbito" WHERE codigo IN ('organico','cliente')`,
+    { transaction: t }
+  );
+  const map = Object.fromEntries(rows.map(r => [r.codigo, r.id]));
+  if (!map.organico || !map.cliente) {
+    throw new Error('Faltan ámbitos requeridos: organico/cliente');
+  }
+  return map;
+}
+
+async function ensureByNombre(queryInterface, table, rows, t) {
+  if (!rows.length) return;
+  const nombres = rows.map(r => r.nombre);
+  const [exists] = await queryInterface.sequelize.query(
+    `SELECT nombre FROM "${table}" WHERE nombre IN (:nombres)`,
+    { transaction: t, replacements: { nombres } }
+  );
+  const have = new Set(exists.map(e => e.nombre));
+  const missing = rows.filter(r => !have.has(r.nombre));
+  if (missing.length) {
+    await queryInterface.bulkInsert(table, missing, { transaction: t });
+  }
+}
+
 module.exports = {
-  async up (q) {
-    const t = await q.sequelize.transaction();
+  async up (queryInterface) {
+    const t = await queryInterface.sequelize.transaction();
     try {
       const now = new Date();
+      const amb = await ensureAmbitos(queryInterface, t);
 
-      // === CalendarioTipo: asegurar 'global'
-      await q.sequelize.query(`
-        INSERT INTO "CalendarioTipo"(codigo,nombre,descripcion,created_at,updated_at)
-        VALUES ('global','Global',NULL,:now,:now)
-        ON CONFLICT (codigo) DO NOTHING;
-      `, { transaction: t, replacements: { now } });
+      const org = [
+        { nombre: 'Líder de Producto',        descripcion: 'Tridente: Producto',        ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Líder de Tecnología',      descripcion: 'Tridente: Tecnología',      ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Líder de Operaciones',     descripcion: 'Tridente: Operaciones',     ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-      // === EventoTipo: agregar overlays esperados
-      const evtTipos = ['interno','asistencia','ausencia','tarea_vencimiento'];
-      for (const cod of evtTipos) {
-        await q.sequelize.query(`
-          INSERT INTO "EventoTipo"(codigo,nombre,descripcion,created_at,updated_at)
-          VALUES (:cod, INITCAP(REPLACE(:cod,'_',' ')), NULL, :now, :now)
-          ON CONFLICT (codigo) DO NOTHING;
-        `, { transaction: t, replacements: { cod, now } });
-      }
+        { nombre: 'Co-Founder y CEO',         descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Co-Founder y CGO',         descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-      // === SyncDireccionTipo: normalizar códigos
-      // Renombres defensivos solo si el destino no existe aún (evita colisión por unique)
-      await q.sequelize.query(`
-        DO $$
-        BEGIN
-          IF EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='local_a_google')
-             AND NOT EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='push')
-          THEN UPDATE "SyncDireccionTipo" SET codigo='push', nombre='Sólo local → Google' WHERE codigo='local_a_google';
-          END IF;
+        { nombre: 'Analista de Cuentas',      descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Diseño',       descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista Audiovisual',     descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Marketing',    descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Responsable de Comunicación', descripcion: null, ambito_id: amb.organico,
+          is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Performance',  descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-          IF EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='google_a_local')
-             AND NOT EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='pull')
-          THEN UPDATE "SyncDireccionTipo" SET codigo='pull', nombre='Sólo Google → local' WHERE codigo='google_a_local';
-          END IF;
+        { nombre: 'Desarrollador Fullstack',  descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrollador Frontend',   descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrollador Backend',    descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'QA / Testing',             descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'DevOps / SRE',             descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-          IF EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='bidireccional')
-             AND NOT EXISTS (SELECT 1 FROM "SyncDireccionTipo" WHERE codigo='both')
-          THEN UPDATE "SyncDireccionTipo" SET codigo='both', nombre='Bidireccional' WHERE codigo='bidireccional';
-          END IF;
-        END$$;
-      `, { transaction: t });
+        { nombre: 'RRHH',                     descripcion: 'Capital Humano',             ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Onboarding',               descripcion: 'Ingreso y activación',       ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now }
+      ];
 
-      // Insertar los definitivos (si faltan)
-      await q.sequelize.query(`
-        INSERT INTO "SyncDireccionTipo"(codigo,nombre,descripcion)
-        VALUES 
-          ('pull','Sólo importar','Eventos desde Google → ERP'),
-          ('push','Sólo exportar','Eventos desde ERP → Google'),
-          ('both','Bidireccional','Sincronización completa'),
-          ('none','Sin sync','Calendario sólo interno')
-        ON CONFLICT (codigo) DO NOTHING;
-      `, { transaction: t });
+      const cli = [
+        { nombre: 'Sponsor (Cliente)',            descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Product Owner (Cliente)',      descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Referente Técnico (Cliente)',  descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Usuario Referente (Cliente)',  descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now }
+      ];
 
-      // === AsistenteTipo: asegurar {feder, externo}
-      await q.sequelize.query(`
-        INSERT INTO "AsistenteTipo"(codigo,nombre,descripcion)
-        VALUES 
-          ('feder','Feder interno','Participante interno (usuario del sistema)'),
-          ('externo','Externo','Participante externo por email')
-        ON CONFLICT (codigo) DO NOTHING;
-      `, { transaction: t });
-
-      // === Visibilidad por defecto para personales: pasar de privado → organizacion
-      // Solo personales y solo si hoy están privados (respeta cambios manuales)
-      await q.sequelize.query(`
-        UPDATE "CalendarioLocal" cl
-        SET visibilidad_id = v_org.id,
-            updated_at = :now
-        FROM "CalendarioTipo" ct,
-             "VisibilidadTipo" v_priv,
-             "VisibilidadTipo" v_org
-        WHERE cl.tipo_id = ct.id
-          AND ct.codigo = 'personal'
-          AND v_priv.codigo = 'privado'
-          AND v_org.codigo = 'organizacion'
-          AND cl.visibilidad_id = v_priv.id;
-      `, { transaction: t, replacements: { now } });
-
-      // === (opcional) ayuda: si no tenés 'organizacion', cae a 'equipo'
-      await q.sequelize.query(`
-        UPDATE "CalendarioLocal" cl
-        SET visibilidad_id = v_eq.id,
-            updated_at = :now
-        FROM "CalendarioTipo" ct,
-             "VisibilidadTipo" v_eq
-        WHERE cl.tipo_id = ct.id
-          AND ct.codigo = 'personal'
-          AND v_eq.codigo = 'equipo'
-          AND NOT EXISTS (SELECT 1 FROM "VisibilidadTipo" WHERE codigo='organizacion')
-          AND NOT EXISTS (
-            SELECT 1 FROM "VisibilidadTipo" vv 
-            WHERE vv.id = cl.visibilidad_id AND vv.codigo IN ('organizacion','equipo')
-          );
-      `, { transaction: t, replacements: { now } });
-
+      await ensureByNombre(queryInterface, 'Cargo', [...org, ...cli], t);
       await t.commit();
     } catch (err) {
       await t.rollback();
@@ -113,7 +88,16 @@ module.exports = {
     }
   },
 
-  async down () {
-    // Down vacío a propósito (no borramos catálogos ya en uso).
+  async down (queryInterface) {
+    const nombres = [
+      'Líder de Producto','Líder de Tecnología','Líder de Operaciones',
+      'Co-Founder y CEO','Co-Founder y CGO',
+      'Analista de Cuentas','Analista de Diseño','Analista Audiovisual',
+      'Analista de Marketing','Analista de Performance',
+      'Desarrollador Fullstack','Desarrollador Frontend','Desarrollador Backend',
+      'QA / Testing','DevOps / SRE','RRHH','Onboarding',
+      'Sponsor (Cliente)','Product Owner (Cliente)','Referente Técnico (Cliente)','Usuario Referente (Cliente)'
+    ];
+    await queryInterface.bulkDelete('Cargo', { nombre: nombres }, {});
   }
 };

@@ -1,7 +1,7 @@
 // /backend/src/modules/calendario/validators.js
 import { z } from 'zod';
 
-export const scopeEnum = z.enum(['mine','feder','celula','cliente','global']);
+export const scopeEnum = z.enum(['mine','feder','celula','cliente','global','all']);
 
 const asArrayOfInts = (v) => {
   if (Array.isArray(v)) return v.map(Number).filter(Number.isFinite);

@@ -10,14 +10,11 @@ export const setupAssociations = (m) => {
     if (!present) { skip('[assoc:skip]', desc); return; }
     try {
       fn();
-      ok('[assoc:ok]  ', desc);
     } catch (e) {
       err('[assoc:err] ', desc, e?.stack || e);
       throw e;
     }
   };
-
-  ok('[assoc] start');
 
   // ===== Módulo 1: Auth =====
   link(m.User && m.AuthEmailDominio, 'User → AuthEmailDominio (email_dominio_id)', () =>
@@ -63,6 +60,9 @@ export const setupAssociations = (m) => {
   link(m.Feder && m.User, 'Feder → User (user_id)', () =>
     m.Feder.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
   );
+  link(m.User && m.Feder, 'User → Feder (user_id)', () =>
+    m.User.hasOne(m.Feder, { foreignKey: 'user_id', as: 'feder' })
+  );
   link(m.Feder && m.Celula, 'Feder → Celula (celula_id)', () =>
     m.Feder.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
   );
@@ -78,6 +78,20 @@ export const setupAssociations = (m) => {
   link(m.FederModalidadDia && m.ModalidadTrabajoTipo, 'FederModalidadDia → ModalidadTrabajoTipo (modalidad_id)', () =>
     m.FederModalidadDia.belongsTo(m.ModalidadTrabajoTipo, { foreignKey: 'modalidad_id', as: 'modalidad' })
   );
+
+  link(m.Feder && m.FirmaPerfil, 'Feder ↔ FirmaPerfil (hasOne)', () => {
+    m.Feder.hasOne(m.FirmaPerfil, { foreignKey: 'feder_id', as: 'firmaPerfil' });
+    m.FirmaPerfil.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+  });
+
+  link(m.Feder && m.FederBanco, 'Feder ↔ FederBanco (hasMany)', () => {
+    m.Feder.hasMany(m.FederBanco, { foreignKey: 'feder_id', as: 'bancos' });
+    m.FederBanco.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+  });
+  link(m.Feder && m.FederEmergencia, 'Feder ↔ FederEmergencia (hasMany)', () => {
+    m.Feder.hasMany(m.FederEmergencia, { foreignKey: 'feder_id', as: 'contactosEmergencia' });
+    m.FederEmergencia.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+  });
 
   // ===== Módulo 4: Asistencia =====
   link(m.AsistenciaRegistro && m.Feder, 'AsistenciaRegistro → Feder (feder_id)', () =>
@@ -260,7 +274,19 @@ export const setupAssociations = (m) => {
   link(m.TareaFavorito && m.User, 'TareaFavorito → User (user_id)', () =>
     m.TareaFavorito.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
   );
+  link(m.TareaKanbanPos && m.Tarea, 'TareaKanbanPos → Tarea (tarea_id)', () =>
+    m.TareaKanbanPos.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' })
+  );
+  link(m.Tarea && m.TareaKanbanPos, 'Tarea ↔ TareaKanbanPos', () => {
+    m.Tarea.hasMany(m.TareaKanbanPos, { foreignKey: 'tarea_id', as: 'kanbanPosiciones' });
+  });
 
+  link(m.TareaKanbanPos && m.User, 'TareaKanbanPos → User (user_id)', () =>
+    m.TareaKanbanPos.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.User && m.TareaKanbanPos, 'User ↔ TareaKanbanPos', () => {
+    m.User.hasMany(m.TareaKanbanPos, { foreignKey: 'user_id', as: 'tareasKanban' });
+  });
   // ===== Módulo 9: Calendario =====
   link(m.CalendarioLocal && m.CalendarioTipo, 'CalendarioLocal → CalendarioTipo (tipo_id)', () =>
     m.CalendarioLocal.belongsTo(m.CalendarioTipo, { foreignKey: 'tipo_id', as: 'tipo' })
@@ -418,8 +444,11 @@ export const setupAssociations = (m) => {
   // ===== Módulo 11: Chat =====
   // Catálogos
   link(m.ChatCanal && m.ChatCanalTipo, 'ChatCanal → ChatCanalTipo (tipo_id)', () =>
-    m.ChatCanal.belongsTo(m.ChatCanalTipo, { foreignKey: 'tipo_id', as: 'canalTipo' })
+    m.ChatCanal.belongsTo(m.ChatCanalTipo, { foreignKey: 'tipo_id', as: 'tipo' })
   );
+  link(m.ChatCanal && m.Notificacion, 'ChatCanal ↔ Notificacion', () => {
+    m.ChatCanal.hasMany(m.Notificacion, { foreignKey: 'chat_canal_id', as: 'notificaciones' });
+  });
   link(m.ChatCanalMiembro && m.ChatRolTipo, 'ChatCanalMiembro → ChatRolTipo (rol_id)', () =>
     m.ChatCanalMiembro.belongsTo(m.ChatRolTipo, { foreignKey: 'rol_id', as: 'rol' })
   );
@@ -594,6 +623,4 @@ export const setupAssociations = (m) => {
     m.ChatTyping.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
   );
 
-  
-  ok('[assoc] done');
 };

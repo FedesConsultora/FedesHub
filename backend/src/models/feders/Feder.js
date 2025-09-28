@@ -12,8 +12,23 @@ export default (sequelize, DataTypes) => {
     fecha_ingreso: { type: DataTypes.DATEONLY },
     fecha_egreso: { type: DataTypes.DATEONLY },
     is_activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+
+    // 👇 NUEVO — datos de identidad/ERP (encriptados donde corresponde)
+    nombre_legal:     { type: DataTypes.STRING(180) },
+    dni_tipo:         { type: DataTypes.STRING(20) },  // 'DNI','PAS','CI', etc.
+    dni_numero_enc:   { type: DataTypes.TEXT },        // JSON AES-GCM
+    cuil_cuit_enc:    { type: DataTypes.TEXT },        // JSON AES-GCM
+    fecha_nacimiento: { type: DataTypes.DATEONLY },
+    domicilio_json:   { type: DataTypes.JSONB },       // { calle, nro, piso, cp, ciudad, provincia, pais }
+
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'Feder', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+  }, {
+    tableName: 'Feder',
+    underscored: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
+  });
   return Feder;
 };

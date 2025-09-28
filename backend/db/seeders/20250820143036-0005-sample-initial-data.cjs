@@ -1,25 +1,33 @@
-// backend/db/seeders/20250820143036-0005-sample-initial-data.cjs
+// backend/db/seeders/0005-sample-initial-data.cjs
 'use strict';
 /**
- * Seeder 0200 - sample-initial-data
- * Crea dominio, 4 usuarios, célula Core (con slug requerido), feders,
- * calendarios personales y un cliente demo.
- * Compatible con el nuevo esquema de Células (slug NOT NULL, perfil_md, avatar/cover).
+ * Seeder 0005 - sample-initial-data (ajustado)
+ * - Mantiene usuarios base (incluye ralbanesi@…)
+ * - Enzo SIN célula (celula_id: null)
+ * - No cambia roles/permisos (Admin intacto).
  */
 
+const argon2 = require('argon2');
+
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up (queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       const now = new Date();
 
-      const slugify = (s) =>
-        (s || '')
-          .toString()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase().trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
+      // Password por persona (argon2id)
+      const DEFAULT_PASS_BY_EMAIL = {
+        'sistemas@fedes.ai'  : 'Sistemas123!',
+        'ralbanesi@fedes.ai' : 'Romina123!',
+        'epinotti@fedes.ai'  : 'Enzo123!',
+        'gcanibano@fedes.ai' : 'Gonzalo123!'
+      };
+      const passHashByEmail = {};
+      for (const [email, plain] of Object.entries(DEFAULT_PASS_BY_EMAIL)) {
+        passHashByEmail[email] = await argon2.hash(plain, {
+          type: argon2.argon2id, timeCost: 3, memoryCost: 19456, parallelism: 1
+        });
+      }
 
       // === 1) Dominio ===
       let [[dom]] = await queryInterface.sequelize.query(
@@ -35,40 +43,61 @@ module.exports = {
       }
       const emailDomId = dom.id;
 
-      // === 2) Usuarios base (idempotente) ===
-      const usersToInsert = [
+      // === 2) Usuarios base ===
+      const baseEmails = [
         'sistemas@fedes.ai', 'ralbanesi@fedes.ai', 'epinotti@fedes.ai', 'gcanibano@fedes.ai'
       ];
+
       const [existingUsers] = await queryInterface.sequelize.query(
         `SELECT email FROM "User" WHERE email IN (:emails)`,
-        { transaction: t, replacements: { emails: usersToInsert } }
+        { transaction: t, replacements: { emails: baseEmails } }
       );
-      const existingSet = new Set(existingUsers.map(u => u.email));
-      const missingUsers = usersToInsert.filter(e => !existingSet.has(e)).map(email => ({
-        email, password_hash: 'changeme', is_activo: true,
-        email_dominio_id: emailDomId, created_at: now, updated_at: now
-      }));
-      if (missingUsers.length) {
-        await queryInterface.bulkInsert('User', missingUsers, { transaction: t });
+      const exists = new Set(existingUsers.map(u => u.email));
+      const toCreate = baseEmails
+        .filter(e => !exists.has(e))
+        .map(email => ({
+          email,
+          password_hash: passHashByEmail[email],
+          is_activo: true,
+          email_dominio_id: emailDomId,
+          created_at: now,
+          updated_at: now
+        }));
+      if (toCreate.length) {
+        await queryInterface.bulkInsert('User', toCreate, { transaction: t });
+      }
+
+      // asegurar formato argon2id
+      const [rowsForFix] = await queryInterface.sequelize.query(
+        `SELECT id, email, password_hash FROM "User" WHERE email IN (:emails)`,
+        { transaction: t, replacements: { emails: baseEmails } }
+      );
+      for (const u of rowsForFix) {
+        const phc = String(u.password_hash || '');
+        if (!phc.startsWith('$argon2id$')) {
+          await queryInterface.sequelize.query(
+            `UPDATE "User" SET password_hash = :hash, updated_at = :now WHERE id = :id`,
+            { transaction: t, replacements: { hash: passHashByEmail[u.email], id: u.id, now } }
+          );
+        }
       }
 
       const [users] = await queryInterface.sequelize.query(
         `SELECT id, email FROM "User"
-         WHERE email IN ('sistemas@fedes.ai','ralbanesi@fedes.ai','epinotti@fedes.ai','gcanibano@fedes.ai')`,
-        { transaction: t }
+         WHERE email IN (:emails)`,
+        { transaction: t, replacements: { emails: baseEmails } }
       );
       const uid = Object.fromEntries(users.map(u => [u.email, u.id]));
 
-      // === 3) Célula Core (con slug y perfil_md) ===
+      // === 3) Célula 1 (con slug y perfil_md) ===
       const [[celulaEstadoActiva]] = await queryInterface.sequelize.query(
         `SELECT id FROM "CelulaEstado" WHERE codigo='activa' LIMIT 1`,
         { transaction: t }
       );
 
-      const coreName = 'Core';
-      const coreSlug = slugify(coreName);
+      const coreName = 'Célula 1';
+      const coreSlug = 'celula-1';
 
-      // Busca por slug o por nombre (por si la migración 0161 generó slug tipo "core-1")
       const [[celExist]] = await queryInterface.sequelize.query(
         `SELECT id FROM "Celula" WHERE slug = :slug OR nombre = :name LIMIT 1`,
         { transaction: t, replacements: { slug: coreSlug, name: coreName } }
@@ -83,7 +112,7 @@ module.exports = {
           slug: coreSlug,
           avatar_url: null,
           cover_url: null,
-          perfil_md: null,        // <<<<<< CORREGIDO (antes era "perfil")
+          perfil_md: null,
           created_at: now,
           updated_at: now
         }], { transaction: t });
@@ -107,13 +136,14 @@ module.exports = {
       );
       const fedSet = new Set(existingFeders.map(f => f.user_id));
       const fedRows = [
-        { user_id: uid['sistemas@fedes.ai'],  nombre: 'Sistemas', apellido: 'Fedes' },
-        { user_id: uid['ralbanesi@fedes.ai'], nombre: 'Romina',   apellido: 'Albanesi' },
-        { user_id: uid['epinotti@fedes.ai'],  nombre: 'Enzo',     apellido: 'Pinotti' },
-        { user_id: uid['gcanibano@fedes.ai'], nombre: 'Gonzalo',  apellido: 'Canibano' },
+        { user_id: uid['sistemas@fedes.ai'],  nombre: 'Sistemas', apellido: 'Fedes',    celula_id: celulaCoreId },
+        { user_id: uid['ralbanesi@fedes.ai'], nombre: 'Romina',   apellido: 'Albanesi', celula_id: celulaCoreId },
+        { user_id: uid['epinotti@fedes.ai'],  nombre: 'Enzo',     apellido: 'Pinotti',  celula_id: null }, // <— SIN célula
+        { user_id: uid['gcanibano@fedes.ai'], nombre: 'Gonzalo',  apellido: 'Canibano', celula_id: celulaCoreId },
       ].filter(r => r.user_id && !fedSet.has(r.user_id))
        .map(r => ({
-         ...r, celula_id: celulaCoreId, estado_id: federActivo.id,
+         ...r,
+         estado_id: federActivo.id,
          is_activo: true, created_at: now, updated_at: now
        }));
       if (fedRows.length) {
@@ -126,7 +156,7 @@ module.exports = {
       );
       const federByUserId = Object.fromEntries(feders.map(f => [f.user_id, f.id]));
 
-      // === 5) Calendarios personales (idempotente) ===
+      // === 5) Calendarios personales ===
       const [[calPersonal]] = await queryInterface.sequelize.query(
         `SELECT id FROM "CalendarioTipo" WHERE codigo='personal' LIMIT 1`, { transaction: t }
       );
@@ -164,7 +194,7 @@ module.exports = {
         }
       }
 
-      // === 6) Cliente demo (idempotente) ===
+      // === 6) Cliente demo ===
       const [[cliTipoA]] = await queryInterface.sequelize.query(
         `SELECT id, ponderacion FROM "ClienteTipo" WHERE codigo='A' LIMIT 1`, { transaction: t }
       );
@@ -184,7 +214,7 @@ module.exports = {
         }], { transaction: t });
       }
 
-      // === 7) Roles (idempotente) ===
+      // === 7) Roles base ===
       const [roles] = await queryInterface.sequelize.query(
         `SELECT id, nombre FROM "Rol"`, { transaction: t }
       );
@@ -218,14 +248,14 @@ module.exports = {
     }
   },
 
-  async down (queryInterface, Sequelize) {
+  async down (queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       await queryInterface.bulkDelete('UserRol', null, { transaction: t });
       await queryInterface.bulkDelete('CalendarioLocal', null, { transaction: t });
       await queryInterface.bulkDelete('Cliente', { nombre: 'Cliente Demo' }, { transaction: t });
       await queryInterface.bulkDelete('Feder', null, { transaction: t });
-      await queryInterface.bulkDelete('Celula', { slug: 'core' }, { transaction: t });
+      await queryInterface.bulkDelete('Celula', { slug: 'celula-1' }, { transaction: t });
       await queryInterface.bulkDelete('User', {
         email: ['sistemas@fedes.ai','ralbanesi@fedes.ai','epinotti@fedes.ai','gcanibano@fedes.ai']
       }, { transaction: t });

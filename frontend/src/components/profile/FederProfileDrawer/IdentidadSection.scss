@@ -1,0 +1,69 @@
+@use '../../../styles/variables' as v;
+
+.pfIdentidad{
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: v.$radius-2xl;
+  padding:14px;
+  box-shadow: v.$shadow-soft;
+  color: v.$fh-text;
+
+  h3{ margin:0 0 12px 0 }
+}
+
+/* Grid fluido (mismo criterio que BasicInfo) */
+.pfIdGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap:12px;
+}
+
+/* Field + label */
+.pfInput{ display:flex; flex-direction:column; gap:8px; }
+.pfInput .lbl{
+  margin:0; font-weight:800; font-size:12px; letter-spacing:.2px;
+  color: v.$fh-muted;
+}
+.pfInput .hint{
+  margin:4px 2px 0;
+  font-size:12px; line-height:1.4; color:v.$fh-muted;
+}
+
+/* Controles grandes y consistentes */
+.pfIdentidad .control{
+  width:100%;
+  background:#0f141b;
+  color:v.$fh-text;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  outline:none;
+  font-size:1rem;
+  line-height:1.2;
+  padding:12px 14px;
+  min-height:48px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+
+  &::placeholder{ color: rgba(255,255,255,.45) }
+  &:focus{
+    border-color: rgba(v.$fh-primary,.9);
+    box-shadow: 0 0 0 2px rgba(v.$fh-primary,.28);
+    background:#111823;
+  }
+  &:disabled{ opacity:.6; cursor:not-allowed }
+}
+
+/* Date input – icono visible en dark y mismo alto */
+.pfIdentidad .control--date{
+  /* Safari/Chrome */
+  &::-webkit-calendar-picker-indicator{
+    filter: invert(0.8);
+    opacity:.9;
+    cursor:pointer;
+  }
+}
+
+/* Responsive fino */
+@media (max-width: 420px){
+  .pfIdGrid{ grid-template-columns: 1fr; gap:10px; }
+  .pfIdentidad .control{ min-height:46px; padding:11px 13px; }
+}

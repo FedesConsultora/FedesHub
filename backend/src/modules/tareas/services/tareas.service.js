@@ -1,413 +1,1006 @@
-// backend/src/modules/tareas/services/TareaService.js
+// backend/src/modules/tareas/services/tareas.service.js
 // -----------------------------------------------------------------------------
-// Servicio de Tareas: aplica reglas de negocio, permisos, cálculos y transacciones.
-// - Cálculo de prioridad (ponderación cliente + impacto + urgencia)
-// - Urgencia derivada de vencimiento
-// - Scoping por roles/célula/responsable/colaborador
-// - Aprobación (pendiente/aprobada/rechazada)
+// Servicio de Tareas (autocontenido):
+// - Catálogos / Compose (scoping de clientes por celula del usuario, salvo Admin/CLevel)
+// - Listado (SQL extendido con filtros, flags, fechas y prioridad) + conteo
+// - CRUD de tarea (con prioridad calculada y aprobaciones por defecto)
+// - Responsables / Colaboradores
+// - Etiquetas
+// - Checklist (con recálculo de progreso_pct)
+// - Comentarios / Menciones / Adjuntos (tarea y comentario)
+// - Relaciones
+// - Favoritos / Seguidores
+// - Estado / Aprobación / Kanban (finalizada_at cuando corresponde)
+// - Exporta funciones svc* consumidas por el controller
 // -----------------------------------------------------------------------------
 
-import { Op } from 'sequelize';
+import { QueryTypes } from 'sequelize';
+import { sequelize } from '../../../core/db.js';
+import { initModels } from '../../../models/registry.js';
 
-function hoursDiff(a, b) {
-  return (a.getTime() - b.getTime()) / (1000 * 60 * 60);
-}
+const models = await initModels();
 
-export default class TareaService {
-  /** @param {import('sequelize').Sequelize} sequelize @param {object} models @param {TareaRepository} repo */
-  constructor(sequelize, models, repo) {
-    this.sequelize = sequelize;
-    this.m = models;
-    this.repo = repo;
+// ---------- Helpers de existencia / reglas ----------
+const ensureExists = async (model, id, msg='No encontrado') => {
+  if (id == null) return null;
+  const row = await model.findByPk(id, { attributes: ['id'] });
+  if (!row) throw Object.assign(new Error(msg), { status: 404 });
+  return row;
+};
+
+const getPuntos = async (impacto_id, urgencia_id) => {
+  const [imp, urg] = await Promise.all([
+    impacto_id ? models.ImpactoTipo.findByPk(impacto_id, { attributes: ['puntos'] }) : null,
+    urgencia_id ? models.UrgenciaTipo.findByPk(urgencia_id, { attributes: ['puntos'] }) : null
+  ]);
+  return {
+    impacto: imp ? imp.puntos : 15,
+    urgencia: urg ? urg.puntos : 0
+  };
+};
+const setResponsableLeader = async (tarea_id, feder_id) => {
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada')
+  await ensureExists(models.Feder, feder_id, 'Feder no encontrado')
+
+  return sequelize.transaction(async (t) => {
+    // 1) setear todos a false
+    await models.TareaResponsable.update(
+      { es_lider: false },
+      { where: { tarea_id }, transaction: t }
+    )
+
+    // 2) asegurar fila del feder y marcar como true
+    const [row] = await models.TareaResponsable.findOrCreate({
+      where: { tarea_id, feder_id },
+      defaults: { tarea_id, feder_id, es_lider: true },
+      transaction: t
+    })
+    if (!row.es_lider) { row.es_lider = true; await row.save({ transaction: t }) }
+
+    return { ok: true }
+  })
+};
+const getClientePonderacion = async (cliente_id) => {
+  const row = await sequelize.query(`
+    SELECT COALESCE(ct.ponderacion,3) AS ponderacion
+    FROM "Cliente" c
+    LEFT JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
+    WHERE c.id = :id
+    LIMIT 1
+  `, { type: QueryTypes.SELECT, replacements: { id: cliente_id } });
+  return row[0]?.ponderacion ?? 3;
+};
+
+const calcPrioridad = (ponderacion, puntosImpacto, puntosUrgencia) =>
+  (ponderacion * 100) + (puntosImpacto || 0) + (puntosUrgencia || 0);
+
+// --- Contexto de usuario para compose (roles y celula) ---
+const getUserContext = async (user) => {
+  if (!user) return { roles: new Set(), feder_id: null, celula_id: null };
+  const u = await models.User.findByPk(user.id, {
+    include: [{ model: models.Rol, as: 'roles', attributes: ['nombre'] }]
+  });
+  const roles = new Set((u?.roles || []).map(r => r.nombre));
+  const feder = await models.Feder.findOne({ where: { user_id: user.id }, attributes: ['id','celula_id'] });
+  return { roles, feder_id: feder?.id ?? null, celula_id: feder?.celula_id ?? null };
+};
+
+const isAdmin  = (roles) => roles.has('Admin');
+const isCLevel = (roles) => roles.has('CLevel');
+
+// ---- Scoping y SQL de listado ----
+const buildListSQL = (params = {}, currentUser) => {
+  const {
+    q,
+    // unitarios
+    cliente_id, hito_id, estado_id, responsable_feder_id, colaborador_feder_id,
+    tarea_padre_id,
+    etiqueta_id, impacto_id, urgencia_id, aprobacion_estado_id,
+    // múltiples
+    cliente_ids = [], estado_ids = [], etiqueta_ids = [],
+    // flags
+    solo_mias, include_archivadas, is_favorita, is_seguidor,
+    // fechas
+    vencimiento_from, vencimiento_to,
+    inicio_from, inicio_to,
+    created_from, created_to,
+    updated_from, updated_to,
+    finalizada_from, finalizada_to,
+    // prioridad
+    prioridad_min, prioridad_max,
+    // orden/paginación
+    orden_by='prioridad', sort='desc', limit=50, offset=0
+  } = params;
+
+  const repl = { limit, offset };
+  const where = [];
+
+  let sql = `
+    SELECT
+      t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id, t.tarea_padre_id,
+      t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
+      t.impacto_id, it.puntos AS impacto_puntos, t.urgencia_id, ut.puntos AS urgencia_puntos,
+      t.aprobacion_estado_id,
+      t.prioridad_num, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
+      t.progreso_pct, t.created_at, t.updated_at,
+      tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
+      c.nombre AS cliente_nombre,
+      h.nombre AS hito_nombre,
+
+      -- Responsables con datos del feder
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tr.feder_id,
+                  'es_lider', tr.es_lider,
+                  'feder', json_build_object(
+                    'id', f.id,
+                    'user_id', f.user_id,
+                    'nombre', f.nombre,
+                    'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaResponsable" tr
+         JOIN "Feder" f ON f.id = tr.feder_id
+        WHERE tr.tarea_id = t.id) AS responsables,
+
+      -- Colaboradores con datos del feder
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tc.feder_id,
+                  'rol', tc.rol,
+                  'feder', json_build_object(
+                    'id', f.id,
+                    'user_id', f.user_id,
+                    'nombre', f.nombre,
+                    'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaColaborador" tc
+         JOIN "Feder" f ON f.id = tc.feder_id
+        WHERE tc.tarea_id = t.id) AS colaboradores,
+
+      (SELECT json_agg(json_build_object('etiqueta_id',tea.etiqueta_id))
+         FROM "TareaEtiquetaAsig" tea
+        WHERE tea.tarea_id = t.id) AS etiquetas,
+
+      EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid) AS is_favorita,
+      EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid) AS is_seguidor
+
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
+    LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
+    LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
+  `;
+  repl.uid = currentUser?.id ?? 0;
+
+  // Helper: IN dinámico con placeholders seguros
+  const addIn = (column, values, keyPrefix) => {
+    if (!values || !values.length) return;
+    const keys = values.map((_, i) => `${keyPrefix}${i}`);
+    where.push(`${column} IN (${keys.map(k => ':' + k).join(',')})`);
+    keys.forEach((k, i) => { repl[k] = values[i]; });
+  };
+
+  // Búsqueda
+  if (q) {
+    where.push(`(t.titulo ILIKE :q OR COALESCE(t.descripcion,'') ILIKE :q OR c.nombre ILIKE :q OR COALESCE(h.nombre,'') ILIKE :q)`);
+    repl.q = `%${q}%`;
   }
 
-  // -------- Contexto de usuario y scoping --------
-  async _getUserContext(user_id) {
-    const user = await this.m.User.findByPk(user_id, {
-      include: [{ model: this.m.Rol, as: 'roles', attributes: ['nombre'] }]
-    });
-    const roles = new Set((user?.roles || []).map(r => r.nombre));
-    const feder = await this.m.Feder.findOne({ where: { user_id }, attributes: ['id','celula_id'] });
-    return { user, roles, feder_id: feder?.id || null, celula_id: feder?.celula_id || null };
+  // Filtros simples
+  if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
+  if (hito_id)    { where.push(`t.hito_id = :hito_id`);       repl.hito_id    = hito_id; }
+  if (estado_id)  { where.push(`t.estado_id = :estado_id`);   repl.estado_id  = estado_id; }
+  if (tarea_padre_id) { where.push(`t.tarea_padre_id = :parent_id`); repl.parent_id = tarea_padre_id; }
+  if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
+  if (urgencia_id){ where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
+  if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
+
+  // Filtros múltiples
+  addIn('t.cliente_id', cliente_ids, 'cids_');
+  addIn('t.estado_id',  estado_ids,  'eids_');
+
+  if (etiqueta_ids?.length) {
+    const keys = etiqueta_ids.map((_, i) => `et${i}`);
+    where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id IN (${keys.map(k => ':' + k).join(',')}))`);
+    keys.forEach((k, i) => { repl[k] = etiqueta_ids[i]; });
   }
 
-  _isAdmin(roles) { return roles.has('Admin'); }
-  _isCLevel(roles) { return roles.has('CLevel'); }
-
-  _baseScopeIncludeForCelula(celula_id) {
-    // Limita por celula del feder (Cliente.celula_id)
-    return [{
-      model: this.m.Cliente, as: 'cliente', required: true,
-      where: { celula_id }, attributes: []
-    }];
+  if (etiqueta_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id=:et)`);
+    repl.et = etiqueta_id;
   }
 
-  async _scopeForUser(user_id) {
-    const ctx = await this._getUserContext(user_id);
-    if (this._isAdmin(ctx.roles)) return { where: {}, include: [] };
-    if (this._isCLevel(ctx.roles)) return { where: {}, include: [] }; // read-all (controlado en permisos del endpoint si hace falta)
+  // Flags
+  if (include_archivadas !== true) where.push(`t.is_archivada = false`);
+  if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);
+  if (is_seguidor === true) where.push(`EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid)`);
 
-    // Regla por defecto:
-    // - Tareas del cliente cuya celula_id = celula del feder
-    // - O donde feder es Responsable o Colaborador
-    const include = [
-      ...this._baseScopeIncludeForCelula(ctx.celula_id),
-      { model: this.m.Feder, as: 'Responsables', required: false, where: { id: ctx.feder_id } },
-      { model: this.m.Feder, as: 'Colaboradores', required: false, where: { id: ctx.feder_id } }
-    ];
-    return { where: {}, include };
+  // Scoping personal
+  if (solo_mias === true && currentUser) {
+    const fid = currentUser.feder_id || -1;
+    repl.fid = fid; repl.uid2 = currentUser.id;
+    where.push(`(
+      t.creado_por_feder_id = :fid
+      OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+      OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+      OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid2)
+    )`);
   }
 
-  // -------- Cálculos --------
-  _calcUrgenciaCodeByVencimiento(vencimiento) {
-    if (!vencimiento) return 'gte_7d';
-    const now = new Date();
-    const diff = hoursDiff(vencimiento, now); // horas hacia el futuro
-    if (diff < 0) return 'lt_24h';            // vencida → tratarla como máxima urgencia
-    if (diff <= 24) return 'lt_24h';
-    if (diff <= 72) return 'lt_72h';
-    if (diff <= 24 * 7) return 'lt_7d';
-    return 'gte_7d';
-    // NOTA: si querés respetar el valor manual de urgencia, podés hacer que este cálculo sea opcional.
+  // Relacionales (responsables/colaboradores)
+  if (responsable_feder_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:rf)`);
+    repl.rf = responsable_feder_id;
+  }
+  if (colaborador_feder_id) {
+    where.push(`EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:cf)`);
+    repl.cf = colaborador_feder_id;
   }
 
-  async _resolveUrgenciaId(codigo, t) {
-    const row = await this.m.UrgenciaTipo.findOne({ where: { codigo }, transaction: t });
-    return row?.id;
-  }
+  // Rangos de fechas
+  if (vencimiento_from) { where.push(`t.vencimiento >= :vfrom`); repl.vfrom = vencimiento_from; }
+  if (vencimiento_to)   { where.push(`t.vencimiento <= :vto`);   repl.vto   = vencimiento_to; }
+  if (inicio_from)      { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
+  if (inicio_to)        { where.push(`t.fecha_inicio <= :ito`);   repl.ito   = inicio_to; }
+  if (created_from)     { where.push(`t.created_at >= :cfrom`);   repl.cfrom = created_from; }
+  if (created_to)       { where.push(`t.created_at <= :cto`);     repl.cto   = created_to; }
+  if (updated_from)     { where.push(`t.updated_at >= :ufrom`);   repl.ufrom = updated_from; }
+  if (updated_to)       { where.push(`t.updated_at <= :uto`);     repl.uto   = updated_to; }
+  if (finalizada_from)  { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
+  if (finalizada_to)    { where.push(`t.finalizada_at <= :fto`);   repl.fto   = finalizada_to; }
 
-  async _calcPrioridadNum({ cliente_ponderacion, impacto_id, urgencia_id }, t) {
-    const [impacto, urgencia] = await Promise.all([
-      this.m.ImpactoTipo.findByPk(impacto_id, { transaction: t }),
-      this.m.UrgenciaTipo.findByPk(urgencia_id, { transaction: t })
+  // Prioridad
+  if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
+  if (typeof prioridad_max === 'number') { where.push(`t.prioridad_num <= :pmax`); repl.pmax = prioridad_max; }
+
+  if (where.length) sql += ` WHERE ${where.join(' AND ')}\n`;
+
+  // Orden
+  const orderCol =
+      orden_by === 'vencimiento'   ? 't.vencimiento'
+    : orden_by === 'fecha_inicio'  ? 't.fecha_inicio'
+    : orden_by === 'created_at'    ? 't.created_at'
+    : orden_by === 'updated_at'    ? 't.updated_at'
+    : orden_by === 'cliente'       ? 'cliente_nombre'
+    : orden_by === 'titulo'        ? 't.titulo'
+    : 't.prioridad_num'; // default
+
+  sql += ` ORDER BY ${orderCol} ${sort.toUpperCase()} NULLS LAST, t.id DESC LIMIT :limit OFFSET :offset`;
+
+  return { sql, repl };
+};
+
+
+const listTasks = async (params, currentUser) => {
+  const { sql, repl } = buildListSQL(params, currentUser);
+  return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
+};
+
+const countTasks = async (params, currentUser) => {
+  const { sql, repl } = buildListSQL({ ...params, limit: 1, offset: 0 }, currentUser);
+  const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/,'')}) q`;
+  const rows = await sequelize.query(countSql, { type: QueryTypes.SELECT, replacements: repl });
+  return rows[0]?.cnt ?? 0;
+};
+
+export const getTaskById = async (id, currentUser) => {
+  const rows = await sequelize.query(`
+    SELECT
+      t.*,
+      te.codigo AS estado_codigo, te.nombre AS estado_nombre,
+      it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
+      tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
+      c.id AS cliente_id, c.nombre AS cliente_nombre,
+      h.id AS hito_id, h.nombre AS hito_nombre,
+
+      /* ===== Responsables (con datos del Feder) ===== */
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tr.feder_id,
+                  'es_lider', tr.es_lider,
+                  'feder', json_build_object(
+                    'id', f.id,
+                    'user_id', f.user_id,
+                    'nombre', f.nombre,
+                    'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaResponsable" tr
+         JOIN "Feder" f ON f.id = tr.feder_id
+        WHERE tr.tarea_id = t.id) AS responsables,
+
+      /* ===== Colaboradores (con datos del Feder) ===== */
+      (SELECT COALESCE(json_agg(
+                json_build_object(
+                  'feder_id', tc.feder_id,
+                  'rol', tc.rol,
+                  'created_at', tc.created_at,
+                  'feder', json_build_object(
+                    'id', f.id,
+                    'user_id', f.user_id,
+                    'nombre', f.nombre,
+                    'apellido', f.apellido
+                  )
+                )
+              ), '[]'::json)
+         FROM "TareaColaborador" tc
+         JOIN "Feder" f ON f.id = tc.feder_id
+        WHERE tc.tarea_id = t.id) AS colaboradores,
+
+      /* ===== Checklist ===== */
+      (SELECT json_agg(
+                json_build_object('id',ti.id,'titulo',ti.titulo,'is_done',ti.is_done,'orden',ti.orden)
+                ORDER BY ti.orden, ti.id
+              )
+         FROM "TareaChecklistItem" ti
+        WHERE ti.tarea_id = t.id) AS checklist,
+
+      /* ===== Etiquetas ===== */
+      (SELECT json_agg(json_build_object('id',te.id,'codigo',te.codigo,'nombre',te.nombre))
+         FROM "TareaEtiquetaAsig" tea
+         JOIN "TareaEtiqueta" te ON te.id = tea.etiqueta_id
+        WHERE tea.tarea_id = t.id) AS etiquetas,
+
+      /* ===== Comentarios (con datos del autor, menciones y adjuntos) ===== */
+      (SELECT json_agg(
+                json_build_object(
+                  'id', cm.id,
+                  'feder_id', cm.feder_id,
+                  'autor_feder_id', f.id,
+                  'autor_user_id', f.user_id,
+                  'autor_nombre',  f.nombre,
+                  'autor_apellido',f.apellido,
+                  'tipo_id',   cm.tipo_id,
+                  'contenido', cm.contenido,
+                  'created_at',cm.created_at,
+                  'updated_at',cm.updated_at,
+                  'menciones', (
+                    SELECT COALESCE(json_agg(m.feder_id), '[]'::json)
+                    FROM "TareaComentarioMencion" m
+                    WHERE m.comentario_id = cm.id
+                  ),
+                  'adjuntos', (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url
+                    )), '[]'::json)
+                    FROM "TareaAdjunto" a
+                    WHERE a.comentario_id = cm.id
+                  ),
+                  /* preview de reply (si corresponde) */
+                  'reply_to', CASE WHEN cm.reply_to_id IS NOT NULL THEN json_build_object(
+                    'id', p.id,
+                    'autor', pf.nombre || ' ' || pf.apellido,
+                    'excerpt', left(regexp_replace(p.contenido, E'\\s+', ' ', 'g'), 140)
+                  ) ELSE NULL END
+                )
+                ORDER BY cm.created_at
+              )
+         FROM "TareaComentario" cm
+         JOIN "Feder" f ON f.id = cm.feder_id
+         LEFT JOIN "TareaComentario" p ON p.id = cm.reply_to_id
+         LEFT JOIN "Feder" pf ON pf.id = p.feder_id
+        WHERE cm.tarea_id = t.id) AS comentarios,
+
+      /* ===== Adjuntos a nivel tarea (no comentario) ===== */
+      (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'created_at',a.created_at))
+         FROM "TareaAdjunto" a
+        WHERE a.tarea_id = t.id AND a.comentario_id IS NULL) AS adjuntos,
+
+      /* ===== Relaciones ===== */
+      (SELECT json_agg(json_build_object('id',r.id,'relacionada_id',r.relacionada_id,'tipo_id',r.tipo_id))
+         FROM "TareaRelacion" r
+        WHERE r.tarea_id = t.id) AS relaciones,
+
+      /* ===== Hijos básicos para preview ===== */
+      (SELECT json_agg(
+                json_build_object(
+                  'id', c.id,
+                  'titulo', c.titulo,
+                  'estado_nombre', te2.nombre,
+                  'cliente_nombre', cl.nombre
+                )
+                ORDER BY c.created_at DESC
+              )
+         FROM "Tarea" c
+         JOIN "TareaEstado" te2 ON te2.id = c.estado_id
+         LEFT JOIN "Cliente" cl ON cl.id = c.cliente_id
+        WHERE c.tarea_padre_id = t.id
+      ) AS children,
+
+      /* ===== Flags por usuario ===== */
+      EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id = t.id AND tf.user_id = :uid) AS is_favorita,
+      EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id = t.id AND ts.user_id = :uid) AS is_seguidor
+
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
+    LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
+    LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
+    WHERE t.id = :id
+    LIMIT 1
+  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 }});
+
+  return rows[0] || null;
+};
+
+
+
+
+// ---------- CRUD de Tarea ----------
+const createTask = async (payload, currentFederId) => {
+  return sequelize.transaction(async (t) => {
+    const {
+      cliente_id, 
+      hito_id, 
+      tarea_padre_id, 
+      titulo, 
+      descripcion,
+      estado_id, 
+      requiere_aprobacion=false, 
+      impacto_id=2, 
+      urgencia_id=4,
+      fecha_inicio=null, 
+      vencimiento=null,
+      responsables = [],            
+      colaboradores = [],           
+      adjuntos = []                 
+    } = payload;
+
+    await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
+    if (hito_id)        await ensureExists(models.ClienteHito, hito_id, 'Hito no encontrado');
+    if (tarea_padre_id) await ensureExists(models.Tarea, tarea_padre_id, 'Tarea padre no encontrada');
+
+    const [puntos, ponderacion] = await Promise.all([
+      getPuntos(impacto_id, urgencia_id),
+      getClientePonderacion(cliente_id)
     ]);
-    const pImp = impacto?.puntos ?? 0;
-    const pUrg = urgencia?.puntos ?? 0;
-    // Regla simple: ponderación*100 + impacto + urgencia
-    return (Number(cliente_ponderacion || 0) * 100) + pImp + pUrg;
-  }
+    const prioridad_num = calcPrioridad(ponderacion, puntos.impacto, puntos.urgencia);
 
-  async _withComputedFields(payload, t) {
-    const cliente = await this.m.Cliente.findByPk(payload.cliente_id, { transaction: t });
-    const cliente_ponderacion = cliente?.ponderacion ?? 3;
-
-    let urgencia_id = payload.urgencia_id;
-    if (!payload.urgencia_id) {
-      const urgCode = this._calcUrgenciaCodeByVencimiento(payload.vencimiento ? new Date(payload.vencimiento) : null);
-      urgencia_id = await this._resolveUrgenciaId(urgCode, t);
+    // Estado default si no vino: 'pendiente'
+    let estado = estado_id;
+    if (!estado) {
+      const est = await models.TareaEstado.findOne({ where: { codigo:'pendiente' }, transaction: t });
+      estado = est?.id ?? null;
     }
 
-    const toEval = {
-      cliente_ponderacion,
-      impacto_id: payload.impacto_id,
-      urgencia_id
-    };
-    const prioridad_num = await this._calcPrioridadNum(toEval, t);
+    // Aprobación por defecto según flag
+    const aprobRow = await models.TareaAprobacionEstado.findOne({
+      where: { codigo: requiere_aprobacion ? 'pendiente' : 'no_aplica' }, transaction: t
+    });
+    const aprobacion_estado_id = aprobRow?.id ?? (requiere_aprobacion ? 2 : 1);
 
-    return { ...payload, urgencia_id, cliente_ponderacion, prioridad_num };
-  }
+    const tarea = await models.Tarea.create({
+      cliente_id, hito_id, tarea_padre_id, titulo, descripcion,
+      estado_id: estado, creado_por_feder_id: currentFederId,
+      requiere_aprobacion, aprobacion_estado_id,
+      impacto_id, urgencia_id, prioridad_num,
+      cliente_ponderacion: ponderacion,
+      fecha_inicio, vencimiento
+    }, { transaction: t });
 
-  // -------- CRUD --------
-  async get(id, user_id) {
-    const scope = await this._scopeForUser(user_id);
-    const tarea = await this.repo.findById(id, { ...scope });
-    if (!tarea) throw new Error('Tarea no encontrada o sin permisos');
+    // ===== Responsables (soporta ids u objetos) =====
+    if (Array.isArray(responsables) && responsables.length) {
+      // asegurar solo un líder (si llegaron varios marcados)
+      let leaderMarked = false;
+      for (const r of responsables) {
+        const feder_id = typeof r === 'number' ? r : r?.feder_id;
+        let es_lider = typeof r === 'object' ? !!r?.es_lider : false;
+        if (es_lider) {
+          if (leaderMarked) es_lider = false;
+          leaderMarked = true;
+        }
+        if (feder_id) {
+          await models.TareaResponsable.findOrCreate({
+            where: { tarea_id: tarea.id, feder_id },
+            defaults: { tarea_id: tarea.id, feder_id, es_lider },
+            transaction: t
+          });
+        }
+      }
+    }
+
+    // ===== Colaboradores =====
+    if (Array.isArray(colaboradores) && colaboradores.length) {
+      for (const c of colaboradores) {
+        const feder_id = typeof c === 'number' ? c : c?.feder_id;
+        const rol = typeof c === 'object' ? (c?.rol ?? null) : null;
+        if (feder_id) {
+          const [row, created] = await models.TareaColaborador.findOrCreate({
+            where: { tarea_id: tarea.id, feder_id },
+            defaults: { tarea_id: tarea.id, feder_id, rol },
+            transaction: t
+          });
+          if (!created && rol !== undefined) { row.rol = rol; await row.save({ transaction: t }); }
+        }
+      }
+    }
+
+    // ===== Adjuntos (meta ya resuelta) =====
+    if (Array.isArray(adjuntos) && adjuntos.length) {
+      const rows = adjuntos.map(a => ({
+        tarea_id: tarea.id,
+        comentario_id: null,
+        nombre: a.nombre,
+        mime: a.mime || null,
+        tamano_bytes: a.tamano_bytes ?? null,
+        drive_file_id: a.drive_file_id || null,
+        drive_url: a.drive_url || null,
+        subido_por_feder_id: currentFederId
+      }));
+      await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
+    }
+
     return tarea;
+  });
+};
+
+
+const updateTask = async (id, payload) => {
+  return sequelize.transaction(async (t) => {
+    const cur = await models.Tarea.findByPk(id, { transaction: t });
+    if (!cur) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+
+    if (payload.cliente_id)     await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
+    if (payload.hito_id)        await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
+    if (payload.tarea_padre_id) await ensureExists(models.Tarea, payload.tarea_padre_id, 'Tarea padre no encontrada');
+
+    // recalcular prioridad si cambian ponderacion/impacto/urgencia/cliente
+    let prioridad_num = cur.prioridad_num;
+    let cliente_ponderacion = cur.cliente_ponderacion;
+    let impacto_id = payload.impacto_id ?? cur.impacto_id;
+    let urgencia_id = payload.urgencia_id ?? cur.urgencia_id;
+
+    if (payload.cliente_id || payload.impacto_id || payload.urgencia_id) {
+      cliente_ponderacion = await getClientePonderacion(payload.cliente_id ?? cur.cliente_id);
+      const pts = await getPuntos(impacto_id, urgencia_id);
+      prioridad_num = calcPrioridad(cliente_ponderacion, pts.impacto, pts.urgencia);
+    }
+
+    await models.Tarea.update({ ...payload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
+    return models.Tarea.findByPk(id, { transaction: t });
+  });
+};
+
+const archiveTask = async (id, archive=true) => {
+  await models.Tarea.update({ is_archivada: !!archive }, { where: { id } });
+  return { ok: true };
+};
+
+// ---------- Responsables / Colaboradores ----------
+const addResponsable = async (tarea_id, feder_id, es_lider=false) => {
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+  await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
+  const row = await models.TareaResponsable.findOrCreate({
+    where: { tarea_id, feder_id },
+    defaults: { tarea_id, feder_id, es_lider }
+  });
+  if (!row[0].isNewRecord && row[0].es_lider !== es_lider) {
+    row[0].es_lider = es_lider; await row[0].save();
   }
+  return row[0];
+};
 
-  async list(params, user_id) {
-    const scope = await this._scopeForUser(user_id);
-    // fusionamos include del scope con filtros del repo
-    return this.repo.list(params, { include: scope.include, where: scope.where });
-  }
+const removeResponsable = async (tarea_id, feder_id) => {
+  await models.TareaResponsable.destroy({ where: { tarea_id, feder_id } });
+  return { ok: true };
+};
 
-  async create(payload, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      // set creador y defaults
-      const ctx = await this._getUserContext(user_id);
-      const base = {
-        ...payload,
-        creado_por_feder_id: ctx.feder_id,
-        aprobacion_estado_id: payload.requiere_aprobacion ? await this._aprobPendienteId(t) : await this._aprobNoAplicaId(t)
-      };
-      const ready = await this._withComputedFields(base, t);
-      const tarea = await this.repo.create(ready, t);
+const addColaborador = async (tarea_id, feder_id, rol=null) => {
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+  await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
+  const [row, created] = await models.TareaColaborador.findOrCreate({
+    where: { tarea_id, feder_id },
+    defaults: { tarea_id, feder_id, rol }
+  });
+  if (!created && rol !== undefined) { row.rol = rol; await row.save(); }
+  return row;
+};
 
-      // Responsables opcionales
-      if (payload.responsables?.length) {
-        await this.repo.addResponsables(tarea.id, payload.responsables, t);
+const removeColaborador = async (tarea_id, feder_id) => {
+  await models.TareaColaborador.destroy({ where: { tarea_id, feder_id } });
+  return { ok: true };
+};
+
+// ---------- Etiquetas ----------
+const assignEtiqueta = async (tarea_id, etiqueta_id) => {
+  await Promise.all([
+    ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
+    ensureExists(models.TareaEtiqueta, etiqueta_id, 'Etiqueta no encontrada')
+  ]);
+  await models.TareaEtiquetaAsig.findOrCreate({ where: { tarea_id, etiqueta_id }, defaults: { tarea_id, etiqueta_id } });
+  return { ok: true };
+};
+
+const unassignEtiqueta = async (tarea_id, etiqueta_id) => {
+  await models.TareaEtiquetaAsig.destroy({ where: { tarea_id, etiqueta_id } });
+  return { ok: true };
+};
+
+// ---------- Checklist ----------
+const listChecklist = (tarea_id) =>
+  models.TareaChecklistItem.findAll({ where: { tarea_id }, order: [['orden','ASC'],['id','ASC']] });
+
+const recomputeProgressPct = async (tarea_id, t = null) => {
+  const total = await models.TareaChecklistItem.count({ where: { tarea_id }, transaction: t || undefined });
+  const done  = await models.TareaChecklistItem.count({ where: { tarea_id, is_done: true }, transaction: t || undefined });
+  const pct   = total ? Math.round((done / total) * 10000) / 100 : 0;
+  await models.Tarea.update({ progreso_pct: pct }, { where: { id: tarea_id }, transaction: t || undefined });
+};
+
+const createChecklistItem = async (tarea_id, titulo) => {
+  return sequelize.transaction(async (t) => {
+    const max = await models.TareaChecklistItem.max('orden', { where: { tarea_id }, transaction: t });
+    const item = await models.TareaChecklistItem.create({ tarea_id, titulo, orden: Number.isFinite(max) ? max + 1 : 1 }, { transaction: t });
+    await recomputeProgressPct(tarea_id, t);
+    return item;
+  });
+};
+
+const updateChecklistItem = async (id, patch) => {
+  return sequelize.transaction(async (t) => {
+    const item = await models.TareaChecklistItem.findByPk(id, { transaction: t });
+    if (!item) throw Object.assign(new Error('Ítem de checklist inexistente'), { status: 404 });
+    await models.TareaChecklistItem.update(patch, { where: { id }, transaction: t });
+    await recomputeProgressPct(item.tarea_id, t);
+    return models.TareaChecklistItem.findByPk(id, { transaction: t });
+  });
+};
+
+const deleteChecklistItem = async (id) => {
+  return sequelize.transaction(async (t) => {
+    const item = await models.TareaChecklistItem.findByPk(id, { transaction: t });
+    if (!item) return { ok: true };
+    await models.TareaChecklistItem.destroy({ where: { id }, transaction: t });
+    await recomputeProgressPct(item.tarea_id, t);
+    return { ok: true };
+  });
+};
+
+const reorderChecklist = async (tarea_id, ordenPairs=[]) =>
+  sequelize.transaction(async (t) => {
+    for (const { id, orden } of ordenPairs) {
+      await models.TareaChecklistItem.update({ orden }, { where: { id, tarea_id }, transaction: t });
+    }
+    return listChecklist(tarea_id);
+  });
+
+// ---------- Comentarios / menciones / adjuntos (comentario) ----------
+const listComentarios = async (tarea_id, currentUser) =>
+  sequelize.query(`
+    SELECT
+      cm.*,
+      -- datos del autor (IDs + nombre/apellido)
+      f.id       AS autor_feder_id,
+      f.user_id  AS autor_user_id,
+      f.nombre   AS autor_nombre,
+      f.apellido AS autor_apellido,
+      ct.codigo  AS tipo_codigo,
+
+      -- flag para el cliente (mío si coincide feder_id o user_id)
+      (cm.feder_id = :cur_fid OR f.user_id = :uid) AS is_mine,
+
+      -- menciones y adjuntos del comentario
+      COALESCE((
+        SELECT json_agg(m.feder_id)
+        FROM "TareaComentarioMencion" m
+        WHERE m.comentario_id = cm.id
+      ), '[]'::json) AS menciones,
+
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'id', a.id, 'nombre', a.nombre, 'mime', a.mime, 'drive_url', a.drive_url
+        ))
+        FROM "TareaAdjunto" a
+        WHERE a.comentario_id = cm.id
+      ), '[]'::json) AS adjuntos,
+
+      -- preview si es reply
+      CASE WHEN cm.reply_to_id IS NOT NULL THEN json_build_object(
+        'id', p.id,
+        'autor', pf.nombre || ' ' || pf.apellido,
+        'excerpt', left(regexp_replace(p.contenido, E'\\s+', ' ', 'g'), 140)
+      ) ELSE NULL END AS reply_to
+
+    FROM "TareaComentario" cm
+    JOIN "Feder" f          ON f.id  = cm.feder_id
+    JOIN "ComentarioTipo" ct ON ct.id = cm.tipo_id
+    LEFT JOIN "TareaComentario" p ON p.id = cm.reply_to_id
+    LEFT JOIN "Feder" pf          ON pf.id = p.feder_id
+
+    WHERE cm.tarea_id = :id
+    ORDER BY cm.created_at ASC
+  `, {
+    type: QueryTypes.SELECT,
+    replacements: {
+      id: tarea_id,
+      uid:     currentUser?.id ?? 0,
+      cur_fid: currentUser?.feder_id ?? 0
+    }
+  });
+
+
+
+const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, contenido, menciones=[], adjuntos=[], reply_to_id=null }) =>
+  sequelize.transaction(async (t) => {
+    let resolvedTipoId = tipo_id ?? null;
+    if (!resolvedTipoId && tipo_codigo) {
+      const tipo = await models.ComentarioTipo.findOne({ where: { codigo: tipo_codigo }, transaction: t });
+      if (!tipo) throw Object.assign(new Error('Tipo de comentario no encontrado'), { status: 400 });
+      resolvedTipoId = tipo.id;
+    }
+    await Promise.all([
+      ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
+      ensureExists(models.ComentarioTipo, resolvedTipoId, 'Tipo de comentario no encontrado')
+    ]);
+
+    // si viene reply_to_id, validamos que exista y pertenezca a la misma tarea
+    if (reply_to_id) {
+      const parent = await models.TareaComentario.findByPk(reply_to_id, { transaction: t })
+      if (!parent || parent.tarea_id !== Number(tarea_id)) {
+        throw Object.assign(new Error('Comentario padre inválido'), { status: 400 })
       }
-
-      // Colaboradores opcionales
-      if (payload.colaboradores?.length) {
-        await this.repo.addColaboradores(tarea.id, payload.colaboradores, t);
-      }
-
-      await t.commit();
-      return this.get(tarea.id, user_id);
-    } catch (e) {
-      await t.rollback();
-      throw e;
     }
-  }
 
-  async update(id, patch, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const ready = await this._withComputedFields(patch, t);
-      await this.repo.update(id, ready, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) {
-      await t.rollback();
-      throw e;
+    const cm = await models.TareaComentario.create({ tarea_id, feder_id, tipo_id: resolvedTipoId, contenido, reply_to_id: reply_to_id || null }, { transaction: t });
+
+    if (menciones?.length) {
+      const uniq = Array.from(new Set(menciones));
+      const rows = uniq.map(fid => ({ comentario_id: cm.id, feder_id: fid }));
+      await models.TareaComentarioMencion.bulkCreate(rows, { transaction: t, ignoreDuplicates: true });
     }
-  }
-
-  async archive(id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.archive(id, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) {
-      await t.rollback();
-      throw e;
+    if (adjuntos?.length) {
+      const rows = adjuntos.map(a => ({ ...a, tarea_id, comentario_id: cm.id, subido_por_feder_id: feder_id }));
+      await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
     }
+    return cm;
+});
+
+// ---------- Adjuntos (a nivel tarea, no comentario) ----------
+const addAdjunto = async (tarea_id, feder_id, meta) => {
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+  return models.TareaAdjunto.create({ ...meta, tarea_id, subido_por_feder_id: feder_id });
+};
+
+const removeAdjunto = async (adjId) => {
+  await models.TareaAdjunto.destroy({ where: { id: adjId } });
+  return { ok: true };
+};
+
+// ---------- Relaciones ----------
+const createRelacion = async (tarea_id, { relacionada_id, tipo_id, tipo_codigo }) => {
+  let resolvedTipoId = tipo_id ?? null;
+  if (!resolvedTipoId && tipo_codigo) {
+    const tipo = await models.TareaRelacionTipo.findOne({ where: { codigo: tipo_codigo } });
+    if (!tipo) throw Object.assign(new Error('Tipo de relación no encontrado'), { status: 400 });
+    resolvedTipoId = tipo.id;
+  }
+  await Promise.all([
+    ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
+    ensureExists(models.Tarea, relacionada_id, 'Tarea relacionada no encontrada'),
+    ensureExists(models.TareaRelacionTipo, resolvedTipoId, 'Tipo de relación no encontrado')
+  ]);
+  const [row] = await models.TareaRelacion.findOrCreate({
+    where: { tarea_id, relacionada_id, tipo_id: resolvedTipoId },
+    defaults: { tarea_id, relacionada_id, tipo_id: resolvedTipoId }
+  });
+  return row;
+};
+
+const deleteRelacion = async (tarea_id, relId) => {
+  await models.TareaRelacion.destroy({ where: { id: relId, tarea_id } });
+  return { ok: true };
+};
+
+// ---------- Favoritos / Seguidores ----------
+const setFavorito = async (tarea_id, user_id, on) => {
+  if (on) await models.TareaFavorito.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
+  else    await models.TareaFavorito.destroy({ where: { tarea_id, user_id } });
+  return { ok: true };
+};
+
+const setSeguidor = async (tarea_id, user_id, on) => {
+  if (on) await models.TareaSeguidor.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
+  else    await models.TareaSeguidor.destroy({ where: { tarea_id, user_id } });
+  return { ok: true };
+};
+
+// ---------- Estado / Aprobación / Kanban ----------
+const setEstado = async (id, estado_id) => {
+  await ensureExists(models.TareaEstado, estado_id, 'Estado inválido');
+
+  // ¿a qué estado vamos?
+  const estado = await models.TareaEstado.findByPk(estado_id, { attributes: ['codigo'] });
+
+  if (estado?.codigo === 'finalizada') {
+    // cerrar la tarea: fecha y progreso al 100
+    await models.Tarea.update(
+      { estado_id, finalizada_at: new Date(), progreso_pct: 100 },
+      { where: { id } }
+    );
+  } else {
+    // sacamos finalizada: limpiamos finalizada_at y recomputamos progreso real desde checklist
+    await models.Tarea.update(
+      { estado_id, finalizada_at: null },
+      { where: { id } }
+    );
+    await recomputeProgressPct(id); // ← ya la tenés definida más arriba
   }
 
-  // -------- Estados / Aprobaciones --------
-  async _aprobNoAplicaId(t) {
-    const row = await this.m.TareaAprobacionEstado.findOne({ where: { codigo: 'no_aplica' }, transaction: t });
-    return row.id;
-  }
-  async _aprobPendienteId(t) {
-    const row = await this.m.TareaAprobacionEstado.findOne({ where: { codigo: 'pendiente' }, transaction: t });
-    return row.id;
-  }
-  async _aprobAprobadaId(t) {
-    const row = await this.m.TareaAprobacionEstado.findOne({ where: { codigo: 'aprobada' }, transaction: t });
-    return row.id;
-  }
-  async _aprobRechazadaId(t) {
-    const row = await this.m.TareaAprobacionEstado.findOne({ where: { codigo: 'rechazada' }, transaction: t });
-    return row.id;
+  return { ok: true };
+};
+
+const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_motivo=null) => {
+  await ensureExists(models.TareaAprobacionEstado, aprobacion_estado_id, 'Estado de aprobación inválido');
+  const patch = { aprobacion_estado_id, rechazo_motivo: rechazo_motivo ?? null };
+  if (aprobacion_estado_id === 3) { patch.aprobado_por_user_id = user_id;  patch.aprobado_at = new Date(); }
+  if (aprobacion_estado_id === 4) { patch.rechazado_por_user_id = user_id; patch.rechazado_at = new Date(); }
+  await models.Tarea.update(patch, { where: { id } });
+  return { ok: true };
+};
+
+const moveKanban = async (tarea_id, user_id, { stage, orden = 0 }) => {
+  if (!user_id) {
+    throw Object.assign(new Error('Usuario no autenticado'), { status: 401 });
   }
 
-  async setEstado(id, estado_codigo, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const estado = await this.m.TareaEstado.findOne({ where: { codigo: estado_codigo }, transaction: t });
-      if (!estado) throw new Error('Estado inválido');
-      const tarea = await this.repo.setEstado(id, estado.id, t);
+  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
 
-      // si finaliza, grabamos finalizada_at
-      if (estado_codigo === 'finalizada') {
-        await this.repo.update(id, { finalizada_at: new Date() }, t);
-      }
-
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) {
-      await t.rollback();
-      throw e;
+  const now = new Date();
+  const [row, created] = await models.TareaKanbanPos.findOrCreate({
+    where: { tarea_id, user_id },
+    defaults: {
+      tarea_id,
+      user_id,
+      stage_code: stage, 
+      pos: orden,        
+      updated_at: now
     }
+  });
+
+  if (!created) {
+    row.stage_code = stage;
+    row.pos = orden;
+    row.updated_at = now;
+    await row.save();
   }
 
-  async aprobar(id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const aprobada = await this._aprobAprobadaId(t);
-      await this.repo.update(id, { aprobacion_estado_id: aprobada, aprobado_por_user_id: user_id, aprobado_at: new Date(), rechazado_por_user_id: null, rechazado_at: null, rechazo_motivo: null }, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+  return { ok: true };
+};
 
-  async rechazar(id, user_id, motivo) {
-    const t = await this.sequelize.transaction();
-    try {
-      const rech = await this._aprobRechazadaId(t);
-      await this.repo.update(id, { aprobacion_estado_id: rech, rechazado_por_user_id: user_id, rechazado_at: new Date(), rechazo_motivo: motivo || null, aprobado_por_user_id: null, aprobado_at: null }, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Wrapper usado por el controller: recibe userId numérico
+export const svcMoveKanban = (id, userId, body) => moveKanban(id, userId, body);
 
-  // -------- Responsables / Colaboradores --------
-  async addResponsables(id, responsables, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const tarea = await this.repo.addResponsables(id, responsables, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
 
-  async removeResponsable(id, feder_id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.removeResponsable(id, feder_id, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
 
-  async addColaboradores(id, colaboradores, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const tarea = await this.repo.addColaboradores(id, colaboradores, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
 
-  async removeColaborador(id, feder_id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.removeColaborador(id, feder_id, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// ---------- Catálogos y Compose ----------
+const listCatalogos = async (customModels = models, scope = {}) => {
+  const [
+    estados,
+    aprobacion_estados,
+    impactos,
+    urgencias,
+    etiquetas,
+    comentario_tipos,
+    relacion_tipos,
+    clientes
+  ] = await Promise.all([
+    customModels.TareaEstado.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
+    customModels.TareaAprobacionEstado.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
+    customModels.ImpactoTipo.findAll({ attributes: ['id','codigo','nombre','puntos'], order: [['id','ASC']] }),
+    customModels.UrgenciaTipo.findAll({ attributes: ['id','codigo','nombre','puntos'], order: [['id','ASC']] }),
+    customModels.TareaEtiqueta.findAll({ attributes: ['id','codigo','nombre'], order: [['nombre','ASC']] }),
+    customModels.ComentarioTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
+    customModels.TareaRelacionTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
+    customModels.Cliente.findAll({ where: scope, attributes: ['id','nombre','celula_id'], order: [['nombre','ASC']] })
+  ]);
 
-  // -------- Comentarios / Adjuntos --------
-  async comentar(id, { feder_id, tipo_codigo, contenido, menciones, adjuntos }, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const tipo = await this.m.ComentarioTipo.findOne({ where: { codigo: tipo_codigo }, transaction: t });
-      if (!tipo) throw new Error('Tipo de comentario inválido');
+  const clienteIds = clientes.map(c => c.id);
+  const hitosWhere = clienteIds.length ? { cliente_id: clienteIds } : {};
+  const hitos = await customModels.ClienteHito.findAll({
+    where: hitosWhere,
+    attributes: ['id','cliente_id','nombre'],
+    order: [['nombre','ASC']]
+  });
 
-      await this.repo.addComentario({ tarea_id: id, feder_id, tipo_id: tipo.id, contenido, menciones, adjuntos }, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+  const feders = await customModels.Feder.findAll({
+    attributes: ['id','user_id','nombre','apellido','celula_id'],
+    order: [['nombre','ASC'], ['apellido','ASC']]
+  });
 
-  async listarComentarios(id, { limit, offset }) {
-    return this.repo.listComentarios(id, limit, offset);
-  }
+  return {
+    estados,
+    aprobacion_estados,
+    impactos,
+    urgencias,
+    etiquetas,
+    comentario_tipos,
+    relacion_tipos,
+    clientes,
+    hitos,
+    feders
+  };
+};
 
-  // -------- Etiquetas --------
-  async setEtiquetas(id, etiqueta_ids, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.assignEtiquetas(id, etiqueta_ids, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+const getCompose = async (idOrNull, user, customModels = models) => {
+  const ctx = await getUserContext(user);
+  const scopeClientes = (isAdmin(ctx.roles) || isCLevel(ctx.roles)) ? {} : { celula_id: ctx.celula_id };
+  const [catalog, tarea] = await Promise.all([
+    listCatalogos(customModels, scopeClientes),
+    idOrNull ? getTaskById(idOrNull, user) : Promise.resolve(null)
+  ]);
+  return { catalog, tarea };
+};
 
-  async quitarEtiqueta(id, etiqueta_id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.unassignEtiqueta(id, etiqueta_id, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// =============================
+// ========== svc* API =========
+// =============================
+export const svcListCatalogos = (customModels = models) => listCatalogos(customModels);
+export const svcGetCompose    = (idOrNull, user, customModels = models) => getCompose(idOrNull, user, customModels);
 
-  // -------- Relaciones --------
-  async relacionar(id, { relacionada_id, tipo_codigo }, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const tipo = await this.m.TareaRelacionTipo.findOne({ where: { codigo: tipo_codigo }, transaction: t });
-      if (!tipo) throw new Error('Tipo de relación inválido');
-      await this.repo.addRelacion({ tarea_id: id, relacionada_id, tipo_id: tipo.id }, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+export const svcListTasks   = async (q, user) => {
+  const rows  = await listTasks(q, user);
+  const total = await countTasks(q, user);
+  return { total, rows };
+};
+export const svcGetTask     = (id, user) => getTaskById(id, user);
+export const svcCreateTask  = async (body, user) => {
+  const row = await createTask(body, user?.feder_id ?? null);
+  return getTaskById(row.id, user);
+};
+export const svcUpdateTask  = async (id, body, user) => {
+  await updateTask(id, body);
+  return getTaskById(id, user);
+};
+export const svcArchiveTask = (id, on=true) => archiveTask(id, on);
 
-  async desrelacionar(id, { relacionada_id, tipo_codigo }, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const tipo = await this.m.TareaRelacionTipo.findOne({ where: { codigo: tipo_codigo }, transaction: t });
-      if (!tipo) throw new Error('Tipo de relación inválido');
-      await this.repo.removeRelacion({ tarea_id: id, relacionada_id, tipo_id: tipo.id }, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Responsables / Colaboradores
+export const svcAddResponsable    = (tarea_id, { feder_id, es_lider=false }) => addResponsable(tarea_id, feder_id, es_lider);
+export const svcRemoveResponsable = (tarea_id, feder_id) => removeResponsable(tarea_id, feder_id);
+export const svcAddColaborador    = (tarea_id, { feder_id, rol=null }) => addColaborador(tarea_id, feder_id, rol);
+export const svcRemoveColaborador = (tarea_id, feder_id) => removeColaborador(tarea_id, feder_id);
 
-  // -------- Checklist --------
-  async addChecklistItem(id, titulo, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.addChecklistItem(id, titulo, t);
-      await this._recomputeProgressPct(id, t);  // ajusta progreso
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Etiquetas
+export const svcAssignEtiqueta   = (tarea_id, etiqueta_id) => assignEtiqueta(tarea_id, etiqueta_id);
+export const svcUnassignEtiqueta = (tarea_id, etiqueta_id) => unassignEtiqueta(tarea_id, etiqueta_id);
 
-  async toggleChecklistItem(item_id, is_done, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const item = await this.repo.toggleChecklistItem(item_id, is_done, t);
-      await this._recomputeProgressPct(item.tarea_id, t);
-      await t.commit();
-      return this.get(item.tarea_id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Checklist
+export const svcListChecklist       = (tarea_id) => listChecklist(tarea_id);
+export const svcCreateChecklistItem = (tarea_id, titulo) => createChecklistItem(tarea_id, titulo);
+export const svcUpdateChecklistItem = (item_id, patch) => updateChecklistItem(item_id, patch);
+export const svcDeleteChecklistItem = (item_id) => deleteChecklistItem(item_id);
+export const svcReorderChecklist    = (tarea_id, ordenPairs) => reorderChecklist(tarea_id, ordenPairs);
 
-  async removeChecklistItem(item_id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      // necesitamos saber tarea_id antes de borrar
-      const item = await this.m.TareaChecklistItem.findByPk(item_id, { transaction: t });
-      if (!item) throw new Error('Ítem de checklist inexistente');
-      await this.repo.removeChecklistItem(item_id, t);
-      await this._recomputeProgressPct(item.tarea_id, t);
-      await t.commit();
-      return this.get(item.tarea_id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Comentarios
+export const svcListComentarios = (tarea_id, user) => listComentarios(tarea_id, user);
+export const svcCreateComentario = (tarea_id, feder_id, body) => createComentario(tarea_id, feder_id, body);
 
-  async reorderChecklist(id, orderedIds, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.reorderChecklist(id, orderedIds, t);
-      await t.commit();
-      return this.get(id, user_id);
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Adjuntos (tarea)
+export const svcAddAdjunto    = (tarea_id, feder_id, meta) => addAdjunto(tarea_id, feder_id, meta);
+export const svcRemoveAdjunto = (adjId) => removeAdjunto(adjId);
 
-  // -------- Favoritos / Seguidores --------
-  async toggleFavorito(id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const r = await this.repo.toggleFavorito(id, user_id, t);
-      await t.commit();
-      return r;
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Relaciones
+export const svcCreateRelacion = (tarea_id, body) => createRelacion(tarea_id, body);
+export const svcDeleteRelacion = (tarea_id, relId) => deleteRelacion(tarea_id, relId);
 
-  async toggleSeguidor(id, user_id) {
-    const t = await this.sequelize.transaction();
-    try {
-      const r = await this.repo.toggleSeguidor(id, user_id, t);
-      await t.commit();
-      return r;
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Favoritos / Seguidores
+export const svcSetFavorito = (tarea_id, user_id, on) => setFavorito(tarea_id, user_id, on);
+export const svcSetSeguidor = (tarea_id, user_id, on) => setSeguidor(tarea_id, user_id, on);
 
-  // -------- Kanban --------
-  async reorderKanban(pairs) {
-    const t = await this.sequelize.transaction();
-    try {
-      await this.repo.reorderKanban(pairs, t);
-      await t.commit();
-      return true;
-    } catch (e) { await t.rollback(); throw e; }
-  }
+// Estado / Aprobación / Kanban
+export const svcSetEstado = (id, estado_id) => setEstado(id, estado_id);
+export const svcSetAprobacion = (id, user_id, body) => {
+  const { aprobacion_estado_id, rechazo_motivo=null } = body || {};
+  return setAprobacion(id, aprobacion_estado_id, user_id, rechazo_motivo);
+};
 
-  // -------- Util: progreso por checklist --------
-  async _recomputeProgressPct(tarea_id, t) {
-    const total = await this.m.TareaChecklistItem.count({ where: { tarea_id }, transaction: t });
-    const done = await this.m.TareaChecklistItem.count({ where: { tarea_id, is_done: true }, transaction: t });
-    const pct = total ? Math.round((done / total) * 10000) / 100 : 0;
-    await this.repo.update(tarea_id, { progreso_pct: pct }, t);
-  }
-}
+export const svcSetResponsableLeader = (tarea_id, feder_id) => setResponsableLeader(tarea_id, feder_id);

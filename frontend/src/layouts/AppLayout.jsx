@@ -1,14 +1,18 @@
 import { Outlet } from 'react-router-dom'
 import Header from '../components/Header/Header.jsx'
+import Sidebar from '../components/Sidebar/Sidebar.jsx'
 import './AppLayout.scss'
 
 export default function AppLayout() {
   return (
-    <div className="appLayout">
+    <div className="appShell">
       <Header />
-      <main className="appMain">
-        <Outlet />
-      </main>
+      <div className="appBody">
+        <Sidebar />
+        <main className="appMain">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

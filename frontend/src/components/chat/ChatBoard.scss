@@ -1,0 +1,13 @@
+// /frontend/src/components/chat/ChatBoard.scss
+@use '../../styles/variables' as *;
+
+.chat-board{
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+  .topbar{
+    padding:8px 10px; display:flex; gap:10px; align-items:center;
+    background:$fh-card; border:1px solid rgba(255,255,255,.05); border-radius:$radius-2xl;
+  }
+}

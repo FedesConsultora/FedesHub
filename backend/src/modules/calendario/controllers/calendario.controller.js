@@ -29,61 +29,81 @@ export const getCatalog = async (_req, res, next) => {
 
 export const getCalendars = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] GET /calendars q=%s user=%s', JSON.stringify(req.query), req.user?.id);
     const q = listCalendarsQuery.parse(req.query);
-    res.json(await svcListCalendars(q, req.user));
+    const out = await svcListCalendars(q, req.user);
+    console.log('[cal:endpoint] GET /calendars -> %s', Array.isArray(out) ? out.length : 'ok');
+    res.json(out);
   } catch (e) { next(e); }
 };
 
 export const postCalendar = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] POST /calendars body=%s user=%s', JSON.stringify(req.body), req.user?.id);
     const body = upsertCalendarSchema.parse(req.body);
     const row = await svcUpsertCalendar(body, req.user);
+    console.log('[cal:endpoint] POST /calendars -> id=%s', row?.id);
     res.status(201).json(row);
   } catch (e) { next(e); }
 };
 
 export const putCalendar = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] PUT /calendars/%s body=%s user=%s', req.params.id, JSON.stringify(req.body), req.user?.id);
     const body = upsertCalendarSchema.parse({ ...req.body, id: Number(req.params.id) });
-    res.json(await svcUpsertCalendar(body, req.user));
+    const row = await svcUpsertCalendar(body, req.user);
+    console.log('[cal:endpoint] PUT /calendars/%s -> ok', req.params.id);
+    res.json(row);
   } catch (e) { next(e); }
 };
 
 export const getEvents = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] GET /events q=%s user=%s', JSON.stringify(req.query), req.user?.id);
     const q = listEventsQuery.parse(req.query);
-    res.json(await svcListEvents(q, req.user));
+    const out = await svcListEvents(q, req.user);
+    console.log('[cal:endpoint] GET /events -> events=%s', out?.events?.length ?? (Array.isArray(out) ? out.length : 'n/a'));
+    res.json(out);
   } catch (e) { next(e); }
 };
 
 export const postEvent = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] POST /events body=%s user=%s', JSON.stringify(req.body), req.user?.id);
     const body = upsertEventSchema.parse(req.body);
     const row = await svcUpsertEvent(body, req.user);
+    console.log('[cal:endpoint] POST /events -> id=%s', row?.id);
     res.status(201).json(row);
   } catch (e) { next(e); }
 };
 
 export const putEvent = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] PUT /events/%s body=%s user=%s', req.params.id, JSON.stringify(req.body), req.user?.id);
     const body = upsertEventSchema.parse({ ...req.body, id: Number(req.params.id) });
-    res.json(await svcUpsertEvent(body, req.user));
+    const row = await svcUpsertEvent(body, req.user);
+    console.log('[cal:endpoint] PUT /events/%s -> ok', req.params.id);
+    res.json(row);
   } catch (e) { next(e); }
 };
 
 export const deleteEvent = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] DELETE /events/%s user=%s', req.params.id, req.user?.id);
     const { id } = idParam.parse(req.params);
-    res.json(await svcDeleteEvent(id, req.user));
+    const out = await svcDeleteEvent(id, req.user);
+    console.log('[cal:endpoint] DELETE /events/%s -> %j', req.params.id, out);
+    res.json(out);
   } catch (e) { next(e); }
 };
 
 export const postMyRsvp = async (req, res, next) => {
   try {
+    console.log('[cal:endpoint] POST /events/%s/rsvp body=%s user=%s', req.params.id, JSON.stringify(req.body), req.user?.id);
     const { id } = idParam.parse(req.params);
     const body = rsvpSchema.parse(req.body);
     const row = await svcSetMyRsvp(id, body.respuesta, req.user);
+    console.log('[cal:endpoint] RSVP evento=%s -> %s', id, row?.respuesta);
     res.status(200).json(row);
   } catch (e) { next(e); }
 };
-

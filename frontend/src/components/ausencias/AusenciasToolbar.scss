@@ -1,0 +1,36 @@
+/* src/components/ausencias/AusenciasToolbar.scss */
+
+@use '../../styles/variables' as v;
+
+.aus-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 8px 0;
+
+  .l { display: flex; align-items: center; gap: 8px; }
+  .r { display: flex; align-items: center; gap: 8px; }
+
+  .pill {
+    display: flex; align-items: center; gap: 10px;
+    background: v.$fh-card; border: 1px solid rgba(255,255,255,0.06);
+    padding: 6px 10px; border-radius: v.$radius-2xl;
+    svg { opacity: .7; }
+    .muted { opacity: .6; }
+    .year-picker {
+      appearance: none; background: transparent; border: 0; color: v.$fh-text;
+      font-weight: 600; padding: 4px 8px; border-radius: 10px;
+      &:hover { background: rgba(255,255,255,0.05); }
+      option { color: #111; } /* menú nativo */
+    }
+  }
+
+  .segmented { display: inline-flex; gap: 2px; }
+  .segmented .seg { border-radius: 10px; padding: 6px 10px; }
+  .segmented .seg.active { background: rgba(255,255,255,0.08); }
+
+  .badge-pend {
+    margin-left: 6px;
+    font-size: 12px; padding: 4px 8px; border-radius: 999px;
+    background: rgba(77,208,225,.2);
+    border: 1px solid rgba(77,208,225,.45);
+  }
+}

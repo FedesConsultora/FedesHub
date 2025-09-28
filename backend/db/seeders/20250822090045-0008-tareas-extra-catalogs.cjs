@@ -1,8 +1,8 @@
 // backend/db/seeders/20250822090045-0008-tareas-extra-catalogs.cjs
 'use strict';
 /**
- * 0180 - Tareas: catálogos extra (idempotente)
- * Inserta sólo los códigos faltantes para evitar colisiones con 0100-core-catalogs.
+ *  Tareas: catálogos extra (idempotente)
+ * Inserta sólo los códigos faltantes para evitar colisiones.
  */
 
 async function ensureCodes(queryInterface, table, rows, t) {

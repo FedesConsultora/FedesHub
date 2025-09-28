@@ -1,4 +1,4 @@
-// backend/db/migrations/202508220955-0810-tareas-campos-extra.cjs
+// 202508320295500-0008-tareas-campos-extra.cjs
 'use strict';
 
 module.exports = {

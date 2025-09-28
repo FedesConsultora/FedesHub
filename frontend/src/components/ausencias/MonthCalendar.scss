@@ -1,0 +1,45 @@
+/* src/components/ausencias/MonthCalendar.scss */
+@use '../../styles/variables' as *;
+
+.aus-month-view{
+  background:$fh-card; border:1px solid $border; border-radius:14px; padding:12px;
+
+  .title{ font-weight:800; margin-bottom:8px; text-transform:capitalize; letter-spacing:.2px; }
+  .dow{
+    display:grid; grid-template-columns: repeat(7,1fr); gap:2px; margin-bottom:4px;
+    span{ text-align:center; font-size:.82rem; color:$fh-muted; }
+  }
+
+  .grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:2px; }
+
+  .day{
+    text-align:left; min-height:92px;
+    background:$fh-card; border:1px solid $border; border-radius:12px; padding:6px; position:relative;
+    transition: background .18s ease, filter .18s ease, border-color .18s ease;
+    &:hover{ background:rgba(255,255,255,.06); }
+    &.wknd{ background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 45%), $fh-card; }
+    &.today{ box-shadow:0 0 0 2px rgba($fh-accent,.55) inset; }
+    &.has-pending{ border-color: rgba(234,179,8,.45); }
+    .num{ font-size:.82rem; opacity:.85; }
+    .tags{ position:absolute; right:6px; top:6px; display:flex; gap:4px; }
+    .tag{
+      font-size:.72rem; padding:2px 6px; border-radius:999px; border:1px solid transparent; font-weight:800;
+      &.ok    { background: rgba( 34,197, 94,.18);  border-color: rgba( 34,197, 94,.4);  color:#0c1117; }
+      &.warn  { background: rgba(234,179,  8,.18);  border-color: rgba(234,179,  8,.4);  color:#0c1117; }
+      &.err   { background: rgba(239, 68, 68,.18);  border-color: rgba(239, 68, 68,.4);  color:#0c1117; }
+      &.cancel{ background: rgba(255,255,255,.10);  border-color: rgba(255,255,255,.24); color:#0c1117; }
+    }
+
+    .chip{
+      margin-top:4px; font-size:.86rem; padding:2px 6px; border-radius:8px; width:100%;
+      &.aprobada  { background: rgba( 34,197, 94,.10); border:1px solid rgba( 34,197, 94,.28); }
+      &.pendiente { background: rgba(234,179,  8,.08); border:1px solid rgba(234,179,  8,.26); }
+      &.denegada  { background: rgba(239, 68, 68,.08); border:1px solid rgba(239, 68, 68,.26); text-decoration:line-through; opacity:.7; }
+      &.cancelada { opacity:.55; text-decoration:line-through; border:1px dashed rgba(255,255,255,.25) }
+    }
+
+    .more{ margin-top:4px; font-size:.82rem; color:$fh-muted; }
+  }
+
+  .empty{ background:transparent; border:none; }
+}

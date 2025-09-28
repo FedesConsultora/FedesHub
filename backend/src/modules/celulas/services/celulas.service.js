@@ -24,7 +24,7 @@ export const svcCloseAsignacion = (asignacion_id, body) => closeAsignacion(asign
 
 export const svcListClientes = (celula_id) => getClientesByCelula(celula_id);
 
-// Sugerencia de “completitud” del tridente
+
 export const svcCoverage = async (celula_id) => {
   const c = await getCelulaById(celula_id);
   if (!c) throw Object.assign(new Error('Célula no encontrada'), { status: 404 });

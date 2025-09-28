@@ -27,8 +27,20 @@ export default defineConfig({
             console.log('[proxy:res]', proxyRes.statusCode, req.method, req.url)
           })
         }
-      }
+      },
+      '/uploads': { target, changeOrigin: true, secure: false },
     },
+    // 👇 IMPORTANTE: forzar polling dentro de Docker
+    watch: {
+      usePolling: true,
+      interval: 150, // 100–300ms suele ir bien
+      awaitWriteFinish: {
+        stabilityThreshold: 200,
+        pollInterval: 100,
+      },
+    },
+    // (opcional, por si el HMR no conecta desde el host)
+    // hmr: { host: 'localhost', clientPort: 3000 },
   },
   css: { preprocessorOptions: { scss: { api: 'modern' } } },
 })

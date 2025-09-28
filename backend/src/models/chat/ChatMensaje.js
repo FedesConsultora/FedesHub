@@ -23,7 +23,14 @@ export default (sequelize, DataTypes) => {
     underscored: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
-    paranoid: false
+    paranoid: false,
+    indexes: [
+      { name: 'IX_ChatMensaje_canal_created', fields: ['canal_id', 'created_at'] },
+      { name: 'IX_ChatMensaje_parent_created', fields: ['parent_id', 'created_at'] },
+      { name: 'IX_ChatMensaje_user_created', fields: ['user_id', 'created_at'] },
+      { name: 'IX_ChatMensaje_canal_id', fields: ['canal_id', 'id'] },
+      { name: 'IX_ChatMensaje_parent_id', fields: ['parent_id', 'id'] }
+    ]
   });
   return ChatMensaje;
 };

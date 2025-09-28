@@ -1,13 +1,16 @@
 // /backend/src/modules/notificaciones/services/push.service.js
+// RUTA: /backend/src/modules/notificaciones/services/push.service.js
 import { initModels } from '../../../models/registry.js';
 import { sendToTokens } from '../../../lib/push/fcm.js';
+import { log } from '../../../infra/logging/logger.js';
 
 const m = await initModels();
 
-async function idByCodigo(table, codigo, t) {
-  const row = await table.findOne({ where: { codigo }, transaction: t });
-  return row?.id ?? null;
-}
+// Errores típicos de FCM que invalidan token
+const INVALID_TOKEN_ERRORS = [
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token'
+];
 
 export const sendNotificationPush = async (notificacion_id, t) => {
   const notif = await m.Notificacion.findByPk(notificacion_id, {
@@ -23,29 +26,48 @@ export const sendNotificationPush = async (notificacion_id, t) => {
   });
   if (!notif) return 0;
 
-  const canalId = await idByCodigo(m.CanalTipo, 'push', t);
-  const proveedorId = await idByCodigo(m.ProveedorTipo, process.env.PUSH_PROVIDER || 'fcm', t);
+  const canal = await m.CanalTipo.findOne({ where: { codigo: 'push' }, transaction: t });
+  const proveedor = await m.ProveedorTipo.findOne({ where: { codigo: process.env.PUSH_PROVIDER || 'fcm' }, transaction: t });
+  const canalId = canal?.id ?? null;
+  const proveedorId = proveedor?.id ?? null;
 
-  const defaults = Array.isArray(notif.tipo?.canales_default_json) ? notif.tipo.canales_default_json : [];
+  const defaults = Array.isArray(notif.tipo?.canales_default_json) && notif.tipo.canales_default_json.length
+    ? notif.tipo.canales_default_json
+    : (process.env.NODE_ENV === 'production' ? ['in_app'] : ['in_app','email','push']); // ⬅️ fallback más conservador en prod
+
   const pushDefaultOn = defaults.includes('push');
 
-  const estadoSent   = await m.EstadoEnvio.findOne({ where: { codigo: 'sent' },   transaction: t });
-  const estadoError  = await m.EstadoEnvio.findOne({ where: { codigo: 'error' },  transaction: t });
+  const estadoSent  = await m.EstadoEnvio.findOne({ where: { codigo: 'sent'  }, transaction: t });
+  const estadoError = await m.EstadoEnvio.findOne({ where: { codigo: 'error' }, transaction: t });
+
+  log.info('push:start', {
+    notificacion_id, canalId, proveedorId, pushDefaultOn,
+    tipo: notif.tipo?.codigo, defaults
+  });
 
   let sent = 0;
 
   for (const d of notif.destinos) {
-    // preferencia efectiva
-    const pref = await m.NotificacionPreferencia.findOne({
+    const pref = canalId ? await m.NotificacionPreferencia.findOne({
       where: { user_id: d.user_id, tipo_id: notif.tipo_id, canal_id: canalId }, transaction: t
-    });
+    }) : null;
+
     const canPush = pref ? !!pref.is_habilitado : pushDefaultOn;
+
+    log.info('push:destino', {
+      destino_id: d.id, user_id: d.user_id,
+      canPush,
+      pref: pref ? { id: pref.id, is_habilitado: pref.is_habilitado } : null
+    });
+
     if (!canPush) continue;
 
-    // tokens válidos y no revocados del usuario
-    const tokens = (await m.PushToken.findAll({
-      where: { user_id: d.user_id, is_revocado: false }, transaction: t
-    })).map(x => x.token);
+    const rows = await m.PushToken.findAll({
+      where: { user_id: d.user_id, is_revocado: false },
+      transaction: t
+    });
+    const tokens = rows.map(x => x.token);
+    log.info('push:tokens', { destino_id: d.id, count: tokens.length });
 
     if (!tokens.length) continue;
 
@@ -65,12 +87,35 @@ export const sendNotificationPush = async (notificacion_id, t) => {
       chat_canal_id: notif.chat_canal_id ? String(notif.chat_canal_id) : '',
     };
 
-    // Envío real a FCM
     const res = await sendToTokens(tokens, { title, body }, data);
 
-    // Loguear resultado por token (success/error)
+    // Actualizo last_seen_at por health del token
+    await m.PushToken.update(
+      { last_seen_at: new Date() },
+      { where: { token: tokens }, transaction: t }
+    );
+
+    log.info('push:resumen', {
+      destino_id: d.id,
+      successCount: res?.successCount,
+      failureCount: res?.failureCount
+    });
+
     for (let i = 0; i < tokens.length; i++) {
-      const ok = res?.responses?.[i]?.success ?? (res?.successCount > 0 && tokens.length === 1);
+      const response = res?.responses?.[i];
+      const ok = response?.success ?? (res?.successCount > 0 && tokens.length === 1);
+      const token = tokens[i];
+
+      if (!ok && response?.error?.message) {
+        const msg = response.error.message;
+        const matchesInvalid = INVALID_TOKEN_ERRORS.some(code => msg.includes(code));
+        if (matchesInvalid) {
+          // Revoco token inválido
+          await m.PushToken.update({ is_revocado: true }, { where: { token }, transaction: t });
+          log.info('push:token:revoked', { token });
+        }
+      }
+
       await m.NotificacionEnvio.create({
         destino_id: d.id,
         canal_id: canalId,
@@ -78,13 +123,15 @@ export const sendNotificationPush = async (notificacion_id, t) => {
         estado_id: ok ? estadoSent?.id : estadoError?.id,
         asunto_render: title,
         cuerpo_render: body,
-        data_render_json: JSON.stringify({ ...data, token: tokens[i] }),
+        data_render_json: JSON.stringify({ ...data, token }),
         enviado_at: ok ? new Date() : null,
-        ultimo_error: ok ? null : (res?.responses?.[i]?.error?.message || 'send error')
+        ultimo_error: ok ? null : (response?.error?.message || 'send error')
       }, { transaction: t });
+
       if (ok) sent++;
     }
   }
 
+  log.info('push:done', { notificacion_id, sent });
   return sent;
 };

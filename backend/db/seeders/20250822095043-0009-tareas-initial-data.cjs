@@ -1,8 +1,7 @@
-// backend/db/seeders/202508220940-0009-tareas-demo-data.cjs
+// backend/db/seeders/20250822095043-0009-tareas-initial-data.cjs
 'use strict';
 
 /**
- * 0190 - Tareas: datos de demo
  * - Inserta TareaRelacionTipo y TareaEtiqueta (si existen las tablas)
  * - Crea 3 tareas de ejemplo para "Cliente Demo"
  * - Asigna responsables/colaboradores, etiquetas, relaciones y comentarios

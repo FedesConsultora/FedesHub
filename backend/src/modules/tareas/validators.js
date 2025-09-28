@@ -5,23 +5,66 @@ const boolish = z.preprocess(v => (v === 'true' ? true : v === 'false' ? false :
 const dateOpt = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional());
 const intId = z.coerce.number().int().positive();
 
+// ---------- NUEVO: compose ----------
+export const composeQuerySchema = z.object({
+  id: intId.optional()
+});
+
+// ---------- Listado con filtros extendidos ----------
 export const listTasksQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
+
   q: z.string().trim().min(1).max(200).optional(),
+
+  // filtros unitarios
   cliente_id: intId.optional(),
   hito_id: intId.optional(),
   estado_id: intId.optional(),
+  tarea_padre_id: z.coerce.number().int().positive().optional(),
   responsable_feder_id: intId.optional(),
   colaborador_feder_id: intId.optional(),
   etiqueta_id: intId.optional(),
-  solo_mias: boolish,            // si true: responsable/colaborador/creador = yo
+  impacto_id: intId.optional(),
+  urgencia_id: intId.optional(),
+  aprobacion_estado_id: intId.optional(),
+
+  // filtros múltiples
+  cliente_ids: z.array(intId).optional(),
+  estado_ids: z.array(intId).optional(),
+  etiqueta_ids: z.array(intId).optional(),
+
+  // flags
+  solo_mias: boolish,
   include_archivadas: boolish,
+  is_favorita: boolish,
+  is_seguidor: boolish,
+
+  // rangos de fechas (TODOS opcionales)
   vencimiento_from: dateOpt,
   vencimiento_to: dateOpt,
-  orden_by: z.enum(['prioridad','vencimiento','created_at']).optional().default('prioridad'),
+  inicio_from: dateOpt,
+  inicio_to: dateOpt,
+  created_from: dateOpt,
+  created_to: dateOpt,
+  updated_from: dateOpt,
+  updated_to: dateOpt,
+  finalizada_from: dateOpt,
+  finalizada_to: dateOpt,
+
+  // prioridad
+  prioridad_min: z.coerce.number().int().min(0).optional(),
+  prioridad_max: z.coerce.number().int().min(0).optional(),
+
+  // orden
+  orden_by: z.enum(['prioridad','vencimiento','fecha_inicio','created_at','updated_at','cliente','titulo'])
+            .optional().default('prioridad'),
   sort: z.enum(['asc','desc']).optional().default('desc')
 });
+
+export const setLeaderBodySchema = z.object({
+  feder_id: intId
+})
 
 export const taskIdParamSchema = z.object({ id: intId });
 
@@ -69,8 +112,8 @@ export const setAprobacionSchema = z.object({
 });
 
 export const moveKanbanSchema = z.object({
-  estado_id: intId,
-  orden_kanban: z.coerce.number().int().optional().default(0)
+  stage: z.enum(['inbox','today','week','month','later']),
+  orden: z.coerce.number().int().optional().default(0)
 });
 
 export const responsableSchema = z.object({
@@ -92,7 +135,7 @@ export const checklistReorderSchema = z.object({ orden: z.array(z.object({ id: i
 
 export const commentCreateSchema = z.object({
   tipo_id: intId,
-  contenido: z.string().min(1).max(10000),
+  contenido: z.string().min(1).max(10000).or(z.literal('')).transform(v=>v||''), // permitimos vacío si hay adjuntos
   menciones: z.array(intId).optional().default([]),
   adjuntos: z.array(z.object({
     nombre: z.string().min(1).max(255),
@@ -100,8 +143,10 @@ export const commentCreateSchema = z.object({
     tamano_bytes: z.coerce.number().int().nonnegative().optional(),
     drive_file_id: z.string().max(255).nullish(),
     drive_url: z.string().max(512).url().nullish()
-  })).optional().default([])
-});
+  })).optional().default([]),
+  reply_to_id: intId.nullish().optional()
+}).refine(obj => obj.contenido.trim().length > 0 || obj.adjuntos.length > 0, { message: 'Comentario vacío' })
+
 
 export const adjuntoCreateSchema = z.object({
   nombre: z.string().min(1).max(255),

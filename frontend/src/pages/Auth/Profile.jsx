@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuthCtx } from '../../context/AuthContext'
+import { useAuthCtx } from '../../context/AuthContext.jsx'
 import FormRow from '../../components/ui/FormRow'
 import './Auth.scss'
 

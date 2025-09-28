@@ -1,3 +1,5 @@
+// /backend/src/modules/notificaciones/controllers/notificaciones.controller.js
+
 import { initModels } from '../../../models/registry.js';
 import {
   inboxQuerySchema, notifIdParam, toggleBoolSchema, setPinSchema,
@@ -10,7 +12,7 @@ import {
 } from '../services/notificaciones.service.js';
 import { markEnvioOpenedByToken } from '../repositories/notificaciones.repo.js';
 
-await initModels(); // asegura modelos cargados
+await initModels();
 
 export const health = (_req, res) => res.json({ module: 'notificaciones', ok: true });
 
@@ -20,6 +22,7 @@ export const getCatalog = async (_req, res, next) => {
 };
 
 // Contadores por ventana
+// ⚠️ Respeta el endpoint actual (ej: GET /notificaciones/windows/counts)
 export const getVentanasCount = async (req, res, next) => {
   try { res.json(await svcVentanasCount(req.user)); } catch (e) { next(e); }
 };
@@ -32,7 +35,7 @@ export const getInbox = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// Canales de chat (proxy de membresía por actividad)
+// Canales de chat
 export const getChatCanales = async (req, res, next) => {
   try { res.json(await svcChatCanales(req.user)); } catch (e) { next(e); }
 };
@@ -49,7 +52,7 @@ export const putPrefs = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// Crear notificación (manual o desde otro módulo)
+// Crear notificación
 export const postNotification = async (req, res, next) => {
   try {
     const body = createNotificationSchema.parse(req.body);
@@ -107,12 +110,13 @@ export const getTrackOpen = async (req, res, _next) => {
       'R0lGODlhAQABAIAAAP///////yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
       'base64'
     );
-    res.setHeader('Content-Type','image/gif');
-    res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma','no-cache');
-    res.setHeader('Expires','0');
+    res.setHeader('Content-Type', 'image/gif');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.send(gif1x1);
   } catch {
-    res.status(200).end(); // no filtrar tokens inexistentes
+    // No exponemos si el token existe o no
+    res.status(200).end();
   }
 };

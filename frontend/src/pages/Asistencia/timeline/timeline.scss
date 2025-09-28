@@ -1,0 +1,221 @@
+@use '../../../styles/variables' as *;
+
+/* =========================
+   TOKENS & VARIABLES
+========================= */
+:root{
+  /* Layout */
+  --tl-fixed-col: 220px;   /* ancho columna fija con el nombre */
+  --tl-col-min:    36px;   /* mínimo por hora (desktop) */
+  --tl-col-min-md: 32px;   /* mínimo por hora (md) */
+  --tl-col-min-sm: 40px;   /* mínimo por hora (sm): más grande para legibilidad */
+
+  /* Header dinámico: lo seteamos también desde JS */
+  --tl-hours-h: 34px;
+
+  /* Fila + pista */
+  --tl-row-h:   56px;  /* alto de la fila completa */
+  --tl-pad-top: 12px;  /* padding superior del track (baja la pista) */
+  --tl-pad-bot: 10px;  /* padding inferior del track */
+  --tl-block-h: 22px;  /* alto de cada bloque */
+
+  /* Elevación y radios reutilizables */
+  --radius: 14px;
+  --radius-lg: 18px;
+  --elev: 0 16px 40px rgba(0,0,0,.35);
+
+  /* Sticky offset general (si tu app tiene topbar, ajustalo aquí) */
+  --app-sticky-top: 64px;
+}
+
+/* Paleta */
+$surface: rgba(14,18,26,.78);
+$surface-2: rgba(18,22,30,.82);
+$border: rgba(255,255,255,.08);
+$border-strong: rgba(255,255,255,.14);
+$text: $fh-text;
+$muted: $fh-muted;
+
+/* Helpers */
+.fh-card{ background:$surface; border:1px solid $border; border-radius:var(--radius); box-shadow:var(--elev); backdrop-filter:blur(10px); }
+.fh-input{
+  padding:.45rem .6rem; border:1px solid $border; border-radius:10px;
+  background:$surface-2; color:$text;
+}
+.fh-skel{ color:$muted } .fh-err{ color:#ff7676 } .fh-empty{ color:$muted }
+
+/* Focus ring accesible */
+:where(button, a, [tabindex], input, textarea, select):focus-visible{
+  outline:2px solid rgba($fh-primary,.65);
+  outline-offset: 2px;
+  box-shadow:0 0 0 4px rgba($fh-primary,.18);
+}
+
+/* =========================
+   TIMELINE
+========================= */
+.timeline-root{
+  @extend .fh-card;
+  padding:6px;
+  overflow: auto; /* scroll horizontal y vertical */
+  color: $text;
+
+  /* Scrollbars discretos */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.2) transparent;
+}
+.timeline-meta{
+  color:$muted; display:flex; gap:12px; padding:6px 8px 10px 8px; align-items:center;
+  .muted{ opacity:.8 }
+}
+
+/* Cabecera de horas (sticky, fila propia) */
+.sticky-top{
+  position: sticky;
+  top: var(--app-sticky-top);
+  z-index: 6;
+  background: linear-gradient(180deg, rgba(18,24,34,.96), rgba(18,24,34,.90));
+  border-bottom:1px solid $border;
+}
+.timeline-hours{
+  display:grid;
+  grid-template-columns: var(--tl-fixed-col) repeat(24, minmax(var(--tl-col-min), 1fr));
+  align-items:center;
+  height: var(--tl-hours-h);
+
+  .person-col{ height: var(--tl-hours-h); }
+  .hour-cell{
+    height: var(--tl-hours-h);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.78rem; color:$muted; border-left:1px solid $border;
+    /* marca gruesa cada 6hs como referencia */
+    &:nth-child(1),
+    &:nth-child(7),
+    &:nth-child(13),
+    &:nth-child(19),
+    &:nth-child(25){ font-weight:700; color:rgba(255,255,255,.8); }
+  }
+}
+
+/* Cuerpo: reserva el alto del header para que la primera fila NO quede tapada */
+.timeline-body{
+  padding-top: var(--tl-hours-h);
+}
+
+/* Filas */
+.timeline-row{
+  position: relative;
+  display:grid;
+  grid-template-columns: var(--tl-fixed-col) 1fr;
+  min-height: var(--tl-row-h);
+  &.odd{ background: rgba(255,255,255,.02) }
+}
+
+/* Col de persona (sticky) */
+.sticky-left{
+  position: sticky; left: 0; z-index: 7;
+  background: linear-gradient(90deg, rgba(18,24,34,.95), rgba(18,24,34,.90));
+  border-right:1px solid $border;
+}
+.person-col{ padding:8px 10px; display:grid; gap:6px; align-content:center; }
+.person-name{ font-weight:700; }
+.person-meta{ font-size:.82rem; color:$muted; }
+.person-meta .warn{ color:#ffcc00 } .person-meta .ok{ color:#38cb89 }
+.person-progress{
+  width:100%; height:6px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; border:1px solid $border;
+  .bar{ height:100%; background: linear-gradient(90deg, #6b7280, #111827) }
+}
+
+/* Pista (24 columnas) + overlay de bloques */
+.track-layer{
+  grid-column: 2 / -1;
+  position: relative;
+  height: var(--tl-row-h);
+  padding-top: var(--tl-pad-top);
+  padding-bottom: var(--tl-pad-bot);
+
+  .cells{
+    display:grid;
+    grid-template-columns: repeat(24, minmax(var(--tl-col-min), 1fr));
+    height: 100%;
+  }
+}
+.track-cell{
+  position: relative;
+  border-left:1px solid $border; border-bottom:1px solid $border;
+
+  /* marcas finas (quarter) */
+  &::before,
+  &::after{
+    content:""; position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.05);
+  }
+  &::before{ left:25% }
+  &::after { left:50% }
+  & > i{ display:block; position:absolute; top:0; bottom:0; left:75%; width:1px; background:rgba(255,255,255,.05) }
+}
+
+/* Capa overlay que respeta paddings para bloques y “ahora” */
+.blocks-layer{
+  position:absolute; left:0; right:0;
+  top: var(--tl-pad-top);
+  bottom: var(--tl-pad-bot);
+  pointer-events:none;
+}
+
+/* Bloques tipo “chip” */
+.block{
+  position:absolute;
+  height: var(--tl-block-h);
+  top: calc((100% - var(--tl-block-h)) / 2);
+  pointer-events:auto;
+
+  border-radius: 8px; border:1px solid rgba(255,255,255,.16);
+  background: linear-gradient(180deg, rgba(86,94,108,.9), rgba(32,38,48,.92));
+  color:#fff; display:flex; align-items:center;
+  padding:0 8px; font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  box-shadow: 0 10px 24px rgba(0,0,0,.30);
+  transition: transform .08s ease, filter .18s ease, background .18s ease, border-color .18s ease;
+
+  &:hover{ transform: translateY(-1px); filter:brightness(1.05) }
+}
+.block.open{ border-style:dashed; background: linear-gradient(180deg, rgba(86,94,108,.9), rgba(32,38,48,.86)); }
+.block .label{ pointer-events:none; }
+
+/* Línea de “AHORA” */
+.now-line{
+  position:absolute;
+  left:0; top: 0; bottom: var(--tl-pad-bot);
+  width:0; border-right: 2px dashed rgba($fh-primary,.65);
+  filter: drop-shadow(0 0 10px rgba($fh-primary,.35));height: 30px;
+}
+.asst-tabs{
+  margin-bottom: 2rem;
+}
+.now-line .now-dot{
+  position:absolute; right:-4px;
+  top: calc(50% - 3px); width:6px; height:6px; border-radius:999px; background:$fh-primary;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 980px){
+  .timeline-hours{
+    grid-template-columns: 200px repeat(24, minmax(var(--tl-col-min-md), 1fr));
+  }
+  .timeline-row{ grid-template-columns: 200px 1fr; }
+  .track-layer .cells{
+    grid-template-columns: repeat(24, minmax(var(--tl-col-min-md), 1fr));
+  }
+}
+@media (max-width: 720px){
+  .timeline-hours{
+    grid-template-columns: 160px repeat(24, minmax(var(--tl-col-min-sm), 1fr));
+  }
+  .timeline-row{ grid-template-columns: 160px 1fr; }
+  .track-layer .cells{
+    grid-template-columns: repeat(24, minmax(var(--tl-col-min-sm),  1fr));
+  }
+  /* mejora legibilidad en pantallas pequeñas */
+  .block{ font-size:.78rem; height:26px; }
+}

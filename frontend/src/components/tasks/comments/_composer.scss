@@ -1,0 +1,12 @@
+.taskDetail .comments{
+  .composer{
+    display:grid; gap:8px; grid-template-columns: 1fr; align-items:end; margin-top:10px;
+    button.primary{ background:$fh-primary; border:0; color:#fff; padding:.7rem .9rem; border-radius:12px; cursor:pointer }
+  }
+  .replyingTo{
+    display:flex; align-items:center; gap:6px;
+    padding:6px 8px; border:1px dashed rgba(0,0,0,.12);
+    border-radius:8px; background:rgba(0,0,0,.02);
+    .ico{ width:14px; height:14px; color:#6b7280; }
+  }
+}

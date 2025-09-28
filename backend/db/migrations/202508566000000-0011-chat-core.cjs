@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/**. 202508566000000-0011-chat-core.cjs
  * Módulo 11 - Chat (robusta / compatible con placeholder de M10)
  */
 module.exports = {

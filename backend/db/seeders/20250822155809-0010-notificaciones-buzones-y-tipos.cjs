@@ -1,5 +1,4 @@
-//20250822155809-0010-notificaciones-buzones-y-tipos.cjs
-
+// 20250822155809-0010-notificaciones-buzones-y-tipos.cjs
 'use strict';
 
 module.exports = {
@@ -11,7 +10,8 @@ module.exports = {
       INSERT INTO "BuzonTipo"(codigo,nombre) VALUES
         ('tareas','Tareas'),
         ('chat','Chat'),
-        ('calendario','Calendario/Reuniones')
+        ('calendario','Calendario/Reuniones'),
+        ('notificaciones','Notificaciones del sistema')
       ON CONFLICT (codigo) DO NOTHING;
     `);
 
@@ -33,10 +33,11 @@ module.exports = {
     `);
 
     // 3) Tipos base con su buzon/canales
+    //    ⬇️ Ajuste: agrego "push" a tarea_asignada y tarea_comentario
     const tipos = [
       // TAREAS
-      ['tarea_asignada',      'Tarea asignada',           bzTareas.id,   ['in_app','email']],
-      ['tarea_comentario',    'Comentario en tarea',      bzTareas.id,   ['in_app']],
+      ['tarea_asignada',      'Tarea asignada',           bzTareas.id,   ['in_app','email','push']],
+      ['tarea_comentario',    'Comentario en tarea',      bzTareas.id,   ['in_app','push']],
       ['tarea_vencimiento',   'Tarea próxima a vencer',   bzTareas.id,   ['in_app','email']],
       // AUSENCIAS → bandeja Tareas
       ['ausencia_aprobada',   'Ausencia aprobada',        bzTareas.id,   ['in_app','email']],
@@ -44,7 +45,7 @@ module.exports = {
       // SISTEMA → bandeja Tareas (genérico)
       ['sistema',             'Sistema',                  bzTareas.id,   ['in_app','email']],
 
-      // CHAT
+      // CHAT (ya tenían push)
       ['chat_mencion',        'Mención en chat',          bzChat.id,     ['in_app','push']],
       ['chat_mensaje',        'Nuevo mensaje en chat',    bzChat.id,     ['in_app','push']],
 
@@ -74,7 +75,7 @@ module.exports = {
       });
     }
 
-    // 5) Backfill defensivo por si existían filas antiguas sin buzon_id
+    // 5) Backfill defensivo de buzon_id
     await queryInterface.sequelize.query(`
       UPDATE "NotificacionTipo"
       SET buzon_id = (SELECT id FROM "BuzonTipo" WHERE codigo='tareas')
@@ -90,6 +91,20 @@ module.exports = {
       SET buzon_id = (SELECT id FROM "BuzonTipo" WHERE codigo='calendario')
       WHERE buzon_id IS NULL AND (codigo LIKE 'evento_%' OR codigo='recordatorio');
     `);
+
+    // 6) ⬅️ Backfill idempotente para agregar "push" si faltara (códigos clave)
+    //     OJO: para arrays JSONB usamos @> para "contiene" y || para concatenar arrays
+    await queryInterface.sequelize.query(`
+      UPDATE "NotificacionTipo"
+      SET canales_default_json =
+        CASE
+          WHEN canales_default_json IS NULL THEN '["in_app","push"]'::jsonb
+          WHEN NOT (canales_default_json @> '["push"]'::jsonb) THEN (canales_default_json || '["push"]'::jsonb)
+          ELSE canales_default_json
+        END,
+        updated_at = :now
+      WHERE codigo IN ('tarea_comentario','tarea_asignada');
+    `, { replacements: { now }});
   },
 
   async down (queryInterface) {

@@ -1,12 +1,36 @@
 @use '../../styles/variables' as *;
 
 .fhHeader{
+  position:sticky; top:0; z-index:10;
   display:flex; align-items:center; gap:12px; padding:12px 16px;
   border-bottom:1px solid rgba(255,255,255,.08); background:#0b1118;
-  .brand{ font-weight:800; letter-spacing:.2px; }
+  .brand{ 
+    font-weight:900; font-size:34px; letter-spacing:.6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.2);
+      background: linear-gradient(90deg, #fff, #8fd3ff);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 3px 18px rgba(77,208,225,.12)); 
+  }
   .spacer{ flex:1 }
-  .userBox{ display:flex; align-items:center; gap:10px }
-  .avatar{ width:36px; height:36px; border-radius:50%; }
-  .name{ font-size:.9rem; color:$fh-muted }
-  .logout{ font-size:.8rem; background:#1a2430; border:1px solid #223; color:$fh-text; padding:.3rem .55rem; border-radius:10px }
+  .userChip{
+    display:flex; align-items:center; gap:10px; background:#0f141b; border:1px solid rgba(255,255,255,.1);
+    color:$fh-text; padding:.35rem .6rem; border-radius:999px;
+  }
+  .avatar{ width:28px; height:28px; border-radius:50%; }
+  .email{ font-size:.9rem; color:$fh-muted; max-width:28ch; text-overflow:ellipsis; overflow:hidden; white-space:nowrap }
+  .caret{ opacity:.6 }
+  .menu{
+    position:absolute; right:16px; top:56px; min-width:220px;
+    background:#0f141b; border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden; box-shadow:$shadow-soft;
+    display:flex; flex-direction:column;
+    button{ text-align:left; background:transparent; border:none; color:$fh-text; padding:.65rem .8rem; }
+    button:hover{ background:#0b1118 }
+    hr{ border:0; height:1px; background:rgba(255,255,255,.08); margin:4px 0 }
+    .danger{ color:#ffb4b4 }
+  }
+}
+
+.rightCluster{
+  display: flex;
+  align-items: center;
 }

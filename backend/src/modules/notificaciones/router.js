@@ -27,26 +27,26 @@ router.get('/health/smtp', smtp);
 router.get('/health/push', pushHealth);
 
 // Catálogos
-router.get('/catalog', requireAuth, requirePermission('notificaciones','read'), getCatalog);
+router.get('/catalog', requireAuth, getCatalog);
 
 // Ventanas (Chats / Tareas / Notificaciones / Calendario)
-router.get('/windows/counts', requireAuth, requirePermission('notificaciones','read'), getVentanasCount);
-router.get('/inbox',          requireAuth, requirePermission('notificaciones','read'), getInbox);
-router.get('/chat/canales',   requireAuth, requirePermission('notificaciones','read'), getChatCanales);
+router.get('/windows/counts', requireAuth, getVentanasCount);
+router.get('/inbox',          requireAuth, getInbox);
+router.get('/chat/canales',   requireAuth, getChatCanales);
 
 // Preferencias de usuario
-router.get('/preferences',    requireAuth, requirePermission('notificaciones','read'),   getPrefs);
+router.get('/preferences',    requireAuth,   getPrefs);
 router.put('/preferences',    requireAuth, requirePermission('notificaciones','update'), putPrefs);
 
 // Crear notificación manual / desde otro módulo
 router.post('/',              requireAuth, requirePermission('notificaciones','create'), postNotification);
 
 // Marcas por usuario-destino
-router.patch('/:id/seen',     requireAuth, requirePermission('notificaciones','update'), patchSeen);
-router.patch('/:id/read',     requireAuth, requirePermission('notificaciones','update'), patchRead);
-router.patch('/:id/dismiss',  requireAuth, requirePermission('notificaciones','update'), patchDismiss);
-router.patch('/:id/archive',  requireAuth, requirePermission('notificaciones','update'), patchArchive);
-router.patch('/:id/pin',      requireAuth, requirePermission('notificaciones','update'), patchPin);
+router.patch('/:id/seen',     requireAuth,  patchSeen);
+router.patch('/:id/read',     requireAuth,  patchRead);
+router.patch('/:id/dismiss',  requireAuth,  patchDismiss);
+router.patch('/:id/archive',  requireAuth,  patchArchive);
+router.patch('/:id/pin',      requireAuth,  patchPin);
 
 // Tracking pixel (público, no requiere auth)
 router.get('/email/open/:token.gif', getTrackOpen);

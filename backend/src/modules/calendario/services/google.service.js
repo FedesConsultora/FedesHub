@@ -68,6 +68,7 @@ export async function svcGoogleSyncOne(body, user) {
     } while (pageToken);
 
     await vinc.update({ sync_token: syncToken, last_synced_at: new Date() });
+    console.log('[cal:gsync] ok calendario_local_id=%s items=%s', body.calendario_local_id, count);
     return { synced: count };
   } catch (err) {
     if (err?.code === 410) {
@@ -82,6 +83,7 @@ export async function svcGoogleSyncOne(body, user) {
         count++;
       }
       await vinc.update({ sync_token: res.data.nextSyncToken ?? null, last_synced_at: new Date() });
+      console.log('[cal:gsync] resynced calendario_local_id=%s items=%s', body.calendario_local_id, count);
       return { resynced: count };
     }
     throw err;

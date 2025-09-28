@@ -1,12 +1,20 @@
+// /frontend/src/pages/Admin/Users.jsx
 import { useEffect, useMemo, useState } from 'react'
 import * as A from '../../api/auth'
 import Table from '../../components/ui/Table'
-import Modal from '../../components/ui/Modal'
-import FormRow from '../../components/ui/FormRow'
 import './Admin.scss'
+import './users.page.scss'
+import UserCreateModal from './modals/UserCreateModal.jsx'
+import UserEditModal from './modals/UserEditModal.jsx'
+import { useToast } from '../../components/toast/ToastProvider.jsx'
+import { useModal } from '../../components/modal/ModalProvider.jsx'
+import SearchBar from '../../components/common/SearchBar.jsx'
 
 export default function Users() {
   document.title = 'FedesHub — Usuarios'
+  const toast = useToast()
+  const modal = useModal()
+
   const [rows, setRows] = useState([])
   const [roles, setRoles] = useState([])
   const [q, setQ] = useState('')
@@ -14,106 +22,88 @@ export default function Users() {
   const [error, setError] = useState(null)
 
   const [openNew, setOpenNew] = useState(false)
-  const [newData, setNewData] = useState({ email:'', password:'', roles:[], is_activo:true })
-
   const [editing, setEditing] = useState(null)
 
   const load = async () => {
     setLoading(true); setError(null)
     try {
-      const [{ data: users }, { data: roles }] = await Promise.all([A.adminListUsers(q), A.adminListRoles()])
-      setRows(users || []); setRoles(roles || [])
-    } catch (e) { setError(e?.fh?.message || 'Error cargando usuarios') }
-    finally { setLoading(false) }
+      const [{ data: users }, { data: rs }] = await Promise.all([A.adminListUsers(q), A.adminListRoles()])
+      setRows(users || []); setRoles(rs || [])
+    } catch (e) {
+      setError(e?.fh?.message || e?.message || 'Error cargando usuarios')
+    } finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
 
   const columns = useMemo(() => ([
     { key:'email', header:'Email' },
-    { key:'is_activo', header:'Activo', render:r => <span>{r.is_activo ? 'Sí' : 'No'}</span> },
+    { key:'is_activo', header:'Activo', render:r =>
+        <span className={`badge ${r.is_activo ? 'ok' : 'off'}`}>{r.is_activo ? 'Sí' : 'No'}</span> },
     { key:'roles', header:'Roles', render:r => (r.roles || []).map(x => x.nombre).join(', ') },
-    { key:'actions', header:'Acciones', render:r => (
-      <div style={{display:'flex', gap:8}}>
-        <button onClick={()=>setEditing({ id:r.id, email:r.email, roles:(r.roles||[]).map(x=>x.nombre) })}>Editar roles</button>
-        <button onClick={async ()=>{
-          try { await A.adminPatchUserActive(r.id, !r.is_activo); load() } catch(e) { alert(e?.fh?.message || 'Error') }
-        }}>{r.is_activo ? 'Desactivar' : 'Activar'}</button>
+    { key:'actions', header:'', render:r => (
+      <div className="row-actions">
+        <button onClick={()=>setEditing({ id:r.id, email:r.email, is_activo:r.is_activo, roles:(r.roles||[]).map(x=>x.id) })}>
+          Editar
+        </button>
+        <button
+          onClick={async ()=>{
+            const toActive = !r.is_activo
+            const ok = await modal.confirm({
+              title: toActive ? 'Activar usuario' : 'Desactivar usuario',
+              message: toActive
+                ? `¿Activar “${r.email}”?`
+                : `¿Desactivar “${r.email}”? El usuario no podrá acceder hasta reactivarlo.`,
+              tone: toActive ? 'success' : 'danger',
+              okText: toActive ? 'Activar' : 'Desactivar',
+              cancelText: 'Cancelar'
+            })
+            if (!ok) return
+            try {
+              await A.adminPatchUserActive(r.id, toActive)
+              toast?.success('Estado actualizado'); load()
+            } catch(e) { toast?.error(e?.fh?.message || 'Error') }
+          }}
+        >
+          {r.is_activo ? 'Desactivar' : 'Activar'}
+        </button>
       </div>
     )}
-  ]), [])
+  ]), [modal])
 
-  const toggleSel = (name, list, setter) => setter(list.includes(name) ? list.filter(n=>n!==name) : [...list, name])
-
-  const createUser = async () => {
-    if (!/@fedes\.ai$/i.test(newData.email.trim())) { alert('Sólo @fedes.ai'); return }
-    if (newData.password.length < 10) { alert('La contraseña debe tener al menos 10 caracteres'); return }
+  const applyEdit = async (val, { soft } = {}) => {
+    if (soft) { setEditing(val); return }
     try {
-      await A.adminCreateUser(newData)
-      setOpenNew(false); setNewData({ email:'', password:'', roles:[], is_activo:true })
-      load()
-    } catch (e) { alert(e?.fh?.message || 'No se pudo crear') }
-  }
-
-  const saveRoles = async () => {
-    try {
-      await A.adminPatchUserRoles(editing.id, editing.roles)
-      setEditing(null); load()
-    } catch (e) { alert(e?.fh?.message || 'No se pudo actualizar') }
+      await A.adminPatchUserRoles(val.id, val.roles)
+      if (val.is_activo !== rows.find(x=>x.id===val.id)?.is_activo) {
+        await A.adminPatchUserActive(val.id, val.is_activo)
+      }
+      toast?.success('Usuario actualizado'); setEditing(null); load()
+    } catch (e) { toast?.error(e?.fh?.message || 'No se pudo actualizar') }
   }
 
   return (
-    <section className="card">
-      <h2>Usuarios</h2>
+    <section className="users-page">
       <div className="toolbar">
-        <input title="Búsqueda" placeholder="Buscar..." value={q} onChange={e=>setQ(e.target.value)} />
-        <button onClick={load} title="Buscar">Buscar</button>
+        <SearchBar
+          value={q}
+          onChange={(e)=>setQ(e.target.value)}
+          onSearch={load}
+          onClear={()=>{ setQ(''); load() }}
+          placeholder="Buscar email…"
+        />
         <button className="primary" onClick={()=>setOpenNew(true)} title="Nuevo usuario">+ Nuevo</button>
       </div>
 
       {error && <div className="error">{error}</div>}
-      {loading ? <div>Cargando…</div> : <Table columns={columns} rows={rows} keyField="id" empty="Sin usuarios" />}
 
-      <Modal open={openNew} title="Nuevo usuario" onClose={()=>setOpenNew(false)} footer={
-        <><button onClick={()=>setOpenNew(false)}>Cancelar</button><button className="primary" onClick={createUser}>Crear</button></>
-      }>
-        <FormRow label="Email">
-          <input required title="Email corporativo" type="email" value={newData.email}
-                 onChange={e=>setNewData(v=>({...v, email:e.target.value}))}
-                 placeholder="usuario@fedes.ai" autoComplete="email" />
-        </FormRow>
-        <FormRow label="Contraseña">
-          <input required title="Mínimo 10 caracteres" type="password" value={newData.password}
-                 onChange={e=>setNewData(v=>({...v, password:e.target.value}))}
-                 placeholder="••••••••••" autoComplete="new-password" />
-        </FormRow>
-        <FormRow label="Activo">
-          <select value={String(newData.is_activo)} onChange={e=>setNewData(v=>({...v, is_activo: e.target.value==='true'}))}>
-            <option value="true">Sí</option><option value="false">No</option>
-          </select>
-        </FormRow>
-        <div className="chipset" aria-label="Roles disponibles">
-          {(roles||[]).map(r => (
-            <button key={r.id}
-              className={newData.roles.includes(r.nombre) ? 'chip active' : 'chip'}
-              onClick={()=>toggleSel(r.nombre, newData.roles, (x)=>setNewData(v=>({...v, roles:x})))}
-              title={r.descripcion || r.nombre}
-            >{r.nombre}</button>
-          ))}
-        </div>
-      </Modal>
+      <div className="tableWrap">
+        {loading ? <div className="loading">Cargando…</div> :
+          <Table columns={columns} rows={rows} keyField="id" empty="Sin usuarios" />
+        }
+      </div>
 
-      <Modal open={!!editing} title={`Editar roles: ${editing?.email || ''}`} onClose={()=>setEditing(null)} footer={
-        <><button onClick={()=>setEditing(null)}>Cancelar</button><button className="primary" onClick={saveRoles}>Guardar</button></>
-      }>
-        <div className="chipset">
-          {(roles||[]).map(r => (
-            <button key={r.id}
-              className={editing?.roles?.includes(r.nombre) ? 'chip active' : 'chip'}
-              onClick={()=>setEditing(ed => ({...ed, roles: ed.roles.includes(r.nombre) ? ed.roles.filter(n=>n!==r.nombre) : [...ed.roles, r.nombre]}))}
-            >{r.nombre}</button>
-          ))}
-        </div>
-      </Modal>
+      <UserCreateModal open={openNew} onClose={()=>setOpenNew(false)} onCreated={load} rolesCatalog={roles} />
+      <UserEditModal open={!!editing} onClose={()=>setEditing(null)} onSave={applyEdit} rolesCatalog={roles} value={editing || { email:'', roles:[], is_activo:true }} />
     </section>
   )
 }

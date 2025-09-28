@@ -1,0 +1,65 @@
+@use '../../styles/variables' as v;
+
+/* Estilos compartidos para detalle de cliente, contactos y mini lista de tareas */
+.ClienteDetailPage {
+  --border: #e5e7eb;
+  --muted:  #6b7280;
+
+  .loading, .error{ padding:12px; border-radius:v.$radius-2xl; }
+  .error{ color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f; }
+
+  .header {
+    background: v.$fh-card; border:1px solid rgba(255,255,255,.08);
+    border-radius: v.$radius-2xl; padding: 14px; box-shadow: v.$shadow-soft;
+    margin-bottom: 12px;
+  }
+  .title { display: flex; gap: 8px; align-items: baseline; }
+  .alias { color: v.$fh-muted; }
+
+  .meta {
+    display: flex; gap: 8px; align-items: center; margin: 6px 0;
+    .badge {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; color: v.$fh-muted; font-weight: 700;
+    }
+    .link {
+      padding:4px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      color:v.$fh-text; font-weight:700;
+      &:hover{ background: rgba(255,255,255,.06); }
+    }
+  }
+
+  .contactLine { color: v.$fh-text; a{ color: v.$fh-primary; } }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 12px; margin: 16px 0;
+    .stat {
+      background: mix(v.$fh-card, v.$fh-bg, 60%); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 12px;
+      .kpi   { font-size: 22px; font-weight: 800; }
+      .label { color: v.$fh-muted; }
+    }
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .panel {
+    background: v.$fh-card; border: 1px solid rgba(255,255,255,.08);
+    border-radius: v.$radius-2xl; padding: 12px; box-shadow: v.$shadow-soft;
+    h2{ margin:0 0 8px; font-size:18px; }
+    .muted{ color: v.$fh-muted; }
+  }
+
+  .small { font-size: 12px; }
+  .contactos, .tareas, .gerentes {
+    display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none;
+  }
+  .row { display: flex; gap: 6px; align-items: center; }
+  .tag {
+    background: #ecfeff; border: 1px solid #a5f3fc; color: #155e75;
+    padding: 2px 6px; border-radius: 999px; font-size: 11px;
+  }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+}

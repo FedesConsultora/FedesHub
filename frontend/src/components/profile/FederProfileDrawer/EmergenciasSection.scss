@@ -1,0 +1,89 @@
+@use '../../../styles/variables' as v;
+
+.pfEmerg{
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: v.$radius-2xl;
+  padding:14px;
+  box-shadow: v.$shadow-soft;
+  color: v.$fh-text;
+
+  h3{ margin:0 0 10px 0 }
+  .rowBetween{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+
+  /* Botones base */
+  .btn{
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.16);
+    padding:10px 14px; border-radius:12px; cursor:pointer;
+    font-weight:800; letter-spacing:.2px; color:v.$fh-text;
+    transition: background .15s ease, transform .05s ease;
+    &:hover{ background: rgba(255,255,255,.1) }
+    &:active{ transform: translateY(1px) }
+    &:disabled{ opacity:.6; cursor:not-allowed }
+    &.danger{ border-color:#5a2d2d; background:#3a1f1f; color:#ffb4b4 }
+  }
+  .cta{
+    background:v.$fh-primary; border:none; color:white; padding:.92rem 1rem; border-radius:12px; font-weight:800;
+    box-shadow:0 8px 20px rgba(68,113,141,.35);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+    &:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 12px 26px rgba(68,113,141,.5); filter:brightness(1.04) }
+    &:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none }
+  }
+
+  /* ----- Formulario ----- */
+  .emForm{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap:12px;
+    margin-top:6px;
+  }
+
+  .pfInput{ display:flex; flex-direction:column; gap:6px }
+  .lbl{
+    display:inline-flex; align-items:center;
+    font-weight:800; font-size:12px; letter-spacing:.2px;
+    color:v.$fh-muted; line-height:1.1; margin:0 0 2px 0; white-space:nowrap;
+  }
+  @media (max-width:480px){ .lbl{ white-space: normal } }
+
+  .hint{ color:v.$fh-muted; font-size:12px; margin-top:2px }
+
+  .control{
+    width:100%;
+    background:#0f141b; color:v.$fh-text;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:14px; outline:none; font-size:1rem; line-height:1.2;
+    padding:12px 14px; min-height:48px;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    &::placeholder{ color: rgba(255,255,255,.45) }
+    &:focus{ border-color: rgba(v.$fh-primary,.9); box-shadow:0 0 0 2px rgba(v.$fh-primary,.28); background:#111823; }
+  }
+
+  .formActions{ grid-column: 1 / -1; }
+
+  /* ----- Listado ----- */
+  .list{ list-style:none; padding:0; margin:6px 0 0; display:grid; gap:10px }
+
+  .rowEm{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid rgba(255,255,255,.08);
+    background:#0f141b; border-radius:14px; padding:12px;
+  }
+  .col .nm{ font-weight:900 }
+  .col .sub{ color:v.$fh-muted; margin-top:2px }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap }
+
+  /* Empty state */
+  .empty{
+    display:grid; place-items:center; text-align:center; gap:10px;
+    border:1px dashed rgba(255,255,255,.14);
+    border-radius:14px; padding:18px; background: rgba(255,255,255,.03);
+    .emoji{ font-size:22px }
+    .txt{ color:v.$fh-muted }
+  }
+
+  /* Mensajes */
+  .error{ color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f; padding:8px 10px; border-radius:12px; margin-top:8px }
+  .muted{ color:v.$fh-muted }
+}

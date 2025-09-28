@@ -8,7 +8,7 @@
 .appTile{
   width:100%; height:120px; display:grid; place-items:center; gap:8px;
   border-radius:$radius-2xl; border:1px solid rgba(255,255,255,.08);
-  background:$fh-card; box-shadow:$shadow-soft;
+  background:$fh-card; backdrop-filter: blur(3px); box-shadow:$shadow-soft;
   .emoji{ font-size:28px } .label{ font-weight:700 }
   .dragHint{ position:absolute; right:10px; top:8px; opacity:.25 }
 }

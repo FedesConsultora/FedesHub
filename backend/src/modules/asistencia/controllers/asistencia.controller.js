@@ -2,13 +2,15 @@
 import {
   listQuerySchema, idParamSchema, openQuerySchema,
   checkInBodySchema, checkOutBodySchema, forceCloseBodySchema, adjustBodySchema,
-  resumenQuerySchema
+  timelineQuerySchema
+,
 } from '../validators.js';
 
 import {
   svcCatalogOrigenes, svcCatalogCierreMotivos,
   svcList, svcGet, svcGetOpen, svcCheckIn, svcCheckOut, svcAdjust, svcForceCloseOpen,
-  svcToggle, svcGetMyFeder, svcResumenPeriodo
+  svcToggle, svcGetMyFeder, svcResumenPeriodo,
+  svcTimelineDia
 } from '../services/asistencia.service.js';
 
 export const health = (_req, res) => res.json({ module: 'asistencia', ok: true });
@@ -106,3 +108,17 @@ export const resumenPeriodo = async (req, res, next) => {
   try { res.json(await svcResumenPeriodo(resumenQuerySchema.parse(req.query))); } catch (e) { next(e); }
 };
 
+export const timelineDia = async (req, res, next) => {
+  try {
+    const q = timelineQuerySchema.parse(req.query);
+    res.json(await svcTimelineDia(q));
+  } catch (e) { next(e); }
+};
+
+export const meTimelineDia = async (req, res, next) => {
+  try {
+    const q = timelineQuerySchema.parse(req.query);
+    const me = await svcGetMyFeder(req.user.id);
+    res.json(await svcTimelineDia({ ...q, feder_id: me.id }));
+  } catch (e) { next(e); }
+};

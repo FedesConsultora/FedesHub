@@ -1,0 +1,63 @@
+@use '../../styles/variables' as *;
+
+// ——— Puntito solo (sin fondo extra)
+.asisDotBtn{
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 0; padding: 0; cursor: pointer;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 12px rgba(0,0,0,.2);
+  transition: transform .12s ease;
+  background: #e74c3c; // rojo (sin registro abierto)
+  margin-right: 1rem;
+  margin-left: 1rem;
+  &.on{ background:#2ecc71 }        // verde (con check-in)
+  &:hover{ transform: scale(1.15) }
+}
+
+// ——— Popover flotante (fuera del flujo del header)
+.asisPop{
+  position: fixed; z-index: 1000;
+  transform: translateX(-50%);
+  background:#0f141b; color:$fh-text;
+  border:1px solid rgba(255,255,255,.12); border-radius:14px;
+  min-width: 340px; padding: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+
+  .popTitle{ font-weight: 700; margin-bottom: 10px; }
+  .modGrid{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .modCard{
+    display:flex; align-items:center; gap:10px;
+    background:#0b1118; border:1px solid rgba(255,255,255,.10);
+    padding:12px; border-radius:12px; cursor:pointer; width:100%;
+    transition: border-color .12s ease, transform .08s ease;
+    .ic{ font-size:20px; opacity:.9 }
+    .txt{ display:flex; flex-direction:column; align-items:flex-start; }
+    .name{ font-weight:700; line-height:1; }
+    .sub{ font-size:.85rem; color:$fh-muted; margin-top:2px; }
+    .cta{ margin-left:auto; opacity:.8 }
+    &:hover{ border-color: rgba(255,255,255,.28); transform: translateY(-1px); }
+    &:active{ transform: translateY(0) scale(.99); }
+  }
+
+  .elapsed{
+    font-variant-numeric: tabular-nums;
+    font-size: 28px; font-weight: 800; letter-spacing:.5px;
+    background:#0b1118; border:1px solid rgba(255,255,255,.10);
+    padding: 10px 12px; border-radius: 12px; margin: 8px 0 12px;
+    text-align:center;
+  }
+
+  .bigDanger{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    background:#e74c3c; border:none; color:white; font-weight:700;
+    border-radius:12px; padding:10px 12px; cursor:pointer;
+    box-shadow: 0 10px 26px rgba(231, 76, 60, .25);
+  }
+
+  .foot{
+    margin-top:10px; display:flex; align-items:center; justify-content:space-between;
+    font-size:.9rem; color:$fh-muted;
+    .link{ background:transparent; border:none; color:$fh-text; cursor:pointer; opacity:.8 }
+  }
+}

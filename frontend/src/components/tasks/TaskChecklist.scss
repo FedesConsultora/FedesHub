@@ -1,0 +1,75 @@
+/* /frontend/src/components/tasks/TaskChecklist.scss */
+@use '../../styles/variables' as v;
+
+$border: rgba(255,255,255,.12);
+$border-strong: rgba(255,255,255,.18);
+$muted: v.$fh-muted;
+$text:  v.$fh-text;
+$bg: rgba(255,255,255,.03);
+
+.TaskChecklist {
+  .cardHeader{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;
+    .title{ font-weight:800; }
+    .smallToggle{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:.28rem .5rem; border-radius:999px; border:1px solid $border; background:transparent;
+      color:$muted; cursor:pointer;
+      &:hover{ background:rgba(255,255,255,.06); color:$text; border-color:$border-strong; }
+      svg{ font-size:.86rem; }
+    }
+  }
+
+  .newRow{
+    display:flex; gap:8px; align-items:center; margin-bottom:8px;
+    .newInput{
+      flex:1; min-width:0; padding:.5rem .6rem; border-radius:10px; border:1px solid $border;
+      background:#0f1419; color:$text; font-size:.95rem;
+      &:focus{ outline:none; border-color: rgba(v.$fh-primary,.6); box-shadow:0 0 0 3px rgba(v.$fh-primary,.18); }
+    }
+    .addBtn{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:.48rem .7rem; border-radius:10px; border:1px solid $border; background: v.$fh-primary; color:white; font-weight:800;
+      &:hover{ filter:brightness(1.08); }
+      svg{ font-size:.88rem }
+      span{ display:none } /* compacto, sólo ícono en pantallas chicas */
+      @media (min-width: 920px){ span{ display:inline } }
+    }
+  }
+
+  .skeleton{ display:grid; gap:6px; margin:6px 0 4px;
+    .skl{ height:34px; border-radius:10px; background:linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.12), rgba(255,255,255,.06)); animation: sh 1.2s infinite; }
+    @keyframes sh{ 0%{background-position:-200px 0} 100%{background-position:200px 0} }
+  }
+
+  .list{ display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+
+  .item{
+    display:grid; grid-template-columns: 20px 22px 1fr auto; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:12px; background:$bg; border:1px solid $border; transition: background .18s ease, border-color .18s ease;
+    &:hover{ background:rgba(255,255,255,.06); border-color:$border-strong; }
+    &.done{ opacity:.72; .txt{ text-decoration: line-through } }
+
+    .drag{ cursor:grab; color:$muted; display:flex; align-items:center; justify-content:center; }
+    .chk{ width:18px; height:18px; accent-color: v.$fh-primary; }
+    .txtBtn{
+      text-align:left; background:transparent; border:0; padding:0; color:$text; cursor:text; line-height:1.4;
+      &:hover{ color:$text }
+    }
+    .editInput{
+      width:100%; padding:.36rem .5rem; border-radius:8px; border:1px solid $border; background:#0f1419; color:$text;
+      &:focus{ outline:none; border-color: rgba(v.$fh-primary,.6); box-shadow:0 0 0 3px rgba(v.$fh-primary,.18); }
+    }
+    .rm{
+      margin-left:auto; background:transparent; border:0; color:$muted; cursor:pointer; padding:.2rem .3rem; border-radius:8px;
+      &:hover{ background:rgba(255,255,255,.06); color:#ffb4b4 }
+      svg{ font-size:.9rem }
+    }
+  }
+
+  .empty{
+    padding:10px; color:$muted; text-align:center; border:1px dashed $border; border-radius:12px; background:rgba(255,255,255,.02);
+  }
+
+  .doneList .item{ opacity:.6 }
+}

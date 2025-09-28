@@ -7,6 +7,7 @@ export const inboxQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
   only_unread: z.coerce.boolean().optional(),
   include_archived: z.coerce.boolean().optional(),
+  include_dismissed: z.coerce.boolean().optional(),
   sort: z.enum(['newest','oldest','importance']).default('newest'),
   chat_canal_id: z.coerce.number().int().optional(),
   tarea_id: z.coerce.number().int().optional(),

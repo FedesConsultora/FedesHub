@@ -1,0 +1,51 @@
+/* src/pages/Notificaciones/NotifListPage.scss */
+@use '../../styles/variables' as v;
+
+.fhNotifList{
+  .head{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+  .fh-input{ min-width:320px; }
+
+  .tableWrap{
+    width:100%; overflow:auto; border-radius: v.$radius-2xl; border:1px solid rgba(255,255,255,.08);
+    box-shadow: v.$shadow-soft;
+  }
+
+  .tbl{
+    width:100%; border-collapse:separate; border-spacing:0;
+    background: v.$fh-card; border-radius: v.$radius-2xl; overflow:hidden;
+
+    thead th{
+      text-align:left; font-weight:700; padding:12px; font-size:.92rem;
+      background: rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:12px; vertical-align:top; border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .colMain{ width:60% }
+    .colBuzon{ width:10%; white-space:nowrap }
+    .colFecha{ width:18%; white-space:nowrap }
+    .colAct{ width:12%; white-space:nowrap }
+
+    tr.row.read{ opacity:.7 } /* ← leídas más claritas */
+    .ttl{ font-weight:800; letter-spacing:.2px }
+    .msg{ color: v.$fh-muted; margin-top:4px }
+    .meta{ color: v.$fh-muted; font-size:.9em; margin-top:4px }
+
+    .btn{
+      border-radius:12px; padding:6px 10px; border:1px solid rgba(255,255,255,.12);
+      background: lighten(v.$fh-card, 4%); color: v.$fh-text; text-decoration:none; margin-right:8px;
+      &:hover{ background: lighten(v.$fh-card, 8%) }
+    }
+  }
+
+  .pager{
+    display:flex; gap:10px; align-items:center; justify-content:center; margin:12px 0;
+    button{
+      border-radius:12px; padding:8px 12px; border:1px solid rgba(255,255,255,.12);
+      background: lighten(v.$fh-card, 4%); color: v.$fh-text;
+      &:disabled{ opacity:.55; cursor:not-allowed }
+      &:not(:disabled):hover{ background: lighten(v.$fh-card, 8%) }
+    }
+  }
+}

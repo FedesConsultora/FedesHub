@@ -1,0 +1,79 @@
+@use '../../../styles/variables' as v;
+
+.pfBasic{
+  position: relative;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: v.$radius-2xl;
+  padding:14px;
+  box-shadow: v.$shadow-soft;
+  color: v.$fh-text;
+
+  h3{ margin:0 0 12px 0; }
+}
+
+/* Botón “Guardar” flotante (aparece sólo si hay cambios) */
+.btnSaveFloating{
+  position:absolute; top:10px; right:12px;
+  display:inline-flex; align-items:center; gap:10px;
+  background:#fff; color:#0b0f15; border:1px solid rgba(255,255,255,.85);
+  padding:9px 12px; border-radius:14px; font-weight:900; letter-spacing:.2px; font-size:.92rem;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+  transition: transform .06s ease, box-shadow .12s ease, opacity .12s ease;
+  cursor:pointer;
+  .txt{ line-height:1; }
+  .spinner{ width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(0,0,0,.25); border-top-color:#0b0f15; animation: pfspin .8s linear infinite; }
+  &:hover{ transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.22); background-color: #fff; }
+  &:disabled{ opacity:.6; cursor:not-allowed; transform:none }
+}
+@keyframes pfspin{ to{ transform: rotate(360deg) } }
+
+/* Grid */
+.pfFormGrid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:12px; }
+
+/* Field */
+.pfInput{ display:flex; flex-direction:column; gap:8px; }
+.pfInput .lbl{ margin:0; font-weight:800; font-size:12px; letter-spacing:.2px; color: v.$fh-muted; }
+.pfInput .hint{ font-size:11px; color:v.$fh-muted; margin-top:-4px; }
+
+/* Controles */
+.pfBasic .control{
+  width:100%; background:#0f141b; color:v.$fh-text;
+  border:1px solid rgba(255,255,255,.12); border-radius:14px;
+  outline:none; font-size:1rem; line-height:1.2; padding:12px 14px; min-height:48px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  &::placeholder{ color: rgba(255,255,255,.45) }
+  &:focus{ border-color: rgba(v.$fh-primary,.9); box-shadow:0 0 0 2px rgba(v.$fh-primary,.28); background:#111823; }
+  &:disabled{ opacity:.65; cursor:not-allowed }
+}
+.pfBasic .control--ro{ color: v.$fh-muted; }
+
+/* Teléfono */
+.pfInput.pfPhone{ grid-column: span 2; }
+.phoneGroup{
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) 120px 1fr; /* select país | área (chica) | número */
+  gap: 8px; align-items: center;
+}
+.control--select.cc{
+  width: 100%; appearance: none; padding-right: 40px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230b0f15' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 14px;
+}
+.phoneGroup .area{ width: 5rem !important; } /* ancho fijo “sano” (no valor fijo) */
+.phoneGroup .number{ width: 100%; }
+
+.pfInput .help{
+  color: v.$fh-muted; font-size: 11px; margin-top: 6px;
+  code{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:2px 6px }
+}
+
+/* Responsive */
+@media (max-width: 900px){ .pfInput.pfPhone{ grid-column: span 1; } }
+@media (max-width: 640px){ .phoneGroup{ grid-template-columns: 1fr 110px 1fr; } }
+@media (max-width: 560px){
+  .phoneGroup{ grid-template-columns: 1fr; }
+  .control--select.cc{ width:100%; min-width:0 }
+  .phoneGroup .area{ width:100% !important; }
+}
