@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import '../Login/login.scss'
+import '../Login/Login.scss'
 import bg from '../../assets/img/fondoOfi.webp'
 import { resetPassword } from '../../api/auth'
 import { FiLock, FiEye, FiEyeOff } from 'react-icons/fi'

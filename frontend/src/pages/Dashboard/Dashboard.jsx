@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TaskSummary from '../../components/dashboard/TaskSummary'
 import MetricsGrid from '../../components/dashboard/MetricsGrid'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
-import './dashboard.scss'
+import './Dashboard.scss'
 
 export default function Dashboard() {
   const [showCreate, setShowCreate] = useState(false)

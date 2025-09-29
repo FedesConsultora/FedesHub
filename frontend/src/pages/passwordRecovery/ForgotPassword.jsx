@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import '../Login/login.scss'
+import '../Login/Login.scss'
 import bg from '../../assets/img/fondoOfi.webp'
 import { forgotPassword } from '../../api/auth'
 import { FiMail } from 'react-icons/fi'
