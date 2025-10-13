@@ -51,27 +51,27 @@ services:
         npm run dev
       "
 
-    frontend:
-      build: ./frontend
-      container_name: fedes-hub_frontend
-      restart: always
-      ports:
-        - "3000:5173"
-      volumes:
-        - ./frontend:/usr/src/app:delegated
-        - /usr/src/app/node_modules
-      environment:
-        - CHOKIDAR_USEPOLLING=true
-        - CHOKIDAR_INTERVAL=150
-        - DOCKER=true
-        - VITE_PROXY_TARGET=http://fedes-hub:4000
-        - ROLLUP_DISABLE_NATIVE=1
-      command: >
-        sh -c "
-          rm -rf node_modules package-lock.json &&
-          npm install &&
-          npm run dev -- --host 0.0.0.0
-        "
+  frontend:
+    build: ./frontend
+    container_name: fedes-hub_frontend
+    restart: always
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./frontend:/usr/src/app:delegated
+      - /usr/src/app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=150
+      - DOCKER=true
+      - VITE_PROXY_TARGET=http://fedes-hub:4000
+      - ROLLUP_DISABLE_NATIVE=1
+    command: >
+      sh -c "
+        rm -rf node_modules package-lock.json &&
+        npm install &&
+        npm run dev -- --host 0.0.0.0
+      "
 
 
 volumes:
