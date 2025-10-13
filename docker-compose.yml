@@ -65,6 +65,7 @@
         - CHOKIDAR_INTERVAL=150
         - DOCKER=true
         - VITE_PROXY_TARGET=http://fedes-hub:4000
+        - ROLLUP_DISABLE_NATIVE=1
       command: ["bash","-lc","npm install && npm run dev -- --host 0.0.0.0"]
 
 
