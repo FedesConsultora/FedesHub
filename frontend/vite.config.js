@@ -11,6 +11,17 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+
+    // 👇 habilitá tus dominios públicos
+    allowedHosts: ['hub.fedes.ai', 'www.hub.fedes.ai', 'fedes.ai', 'www.fedes.ai'],
+
+    // 👇 HMR detrás de proxy TLS (Apache termina HTTPS)
+    hmr: {
+      host: 'hub.fedes.ai',
+      clientPort: 443,
+      protocol: 'wss'
+    },
+
     proxy: {
       '/api': {
         target,
@@ -30,17 +41,12 @@ export default defineConfig({
       },
       '/uploads': { target, changeOrigin: true, secure: false },
     },
-    // 👇 IMPORTANTE: forzar polling dentro de Docker
+
     watch: {
       usePolling: true,
-      interval: 150, // 100–300ms suele ir bien
-      awaitWriteFinish: {
-        stabilityThreshold: 200,
-        pollInterval: 100,
-      },
+      interval: 150,
+      awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 },
     },
-    // (opcional, por si el HMR no conecta desde el host)
-    // hmr: { host: 'localhost', clientPort: 3000 },
   },
   css: { preprocessorOptions: { scss: { api: 'modern' } } },
 })
