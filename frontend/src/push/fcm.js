@@ -25,7 +25,9 @@ export async function initFCM() {
   }
 
   if ('serviceWorker' in navigator) {
-    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    // Registrar y ESPERAR a que el SW esté activo
+    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+    await navigator.serviceWorker.ready
 
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
     const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: reg })
