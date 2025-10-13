@@ -1,80 +1,82 @@
-# docker-compose.yml
-# --------------------------------------
-services:
-  db:
-    image: postgres:16
-    container_name: fedes-hub_db
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+  # docker-compose.yml
+  # --------------------------------------
+  services:
+    db:
+      image: postgres:16
+      container_name: fedes-hub_db
+      restart: always
+      environment:
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+        POSTGRES_DB: ${DB_NAME}
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
 
-  admier:
-    image: dpage/pgadmin4
-    container_name: fedes-hub_admier
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@fedes.ai}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-    ports:
-      - "8080:80"
-    depends_on:
-      - db
+    admier:
+      image: dpage/pgadmin4
+      container_name: fedes-hub_admier
+      restart: always
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@fedes.ai}
+        PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      ports:
+        - "8080:80"
+      depends_on:
+        - db
 
-  fedes-hub:
-    build: ./backend
-    container_name: fedes-hub
-    restart: always
-    ports:
-      - "4000:4000"
-    env_file:
-      - ./backend/.env
-    volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
-    depends_on:
-      db:
-        condition: service_healthy
-    command: >
-      sh -c "
-        npm install &&
-        npm run dev
-      "
+    fedes-hub:
+      build: ./backend
+      container_name: fedes-hub
+      restart: always
+      ports:
+        - "4000:4000"
+      env_file:
+        - ./backend/.env
+      volumes:
+        - ./backend:/usr/src/app
+        - /usr/src/app/node_modules
+      depends_on:
+        db:
+          condition: service_healthy
+      command: >
+        sh -c "
+          npm install &&
+          npm run dev
+        "
 
-  frontend:
-    build: ./frontend
-    container_name: fedes-hub_frontend
-    restart: always
-    ports:
-      - "3000:5173"
-    volumes:
-      - ./frontend:/usr/src/app:delegated
-      - /usr/src/app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=150
-      - DOCKER=true
-      - VITE_PROXY_TARGET=http://fedes-hub:4000
-      - ROLLUP_DISABLE_NATIVE=1
-      - NPM_CONFIG_OPTIONAL=false
-    command: >
-      sh -c "
-        rm -rf node_modules package-lock.json &&
-        npm install --omit=optional &&
-        npm run dev -- --host 0.0.0.0
-      "
+    frontend:
+      build: ./frontend
+      container_name: fedes-hub_frontend
+      restart: always
+      ports:
+        - "3000:5173"
+      volumes:
+        - ./frontend:/usr/src/app:delegated
+        - /usr/src/app/node_modules
+      environment:
+        - CHOKIDAR_USEPOLLING=true
+        - CHOKIDAR_INTERVAL=150
+        - DOCKER=true
+        - VITE_PROXY_TARGET=http://fedes-hub:4000
+        - ROLLUP_DISABLE_NATIVE=1
+        - NPM_CONFIG_OPTIONAL=false
+      command: >
+        sh -euxo pipefail -c "
+          rm -f package-lock.json &&
+          rm -rf node_modules/* &&
+          npm install --omit=optional &&
+          npm run dev -- --host 0.0.0.0
+        "
 
 
 
-volumes:
-  postgres_data:
+
+  volumes:
+    postgres_data:
