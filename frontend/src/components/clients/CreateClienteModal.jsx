@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import useClientesCatalog from '../../pages/clientes/hooks/useClientesCatalog'
+import useClientesCatalog from '../../pages/Clientes/hooks/useClientesCatalog'
 import { clientesApi } from '../../api/clientes'
 import { useToast } from '../toast/ToastProvider.jsx'
 import { FiBriefcase, FiGlobe, FiMail, FiPhone, FiTag, FiUsers, FiX } from 'react-icons/fi'

@@ -1,4 +1,4 @@
-// frontend/src/pages/clientes/ClientesListPage.jsx
+// frontend/src/pages/Clientes/ClientesListPage.jsx
 import React, { useMemo, useState } from 'react'
 import { useClientesList, PageSize } from './hooks/useClientesList'
 import ClientesFilters from '../../components/clients/ClientesFilters'
