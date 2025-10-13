@@ -66,12 +66,14 @@ services:
       - DOCKER=true
       - VITE_PROXY_TARGET=http://fedes-hub:4000
       - ROLLUP_DISABLE_NATIVE=1
+      - NPM_CONFIG_OPTIONAL=false
     command: >
       sh -c "
         rm -rf node_modules package-lock.json &&
-        npm install &&
+        npm install --omit=optional &&
         npm run dev -- --host 0.0.0.0
       "
+
 
 
 volumes:
