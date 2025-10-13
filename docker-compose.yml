@@ -66,8 +66,14 @@
         - DOCKER=true
         - VITE_PROXY_TARGET=http://fedes-hub:4000
         - ROLLUP_DISABLE_NATIVE=1
-      command: ["bash","-lc","rm -rf node_modules package-lock.json && (npm ci || npm install) && npm run dev -- --host 0.0.0.0"]
-
+      command:
+        - bash
+        - -lc
+        - |
+          if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
+            if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          fi
+          npm run dev -- --host 0.0.0.0
 
 
   volumes:
