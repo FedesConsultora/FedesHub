@@ -4,12 +4,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates git curl bash \
   && rm -rf /var/lib/apt/lists/*
 
-ENV ROLLUP_DISABLE_NATIVE=1
+# Fuerza a Rollup a usar la implementación JS (no binario nativo)
+ENV ROLLUP_SKIP_NODEJS_NATIVE=1
+# Evita instalar dependencias "optional" (las nativas de rollup son opcionales)
+ENV npm_config_optional=false
 
 WORKDIR /usr/src/app
 
+# ⚠️ Evitamos el bug de npm con el lockfile: instalamos SIN package-lock.json
 COPY package*.json ./
-RUN npm ci || npm install
+RUN rm -f package-lock.json && npm install
 
 COPY . .
 

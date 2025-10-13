@@ -65,15 +65,20 @@
         - CHOKIDAR_INTERVAL=150
         - DOCKER=true
         - VITE_PROXY_TARGET=http://fedes-hub:4000
-        - ROLLUP_DISABLE_NATIVE=1
+        # Refuerzos por si acaso en runtime:
+        - ROLLUP_SKIP_NODEJS_NATIVE=1
+        - npm_config_optional=false
       command:
         - bash
         - -lc
         - |
+          # si el volumen de node_modules está vacío, instalá
           if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
-            if [ -f package-lock.json ]; then npm ci; else npm install; fi
+            rm -f package-lock.json
+            npm install
           fi
           npm run dev -- --host 0.0.0.0
+
 
 
   volumes:
