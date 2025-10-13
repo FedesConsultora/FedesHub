@@ -65,11 +65,8 @@
         - CHOKIDAR_INTERVAL=150
         - DOCKER=true
         - VITE_PROXY_TARGET=http://fedes-hub:4000
-      command: >
-        sh -euxo pipefail -c "
-          npm install &&
-          npm run dev -- --host 0.0.0.0
-        "
+      command: ["bash","-lc","npm install && npm run dev -- --host 0.0.0.0"]
+
 
   volumes:
     postgres_data:
