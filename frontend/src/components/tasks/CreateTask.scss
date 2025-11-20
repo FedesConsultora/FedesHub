@@ -62,8 +62,41 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
     &::placeholder{ color: rgba(255,255,255,.45); }
   }
   textarea{ padding-top: 2px; resize: vertical; }
+  #desc::placeholder {
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  
+  color: #999; /* opcional */
+}
   &:focus-within{ border-color: $fh-primary; box-shadow: 0 0 0 2px rgba($fh-primary,.30); background: #111823; }
   &.is-error{ border-color:#5a2d2d; box-shadow:0 0 0 2px rgba(255,88,88,.15) inset; }
+
+    &.upload-files{
+    min-height: 300px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    label {
+      color: #305064;
+      font-size: 1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+   .upload-btn {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+     
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+  }
 }
 
 /* ===== Multiselect ===== */

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useId } from 'react'
 import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
-import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload } from 'react-icons/fi'
+import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle } from 'react-icons/fi'
 import './CreateTask.scss'
 
 /* ================= util: click afuera ================= */
@@ -240,7 +240,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
       descripcion: descripcion?.trim() || null,
       impacto_id: parseNumOrNull(impactoId) || undefined,
       urgencia_id: parseNumOrNull(urgenciaId) || undefined,
-      fecha_inicio: fechaInicio || undefined,
+      fecha_inicio: new Date().toISOString() || undefined,
       vencimiento: vencimiento || undefined,
       requiere_aprobacion: !!requiereAprob,
       etiquetas: etiquetas.map(id => Number(id)),
@@ -293,7 +293,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
         <header className="tcHeader">
           <div className="brand">
             <div className="logo">Nueva tarea</div>
-            <div className="subtitle">Campos mínimos: Cliente y Título</div>
+            
           </div>
           <button type="button" className="close" onClick={onClose} aria-label="Cerrar"><FiX/></button>
         </header>
@@ -302,7 +302,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
           <div className="tcGrid">
             {/* Columna izquierda */}
             <div className="col">
-              <label className="lbl" htmlFor="cliente">Cliente <span className="req">*</span></label>
+            
               <div className={'field ' + (!clienteId ? 'is-error' : '')} style={S.field}>
                 <FiBriefcase className="ico" aria-hidden style={S.ico}/>
                 <select
@@ -310,7 +310,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   onChange={(e)=>setClienteId(e.target.value)} disabled={loading}
                   style={S.control} aria-invalid={!clienteId}
                 >
-                  <option value="">— Seleccionar —</option>
+                  <option value="">Cliente</option>
                   {(cat.clientes || []).map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </select>
                 <div className="addon" aria-hidden style={S.addon}/>
@@ -330,31 +330,103 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   </div>
                 </>
               )}
+                {/* Deadline */}
+              <div className={'field ' + (fechaError ? 'is-error' : '')} style={S.field}>
+                <div style={S.control}>
+                  <div style={S.datesRow}>
+                    
+                    <div style={S.dateCell}>
+                      <span style={{fontFamily:'inherit', color:'#FFFFFF8C'}}>Deadline</span>
+                      <input type="date" value={vencimiento} label='Deadline'
+                        onChange={(e)=>setVencimiento(e.target.value)} disabled={loading} style={{flex:1,minWidth:0}}/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {fechaError && <div className="help error-inline">{fechaError}</div>}
 
-              <label className="lbl" htmlFor="titulo">Título <span className="req">*</span></label>
+              {/* Responsables / Colaboradores */}
+              {(cat.feders || []).length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <MultiSelect
+                      id="ms-resps"
+                      labelId={lblRespsId}
+                      leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
+                      options={federsOpts}
+                      value={responsables}
+                      onChange={setResponsables}
+                      placeholder="Responsables"
+                      disabled={loading}
+                    />
+                  </div>
+
+                      <div style={{ flex: 1 }}>
+                        <MultiSelect
+                          id="ms-colabs"
+                          labelId={lblColabsId}
+                          leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
+                          options={federsOpts}
+                          value={colaboradores}
+                          onChange={setColaboradores}
+                          placeholder="Colaboradores"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+              )}
+              {/* 
+                  <label className="lbl" htmlFor="leader">Líder</label>
+                  <div className="field" style={S.field}>
+                    <FiUsers className="ico" aria-hidden style={S.ico}/>
+                    <select id="leader" value={leaderId} onChange={(e)=>setLeaderId(e.target.value)}
+                            disabled={loading || responsables.length === 0} style={S.control}>
+                      <option value="">— Ninguno —</option>
+                      {responsables.map(fid => {
+                        const f = (cat.feders || []).find(x => String(x.id) === String(fid))
+                        const name = f ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`) : `Feder #${fid}`
+                        return <option key={fid} value={String(fid)}>{name}</option>
+                      })}
+                    </select>
+                    <div className="addon" aria-hidden style={S.addon}/>
+                  </div> */}
+
+         
               <div className={'field ' + (tituloError ? 'is-error' : '')} style={S.field}>
                 <FiFlag className="ico" aria-hidden style={S.ico}/>
                 <input
-                  id="titulo" type="text" placeholder="Ej. Implementar integración con Google"
+                  id="titulo" type="text" placeholder=" Título - Ej. Implementar integración con Google"
                   value={titulo} onChange={(e)=>setTitulo(e.target.value)} maxLength={220}
                   disabled={loading} style={S.control} aria-invalid={!!tituloError}
                 />
                 <div className="addon" aria-hidden style={S.addon}/>
               </div>
 
-              <label className="lbl" htmlFor="desc">Descripción</label>
+          
               <div className="field area" style={{...S.field, ...S.fieldArea}}>
                 <FiTag className="ico" aria-hidden style={{...S.ico, alignSelf:'flex-start'}}/>
                 <textarea
-                  id="desc" rows={6} placeholder="Detalles de la tarea…"
+                  id="desc" rows={6} placeholder="Descripción de la tarea" 
                   value={descripcion} onChange={(e)=>setDescripcion(e.target.value)}
-                  disabled={loading} style={S.control}
+                  disabled={loading} style={S.control} 
                 />
               </div>
 
-              <label className="lbl" htmlFor="files">Adjuntos</label>
-              <div className="field" style={S.field}>
-                <FiUpload className="ico" aria-hidden style={S.ico}/>
+            
+            </div>
+
+            {/* Columna derecha */}
+            
+            <div className="col">
+               
+              <div className={"field upload-files"} style={S.field}>
+             
+                <label htmlFor="files">
+                Carga de Archivos</label>
+                <span>Arrastra un archivo para cargarlo</span>
+                <div className='upload-btn'
+    >
                 <input
                   id="files" ref={fileInputRef} type="file" multiple
                   onChange={(e)=>setFiles(Array.from(e.target.files || []))}
@@ -368,8 +440,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   <span className="fileSummary ellipsis" title={files.map(f=>f.name).join(', ')}>
                     {fileSummary}
                   </span>
-                </div>
-                <div className="addon" aria-hidden style={S.addon}/>
+                  </div>
+                  </div>
+                <div className="addon" aria-hidden style={S.addon} />
               </div>
 
               {files?.length > 0 && (
@@ -382,11 +455,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Columna derecha */}
-            <div className="col">
-              {(cat.impactos || []).length > 0 && (
+              {/* {(cat.impactos || []).length > 0 && (
                 <>
                   <label className="lbl" htmlFor="impacto">Impacto</label>
                   <div className="field" style={S.field}>
@@ -399,9 +468,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                     <div className="addon" aria-hidden style={S.addon}/>
                   </div>
                 </>
-              )}
+              )} */}
 
-              {(cat.urgencias || []).length > 0 && (
+              {/* {(cat.urgencias || []).length > 0 && (
                 <>
                   <label className="lbl" htmlFor="urgencia">Urgencia</label>
                   <div className="field" style={S.field}>
@@ -414,30 +483,11 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                     <div className="addon" aria-hidden style={S.addon}/>
                   </div>
                 </>
-              )}
+              )} */}
 
-              {/* Fechas */}
-              <div className="lbl">Fechas</div>
-              <div className={'field ' + (fechaError ? 'is-error' : '')} style={S.field}>
-                <div style={S.control}>
-                  <div style={S.datesRow}>
-                    <div style={S.dateCell}>
-                      <span className="muted">Inicio</span>
-                      <input type="date" value={fechaInicio}
-                        onChange={(e)=>setFechaInicio(e.target.value)} disabled={loading} style={{flex:1,minWidth:0}}/>
-                    </div>
-                    <div style={S.dateCell}>
-                      <span className="muted">Vencimiento</span>
-                      <input type="date" value={vencimiento}
-                        onChange={(e)=>setVencimiento(e.target.value)} disabled={loading} style={{flex:1,minWidth:0}}/>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {fechaError && <div className="help error-inline">{fechaError}</div>}
-
+          
               {/* Etiquetas */}
-              {(cat.etiquetas || []).length > 0 && (
+              {/* {(cat.etiquetas || []).length > 0 && (
                 <>
                   <label
                     className="lbl"
@@ -457,65 +507,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                     disabled={loading}
                   />
                 </>
-              )}
+              )} */}
 
-              {/* Responsables / Colaboradores */}
-              {(cat.feders || []).length > 0 && (
-                <>
-                  <label
-                    className="lbl"
-                    id={lblRespsId}
-                    onMouseDown={(e)=>{ e.preventDefault(); document.getElementById('ms-resps')?.click() }}
-                  >
-                    Responsables
-                  </label>
-                  <MultiSelect
-                    id="ms-resps"
-                    labelId={lblRespsId}
-                    leftIcon={<FiUsers className="ico" aria-hidden style={S.ico}/>}
-                    options={federsOpts}
-                    value={responsables}
-                    onChange={setResponsables}
-                    placeholder="Seleccionar responsables…"
-                    disabled={loading}
-                  />
-                  <div className="help">Tocá para abrir y marcar varios</div>
-
-                  <label className="lbl" htmlFor="leader">Líder</label>
-                  <div className="field" style={S.field}>
-                    <FiUsers className="ico" aria-hidden style={S.ico}/>
-                    <select id="leader" value={leaderId} onChange={(e)=>setLeaderId(e.target.value)}
-                            disabled={loading || responsables.length === 0} style={S.control}>
-                      <option value="">— Ninguno —</option>
-                      {responsables.map(fid => {
-                        const f = (cat.feders || []).find(x => String(x.id) === String(fid))
-                        const name = f ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`) : `Feder #${fid}`
-                        return <option key={fid} value={String(fid)}>{name}</option>
-                      })}
-                    </select>
-                    <div className="addon" aria-hidden style={S.addon}/>
-                  </div>
-
-                  <label
-                    className="lbl"
-                    id={lblColabsId}
-                    onMouseDown={(e)=>{ e.preventDefault(); document.getElementById('ms-colabs')?.click() }}
-                  >
-                    Colaboradores
-                  </label>
-                  <MultiSelect
-                    id="ms-colabs"
-                    labelId={lblColabsId}
-                    leftIcon={<FiUsers className="ico" aria-hidden style={S.ico}/>}
-                    options={federsOpts}
-                    value={colaboradores}
-                    onChange={setColaboradores}
-                    placeholder="Seleccionar colaboradores…"
-                    disabled={loading}
-                  />
-                  <div className="help">Tocá para abrir y marcar varios</div>
-                </>
-              )}
+           
 
               {/* Aprobación */}
               <div className="field checkbox" style={S.fieldCheckbox}>
