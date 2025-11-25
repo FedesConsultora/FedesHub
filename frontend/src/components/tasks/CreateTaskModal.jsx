@@ -126,7 +126,7 @@ function MultiSelect({
   )}
 
   {value.map((opt) => (
-    <div className="tag" key={opt.value}>
+    <div className="tag"  key={opt.value}>
       {opt.label}
     </div>
   ))}
@@ -373,7 +373,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
             
               {(cat.feders || []).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',  maxWidth: '100%',
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',  maxWidth: '100%'
                 }}>
                 <div className={'field ' + (fechaError ? 'is-error' : '')} style={{width: '50%'}}>
                 <div style={S.control}>
@@ -488,22 +488,50 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   <button type="button" className="fileBtn" onClick={()=>fileInputRef.current?.click()} disabled={loading}>
                     Elegir archivos
                   </button>
-                  <span className="fileSummary ellipsis" title={files.map(f=>f.name).join(', ')}>
-                    {fileSummary}
-                  </span>
+                 
                   </div>
                   </div>
                 <div className="addon" style={S.addon} />
-              </div>
-
-            {files?.length > 0 && (
+                 {files?.length > 0 && (
   <div className="filesList" style={S.filesList}>
     {files.map((f, i) => {
       const isImage = f.type.startsWith('image/');
       const previewUrl = isImage ? URL.createObjectURL(f) : null;
 
       return (
-    <div key={i} className="fileRow" >
+        <div key={i} className="fileRow" style={{position:'relative'}} >
+             <button
+            type="button"
+            onClick={() => {
+              const newFiles = [...files];
+              newFiles.splice(i, 1);
+              setFiles(newFiles);
+            }}
+            style={{
+              position: 'absolute',
+              top: 1,
+              right: 4,
+              width: 12,
+              height: 12,
+              padding: 0,
+              paddingBottom: '0.3rem',
+              borderRadius: "50%", 
+              background: '#9F1B1B',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+            
+              zIndex: 10,
+              overflow: 'visible',
+             
+            }}
+          >
+            x
+          </button>
   {isImage && (
     <img 
       src={previewUrl} 
@@ -532,6 +560,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
     })}
   </div>
 )}
+              </div>
+
+           
 
               {/* {(cat.impactos || []).length > 0 && (
                 <>
@@ -590,7 +621,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
            
 
               {/* Aprobación */}
-              <div className="field checkbox" style={S.fieldCheckbox}>
+              <div className="field checkbox"  style={{display: 'none'}}>
                 <input id="aprob" type="checkbox" checked={requiereAprob}
                        onChange={(e)=>setRequiereAprob(e.target.checked)} disabled={loading}/>
                 <label htmlFor="aprob">Requiere aprobación</label>

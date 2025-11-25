@@ -137,7 +137,18 @@ white-space: normal;
   font-size: 0.85rem;
  background-color:  #2C4450;
 
+
+
 }
+ .cli-tag {
+  padding: 4px 8px;
+white-space: normal;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 0.85rem;
+  background-color: #9F1B1B !important;
+ }
+
   min-width: 0; width: 100%;
  
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -177,18 +188,21 @@ white-space: normal;
   margin: 0;
   gap: 0.5rem;
   padding-bottom: 3rem;
-  overflow-x: scroll;
+align-items: flex-start;
   max-width: fit-content;
   white-space: wrap;
 
 
   .fileRow {
-align-items: center;
+align-items: flex-start;
+
  padding: 0;
  width: 100px;
  height: auto;
  flex-direction: column;
  background-color: transparent;
+
+ position: relative;
 
  span {
   white-space: nowrap;
