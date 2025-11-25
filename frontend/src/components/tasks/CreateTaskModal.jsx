@@ -159,22 +159,23 @@ function MultiSelect({
 const S = {
   // field base: icono izquierda + control que ocupa 100%
   field: {
-    display: 'flex', alignItems: 'center', gap: 10,
+    display: 'flex', alignItems: 'center', gap: 8,
     padding: '14px 14px', borderRadius: 12,
     border: '1px solid rgba(255,255,255,.12)',
     background: '#0f141b', boxSizing: 'border-box', width: '100%',
+  
   },
   fieldArea: { alignItems: 'flex-start' },
   fieldCheckbox: {
     display: 'flex', alignItems: 'center', gap: 10,
-    padding: '12px 14px', borderRadius: 12,
+    padding: '12px 12px', borderRadius: 12,
     border: '1px solid rgba(255,255,255,.12)', background: '#0f141b'
   },
   ico: { flex: '0 0 22px', width: 22, height: 22, opacity: .85 },
   control: { flex: '1 1 auto', minWidth: 0, width: '100%' },
   addon: { flex: '0 0 22px', width: 22, height: 22, color: 'white' },
 
-  datesRow: { display:'flex', gap:10, width:'100%' },
+  datesRow: { display:'flex', gap:6, width:'100%' },
   dateCell: { display:'flex', alignItems:'center', gap:8, flex:1 },
 
 
@@ -213,6 +214,8 @@ export default function CreateTaskModal({ onClose, onCreated }) {
     return (cat.hitos || []).filter(h => String(h.cliente_id) === String(clienteId))
   }, [cat.hitos, clienteId])
   useEffect(() => { setHitoId('') }, [clienteId])
+
+  const lblClienteId = 'lbl-cliente'
 
   // Validaciones
   const tituloError = useMemo(() => {
@@ -329,18 +332,27 @@ export default function CreateTaskModal({ onClose, onCreated }) {
             {/* Columna izquierda */}
             <div className="col">
             
-              <div className={'field ' + (!clienteId ? 'is-error' : '')} style={S.field}>
-                <FiBriefcase className="ico" aria-hidden style={S.ico}/>
-                <select
-                  id="cliente" ref={firstFieldRef} value={clienteId}
-                  onChange={(e)=>setClienteId(e.target.value)} disabled={loading}
-                  style={S.control} aria-invalid={!clienteId}
-                >
-                  <option value="">Cliente</option>
-                  {(cat.clientes || []).map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
-                <div className="addon" style={S.addon}/>
-              </div>
+
+
+    <MultiSelect
+      id="ms-cliente"
+    
+      labelId={lblClienteId}
+      leftIcon={  <FiBriefcase className="ico" aria-hidden style={S.ico}/>}
+      options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
+      value={clienteId ? [String(clienteId)] : []}
+      onChange={(next) => {
+        const first = (next && next.length) ? String(next[0]) : ''
+        setClienteId(first)
+      }}
+      placeholder="Clientes"
+      disabled={loading}
+    />
+ 
+    <div className="addon" style={S.addon} />
+               
+
+
 
               {hitosOpts.length > 0 && (
                 <>
@@ -415,9 +427,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
               )}
 
-              {/* 
-                  <label className="lbl" htmlFor="leader">Líder</label>
-                  <div className="field" style={S.field}>
+              
+                  <label className="lbl" htmlFor="leader" style={{display:'none'}}>Líder</label>
+                  <div className="field" style={{display: 'none'}}>
                     <FiUsers className="ico" aria-hidden style={S.ico}/>
                     <select id="leader" value={leaderId} onChange={(e)=>setLeaderId(e.target.value)}
                             disabled={loading || responsables.length === 0} style={S.control}>
@@ -429,7 +441,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                       })}
                     </select>
                     <div className="addon" aria-hidden style={S.addon}/>
-                  </div> */}
+                  </div>
 
          
               <div className={'field ' + (tituloError ? 'is-error' : '')} style={S.field}>
@@ -491,12 +503,12 @@ export default function CreateTaskModal({ onClose, onCreated }) {
       const previewUrl = isImage ? URL.createObjectURL(f) : null;
 
       return (
-    <div key={i} className="fileRow" style={{ ...S.fileRow, display:'flex', alignItems:'center', gap: '0.5rem' }}>
+    <div key={i} className="fileRow" >
   {isImage && (
     <img 
       src={previewUrl} 
       alt={f.name} 
-      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} 
+      style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} 
     />
   )}
   <div style={{ display:'flex', flexDirection:'column', width: '100px', flexShrink:0, minWidth: 0, paddingBottom:' 1rem'}}>

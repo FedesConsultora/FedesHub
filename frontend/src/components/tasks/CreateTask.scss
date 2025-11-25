@@ -54,6 +54,7 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
 .req{ color:#ff9080; margin-left: 4px; }
 .muted{ color:$fh-muted; font-size:.9rem; }
 
+
 .field{
   transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
   input, select, textarea{
@@ -62,6 +63,8 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
     
     &::placeholder{ color: rgba(255,255,255,.45); }
   }
+
+ 
 
    input:focus, select:focus, textarea:focus {
     border-color: none !important;
@@ -141,7 +144,9 @@ white-space: normal;
 }
 .msDisplay.placeholder{ color: rgba(255,255,255,.55); }
 
-
+ .field #ms-cliente.field {
+  margin: 0 !important;
+}
 
 .msPanel{
   position: absolute; inset-inline: 0; top: calc(100% + 6px);
@@ -154,7 +159,7 @@ white-space: normal;
 .msPanel ul{ list-style:none; padding:0; margin:0; display:grid; gap:6px; }
 .msRow{
   display:flex; align-items:center; gap:10px;
-  border: solid red 1px;
+
   padding:8px 10px; border-radius:10px; cursor:pointer;
   &:hover{ background: rgba(255,255,255,.04); }
   input{ width:auto; 
@@ -167,17 +172,28 @@ white-space: normal;
 .filesList {
   display: flex;
   flex-direction: row;
-  padding: 0.5rem;
+  flex-wrap: wrap;
   background-color: transparent;
+  margin: 0;
+  gap: 0.5rem;
+  padding-bottom: 3rem;
+  overflow-x: scroll;
+  max-width: fit-content;
+  white-space: wrap;
+
 
   .fileRow {
-
-   flex: 1;
+align-items: center;
+ padding: 0;
  width: 100px;
- height: 100px;
+ height: auto;
  flex-direction: column;
  background-color: transparent;
 
+ span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+ }
  
 
 
