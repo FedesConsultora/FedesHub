@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState, useId } from 'react'
 import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
 import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle } from 'react-icons/fi'
+import { MdKeyboardArrowDown } from "react-icons/md";
+
 import './CreateTask.scss'
 
 /* ================= util: click afuera ================= */
@@ -86,25 +88,50 @@ function MultiSelect({
         }}
       >
         {leftIcon}
-        <div
-          className={'msDisplay ' + (selectedLabels.length ? '' : 'placeholder')}
-          style={{ flex: '1 1 auto', minWidth: 0 }}
-        >
-          {summary}
+      <div
+  className={'msDisplay ' + (selectedLabels.length ? 'selected-labels' : 'placeholder')}
+  style={{ flex: '1 1 auto', minWidth: 0 }}
+>
+  {selectedLabels.length === 0 ? (
+    <span className="msPlaceholder">{placeholder}</span>
+  ) : (
+    <div className="selected-tags" onClick={(e) => e.stopPropagation()}>
+      {value.map(val => {
+        const v = String(val)
+        const label = labelsByVal.get(v)
+        if (!label) return null
+        return (
+          <div className="tag" key={v} role="button" tabIndex={0}
+               onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
+               onClick={(e) => { e.stopPropagation(); /* opcional: toggleVal(v) para remover al click */ }}>
+            {label}
+          </div>
+        )
+      })}
+    </div>
+  )}
+</div>
+
+        <div className="addon" style={S.addon}>
+          <MdKeyboardArrowDown/>
         </div>
-        <div className="addon" aria-hidden />
       </div>
 
       {open && !disabled && (
         <div className="msPanel" id={listboxId} role="listbox" aria-multiselectable="true">
           <div className="msSearch">
-            <input
-              type="text"
-              placeholder="Buscar…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              aria-label="Buscar opciones"
-            />
+            <div className="selected-tags">
+  {value.length === 0 && (
+    <span className="placeholder">{placeholder}</span>
+  )}
+
+  {value.map((opt) => (
+    <div className="tag" key={opt.value}>
+      {opt.label}
+    </div>
+  ))}
+</div>
+
           </div>
           <ul>
             {filtered.map(opt => {
@@ -145,16 +172,15 @@ const S = {
   },
   ico: { flex: '0 0 22px', width: 22, height: 22, opacity: .85 },
   control: { flex: '1 1 auto', minWidth: 0, width: '100%' },
-  addon: { flex: '0 0 22px', width: 22, height: 22 },
+  addon: { flex: '0 0 22px', width: 22, height: 22, color: 'white' },
 
   datesRow: { display:'flex', gap:10, width:'100%' },
   dateCell: { display:'flex', alignItems:'center', gap:8, flex:1 },
 
-  filesList: { marginTop: 8, display: 'grid', gap: 6 },
-  fileRow: { display:'flex', alignItems:'center', gap:8, padding:'6px 8px',
-             borderRadius:10, background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.10)' },
-  fileName: { overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
-  fileSize: { marginLeft:'auto', color:'#a9b7c7', fontSize:'.88rem' },
+
+ 
+  fileName: { overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'normal' },
+
 }
 
 export default function CreateTaskModal({ onClose, onCreated }) {
@@ -313,7 +339,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   <option value="">Cliente</option>
                   {(cat.clientes || []).map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </select>
-                <div className="addon" aria-hidden style={S.addon}/>
+                <div className="addon" style={S.addon}/>
               </div>
 
               {hitosOpts.length > 0 && (
@@ -326,29 +352,31 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                       <option value="">— Ninguno —</option>
                       {hitosOpts.map(h => <option key={h.id} value={h.id}>{h.nombre}</option>)}
                     </select>
-                    <div className="addon" aria-hidden style={S.addon}/>
+                    <div className="addon" style={S.addon}/>
                   </div>
                 </>
               )}
-                {/* Deadline */}
-              <div className={'field ' + (fechaError ? 'is-error' : '')} style={S.field}>
+                {/* Deadline + Responsables / */}
+             
+
+            
+              {(cat.feders || []).length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',  maxWidth: '100%',
+                }}>
+                <div className={'field ' + (fechaError ? 'is-error' : '')} style={{width: '50%'}}>
                 <div style={S.control}>
                   <div style={S.datesRow}>
                     
                     <div style={S.dateCell}>
                       <span style={{fontFamily:'inherit', color:'#FFFFFF8C'}}>Deadline</span>
                       <input type="date" value={vencimiento} label='Deadline'
-                        onChange={(e)=>setVencimiento(e.target.value)} disabled={loading} style={{flex:1,minWidth:0}}/>
+                        onChange={(e)=>setVencimiento(e.target.value)} disabled={loading} style={{flex:0.9,minWidth:0}}/>
                     </div>
                   </div>
                 </div>
               </div>
               {fechaError && <div className="help error-inline">{fechaError}</div>}
-
-              {/* Responsables / Colaboradores */}
-              {(cat.feders || []).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ width: '50%'}}>
                     <MultiSelect
                       id="ms-resps"
                       labelId={lblRespsId}
@@ -361,7 +389,16 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                     />
                   </div>
 
-                      <div style={{ flex: 1 }}>
+                     
+                    </div>
+
+              )}
+                {/* Colaboradores */}
+ {(cat.feders || []).length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'row',   maxWidth: '100%',
+                }}>
+                  
+                      <div style={{ width: '100%'   }}>
                         <MultiSelect
                           id="ms-colabs"
                           labelId={lblColabsId}
@@ -369,13 +406,15 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                           options={federsOpts}
                           value={colaboradores}
                           onChange={setColaboradores}
-                          placeholder="Colaboradores"
+                          placeholder="Asignar a"
                           disabled={loading}
                         />
-                      </div>
+                  </div>
+                  
                     </div>
 
               )}
+
               {/* 
                   <label className="lbl" htmlFor="leader">Líder</label>
                   <div className="field" style={S.field}>
@@ -400,7 +439,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   value={titulo} onChange={(e)=>setTitulo(e.target.value)} maxLength={220}
                   disabled={loading} style={S.control} aria-invalid={!!tituloError}
                 />
-                <div className="addon" aria-hidden style={S.addon}/>
+                <div className="addon"  style={S.addon}/>
               </div>
 
           
@@ -442,19 +481,46 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   </span>
                   </div>
                   </div>
-                <div className="addon" aria-hidden style={S.addon} />
+                <div className="addon" style={S.addon} />
               </div>
 
-              {files?.length > 0 && (
-                <div className="filesList" style={S.filesList}>
-                  {files.map((f, i) => (
-                    <div key={i} className="fileRow" style={S.fileRow}>
-                      <span className="name ellipsis" style={S.fileName} title={f.name}>{f.name}</span>
-                      <span className="size" style={S.fileSize}>{humanSize(f.size)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {files?.length > 0 && (
+  <div className="filesList" style={S.filesList}>
+    {files.map((f, i) => {
+      const isImage = f.type.startsWith('image/');
+      const previewUrl = isImage ? URL.createObjectURL(f) : null;
+
+      return (
+    <div key={i} className="fileRow" style={{ ...S.fileRow, display:'flex', alignItems:'center', gap: '0.5rem' }}>
+  {isImage && (
+    <img 
+      src={previewUrl} 
+      alt={f.name} 
+      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} 
+    />
+  )}
+  <div style={{ display:'flex', flexDirection:'column', width: '100px', flexShrink:0, minWidth: 0, paddingBottom:' 1rem'}}>
+    <span
+      className="FileName"
+      style={{ ...S.fileName, color:'#fff', textOverflow:'ellipsis', whiteSpace:'nowrap' }}
+      title={f.name}
+    >
+      {f.name}
+    </span>
+    <span
+      className='fileSize'
+      style={{ color:'#a9b7c7', fontSize:'.88rem', textOverflow:'ellipsis', whiteSpace:'nowrap' }}
+    >
+      {humanSize(f.size)}
+    </span>
+  </div>
+</div>
+
+      )
+    })}
+  </div>
+)}
+
               {/* {(cat.impactos || []).length > 0 && (
                 <>
                   <label className="lbl" htmlFor="impacto">Impacto</label>

@@ -59,7 +59,16 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
   input, select, textarea{
     background: none !important; color: $fh-text; border:0; outline:none; padding:0;
     font-size: 1rem; line-height: 1.2; min-height: 24px;
+    
     &::placeholder{ color: rgba(255,255,255,.45); }
+  }
+
+   input:focus, select:focus, textarea:focus {
+    border-color: none !important;
+    outline: none !important;
+    box-shadow: none;
+    border: none;
+
   }
   textarea{ padding-top: 2px; resize: vertical; }
   #desc::placeholder {
@@ -80,7 +89,7 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
 
     label {
       color: #305064;
-      font-size: 1rem;
+      font-size: 1.5rem;
       font-weight: 500;
       text-transform: uppercase;
     }
@@ -102,23 +111,78 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
 /* ===== Multiselect ===== */
 .msWrap{ position: relative; }
 .msDisplay{
+  .selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+ 
+
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.placeholder {
+  color: #aaa;
+}
+
+.tag {
+  padding: 4px 8px;
+white-space: normal;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 0.85rem;
+ background-color:  #2C4450;
+
+}
   min-width: 0; width: 100%;
+ 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .msDisplay.placeholder{ color: rgba(255,255,255,.55); }
+
+
+
 .msPanel{
   position: absolute; inset-inline: 0; top: calc(100% + 6px);
   z-index: 30;
   background:#0f141b; border:1px solid rgba(255,255,255,.12); border-radius:12px;
   box-shadow: 0 16px 40px rgba(0,0,0,.35);
   max-height: 260px; overflow:auto; padding: 8px;
+  padding-top: 1rem;
 }
 .msPanel ul{ list-style:none; padding:0; margin:0; display:grid; gap:6px; }
 .msRow{
   display:flex; align-items:center; gap:10px;
+  border: solid red 1px;
   padding:8px 10px; border-radius:10px; cursor:pointer;
   &:hover{ background: rgba(255,255,255,.04); }
-  input{ width:auto; }
+  input{ width:auto; 
+ 
+  }
+
+ 
+}
+
+.filesList {
+  display: flex;
+  flex-direction: row;
+  padding: 0.5rem;
+  background-color: transparent;
+
+  .fileRow {
+
+   flex: 1;
+ width: 100px;
+ height: 100px;
+ flex-direction: column;
+ background-color: transparent;
+
+ 
+
+
+
+  }
 }
 
 /* ===== File picker ===== */
@@ -165,3 +229,5 @@ $shadow-soft: 0 10px 35px rgba(0,0,0,.35);
   box-shadow: 0 0 0px 1000px #0f141b inset !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+
