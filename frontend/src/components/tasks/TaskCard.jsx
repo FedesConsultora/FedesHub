@@ -2,9 +2,12 @@
 import { useNavigate } from 'react-router-dom'
 import AvatarStack from '../common/AvatarStack'
 
-export default function TaskCard({ t, onPointerDown }) {
-  const nav = useNavigate()
-  const open = () => nav(`/tareas/${t.id}`)
+export default function TaskCard({ t, onPointerDown, onOpenTask}) {
+const open = () => {
+  console.log("ABRIENDO TASK", t.id);
+  onOpenTask(t.id);
+};
+
 
   const dueTxt = t.due
     ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' })

@@ -15,11 +15,9 @@ import Users from '../pages/Admin/Users.jsx'
 import Roles from '../pages/Admin/Roles.jsx'
 import AdminCargos from '../pages/Admin/Cargos.jsx'
 import AdminCatalogos from '../pages/Admin/Catalogos.jsx'
-
 import RoleDetail from '../pages/Admin/RoleDetail.jsx'
 import Diag from '../pages/Diag.jsx'
 import TasksPage from '../pages/Tareas/TasksPage.jsx'
-import TaskDetail from '../pages/Tareas/TaskDetail.jsx'   
 import ForgotPassword from '../pages/passwordRecovery/ForgotPassword.jsx'
 import ResetPassword from '../pages/passwordRecovery/ResetPassword.jsx'
 import AdminTabs from '../pages/Admin/AdminTabs.jsx'
@@ -110,10 +108,7 @@ export default function AppRouter() {
             element={<RequirePerm modulo="chat" accion="read"><ChatPage /></RequirePerm>}
           />
 
-          <Route
-            path="tareas/:id"
-            element={<RequirePerm modulo="tareas" accion="read"><TaskDetail /></RequirePerm>}
-          />
+         
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />
           <Route

@@ -1,7 +1,7 @@
 // /frontend/src/components/tasks/KanbanColumn.jsx
 import TaskCard from './TaskCard'
 
-export default function KanbanColumn({ code, title, items, indices, bodyRef, onStartDrag }) {
+export default function KanbanColumn({ code, title, items, indices, bodyRef, onStartDrag, onOpenTask }) {
   return (
     <section className="fh-k-col" role="region" aria-label={title}>
       <header className="fh-k-head">
@@ -12,6 +12,7 @@ export default function KanbanColumn({ code, title, items, indices, bodyRef, onS
       <div className="fh-k-body" ref={bodyRef}>
         {items.map((t, iVis) => (
           <TaskCard
+            onOpenTask={onOpenTask}   
             key={t.id}
             t={t}
             onPointerDown={(e)=>onStartDrag(e, code, iVis, indices[iVis], t.id)}

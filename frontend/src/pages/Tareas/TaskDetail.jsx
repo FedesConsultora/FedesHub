@@ -34,7 +34,7 @@ const fromInputDate = (val) => {
   return dt.toISOString()
 }
 
-export default function TaskDetail(){
+export default function TaskDetail({ taskId, onUpdated, onClose}){
   const { id } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
@@ -62,7 +62,7 @@ export default function TaskDetail(){
   // cargar
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
-      tareasApi.get(id),
+      tareasApi.get(taskId),
       tareasApi.catalog().catch(()=>({}))
     ])
     setTask(t)
@@ -100,7 +100,7 @@ export default function TaskDetail(){
     }catch(e){
       toast?.error(e?.message || 'No se pudo guardar')
     } finally { setSaving(false) }
-  }, [dirty, form, id, task, saving, toast])
+  }, [dirty, form, taskId, task, saving, toast])
 
   // dispara cada vez que cambia título/desc (debounce 800ms)
   useEffect(() => {
@@ -164,13 +164,13 @@ export default function TaskDetail(){
   const handleDueChange = async (inputValue) => {
     const iso = fromInputDate(inputValue)  // puede ser null
     try{
-      const next = await tareasApi.update(id, { vencimiento: iso })
+      const next = await tareasApi.update(taskId, { vencimiento: iso })
       setTask(next)
       toast?.success('Vencimiento actualizado')
     }catch(e1){
       try{
-        await tareasApi.setAprobacion(id, { tipo:'vencimiento', vencimiento: iso })
-        const next = await tareasApi.get(id)
+        await tareasApi.setAprobacion(taskId, { tipo:'vencimiento', vencimiento: iso })
+        const next = await tareasApi.get(taskId)
         setTask(next)
         toast?.success('Solicitud de cambio enviada para aprobación')
       }catch(e2){
@@ -195,7 +195,7 @@ export default function TaskDetail(){
     if (currentId === cid) return
 
     try {
-      const next = await tareasApi.update(id, { cliente_id: cid })
+      const next = await tareasApi.update(taskId, { cliente_id: cid })
       setTask(next)
       toast?.success('Cliente actualizado')
     } catch (e) {
@@ -208,22 +208,7 @@ export default function TaskDetail(){
   return (
     <div className="taskDetail">
       {/* === Estados + Volver === */}
-      <div className="stateRow">
-        <button className="backBtn" onClick={handleBack} title="Volver">
-          <FaArrowLeft /> <span>Volver</span>
-        </button>
-
-        <TaskStatusCard
-          estadoCodigo={estadoCodigo}
-          progresoPct={progreso}
-          aprobLabel={aprobLabel}
-          prioridad={prioridad}
-          vencimientoISO={vencimientoISO}
-          etiquetas={etiquetas}
-          estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
-          onPick={handleEstado}
-        />
-      </div>
+  
 
       {/* === Header sticky === */}
       <div className="taskHeader">
@@ -248,9 +233,14 @@ export default function TaskDetail(){
                 document.execCommand?.('insertText', false, txt)
               }}
             />
-            <div className="meta">
+            
+          </div>
+          {/* <div className="chips">
+            {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
+          </div> */}
+          <div className="meta">
               <span className="inlineClient">
-                <b>Proyecto</b>
+                
                 <InlineClient
                   valueId={task?.cliente?.id || task?.cliente_id || null}
                   valueName={clienteNombre}
@@ -262,20 +252,12 @@ export default function TaskDetail(){
               {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
               <span className="inlineDue">
-                <b>Vence</b>
                 <InlineDue
                   value={toInputDate(vencimientoISO)}
                   onChange={handleDueChange}
                 />
-              </span>
-            </div>
-          </div>
-          <div className="chips">
-            {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
-          </div>
-        </div>
-
-        {/* Acciones derechas: sólo acciones rápidas */}
+        </span>
+          {/* Acciones derechas: sólo acciones rápidas */}
         <div className="actions">
           <TaskHeaderActions
             isFavorita={isFavorita}
@@ -287,17 +269,35 @@ export default function TaskDetail(){
           />
         </div>
       </div>
+        </div>
+          
+      
+
+        {/* <TaskStatusCard
+          estadoCodigo={estadoCodigo}
+          progresoPct={progreso}
+          aprobLabel={aprobLabel}
+          prioridad={prioridad}
+          vencimientoISO={vencimientoISO}
+          etiquetas={etiquetas}
+          estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
+          onPick={handleEstado}
+        /> */}
+    
+      
+
+      
+      </div>
 
       {/* === Layout === */}
       <div className="grid">
         {/* LEFT */}
         <div className="left">
-          <div className="card">
+          <div className="card" style={{minHeight:'300px'}}>
             <div className="cardHeader">
-              <div className="title">Contenido</div>
-              <div className="fh-row">
-                <button className={`fh-chip ${tab==='desc'?'primary':''}`} onClick={()=>setTab('desc')}>Descripción</button>
-                <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button>
+              <div className="desc">
+                  <p>Descripción</p>
+                {/* <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button> */}
               </div>
             </div>
 
@@ -305,6 +305,7 @@ export default function TaskDetail(){
               // Descripción (autosave)
               <div
                 className="txt editable"
+                style={{minHeight:'190px'}}
                 data-placeholder="Escribí la descripción…"
                 contentEditable
                 suppressContentEditableWarning
@@ -321,45 +322,37 @@ export default function TaskDetail(){
               />
             ) : (
               <SubtasksPanel
-                parentId={Number(id)}
+                parentId={Number(taskId)}
                 defaultClienteId={task?.cliente_id || task?.cliente?.id || null}
                 catalog={catalog}
               />
             )}
           </div>
+            <TaskAttachments
+            taskId={Number(taskId)}
+            onAfterChange={async () => {
+              try { setTask(await tareasApi.get(taskId)) } catch {}
+            }}
+          />
 
-          <TaskComments taskId={Number(id)} catalog={catalog} />
+          <div className='historial-section'>
+            <div>SECCIÓN HISTORIAL</div>
+          </div>
+
+          {/* <TaskComments taskId={Number(taskId)} catalog={catalog} /> */}
         </div>
 
         {/* RIGHT */}
-        <div className="right">
-          <div className="card">
-            <div className="cardHeader">
-              <div className="title">Personas asignadas</div>
-              <div className="fh-row">
-                <button className={`fh-chip ${!editPeople?'primary':''}`} onClick={()=>setEditPeople(false)}>Ver</button>
-                <button className={`fh-chip ${editPeople?'primary':''}`} onClick={()=>setEditPeople(true)}>Editar</button>
-              </div>
-            </div>
+        <div className="right" style={{alignItems:'center'}}>
+          <div className='dropzone'>
+          <p>DROPZONE</p></div>     </div>
 
-            {editPeople ? (
-              <ParticipantsEditor
-                taskId={Number(id)}
-                responsables={responsables}
-                colaboradores={colaboradores}
-                feders={catalog?.feders || []}
-                onChange={async () => setTask(await tareasApi.get(id))}
-              />
-            ) : (
-              <AssignedPeople responsables={responsables} colaboradores={colaboradores} />
-            )}
-          </div>
-
-          <TaskChecklist
-            taskId={Number(id)}
+          {/* <TaskChecklist
+            style={{display: 'none'}}
+            taskId={Number(taskId)}
             onAfterChange={async () => {
               try {
-                const next = await tareasApi.get(id)
+                const next = await tareasApi.get(taskId)
                 setTask(next)
                 const estadoCodigo = next?.estado?.codigo || next?.estado_codigo
                 const pct = Number(next?.progreso_pct) || 0
@@ -373,21 +366,32 @@ export default function TaskDetail(){
                   if (ok) {
                     const catEstados = catalog?.estados || catalog?.tareaEstados || []
                     const finalId = catEstados.find(e => e.codigo === 'finalizada')?.id
-                    if (finalId) setTask(await tareasApi.setEstado(id, finalId))
+                    if (finalId) setTask(await tareasApi.setEstado(taskId, finalId))
                   }
                 }
               } catch {}
             }}
-          />
+          /> */}
 
-          <TaskAttachments
-            taskId={Number(id)}
-            onAfterChange={async () => {
-              try { setTask(await tareasApi.get(id)) } catch {}
-            }}
-          />
-        </div>
+         
+
       </div>
+       <div className='people-detail'>
+          {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
+          <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
+            {editPeople ? (
+              <ParticipantsEditor
+                taskId={Number(taskId)}
+                responsables={responsables}
+                colaboradores={colaboradores}
+                feders={catalog?.feders || []}
+                onChange={async () => setTask(await tareasApi.get(taskId))}
+              />
+            ) : (
+              <AssignedPeople responsables={responsables} colaboradores={colaboradores} />
+            )}
+        
+        </div>
     </div>
   )
 }

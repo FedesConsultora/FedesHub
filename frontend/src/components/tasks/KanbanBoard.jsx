@@ -5,7 +5,7 @@ import './kanban.scss'
 
 const DRAG_THRESHOLD = 6 // px de movimiento antes de iniciar drag
 
-export default function KanbanBoard({ compact=false, maxRows=4, params, board:extBoard, moveTask:extMove }) {
+export default function KanbanBoard({ compact=false, maxRows=4, params, board:extBoard, moveTask:extMove, onOpenTask: onOpenTask }) {
   const internal = extBoard ? null : useTasksBoard(params)
   const board    = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
   const moveTask = extMove ?? internal?.moveTask ?? (() => {})
@@ -265,6 +265,7 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
     <div className={`fh-k-board ${compact ? 'is-compact' : ''}`} ref={boardRef}>
       {cols.map(c => (
         <KanbanColumn
+          onOpenTask={onOpenTask}
           key={c.code}
           code={c.code}
           title={c.name}

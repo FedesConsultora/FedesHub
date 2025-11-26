@@ -22,6 +22,8 @@ export default function TaskList({
   dense = false,
   showHeader = true,
   onRowClick,
+  onOpenTask,
+ 
   columns: cols = { cliente: true, estado: true, vence: true, progreso: true },
 }) {
   const data = useMemo(() => {
@@ -111,7 +113,11 @@ export default function TaskList({
                 <tr
                   key={t.id}
                   className={`border-t ${clickable ? "hover:bg-muted/30 cursor-pointer" : ""}`}
-                  onClick={clickable ? () => onRowClick(t) : undefined}
+onClick={() => {
+  console.log("Row clicked", t.id); // para debug
+  if (typeof onRowClick === "function") onRowClick(t);
+  if (typeof onOpenTask === "function") onOpenTask(t.id);
+}}
                 >
                   <td className={`px-3 ${RowPad} font-medium cursor-pointer `}>
                     {t.titulo || t.title}

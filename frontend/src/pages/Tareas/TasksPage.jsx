@@ -7,13 +7,17 @@ import TareasFilters from "../../components/tasks/TareasFilters";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import TaskList from "../../components/tasks/TaskList";
 import CreateTaskModal from "../../components/tasks/CreateTaskModal";
+import ModalPanel from "./components/ModalPanel";
+import TaskDetail from "./TaskDetail";
+import './components/modal-panel.scss';
+
 import "./TasksPage.scss";
 
 export default function TasksPage() {
   const [view, setView] = useState("kanban");
   const [showCreate, setShowCreate] = useState(false);
+const [openTaskId, setOpenTaskId] = useState(null);
 
-  const navigate = useNavigate();
   // catálogo (selects)
   const [catalog, setCatalog] = useState({
     clientes: [],
@@ -182,12 +186,14 @@ export default function TasksPage() {
       {/* Resultados */}
       <section className="results" data-view={view}>
         {view === "kanban" ? (
-          <KanbanBoard board={board} moveTask={moveTask} />
+          <KanbanBoard board={board} moveTask={moveTask}   onOpenTask={setOpenTaskId}
+/>
         ) : (
-          <TaskList
+            <TaskList
+              onOpenTask={setOpenTaskId}
             rows={tableRows}
             loading={loading}
-            onRowClick={(t) => navigate(`/tareas/${t.id}`)}
+            onRowClick={(t) => setOpenTaskId(t.id)}
           />
         )}
       </section>
@@ -201,6 +207,17 @@ export default function TasksPage() {
           }}
         />
       )}
+     
+      {openTaskId && (
+  <ModalPanel  open={!!openTaskId}  onClose={() => setOpenTaskId(null)}>
+    <TaskDetail
+      taskId={openTaskId}
+      onUpdated={refetch}
+      onClose={() => setOpenTaskId(null)}
+    />
+  </ModalPanel>
+)}
+
     </div>
   );
 }

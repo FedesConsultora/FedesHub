@@ -6,10 +6,11 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import './TaskStatusCard.scss'
 
 const MAP = {
-  pendiente:  { name:'Pendiente',  dot:'#22c55e' },
-  en_curso:   { name:'En curso',   dot:'#38bdf8' },
-  finalizada: { name:'Finalizada', dot:'#a3e635' },
-  cancelada:  { name:'Cancelada',  dot:'#ef4444' }
+  pendiente:  { name:'Pendiente',  dot:'#7A1B9F' },
+  en_curso: { name: 'En curso', dot: '#9F1B50' },
+  revision: {name: 'En Revisión', dot: '#1B6D9F'},
+  aprobada: { name:'Aprobada', dot:'#1B9F4E' },
+  cancelada:  { name:'Cancelada',  dot:'#9F1B1B' }
 }
 
 export default function TaskStatusCard({
@@ -50,7 +51,7 @@ export default function TaskStatusCard({
       await onPick(id)
       const msg =
         code === 'cancelada' ? 'Tarea cancelada' :
-        code === 'finalizada' ? 'Tarea finalizada' : 'Estado actualizado'
+        code === 'aprobada' ? 'Tarea aprobada' : 'Estado actualizado'
       toast?.success(msg)
     } catch (e) {
       toast?.error(e?.message || 'No se pudo actualizar el estado')
