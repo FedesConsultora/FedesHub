@@ -44,7 +44,7 @@ $text: $fh-text;
     position: sticky;
      z-index: 7;
     width: 100%;
-    display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;
+    display:grid; grid-template-columns: 1fr auto;  align-items:center; justify-content: space-between;
   }
 
   .titleWrap{
@@ -52,9 +52,10 @@ $text: $fh-text;
     display:flex; align-items:flex-start; justify-content:space-between;
     padding:1px 1px; gap:4px; 
     margin: 0;
+    width: 100%;
     padding-left: 1rem;
     .ttl{ font-weight:600; font-size:1.5rem; letter-spacing:.2px; margin-bottom: 1rem; }
-    .meta{ color:$muted; display:flex; gap:14px; font-size:.92rem; flex-wrap:wrap; }
+    .meta{ color:$muted; display:flex; gap:10px; font-size:.92rem; flex-wrap:wrap; }
     .chips{ display:flex; gap:6px; flex-wrap:wrap; }
   }
 
@@ -73,10 +74,10 @@ $text: $fh-text;
 
     .dropdown{
       position:absolute; right:0; top: calc(100% + 6px);
-      min-width: 220px; padding:6px;
-      background:$surface-2; border:1px solid $border-strong; border-radius:12px;
+      min-width: 220px; padding:2px;
+      background: #0B0F15; border:1px solid $border-strong; border-radius:12px;
       box-shadow: var(--elev); z-index: 40;
-      display:grid; gap:4px;
+      display:grid; gap:2px;
 
       .item{
         display:flex; align-items:center; gap:10px;
@@ -249,9 +250,11 @@ $text: $fh-text;
 /* ===== Inline editors: fecha y cliente ===== */
 .taskDetail {
   .meta {
-    display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-padding-left: 2rem;
-    .inlineDue, .inlineClient { display: inline-flex; align-items: center; gap: 8px; }
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;
+
+    .inlineDue, 
+    
+    .inlineClient { display: inline-flex; align-items: center; gap: 8px; }
 
     .dueChip, .clientChip {
       padding: .24rem .55rem;
@@ -286,10 +289,11 @@ padding-left: 2rem;
 
   .people-detail {
     display: flex;
-   
+    align-self: flex-end;
     flex-direction: row !important;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
+    
+    padding-top: 4rem;
   }
 }

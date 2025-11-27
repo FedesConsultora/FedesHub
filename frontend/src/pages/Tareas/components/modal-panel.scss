@@ -2,7 +2,7 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-background: transparent;
+  background: transparent;
   display: flex;
   justify-content: flex-end;
   z-index: 999;
@@ -11,10 +11,10 @@ background: transparent;
 .modalPanel {
   width: 720px;      
   height: 100%;
-background: #0B0F15;
+  background: #0B0F15;
   overflow-y: auto;
-    -webkit-overflow-scrolling: touch; 
-  padding-bottom: 2rem; 
+  -webkit-overflow-scrolling: touch; 
+  padding-bottom: 1rem; 
   animation: slideIn .25s ease;
 }
 

@@ -14,6 +14,7 @@ import SubtasksPanel from '../../components/tasks/SubtasksPanel.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
+import { MdKeyboardArrowDown } from 'react-icons/md'
 import './task-detail.scss'
 
 /* === helpers fecha === */
@@ -134,7 +135,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
 
   // estado
   const handleEstado = async (estado_id) => {
-    const next = await tareasApi.setEstado(id, estado_id)
+    const next = await tareasApi.setEstado(taskId, estado_id)
     setTask(next)
   }
 
@@ -245,7 +246,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
                   valueId={task?.cliente?.id || task?.cliente_id || null}
                   valueName={clienteNombre}
                   options={catalog?.clientes || catalog?.clients || []}
-                  onChange={handleClientChange}
+                onChange={handleClientChange}
+                
                 />
               </span>
 
@@ -434,16 +436,20 @@ function InlineClient({ valueId=null, valueName='', options=[], onChange }){
     [options]
   )
 
-  if (!editing){
+  if (!editing) {
+    
     return (
+      <>
       <button
         className="clientChip"
         type="button"
         onClick={()=>setEditing(true)}
         title="Cambiar cliente"
       >
-        {valueName || 'Sin cliente'}
+          {valueName || 'Sin cliente'}  <MdKeyboardArrowDown style={ {position:'relative', top: '2px'}} />
       </button>
+     
+      </>
     )
   }
 
