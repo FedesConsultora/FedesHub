@@ -282,12 +282,12 @@ padding-left: 2rem;
 
    
   }
-
   
 
   .people-detail {
     display: flex;
-    width: 100%;
+   
+    flex-direction: row !important;
     align-items: center;
     justify-content: space-between;
     padding: 1rem;

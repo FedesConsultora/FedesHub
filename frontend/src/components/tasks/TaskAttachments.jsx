@@ -13,7 +13,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
   const [nombre, setNombre] = useState('')
   const [url, setUrl] = useState('')
   const [mime, setMime] = useState('')
-  const [busy, setBusy] = useState(null)   // 'add' | 'upload' | id
+  const [busy, setBusy] = useState(null) 
   const [isOver, setIsOver] = useState(false)
 
   const fileInputRef = useRef(null)
@@ -60,10 +60,9 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
 
   return (
     <div className="TaskAttachments card">
-      <div className="cardHeader">
-        <div className="title">Adjuntos</div>
+      {/* <div className="cardHeader">
         <div className="subtitle">{loading ? 'Cargando…' : `(${adjuntos.length})`}</div>
-      </div>
+      </div> */}
 
       {/* Dropzone */}
       <div
@@ -84,7 +83,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
           <FaUpload /> <span>Adjuntar archivos</span>
         </button>
         <div className="muted drop-help">
-          Soltá acá o elegí archivos. (Imágenes, PDF, docs…)
+          
         </div>
         <input ref={fileInputRef} type="file" hidden multiple onChange={onPickFiles} />
       </div>
@@ -114,7 +113,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
       )}
 
       {/* Alta por URL (labels claras) */}
-      <div className="att-add">
+      {/* <div className="att-add">
         <div className="fld">
           <label className="label" htmlFor="att-nombre">Nombre</label>
           <input
@@ -122,8 +121,8 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
             title="Nombre visible del adjunto" value={nombre}
             onChange={e => setNombre(e.target.value)} onKeyDown={onKeyDownNew} maxLength={255} required
           />
-        </div>
-        <div className="fld urlfld">
+        </div> */}
+        {/* <div className="fld urlfld">
           <label className="label" htmlFor="att-url">URL pública</label>
           <input
             id="att-url" className="att-input" placeholder="https://…"
@@ -131,23 +130,23 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
             onChange={e => setUrl(e.target.value)} onKeyDown={onKeyDownNew} inputMode="url" required
             aria-describedby="att-url-help"
           />
-        </div>
-        <div className="fld mimefld">
+        </div> */}
+        {/* <div className="fld mimefld">
           <label className="label" htmlFor="att-mime">MIME (opcional)</label>
           <input
             id="att-mime" className="att-input" placeholder="application/pdf"
             title="Tipo MIME (opcional)" value={mime}
             onChange={e => setMime(e.target.value)} onKeyDown={onKeyDownNew}
           />
-        </div>
-        <button
+        </div> */}
+        {/* <button
           className="addBtn" onClick={handleAdd}
           disabled={!canAdd || busy === 'add'}
           title={canAdd ? 'Agregar adjunto por URL' : 'Completá nombre y URL'}
         >
           <FaPlus/> <span>Agregar</span>
-        </button>
-      </div>
+        </button> */}
+      {/* </div> */}
     </div>
   )
 }

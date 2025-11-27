@@ -6,7 +6,7 @@ $text:  v.$fh-text;
 $muted: v.$fh-muted;
 
 .TaskAttachments {
-  .cardHeader{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px;
+  .cardHeader{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; 
     .title{ font-weight:800 } .subtitle{ color:$muted }
   }
 
@@ -14,11 +14,12 @@ $muted: v.$fh-muted;
   .att-drop{
     border:1px dashed $border-strong; border-radius:12px;
     background: rgba(255,255,255,.03);
-    padding:10px; display:flex; flex-direction:column; align-items:flex-start; gap:8px;
-    transition: background .18s ease, border-color .18s ease;
+    padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; justify-content: center;
+    transition: background .18s ease, border-color .18s ease; 
     .pickBtn{
       display:inline-flex; align-items:center; gap:8px;
-      padding:.56rem .8rem; border-radius:10px; border:1px solid $border; background:v.$fh-primary; color:white; font-weight:800;
+      padding:.56rem .8rem;  border: none; background: transparent; color:white; font-weight:600;
+      padding-top: 1rem;
       &:hover{ filter:brightness(1.08) } &:disabled{ opacity:.6; cursor:not-allowed }
       span{ display:inline }
     }
@@ -27,7 +28,7 @@ $muted: v.$fh-muted;
   }
 
   /* ===== Lista ===== */
-  .att-list{ list-style:none; margin:10px 0 0; padding:0; display:grid; gap:8px; }
+  .att-list{ list-style:none;padding:0; display:grid; gap:8px; }
   .attItem{
     display:grid; grid-template-columns: 20px 1fr auto auto; gap:10px; align-items:center;
     padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid $border;
