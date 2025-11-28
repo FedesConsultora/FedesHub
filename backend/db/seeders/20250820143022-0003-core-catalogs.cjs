@@ -63,10 +63,11 @@ module.exports = {
 
     // ===== TAREAS
     await queryInterface.bulkInsert('TareaEstado', [
-      { codigo: 'pendiente', nombre: 'Pendiente', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'en_curso',  nombre: 'En curso',  descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'finalizada',nombre: 'Finalizada',descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'cancelada', nombre: 'Cancelada', descripcion: null, created_at: now, updated_at: now },
+    { codigo: 'pendiente',  nombre: 'Pendiente',  descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'en_curso',   nombre: 'En curso',   descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'revision', nombre: 'Revisión', descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'aprobada', nombre: 'Aprobada', descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'cancelada',  nombre: 'Cancelada',  descripcion: null, created_at: now, updated_at: now }
     ], {});
 
     await queryInterface.bulkInsert('ImpactoTipo', [

@@ -1010,7 +1010,8 @@ module.exports = {
       await ensureCodes(queryInterface, 'TareaEstado', [
         { codigo: 'pendiente',  nombre: 'Pendiente',  descripcion: null, created_at: now, updated_at: now },
         { codigo: 'en_curso',   nombre: 'En curso',   descripcion: null, created_at: now, updated_at: now },
-        { codigo: 'finalizada', nombre: 'Finalizada', descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'revision', nombre: 'Revisión', descripcion: null, created_at: now, updated_at: now },
+        { codigo: 'aprobada', nombre: 'Aprobada', descripcion: null, created_at: now, updated_at: now },
         { codigo: 'cancelada',  nombre: 'Cancelada',  descripcion: null, created_at: now, updated_at: now }
       ], t);
 
@@ -1060,7 +1061,7 @@ module.exports = {
     await queryInterface.bulkDelete('ImpactoTipo',
       { codigo: ['alto','medio','bajo'] }, {});
     await queryInterface.bulkDelete('TareaEstado',
-      { codigo: ['pendiente','en_curso','finalizada','cancelada'] }, {});
+      { codigo: ['pendiente','en_curso', 'aprobada', 'revision','cancelada'] }, {});
   }
 };
 // backend/db/seeders/20250822095043-0009-tareas-initial-data.cjs

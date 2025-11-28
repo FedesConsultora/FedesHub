@@ -4,7 +4,6 @@ import AvatarStack from '../common/AvatarStack'
 
 export default function TaskCard({ t, onPointerDown, onOpenTask}) {
 const open = () => {
-  console.log("ABRIENDO TASK", t.id);
   onOpenTask(t.id);
 };
 

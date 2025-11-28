@@ -29,7 +29,8 @@ export default function TaskStatusCard({
 
   const active = MAP[estadoCodigo] ? estadoCodigo : 'pendiente'
   const idByCode = Object.fromEntries((estadosCatalog||[]).map(e => [e.codigo, e.id]))
-const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false)
+  
 
   const doPick = async (code) => {
     if (busy || code===active) return
@@ -77,7 +78,9 @@ return (
 
       {open && (
         <div className="statusMenu">
-          {Object.entries(MAP).map(([code, info]) => (
+        {Object.entries(MAP)
+            .filter(([code]) => code !== active)  
+          .map(([code, info]) => (
             <div
               key={code}
               className={`item ${active===code?'active':''} ${busy===code?'busy':''}`}

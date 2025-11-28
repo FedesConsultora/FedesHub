@@ -9,18 +9,15 @@
   gap: 6px;
   background: #121721;
   color: #fff;
-  padding: 6px 11px;
+  padding: 6px 19px;
   border-radius: 1rem;
   cursor: pointer;
-  
-
- 
 }
 
 .statusMenu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+ left: -.8rem;
   background: transparent;
   border: 1px solid #2c3441;
   border-radius: 12px;
