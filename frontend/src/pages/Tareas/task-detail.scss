@@ -298,5 +298,16 @@ $text: $fh-text;
     justify-content: space-between;
     
     padding-top: 4rem;
+
+    .saveBtn {
+      background-color: #034962;
+      border : solid 2px #67A4FF;
+      border-radius: 1.4rem;
+      color: #fff;
+      padding: 4px  12px 12px;
+      gap: 6px;
+
+     
+    }
   }
 }

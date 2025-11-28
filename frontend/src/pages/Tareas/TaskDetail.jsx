@@ -15,6 +15,8 @@ import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
+import { FaRegSave } from "react-icons/fa";
+
 
 import './task-detail.scss'
 
@@ -407,9 +409,8 @@ useEffect(() => {
    />
          
         
-      </div>
-      
-      <button
+        <button
+          style={{alignSelf:'flex-end', marginBottom: '1rem'}}
   className="saveBtn"
   disabled={saving}
   // onClick={async () => {
@@ -425,8 +426,11 @@ useEffect(() => {
   //   }
   // }}
 >
-  Guardar cambios
+          <FaRegSave size={ 22} style={{cursor: 'pointer', position:'relative', top:'.3rem'}} color='#489FD4' /> Guardar cambios
 </button>
+      </div>
+    
+     
     </div>
   )
 }
