@@ -1,61 +1,7 @@
-
-// import Avatar from '../Avatar.jsx'
-// import './assigned-people.scss'
-
-// export default function AssignedPeople({ responsables=[], colaboradores=[] }){
-//   return (
-//     <div className="peopleGrid">
-//        <Group
-        
-//         title="Colaboradores"
-//         items={colaboradores}
-//         showRole={true}
-//       />
-//       <Group
-       
-//         title="Responsable"
-//         items={responsables}
-//         showRole={false}
-//         // renderBadge={(p)=> p.es_lider ? (<><FaCrown className="crown"/><span>Líder</span></>) : null}
-//       />
-     
-//     </div>
-//   )
-// }
-
-// function Group({ title, icon, items=[], showRole=false, renderBadge }){
-//   return (
-//     <div className="peopleGroup">
-//       <div className="pgHead">
-//         <span className="fh-row" style={{gap:8}}>
-//           {icon}<span>{title}</span>
-//         </span>
-       
-//       </div>
-
-//       <div className="peopleList">
-//         {items.length ? items.map((p, i) => {
-//           const fullName = [p.nombre, p.apellido].filter(Boolean).join(' ') || p.name || '—'
-//           const badgeEl = renderBadge ? renderBadge(p) : null
-//           return (
-//             <div className="person" key={p.feder_id || p.id || i}>
-//               <Avatar src={p.avatar_url || undefined} name={fullName} size={36} usePlaceholder={false} />
-//               <div className="info">
-//                 <div className="name">{fullName}</div>
-//               </div>
-//               {badgeEl && <div className="badge">{badgeEl}</div>}
-//             </div>
-//           )
-//         }) : <div className="empty">Sin {title.toLowerCase()}</div>}
-//       </div>
-//     </div>
-//   )
-// }
 import { useState } from 'react';
-import { MdKeyboardArrowDown } from 'react-icons/md';
 import Avatar from '../Avatar.jsx';
+import { MdKeyboardArrowDown, MdClose } from 'react-icons/md';
 import { CiCirclePlus } from "react-icons/ci";
-
 import './assigned-people.scss';
 
 export default function AssignedPeople({
@@ -63,66 +9,125 @@ export default function AssignedPeople({
   colaboradores = [],
   candidatesResp = [],
   candidatesCol = [],
-  onLocalChange
+  onChange
 }) {
-  const [openIndex, setOpenIndex] = useState(null);
-  const [localState, setLocalState] = useState({
-    responsables,
-    colaboradores
-  });
+  const [openItem, setOpenItem] = useState(null);
+  const [openAdd, setOpenAdd] = useState(null);
 
-  const toggle = (key, index) => {
-    const id = `${key}-${index}`;
-    setOpenIndex(openIndex === id ? null : id);
+  /** Notifica cambios al componente padre */
+  const update = (nextState) => {
+    onChange?.(nextState);
   };
 
-  const handleSelect = (key, index, person) => {
-    const updated = {
-      ...localState,
-      [key]: [...localState[key], person]
+  /** Agregar persona */
+  const handleAdd = (groupKey, person) => {
+    const next = {
+      responsables,
+      colaboradores,
+      [groupKey]: [...(groupKey === "responsables" ? responsables : colaboradores), person]
     };
-    setLocalState(updated);
-    onLocalChange?.(updated);
-    setOpenIndex(null);
+    update(next);
+    setOpenAdd(null);
   };
 
-  const Group = ({ title, groupKey, showRole = false, renderBadge, candidates }) => (
+  /** Cambiar persona existente */
+  const handleReplace = (groupKey, index, person) => {
+    const list = groupKey === 'responsables' ? [...responsables] : [...colaboradores];
+    list[index] = person;
+
+    update({
+      responsables: groupKey === 'responsables' ? list : responsables,
+      colaboradores: groupKey === 'colaboradores' ? list : colaboradores
+    });
+
+    setOpenItem(null);
+  };
+
+  /** Eliminar persona */
+  const handleRemove = (groupKey, index) => {
+    const list = groupKey === 'responsables' ? [...responsables] : [...colaboradores];
+    list.splice(index, 1);
+
+    update({
+      responsables: groupKey === 'responsables' ? list : responsables,
+      colaboradores: groupKey === 'colaboradores' ? list : colaboradores
+    });
+
+    if (openItem === `${groupKey}-${index}`) {
+      setOpenItem(null);
+    }
+  };
+
+  const Group = ({ title, groupKey, items, candidates }) => (
     <div className="peopleGroup">
       <div className="pgHead">
-        <span className="fh-row" style={{ gap: 8 }}>
-          <span>{title}</span>
-        </span>
+        <span>{title}</span>
+
+        {/* Botón + */}
+        <CiCirclePlus
+          size={26}
+          style={{ cursor: 'pointer' }}
+          onClick={() => setOpenAdd(openAdd === groupKey ? null : groupKey)}
+        />
+
+        {/* Dropdown agregar */}
+        {openAdd === groupKey && (
+          <div className="dropdown global">
+            {candidates.length ? (
+              candidates.map(c => (
+                <div key={c.id} className="dd-item" onClick={() => handleAdd(groupKey, c)}>
+                  {[c.nombre, c.apellido].filter(Boolean).join(' ') || c.name}
+                </div>
+              ))
+            ) : (
+              <div className="empty">No hay opciones</div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Lista de personas */}
       <div className="peopleList">
-        {localState[groupKey].length ? localState[groupKey].map((p, i) => {
+        {items.length ? items.map((p, i) => {
           const fullName = [p.nombre, p.apellido].filter(Boolean).join(' ') || p.name || '—';
-          const badgeEl = renderBadge ? renderBadge(p) : null;
-          const isOpen = openIndex === `${groupKey}-${i}`;
+          const isOpen = openItem === `${groupKey}-${i}`;
+
           return (
-            <div className="person" key={p.feder_id || p.id || i}>
-              <Avatar src={p.avatar_url || undefined} name={fullName} size={36} usePlaceholder={false} />
+            <div className="person" key={p.id || p.feder_id || i}>
+              <Avatar src={p.avatar_url} name={fullName} size={36} />
+
               <div className="info">
                 <div className="name">
                   {fullName}
-                  <span className="arrow" onClick={() => toggle(groupKey, i)}><MdKeyboardArrowDown />
-</span>
+                  <span
+                    className="arrow"
+                    onClick={() => setOpenItem(isOpen ? null : `${groupKey}-${i}`)}
+                  >
+                    <MdKeyboardArrowDown />
+                  </span>
                 </div>
               </div>
-              {badgeEl && <div className="badge">{badgeEl}</div>}
 
+              {/* Eliminar persona */}
+              <MdClose
+                size={20}
+                className="removeBtn"
+                onClick={() => handleRemove(groupKey, i)}
+              />
+
+              {/* Dropdown cambiar */}
               {isOpen && (
                 <div className="dropdown">
-                  {candidates.length ? (
-                    <ul>
-                      {candidates.map(c => (
-                        <li key={c.id} onClick={() => handleSelect(groupKey, i, c)}>
-                          {[c.nombre, c.apellido].filter(Boolean).join(' ') || c.name || '—'}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="empty"></div>
+                  {candidates.length ? candidates.map(c => (
+                    <div
+                      className="dd-item"
+                      key={c.id}
+                      onClick={() => handleReplace(groupKey, i, c)}
+                    >
+                      {[c.nombre, c.apellido].filter(Boolean).join(' ') || c.name}
+                    </div>
+                  )) : (
+                    <div className="empty">No hay opciones</div>
                   )}
                 </div>
               )}
@@ -138,20 +143,16 @@ export default function AssignedPeople({
       <Group
         title="Colaboradores"
         groupKey="colaboradores"
-        showRole={true}
+        items={colaboradores}
         candidates={candidatesCol}
       />
-      
-      <CiCirclePlus size={36} style={{position:'relative', top:' .8rem', right:'1.3rem'}}
-     />
 
       <Group
         title="Responsables"
         groupKey="responsables"
-        showRole={false}
+        items={responsables}
         candidates={candidatesResp}
       />
     </div>
   );
 }
-

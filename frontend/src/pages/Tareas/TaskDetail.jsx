@@ -15,6 +15,7 @@ import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
+
 import './task-detail.scss'
 
 /* === helpers fecha === */
@@ -45,7 +46,19 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
   const [editPeople, setEditPeople] = useState(false)
+const [peopleForm, setPeopleForm] = useState({
+  responsables: [],
+  colaboradores: []
+});
 
+// Inicializar al cargar tarea
+useEffect(() => {
+  if (!task) return
+  setPeopleForm({
+    responsables: mapResp(task?.Responsables || task?.responsables || []),
+    colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
+  })
+}, [task])
   // estado editable
   const [form, setForm] = useState({ titulo:'', descripcion:'' })
   const [saving, setSaving] = useState(false)
@@ -384,19 +397,37 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
        <div className='people-detail'>
           {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
           <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
-            {editPeople ? (
-              <ParticipantsEditor
-                taskId={Number(taskId)}
-                responsables={responsables}
-                colaboradores={colaboradores}
-                feders={catalog?.feders || []}
-                onChange={async () => setTask(await tareasApi.get(taskId))}
-              />
-            ) : (
-              <AssignedPeople responsables={responsables} colaboradores={colaboradores} />
-            )}
+          
+            <AssignedPeople
+                
+                responsables={peopleForm.responsables}
+  colaboradores={peopleForm.colaboradores}
+                candidatesResp={catalog?.feders || []}  // lista de posibles responsables
+                candidatesCol={catalog?.feders || []}   // lista de posibles colaboradores
+                onChange={setPeopleForm}
+   />
+         
         
-        </div>
+      </div>
+      
+      <button
+  className="saveBtn"
+  disabled={saving}
+  // onClick={async () => {
+  //   try {
+  //     setSaving(true)
+  //     await tareasApi.updatePeople(taskId, peopleForm)
+  //     setTask(await tareasApi.get(taskId))
+  //     toast?.success('Cambios guardados')
+  //   } catch(e) {
+  //     toast?.error(e?.message || 'No se pudo guardar')
+  //   } finally {
+  //     setSaving(false)
+  //   }
+  // }}
+>
+  Guardar cambios
+</button>
     </div>
   )
 }
