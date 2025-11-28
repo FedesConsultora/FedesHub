@@ -240,6 +240,22 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
             {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
           </div> */}
           <div className="meta">
+             <span className="inlineDue">
+                <InlineDue
+                  value={toInputDate(vencimientoISO)}
+                  onChange={handleDueChange}
+                />
+        </span>
+              <TaskStatusCard
+              estadoCodigo={estadoCodigo}
+              progresoPct={progreso}
+              aprobLabel={aprobLabel}
+              prioridad={prioridad}
+              vencimientoISO={vencimientoISO}
+              etiquetas={etiquetas}
+              estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
+              onPick={handleEstado}
+        />
               <span className="inlineClient">
                 
                 <InlineClient
@@ -253,12 +269,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
 
               {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
-              <span className="inlineDue">
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                  onChange={handleDueChange}
-                />
-        </span>
+             
           {/* Acciones derechas: sólo acciones rápidas */}
         <div className="actions">
           <TaskHeaderActions
@@ -269,22 +280,14 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
             onRelate={() => alert('Abrir modal de relaciones (WIP)')}
             onQuickAttach={() => document.querySelector('input[type=file]')?.click()}
           />
-        </div>
+            </div>
+          
       </div>
         </div>
           
       
 
-        {/* <TaskStatusCard
-          estadoCodigo={estadoCodigo}
-          progresoPct={progreso}
-          aprobLabel={aprobLabel}
-          prioridad={prioridad}
-          vencimientoISO={vencimientoISO}
-          etiquetas={etiquetas}
-          estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
-          onPick={handleEstado}
-        /> */}
+        
     
       
 

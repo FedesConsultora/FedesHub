@@ -8,7 +8,7 @@ import './TaskStatusCard.scss'
 const MAP = {
   pendiente:  { name:'Pendiente',  dot:'#7A1B9F' },
   en_curso: { name: 'En curso', dot: '#9F1B50' },
-  revision: {name: 'En Revisión', dot: '#1B6D9F'},
+  revision: {name: 'Revisión', dot: '#1B6D9F'},
   aprobada: { name:'Aprobada', dot:'#1B9F4E' },
   cancelada:  { name:'Cancelada',  dot:'#9F1B1B' }
 }
@@ -29,6 +29,7 @@ export default function TaskStatusCard({
 
   const active = MAP[estadoCodigo] ? estadoCodigo : 'pendiente'
   const idByCode = Object.fromEntries((estadosCatalog||[]).map(e => [e.codigo, e.id]))
+const [open, setOpen] = useState(false)
 
   const doPick = async (code) => {
     if (busy || code===active) return
@@ -62,37 +63,38 @@ export default function TaskStatusCard({
 
   const prio = getPriorityMeta(Number(prioridad)||0, vencimientoISO)
 
-  return (
-    <div className={`taskStatusCard stateCard ${prio.class}`}>
-      <div className="stateRail" role="tablist" aria-label="Estados de la tarea">
-        {Object.entries(MAP).map(([code, info], i) => (
-          <Fragment key={code}>
+return (
+ 
+    <div className="statusDropdown">
+      <button
+        className="statusTrigger"
+        type="button"
+      onClick={() => setOpen(v => !v)}
+       style={{ background: MAP[active].dot }}
+      >
+        {MAP[active].name}
+      </button>
+
+      {open && (
+        <div className="statusMenu">
+          {Object.entries(MAP).map(([code, info]) => (
             <div
-              className={`st ${active===code?'active':''} ${busy===code?'busy':''}`}
-              role="tab"
-              aria-selected={active===code}
-              tabIndex={active===code ? -1 : 0}
-              onKeyDown={(e)=> (e.key==='Enter'||e.key===' ') && doPick(code)}
-              onClick={()=>doPick(code)}
-              title={info.name}
+              key={code}
+              className={`item ${active===code?'active':''} ${busy===code?'busy':''}`}
+              onClick={() => { setOpen(false); doPick(code); }}
+              style={{ backgroundColor: info.dot }}
+
             >
-              <span className="dot" style={{ background: info.dot }} />
+             
               {info.name}
             </div>
-            {i < 3 && <span className="sep">—</span>}
-          </Fragment>
-        ))}
-      </div>
-
-      <div className="stateRight">
-        {aprobLabel && <span className="chipStat">{aprobLabel}</span>}
-        <span className={`prioBadge ${prio.class}`}>
-          <span className="dot" /> Prioridad: {prio.label}
-        </span>
-        <div className="progress" aria-label="Progreso">
-          <div className="bar" style={{ width: `${Math.max(0, Math.min(100, Number(progresoPct)||0))}%` }} />
+          ))}
         </div>
-      </div>
+      )}
     </div>
-  )
+
+  
+  
+)
+
 }

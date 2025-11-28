@@ -1,91 +1,63 @@
-/* /frontend/src/components/tasks/TaskStatusCard.scss */
-@use '../../styles/variables' as v;
-
-/* tokens locales */
-$surface-2: rgba(18,22,30,.82);
-$border: rgba(255,255,255,.08);
-$border-strong: rgba(255,255,255,.14);
-$text: v.$fh-text;
-$muted: v.$fh-muted;
-$primary: v.$fh-primary;
-
-/* chip base local (para reemplazar @extend .fh-chip) */
-@mixin chip {
-  padding:.42rem .65rem;
-  border:1px solid $border-strong;
-  border-radius:999px;
-  background:rgba(255,255,255,.04);
+.statusDropdown {
+  position: relative;
+  display: inline-block;
 }
 
-/* ===== card ===== */
-.taskStatusCard {
-  position: sticky; top: 8px; z-index: 8;
-  width: 100%;
-  margin: 0; padding: 8px 10px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  background: linear-gradient(90deg, rgba(18,24,34,.92), rgba(18,24,34,.78));
-  border: 1px solid $border-strong; border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0,0,0,.35);
-  isolation: isolate; overflow: visible; color: $text;
+.statusTrigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #121721;
+  color: #fff;
+  padding: 6px 11px;
+  border-radius: 1rem;
+  cursor: pointer;
+  
 
-  &::before{
-    content:""; position:absolute; left:-10px; top:50%; translate:0 -50%;
-    width:18px; height:18px; rotate:45deg; background:inherit; border-left:1px solid $border-strong; border-bottom:1px solid $border-strong;
-    filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
-    z-index:-1;
+ 
+}
+
+.statusMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: transparent;
+  border: 1px solid #2c3441;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 140px;
+  z-index: 50;
+  
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  animation: fadeIn .15s ease;
+}
+
+.statusMenu .item {
+  padding: 6px 11px;
+  color: #fff;
+  display: flex;
+  border-radius: 1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+
+   margin-bottom: 10px;   
+
+  &:last-child {
+    margin-bottom: 0;  
   }
 
-  /* ===== (lo que pediste) stateRail / stateRight ===== */
-  .stateRail{
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-
-    .st{
-      @include chip;
-      display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
-      background:rgba(255,255,255,.04);
-      transition: transform .06s ease, background .18s ease, box-shadow .18s ease, border-color .18s ease;
-
-      .dot{ width:8px; height:8px; border-radius:999px; box-shadow:0 0 0 2px rgba(0,0,0,.35) inset; }
-      &:hover{ background:rgba(255,255,255,.08); border-color:$border-strong }
-      &.active{ font-weight:800; background:rgba($primary,.16); border-color:rgba($primary,.42) }
-      &.busy{ pointer-events:none; opacity:.6 }
-    }
-    .sep{ opacity:.45; }
+  &:hover {
+    background: rgba(255,255,255,0.08);
   }
 
-  .stateRight{
-    display:flex; align-items:center; gap:8px;
+  &.active {
+    background: rgba(255,255,255,0.12);
+  }
+}
 
-    .chipStat{ @include chip; font-weight:700; }
-
-    .progress{
-      width:180px; height:6px; background:rgba(255,255,255,.06);
-      border-radius:999px; overflow:hidden; border:1px solid $border;
-      .bar{ height:100%; background:$primary }
-    }
-
-    @media (max-width: 900px){ .progress{ display:none } }
-    @media (max-width: 520px){ .chipStat{ display:none } }
-  }
-
-  /* ===== prioridad (bordes/sombras + badge) ===== */
-  .prioBadge{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:.42rem .62rem; border-radius:999px; font-weight:800;
-    border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06);
-    .dot{ width:8px; height:8px; border-radius:999px; box-shadow:0 0 0 2px rgba(0,0,0,.35) inset; }
-  }
-
-  &.prio--low  { border-color: rgba( 56,203,137,.28); box-shadow: 0 12px 30px rgba( 56,203,137,.10);
-    .prioBadge{ border-color: rgba( 56,203,137,.35); background: rgba( 56,203,137,.10); .dot{ background:#38cb89; } }
-  }
-  &.prio--med  { border-color: rgba(255,204,  0,.28); box-shadow: 0 12px 30px rgba(255,204,  0,.12);
-    .prioBadge{ border-color: rgba(255,204,  0,.35); background: rgba(255,204,  0,.10); .dot{ background:#ffcc00; } }
-  }
-  &.prio--high { border-color: rgba(255,139,61,.30); box-shadow: 0 12px 30px rgba(255,139,61,.14);
-    .prioBadge{ border-color: rgba(255,139,61,.35); background: rgba(255,139,61,.10); .dot{ background:#ff8b3d; } }
-  }
-  &.prio--crit { border-color: rgba(255, 77,79,.35); box-shadow: 0 12px 30px rgba(255,77,79,.18);
-    .prioBadge{ border-color: rgba(255, 77,79,.40); background: rgba(255, 77,79,.12); .dot{ background:#ff4d4f; } }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

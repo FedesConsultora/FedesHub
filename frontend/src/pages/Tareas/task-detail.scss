@@ -44,7 +44,7 @@ $text: $fh-text;
     position: sticky;
      z-index: 7;
     width: 100%;
-    display:grid; grid-template-columns: 1fr auto;  align-items:center; justify-content: space-between;
+    display:grid; grid-template-columns: 1fr auto;  align-items:center; justify-content: center;
   }
 
   .titleWrap{
@@ -55,7 +55,6 @@ $text: $fh-text;
     width: 100%;
     padding-left: 1rem;
     .ttl{ font-weight:600; font-size:1.5rem; letter-spacing:.2px; margin-bottom: 1rem; }
-    .meta{ color:$muted; display:flex; gap:10px; font-size:.92rem; flex-wrap:wrap; }
     .chips{ display:flex; gap:6px; flex-wrap:wrap; }
   }
 
@@ -140,11 +139,13 @@ $text: $fh-text;
 }
 
 .right {
+
   justify-content: center;
   align-items: center;
   display: flex;
 
   .dropzone {
+      width:100%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -250,8 +251,10 @@ $text: $fh-text;
 /* ===== Inline editors: fecha y cliente ===== */
 .taskDetail {
   .meta {
-    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;
 
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start; margin-right: .5rem;
+
+ 
     .inlineDue, 
     
     .inlineClient { display: inline-flex; align-items: center; gap: 8px; }
