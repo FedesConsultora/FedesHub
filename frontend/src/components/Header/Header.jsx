@@ -16,6 +16,7 @@ export default function Header() {
   return (
     <header className="fhHeader">
       <Link to="/" className="brand">FedesHub</Link>
+      <span className='sys-version'>BETA v1.0</span>
       <div className="spacer" />
       <div className="rightCluster">
         <BellCluster onAnyOpen={() => setOpen(false)} />

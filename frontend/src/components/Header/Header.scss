@@ -11,6 +11,15 @@
       -webkit-background-clip: text; background-clip: text; color: transparent;
       filter: drop-shadow(0 3px 18px rgba(77,208,225,.12)); 
   }
+  .sys-version {
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 0.5rem;
+   
+ 
+  
+   
+  }
   .spacer{ flex:1 }
   .userChip{
     display:flex; align-items:center; gap:10px; background:#0f141b; border:1px solid rgba(255,255,255,.1);
