@@ -6,6 +6,23 @@ $border: rgba(255,255,255,.08);
 $border-strong: rgba(255,255,255,.14);
 $muted: $fh-muted;
 $text: $fh-text;
+.addWrapper {
+  position: relative;
+  display: inline-block;
+
+  .addButton {
+    position: relative;
+    top: 2px;
+    cursor: pointer;
+  }
+}
+
+.dd-add {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  z-index: 20;
+}
 
 .peopleGrid{ display:flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 1.5rem; }
 .add-col {
@@ -14,12 +31,13 @@ color: #fff;
 border-radius: 36px;
 }
 .peopleGroup{
+  
   padding:10px; 
  
 }
 
 .pgHead{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center; justify-content: flex-start ;gap: 4px;
   margin-bottom:8px; font-weight:800; color:$text;
 
   span {
@@ -30,21 +48,34 @@ border-radius: 36px;
 }
 
 /* pequeño espacio entre personas */
-.peopleList{ display:grid; gap: 1rem; }
+.peopleList{ display:flex;  flex-direction: row; 
+  flex-wrap: wrap;       
+  gap: 1px; cursor: pointer; }
 
 .person{
   position: relative;
-  display:grid;
-  grid-template-columns: 36px 1fr auto;
-  align-items:center; gap:5px;
-  padding:2px 10px; border-radius:24px;
-  border:1px solid $border; background:#2C4450;
+ display: flex;
+ flex-wrap: wrap;
+  align-items:center; 
+  padding: 1px; border-radius:24px;
+   background: transparent;
+   cursor: pointer;
 
   img, .fhAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:1px solid $border }
 
   .info{
     display:grid; gap:2px; min-width:0;
     .name{ font-size:.9rem; font-weight: 400; color:$text; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .newTag {
+  margin-left: 6px;
+  background: #10bc83;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
   
   }
 
@@ -57,11 +88,39 @@ border-radius: 36px;
   }
 }
 
+.avatarWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatarTooltip {
+  position: absolute;
+  bottom: 110%;
+  left: 48%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 16px;
+  white-space: nowrap;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease-out;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.avatarWrapper:hover .avatarTooltip {
+  opacity: 1;
+}
+
 
 
 .dropdown {
+  cursor: pointer;
   position: absolute;
-  top: 100%;        
+  top: 0;        
   left: 0;
   z-index: 10;
   background: #2C4450;
@@ -73,3 +132,25 @@ border-radius: 36px;
 }
 
 .empty{ color:$muted; }
+.dd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  
+
+  .dd-name {
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .dd-remove {
+    cursor: pointer;
+    color: #aaa;
+    padding: 3px;
+
+    &:hover {
+      color: #e74c3c;
+    }
+  }
+}

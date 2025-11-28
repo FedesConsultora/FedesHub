@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef,useEffect } from 'react';
 import Avatar from '../Avatar.jsx';
-import { MdKeyboardArrowDown, MdClose } from 'react-icons/md';
-import { CiCirclePlus } from "react-icons/ci";
+import { MdClose } from 'react-icons/md';
+import { CiCirclePlus} from "react-icons/ci";
+import { MdEdit } from "react-icons/md";
+
 import './assigned-people.scss';
 
 export default function AssignedPeople({
@@ -11,8 +13,21 @@ export default function AssignedPeople({
   candidatesCol = [],
   onChange
 }) {
-  const [openItem, setOpenItem] = useState(null);
   const [openAdd, setOpenAdd] = useState(null);
+const dropdownRef = useRef(null);
+
+// Cierra el dropdown al clickear fuera
+ useEffect(() => {
+    const handleClickOutside = (e) => {
+      // si hay dropdown abierto y el click NO está dentro de él
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenAdd(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   /** Notifica cambios al componente padre */
   const update = (nextState) => {
@@ -20,28 +35,26 @@ export default function AssignedPeople({
   };
 
   /** Agregar persona */
-  const handleAdd = (groupKey, person) => {
-    const next = {
-      responsables,
-      colaboradores,
-      [groupKey]: [...(groupKey === "responsables" ? responsables : colaboradores), person]
-    };
-    update(next);
-    setOpenAdd(null);
-  };
+ const handleAdd = (groupKey, person) => {
+  const newPerson = { ...person, isNew: true };
 
-  /** Cambiar persona existente */
-  const handleReplace = (groupKey, index, person) => {
-    const list = groupKey === 'responsables' ? [...responsables] : [...colaboradores];
-    list[index] = person;
-
+ 
+  if (groupKey === "responsables") {
     update({
-      responsables: groupKey === 'responsables' ? list : responsables,
-      colaboradores: groupKey === 'colaboradores' ? list : colaboradores
+      responsables: [newPerson],
+      colaboradores
     });
+  } else {
+   
+    update({
+      responsables,
+      colaboradores: [...colaboradores, newPerson]
+    });
+  }
 
-    setOpenItem(null);
-  };
+  setOpenAdd(null);
+};
+
 
   /** Eliminar persona */
   const handleRemove = (groupKey, index) => {
@@ -52,10 +65,6 @@ export default function AssignedPeople({
       responsables: groupKey === 'responsables' ? list : responsables,
       colaboradores: groupKey === 'colaboradores' ? list : colaboradores
     });
-
-    if (openItem === `${groupKey}-${index}`) {
-      setOpenItem(null);
-    }
   };
 
   const Group = ({ title, groupKey, items, candidates }) => (
@@ -63,77 +72,120 @@ export default function AssignedPeople({
       <div className="pgHead">
         <span>{title}</span>
 
-        {/* Botón + */}
-        <CiCirclePlus
-          size={26}
-          style={{ cursor: 'pointer' }}
-          onClick={() => setOpenAdd(openAdd === groupKey ? null : groupKey)}
-        />
+        {/* Wrapper para posicionar dropdown */}
+        <div className="addWrapper"  ref={dropdownRef}>
+         {groupKey === "responsables" ? (
+  <MdEdit
+    size={16}
+  style={{cursor: 'pointer'}}
+    className="addBtn"
+    onClick={() => setOpenAdd(openAdd === groupKey ? null : groupKey)}
+  />
+) : (
+  <CiCirclePlus
+                size={26}
+                style={{cursor: 'pointer', position:'relative', top: '.2rem'}}
+    className="addBtn"
+    onClick={() => setOpenAdd(openAdd === groupKey ? null : groupKey)}
+  />
+)}
 
-        {/* Dropdown agregar */}
-        {openAdd === groupKey && (
-          <div className="dropdown global">
-            {candidates.length ? (
-              candidates.map(c => (
-                <div key={c.id} className="dd-item" onClick={() => handleAdd(groupKey, c)}>
-                  {[c.nombre, c.apellido].filter(Boolean).join(' ') || c.name}
-                </div>
-              ))
-            ) : (
-              <div className="empty">No hay opciones</div>
+
+    {openAdd === groupKey && (
+  <div className="dropdown global dd-add" onClick={(e) => e.stopPropagation()}>
+    {candidates.length ? (
+      candidates.map((c) => {
+        const fullName =
+          [c.nombre, c.apellido].filter(Boolean).join(" ") || c.name || '—';
+
+        // helper robusto para comparar personas
+        const same = (a, b) => {
+          if (!a || !b) return false;
+          const aid = a.id ?? a.feder_id ?? null;
+          const bid = b.id ?? b.feder_id ?? null;
+          if (aid != null && bid != null) return String(aid) === String(bid);
+          // fallback por correo o nombre (opcional)
+          if (a.email && b.email) return a.email === b.email;
+          return false;
+        };
+
+        // buscar índice real en items
+        const selectedIndex = items.findIndex((p) => same(p, c));
+        const isSelected = selectedIndex !== -1;
+
+        return (
+          <div key={c.id ?? c.feder_id ?? `${groupKey}-${c.nombre}-${c.apellido}`} className="dd-item">
+            {/* Nombre: clic para agregar SOLO si NO está seleccionado */}
+            <span
+              className="dd-name"
+              onClick={() => {
+                if (!isSelected) handleAdd(groupKey, c);
+              }}
+              style={{
+                opacity: isSelected ? 0.6 : 1,
+                cursor: isSelected ? 'default' : 'pointer'
+              }}
+            >
+              {fullName}
+            </span>
+
+            {/* Si está seleccionado → mostrar X para remover */}
+            {isSelected && (
+              <MdClose
+                size={18}
+                className="dd-remove"
+                onClick={() => handleRemove(groupKey, selectedIndex)}
+              />
             )}
           </div>
-        )}
+        );
+      })
+    ) : (
+      <div className="empty">No hay opciones</div>
+    )}
+  </div>
+)}
+
+
+
+
+        </div>
       </div>
 
-      {/* Lista de personas */}
+      {/* Lista */}
       <div className="peopleList">
-        {items.length ? items.map((p, i) => {
-          const fullName = [p.nombre, p.apellido].filter(Boolean).join(' ') || p.name || '—';
-          const isOpen = openItem === `${groupKey}-${i}`;
+        {items.length ? (
+          items.map((p, i) => {
+            const fullName =
+              [p.nombre, p.apellido].filter(Boolean).join(' ') ||
+              p.name ||
+              '—';
 
-          return (
-            <div className="person" key={p.id || p.feder_id || i}>
-              <Avatar src={p.avatar_url} name={fullName} size={36} />
+            return (
+             <div className="person" key={p.id || p.feder_id || i}>
+  <div className="avatarWrapper">
+    <Avatar src={p.avatar_url} name={fullName} size={36} />
 
-              <div className="info">
-                <div className="name">
-                  {fullName}
-                  <span
-                    className="arrow"
-                    onClick={() => setOpenItem(isOpen ? null : `${groupKey}-${i}`)}
-                  >
-                    <MdKeyboardArrowDown />
-                  </span>
-                </div>
-              </div>
+    {/* Tooltip con el nombre */}
+    <div className="avatarTooltip">
+      {fullName}
+    </div>
+  </div>
 
-              {/* Eliminar persona */}
-              <MdClose
-                size={20}
-                className="removeBtn"
-                onClick={() => handleRemove(groupKey, i)}
-              />
+  
 
-              {/* Dropdown cambiar */}
-              {isOpen && (
-                <div className="dropdown">
-                  {candidates.length ? candidates.map(c => (
-                    <div
-                      className="dd-item"
-                      key={c.id}
-                      onClick={() => handleReplace(groupKey, i, c)}
-                    >
-                      {[c.nombre, c.apellido].filter(Boolean).join(' ') || c.name}
-                    </div>
-                  )) : (
-                    <div className="empty">No hay opciones</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        }) : <div className="empty">Sin {title.toLowerCase()}</div>}
+  {/* <MdClose
+    size={20}
+    className="removeBtn"
+    onClick={() => handleRemove(groupKey, i)}
+  /> */}
+</div>
+
+            );
+          })
+        ) : (
+          <div className="empty">Sin {title.toLowerCase()}</div>
+        )}
       </div>
     </div>
   );

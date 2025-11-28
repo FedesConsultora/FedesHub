@@ -45,7 +45,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
-  const [editPeople, setEditPeople] = useState(false)
 const [peopleForm, setPeopleForm] = useState({
   responsables: [],
   colaboradores: []
