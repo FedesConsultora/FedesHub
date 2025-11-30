@@ -174,7 +174,7 @@ export default function TaskComments({ taskId, catalog }) {
 
               return (
                 <div className={`item ${isMine ? 'mine' : ''}`} key={c.id}>
-                  <Avatar className="ph-avatar" name={author} size={42} />
+                  <Avatar className="ph-avatar" name={author} size={30} />
                   <CommentItem
                     c={c}
                     author={author}

@@ -2,6 +2,8 @@ import React, { useMemo, useRef, useState, forwardRef, useImperativeHandle } fro
 import { FaReply } from 'react-icons/fa'
 import MentionTextArea from './MentionTextArea.jsx'
 import FilesPicker from '../../common/FilesPicker'
+import { IoMdSend } from "react-icons/io";
+
 
 const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCancelReply, onSend }, ref){
   const [msg, setMsg] = useState('')
@@ -70,25 +72,24 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
             <button className="ghost" onClick={onCancelReply} title="Cancelar">✕</button>
           </div>
         )}
-
+        <div style={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexDirection: 'row', padding: 0 }}>
+           <button className="primary" onClick={handleSend} disabled={!canPost || (!msg.trim() && files.length===0)}>
+            <IoMdSend aria-hidden="true" />
+          </button>
         <MentionTextArea
           value={msg}
           onChange={setMsg}
           feders={feders}
           disabled={!canPost}
           // ⛔️ NO pasamos onPaste acá para que no duplique
-          placeholder={canPost ? 'Escribir un mensaje… (mencioná con @nombre)' : 'Sin tipos de comentario configurados'}
+          placeholder={'Escribir un mensaje… (mencioná con @nombre)'}
           classNames={{ root:'mentionBox', textarea:'mentionInput', popover:'mentionPopover', item:'mentionItem' }}
           inputRef={inputRef}
         />
 
-        <div style={{display:'flex', gap:8, alignItems:'center'}}>
-          <button className="primary" onClick={handleSend} disabled={!canPost || (!msg.trim() && files.length===0)}>
-            Enviar
-          </button>
-          <span className="muted" style={{fontSize:12}}>
-            Tip: escribí <code>@</code> para mencionar; podés pegar imágenes desde el portapapeles.
-          </span>
+        
+         
+      
         </div>
       </div>
 

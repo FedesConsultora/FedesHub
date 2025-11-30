@@ -17,11 +17,11 @@ export default function CommentItem({
 
       <div className="meta" title={fmtDateTime(c.created_at)}>
         <b className="author">{author}</b>
-        <span className="dot">•</span>
+        
         <span className="fecha">
-          {fmtDateTime(c.created_at)} <span className="muted">({timeAgo(c.created_at)})</span>
+         <span className="muted">({timeAgo(c.created_at)})</span>
         </span>
-        {c.tipo_codigo && <><span className="dot">•</span><span className="tipo">{c.tipo_codigo}</span></>}
+      
       </div>
 
       {c.reply_to && (

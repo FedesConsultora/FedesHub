@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { MdOutlineUploadFile } from "react-icons/md";
+
 import '../../pages/Tareas/task-detail.scss'
 
 export default function FilesPicker({
@@ -39,7 +41,7 @@ export default function FilesPicker({
       onDrop={(e)=>{ e.preventDefault(); setOver(false); add(e.dataTransfer.files) }}
     >
       <div className="pickRow">
-        <button className="btn" type="button" onClick={()=>inputRef.current?.click()}>Adjuntar archivos</button>
+        <MdOutlineUploadFile size={30} color={'#1A73E8'} onClick={()=>inputRef.current?.click()}/>
         <input ref={inputRef} type="file" multiple hidden onChange={(e)=> add(e.target.files)} />
         <span className="hint">Soltá aquí o elegí archivos. (Imágenes, PDF, docs…)</span>
         {!!files.length && <span className="muted" style={{marginLeft:'auto'}}>{bytesToMB(sizeOf(files)).toFixed(1)} MB totales</span>}

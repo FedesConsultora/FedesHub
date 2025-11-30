@@ -16,9 +16,10 @@ import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
-
+import { MdAddComment } from "react-icons/md";
 
 import './task-detail.scss'
+
 
 /* === helpers fecha === */
 const toInputDate = (iso) => {
@@ -51,6 +52,8 @@ const [peopleForm, setPeopleForm] = useState({
   responsables: [],
   colaboradores: []
 });
+  const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+
 
 // Inicializar al cargar tarea
 useEffect(() => {
@@ -358,13 +361,40 @@ useEffect(() => {
             <div>SECCIÓN HISTORIAL</div>
           </div>
 
-          {/* <TaskComments taskId={Number(taskId)} catalog={catalog} /> */}
+         
         </div>
 
         {/* RIGHT */}
-        <div className="right" style={{alignItems:'center'}}>
+        <div className="right" style={{alignItems:'center', position:'relative'}}>
           <div className='dropzone'>
-          <p>DROPZONE</p></div>     </div>
+            <p>DROPZONE</p>
+            <MdAddComment
+              size={30}
+              className="commentsToggleBtn"
+              onClick={() => setShowCommentsPopup(v => !v)} />
+    
+      
+            
+              
+   
+          
+          
+          </div>
+          {/* === Panel de comentarios === */}
+          {showCommentsPopup && (
+    <div className="comments"
+         style={{
+           position: 'absolute',
+           top: 42,
+           right: 0,
+           height: 'calc(100% - 48px)'
+         }}
+    >
+      <TaskComments taskId={Number(taskId)} catalog={catalog} />
+    </div>
+  )}
+        
+        </div>
 
           {/* <TaskChecklist
             style={{display: 'none'}}

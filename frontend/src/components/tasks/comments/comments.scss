@@ -6,136 +6,305 @@
 @import './_attach.scss';
 @import './_composer.scss';
 
-.comments{
-  display: flex; flex-direction: column;
+ .comments {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 300px !important;
+  height: 530px; 
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff !important;
 
-  .cardHeader{ margin-bottom: 8px; }
+  border-radius: 12px !important;
+   animation: commentPopupEnter 140ms cubic-bezier(0.2, 0, 0, 1) !important;
+  transform-origin: top right !important;
+   overflow-x: hidden !important;
+   
 
-  .list{
+    &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  /* fondo del track */
+  &::-webkit-scrollbar-track {
+    background: transparent;   // o #f1f3f4
+  }
+
+  /* el thumb (la barra que se mueve) */
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+  }
+
+  /* hover un poco más visible */
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .card .comments {
+
+    margin-top: 0;
+    
+    &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* fondo del track */
+  &::-webkit-scrollbar-track {
+display: none;  }
+
+  /* el thumb (la barra que se mueve) */
+  &::-webkit-scrollbar-thumb {
+   display: none;
+  }
+
+  /* hover un poco más visible */
+  &::-webkit-scrollbar-thumb:hover {
+    display: none;
+  }
+  }
+ 
+  * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* ==== HEADER === */
+  .cardHeader {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+
+    .title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #202124;
+    }
+    .subtitle {
+      font-size: .9rem;
+      color: #5f6368;
+    }
+  }
+
+  /* ==== LISTA === */
+  .list {
     flex: 1 1 auto;
-    max-height: clamp(320px, 50vh, 640px);
-    overflow: auto;
-    display: grid; gap: 14px;
-    padding-right: 6px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    display: grid;
+    gap: 18px;
+    min-height: 100px;
+    max-height: 320px;
+    background-color: #f1f3f4 !important;
 
-    .daySep{
-      display:flex; justify-content:center;
-      color:#6b7280; margin: 6px 0 10px;
-      text-transform: capitalize;
-    }
-    .item{ display:grid; grid-template-columns: 48px 1fr; gap:12px; align-items:flex-start; margin-bottom: 12px; }
+    &::-webkit-scrollbar {
+    width: 4px;
   }
 
-  .bubble{
-    position:relative;
-    border:1px solid rgba(0,0,0,.08); border-radius:12px;
-    background:#ffffff; color:#0d1117;
-    padding:12px 14px;
-
-    &.mine{
-      background: #eff9ff;
-      border-color: rgba($fh-primary,.35);
-      .author{ color:#0d1117; }
-      .replyIco{ border-color: rgba($fh-primary,.28); color: rgba($fh-primary,.9); }
-      .txt .mentions{ background: rgba($fh-primary,.18); color: $fh-primary; }
-    }
+  /* fondo del track */
+  &::-webkit-scrollbar-track {
+    background: transparent;   // o #f1f3f4
   }
 
-  .replyIco{
-    position:absolute; top:8px; right:8px;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:34px; height:34px; 
-    background:transparent; 
-    color:#6b7280; cursor:pointer; padding:0;
-    &:hover{ background:rgba(0,0,0,.04);  }
-    &:active{ transform:translateY(1px) }
-    svg{ width:18px; height:18px; }
+  /* el thumb (la barra que se mueve) */
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
   }
 
-  .meta{ display:flex; gap:8px; align-items:center; font-size:.9rem; color:#6b7280; }
-  .author{ color:#0d1117; font-weight:700; }
-  .dot, .fecha, .tipo{ color:#6b7280; }
-  .ago{ color:#9ca3af; }
+  /* hover un poco más visible */
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+  }
 
-  .replyPreview{
-    display:flex; align-items:center; gap:6px;
-    margin:6px 0 2px; padding:6px 8px;
-    border:1px dashed rgba(0,0,0,.12); border-radius:8px;
-    background:rgba(0,0,0,.02);
-    .ico{ width:14px; height:14px; color:#6b7280; }
-    .label{
-      font-size:.75rem; font-weight:800; letter-spacing:.02em;
-      color:$fh-primary; background:rgba($fh-primary,.12);
-      border:1px solid rgba($fh-primary,.35); padding:.08rem .35rem; border-radius:6px;
-      text-transform:uppercase;
+    .daySep {
+      text-align: center;
+      color: #5f6368;
+      font-size: .82rem;
+      margin: 8px 0 2px;
     }
-    .replyAuthor{ color:#0d1117; }
-    .replyExcerpt{
-      .mentions{ display:inline-block; padding:0 .3rem; border-radius:6px; color:$fh-primary; background:rgba($fh-primary, .14); font-weight:800; }
-      a{ color:$fh-primary; text-decoration:underline; }
+
+    .item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: flex-start;
     }
   }
 
-  .txt{
-    margin-top:6px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
-    a{ color:$fh-primary; text-decoration:underline; }
-    .mentions{ display:inline-block; padding:0 .3rem; border-radius:6px; color:$fh-primary; background:rgba($fh-primary,.14); font-weight:800; }
-  }
+  /* ==== BURBUJA COMO GOOGLE DOCS === */
+  .bubble {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 10px 14px;
+    position: relative;
+    border: 1px solid rgba(0,0,0,.08);
 
-  .attachList{ display:grid; gap:6px; margin-top:8px; }
-  .attachItem{
-    display:flex; align-items:center; gap:10px; padding:8px 10px;
-    border:1px solid rgba(0,0,0,.08); border-radius:10px; background:#fff;
-    text-decoration:none; color:#0d1117;
+    .author {
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 2px;
+    }
 
-    img{ display:block; height:44px; width:44px; object-fit:cover; border-radius:6px; border:1px solid rgba(0,0,0,.06); }
-    .ico{ width:22px; height:22px; opacity:.9; }
-    .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .muted{ margin-left:auto; color:#6b7280; font-size:.86rem; }
-    &:hover{ background:rgba(0,0,0,.02); }
-  }
+    .meta {
+      display: flex;
+      flex-direction:row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 1px;
+    gap: 0px !important;
+      font-size: .8rem;
+      color: #5f6368;
+      margin-top: 4px;
+     
+    }
 
-  /* Composer + Mention styles */
-  .replyingTo{
-    display:flex; align-items:center; gap:6px;
-    padding:6px 8px; border:1px dashed rgba(0,0,0,.12);
-    border-radius:8px; background:rgba(0,0,0,.02);
-    .ico{ width:14px; height:14px; color:#6b7280; }
-    .ghost{ margin-left:auto; background:transparent; border:0; cursor:pointer; color:#6b7280; padding-top: 0.3rem;}
-    .mentions{ display:inline-block; padding:0 .3rem; border-radius:6px; color:$fh-primary; background:rgba($fh-primary,.14); font-weight:800; }
-  }
+    &.mine {
+      background: #e8f0fe;
+      border-color: rgba(66,133,244,.3);
 
-  .composer{ display:grid; gap:8px; grid-template-columns:1fr; align-items:end; margin-top:10px;
-    button.primary{ background:$fh-primary; border:0; color:#fff; padding:.7rem .9rem; border-radius:12px; cursor:pointer }
-  }
-
-  .mentionBox{ position:relative; }
-  .mentionInput{
-    min-height:92px; width:100%;
-    resize:vertical; padding:10px 12px; border-radius:12px;
-    background:rgba(255,255,255,.85); color:#0d1117;
-    border:1px solid rgba(0,0,0,.08); font:inherit; line-height:1.5;
-    &::placeholder{
-      color: #0d1117;
+      .mentions {
+        background: rgba(66,133,244,.14);
+        color: #1a73e8;
+      }
     }
   }
-  .mentionPopover{
-    position:absolute; left:8px; bottom:calc(100% + 6px);
-    width:280px; padding:6px; z-index:10;
-    background:transparent; border:1px solid rgba(0,0,0,.10); border-radius:12px;
-    box-shadow:0 8px 24px rgba(0,0,0,.18); backdrop-filter: blur(8px);
+
+  /* ==== ICONO DE RESPUESTA (tipo Drive) === */
+  .replyIco {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px; 
+    height: 28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #5f6368;
+
+    &:hover {
+      background: rgba(0,0,0,.06);
+    }
   }
-  .mentionItem{
-    display:grid; grid-template-columns:auto 1fr; gap:8px; width:100%;
-    padding:6px 8px; border-radius:8px; background:transparent; color:#0d1117;
-    .nm{ font-weight:700; }
-    .muted{ color:#6b7280; font-size:.85rem; }
-    &.is-active, &:hover{ background:rgba(0,0,0,.06); }
+
+  /* ==== REPLY PREVIEW === */
+  .replyPreview {
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    border-left: 3px solid #dadce0;
+    background: #f1f3f4;
+    border-radius: 6px;
+
+    .replyAuthor {
+      font-weight: 600;
+      color: #202124;
+    }
+  }
+
+  .txt {
+    margin-top: 6px;
+    color: #202124;
+    line-height: 1.45;
+
+    .mentions {
+      background: rgba(26,115,232,.18);
+      color: #1a73e8;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    a {
+      color: #1a73e8;
+      text-decoration: underline;
+    }
+  }
+
+  /* ==== ADJUNTOS ==== */
+  .attachList {
+    margin-top: 10px;
+    display: grid; 
+    gap: 8px;
+  }
+
+  .attachItem {
+    padding: 8px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    display:flex; 
+    gap:10px;
+    text-decoration:none;
+    color:#202124;
+    background: #fff;
+
+    &:hover {
+      background: #f8f9fa;
+    }
+  }
+
+  /* ==== COMPOSER (input para escribir) === */
+  .composer {
+    border-top: 1px solid rgba(0,0,0,.1);
+    padding: 2px;
+    background: #fff;
+    display: grid;
+    gap: 8px;
+    max-height: 50px;
+
+    .mentionInput {
+      max-height: 30px;
+      border-radius: 16px;
+      border: 1px solid #dadce0;
+      background: #f8f9fa;
+   
+
+      &:focus {
+        outline: none;
+        background: #fff;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26,115,232,.18) !important;
+      }
+    }
+
+    button.primary {
+      background: #1a73e8 !important;
+      border: none;
+      color:#fff;
+      padding:.6rem .9rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor:pointer;
+
+      &:hover {
+        background: #1669c1;
+      }
+    }
   }
 }
 
-/* Ajuste móvil */
+/* ==== MOBILE ==== */
 @media (max-width: 520px){
-  .comments .item{ grid-template-columns: 36px 1fr; }
-  .comments .replyIco{ top:6px; right:6px; width:32px; height:32px; }
+  .comments {
+    width: 100%;
+    right: 0;
+    left: 0;
+  }
+}
+
+@keyframes commentPopupEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
