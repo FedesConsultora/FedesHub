@@ -13,5 +13,9 @@
   },
   "dependencies": {
     "googleapis": "^159.0.0"
+  },
+  "devDependencies": {
+    "clipboardy": "^5.0.0",
+    "minimist": "^1.2.8"
   }
 }

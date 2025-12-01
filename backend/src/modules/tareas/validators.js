@@ -57,9 +57,9 @@ export const listTasksQuerySchema = z.object({
   prioridad_max: z.coerce.number().int().min(0).optional(),
 
   // orden
-  orden_by: z.enum(['prioridad','vencimiento','fecha_inicio','created_at','updated_at','cliente','titulo'])
-            .optional().default('prioridad'),
-  sort: z.enum(['asc','desc']).optional().default('desc')
+  orden_by: z.enum(['prioridad', 'vencimiento', 'fecha_inicio', 'created_at', 'updated_at', 'cliente', 'titulo'])
+    .optional().default('prioridad'),
+  sort: z.enum(['asc', 'desc']).optional().default('desc')
 });
 
 export const setLeaderBodySchema = z.object({
@@ -112,7 +112,7 @@ export const setAprobacionSchema = z.object({
 });
 
 export const moveKanbanSchema = z.object({
-  stage: z.enum(['inbox','today','week','month','later']),
+  stage: z.enum(['inbox', 'today', 'week', 'month', 'later']),
   orden: z.coerce.number().int().optional().default(0)
 });
 
@@ -135,7 +135,7 @@ export const checklistReorderSchema = z.object({ orden: z.array(z.object({ id: i
 
 export const commentCreateSchema = z.object({
   tipo_id: intId,
-  contenido: z.string().min(1).max(10000).or(z.literal('')).transform(v=>v||''), // permitimos vacío si hay adjuntos
+  contenido: z.string().min(1).max(10000).or(z.literal('')).transform(v => v || ''), // permitimos vacío si hay adjuntos
   menciones: z.array(intId).optional().default([]),
   adjuntos: z.array(z.object({
     nombre: z.string().min(1).max(255),
@@ -167,3 +167,10 @@ export const etiquetaIdParam = z.object({ etiquetaId: intId });
 export const adjIdParam = z.object({ adjId: intId });
 export const relIdParam = z.object({ relId: intId });
 export const comentarioIdParam = z.object({ comentarioId: intId });
+
+// ---------- Historial ----------
+export const historialQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+  tipo_cambio: z.string().min(1).max(50).optional()
+});

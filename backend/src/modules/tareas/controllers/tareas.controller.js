@@ -7,7 +7,8 @@ import {
   checklistCreateSchema, checklistUpdateSchema, checklistReorderSchema,
   commentCreateSchema, adjuntoCreateSchema, relacionCreateSchema,
   toggleBoolSchema,
-  idParam, itemIdParam, federIdParam, etiquetaIdParam, adjIdParam, relIdParam, comentarioIdParam, composeQuerySchema, setLeaderBodySchema
+  idParam, itemIdParam, federIdParam, etiquetaIdParam, adjIdParam, relIdParam, comentarioIdParam, composeQuerySchema, setLeaderBodySchema,
+  historialQuerySchema
 } from '../validators.js';
 
 import {
@@ -18,7 +19,8 @@ import {
   svcListComentarios, svcCreateComentario, svcAddAdjunto, svcRemoveAdjunto,
   svcCreateRelacion, svcDeleteRelacion,
   svcSetFavorito, svcSetSeguidor, svcSetEstado, svcSetAprobacion, svcMoveKanban,
-  svcGetCompose, svcSetResponsableLeader
+  svcGetCompose, svcSetResponsableLeader,
+  svcGetHistorial
 } from '../services/tareas.service.js';
 
 import { saveUploadedFiles, getFolderLink } from '../../../infra/storage/index.js';
@@ -30,7 +32,7 @@ const models = await initModels();
    Helpers para notificaciones
    ========================= */
 function buildBaseUrl(req) {
-  const baseFromEnv = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/,'');
+  const baseFromEnv = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   if (baseFromEnv) return baseFromEnv;
   const host = req.get?.('x-forwarded-host') || req.get?.('host');
   const proto = (req.get?.('x-forwarded-proto') || req.protocol || 'https');
@@ -41,7 +43,7 @@ function buildBaseUrl(req) {
 async function federIdsToDestinos(federIds = [], req) {
   const uniq = Array.from(new Set(federIds.map(Number).filter(Boolean)));
   if (!uniq.length) return [];
-  const feders = await models.Feder.findAll({ where: { id: uniq }, attributes: ['id','user_id'] });
+  const feders = await models.Feder.findAll({ where: { id: uniq }, attributes: ['id', 'user_id'] });
   return feders
     .map(f => ({ user_id: f.user_id, feder_id: f.id }))
     .filter(d => d.user_id && d.user_id !== req.user?.id);
@@ -118,9 +120,9 @@ export const postAdjuntoUpload = async (req, res, next) => {
     for (const f of saved) {
       // Intentamos cubrir distintos nombres de campos que pueda devolver saveUploadedFiles
       const nombre = f.originalname || f.name || f.filename || 'archivo';
-      const mime   = f.mime || f.mimetype || null;
-      const bytes  = f.bytes || f.size || null;
-      const url    = f.publicUrl || f.url || f.drive_url || null;
+      const mime = f.mime || f.mimetype || null;
+      const bytes = f.bytes || f.size || null;
+      const url = f.publicUrl || f.url || f.drive_url || null;
       const fileId = f.fileId || f.drive_file_id || null;
 
       const meta = {
@@ -148,7 +150,7 @@ export const postAdjuntoUpload = async (req, res, next) => {
 export const deleteAdjuntoCtrl = async (req, res, next) => {
   try {
     const { adjId } = adjIdParam.parse(req.params);
-    await svcRemoveAdjunto(adjId);
+    await svcRemoveAdjunto(adjId, req.user);
     res.json({ ok: true });
   } catch (e) { next(e); }
 };
@@ -223,7 +225,7 @@ export const patchEstado = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const { estado_id } = setEstadoSchema.parse(req.body);
-    await svcSetEstado(id, estado_id);
+    await svcSetEstado(id, estado_id, req.user.feder_id);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -232,7 +234,7 @@ export const patchAprobacion = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const body = setAprobacionSchema.parse(req.body);
-    await svcSetAprobacion(id, req.user.id, body);
+    await svcSetAprobacion(id, req.user.id, body, req.user.feder_id);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -279,7 +281,7 @@ export const deleteResponsable = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const { federId } = federIdParam.parse(req.params);
-    await svcRemoveResponsable(id, federId);
+    await svcRemoveResponsable(id, federId, req.user);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -304,7 +306,7 @@ export const deleteColaborador = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const { federId } = federIdParam.parse(req.params);
-    await svcRemoveColaborador(id, federId);
+    await svcRemoveColaborador(id, federId, req.user);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -425,14 +427,14 @@ export const postComentario = async (req, res, next) => {
         }
 
         // --- 2) Datos de la tarea y link
-        const tarea = await models.Tarea.findByPk(id, { attributes: ['id','titulo'] });
+        const tarea = await models.Tarea.findByPk(id, { attributes: ['id', 'titulo'] });
         const baseUrl = buildBaseUrl(req);
         const linkUrl = baseUrl ? `${baseUrl}/tareas/${id}#c${cm.id}` : undefined;
 
         req.log?.info('tareas.postComentario:notif:payload', {
           tipo_codigo: 'tarea_comentario',
           linkUrl,
-          canales: ['in_app','push']
+          canales: ['in_app', 'push']
         });
 
         // --- 3) Crear notificación (in_app + push)
@@ -481,7 +483,7 @@ export const postRelacion = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const body = relacionCreateSchema.parse(req.body);
-    await svcCreateRelacion(id, body);
+    await svcCreateRelacion(id, body, req.user);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -490,7 +492,7 @@ export const deleteRelacionCtrl = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const { relId } = relIdParam.parse(req.params);
-    await svcDeleteRelacion(id, relId);
+    await svcDeleteRelacion(id, relId, req.user);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };
@@ -511,5 +513,15 @@ export const postSeguidor = async (req, res, next) => {
     const { on } = toggleBoolSchema.parse(req.body);
     await svcSetSeguidor(id, req.user.id, on);
     res.json(await svcGetTask(id, req.user));
+  } catch (e) { next(e); }
+};
+
+// ---- Historial de cambios
+export const getHistorial = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const query = historialQuerySchema.parse(req.query);
+    const result = await svcGetHistorial(id, query);
+    res.json(result);
   } catch (e) { next(e); }
 };

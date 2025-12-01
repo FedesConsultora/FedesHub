@@ -17,6 +17,7 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
+import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 
 import './task-detail.scss'
 
@@ -27,19 +28,19 @@ const toInputDate = (iso) => {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   const yyyy = d.getFullYear()
-  const mm = String(d.getMonth()+1).padStart(2,'0')
-  const dd = String(d.getDate()).padStart(2,'0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd}`
 }
 const fromInputDate = (val) => {
   if (!val) return null
   // set local a 23:59:59 para evitar TZ raras si mostramos solo fecha
-  const [y,m,d] = val.split('-').map(Number)
-  const dt = new Date(y, m-1, d, 23, 59, 59)
+  const [y, m, d] = val.split('-').map(Number)
+  const dt = new Date(y, m - 1, d, 23, 59, 59)
   return dt.toISOString()
 }
 
-export default function TaskDetail({ taskId, onUpdated, onClose}){
+export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
@@ -48,23 +49,24 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
-const [peopleForm, setPeopleForm] = useState({
-  responsables: [],
-  colaboradores: []
-});
+  const [peopleForm, setPeopleForm] = useState({
+    responsables: [],
+    colaboradores: []
+  });
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+  const [historyRefresh, setHistoryRefresh] = useState(0);
 
 
-// Inicializar al cargar tarea
-useEffect(() => {
-  if (!task) return
-  setPeopleForm({
-    responsables: mapResp(task?.Responsables || task?.responsables || []),
-    colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
-  })
-}, [task])
+  // Inicializar al cargar tarea
+  useEffect(() => {
+    if (!task) return
+    setPeopleForm({
+      responsables: mapResp(task?.Responsables || task?.responsables || []),
+      colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
+    })
+  }, [task])
   // estado editable
-  const [form, setForm] = useState({ titulo:'', descripcion:'' })
+  const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
 
   // contentEditable
@@ -81,15 +83,16 @@ useEffect(() => {
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
-      tareasApi.catalog().catch(()=>({}))
+      tareasApi.catalog().catch(() => ({}))
     ])
     setTask(t)
+    setHistoryRefresh(prev => prev + 1) // Trigger history refresh
     setCatalog(cat || {})
     setForm({ titulo: t?.titulo || '', descripcion: t?.descripcion || '' })
     document.title = `${t?.titulo || 'Tarea'}`
   }, [id])
 
-  useEffect(() => { (async()=>{ await reload() })() }, [reload])
+  useEffect(() => { (async () => { await reload() })() }, [reload])
 
   // dirty
   const dirty = useMemo(() => {
@@ -100,22 +103,23 @@ useEffect(() => {
   }, [form, task])
 
   // autosave (debounce)
-  const saveIfDirty = useCallback(async (source='auto') => {
+  const saveIfDirty = useCallback(async (source = 'auto') => {
     if (!dirty || !task || saving) return
     const patch = {}
     const currTitulo = (form.titulo ?? '').trim()
-    const currDesc   = (form.descripcion ?? '')
+    const currDesc = (form.descripcion ?? '')
     if (currTitulo !== (task.titulo ?? '').trim()) patch.titulo = currTitulo
-    if (currDesc   !== (task.descripcion ?? ''))   patch.descripcion = currDesc
+    if (currDesc !== (task.descripcion ?? '')) patch.descripcion = currDesc
     if (!Object.keys(patch).length) return
 
-    try{
+    try {
       setSaving(true)
       const next = await tareasApi.update(id, patch)
       setTask(next)
+      setHistoryRefresh(prev => prev + 1)
       setForm({ titulo: next?.titulo || '', descripcion: next?.descripcion || '' })
       toast?.success(source === 'auto' ? 'Cambios guardados' : 'Guardado')
-    }catch(e){
+    } catch (e) {
       toast?.error(e?.message || 'No se pudo guardar')
     } finally { setSaving(false) }
   }, [dirty, form, taskId, task, saving, toast])
@@ -154,24 +158,25 @@ useEffect(() => {
   const handleEstado = async (estado_id) => {
     const next = await tareasApi.setEstado(taskId, estado_id)
     setTask(next)
+    setHistoryRefresh(prev => prev + 1) // Trigger history refresh
   }
 
   if (!task) return <div className="taskDetail"><div className="card">Cargando…</div></div>
 
   // normalización
-  const estadoCodigo   = task?.estado?.codigo || task?.estado_codigo || 'pendiente'
-  const aprobLabel     = task?.aprobacionEstado?.nombre || task?.aprobacion_estado_nombre || null
-  const etiquetas      = task?.etiquetas || []
-  const clienteNombre  = task?.cliente?.nombre || task?.cliente_nombre || '—'
-  const hitoNombre     = task?.hito?.nombre || task?.hito_nombre || null
+  const estadoCodigo = task?.estado?.codigo || task?.estado_codigo || 'pendiente'
+  const aprobLabel = task?.aprobacionEstado?.nombre || task?.aprobacion_estado_nombre || null
+  const etiquetas = task?.etiquetas || []
+  const clienteNombre = task?.cliente?.nombre || task?.cliente_nombre || '—'
+  const hitoNombre = task?.hito?.nombre || task?.hito_nombre || null
   const vencimientoISO = task?.vencimiento || null
-  const progreso       = Number(task?.progreso_pct) || 0
-  const prioridad      = task?.prioridad_num
+  const progreso = Number(task?.progreso_pct) || 0
+  const prioridad = task?.prioridad_num
 
-  const mapResp = (arr=[]) => arr.map(r => r?.feder ? ({ ...r.feder, es_lider: !!r.es_lider, avatar_url: r.feder.avatar_url || null }) : r)
-  const mapCol  = (arr=[]) => arr.map(c => c?.feder ? ({ ...c.feder, rol: c.rol ?? null, avatar_url: c.feder.avatar_url || null }) : c)
-  const responsables  = mapResp(task?.Responsables || task?.responsables || [])
-  const colaboradores = mapCol (task?.Colaboradores || task?.colaboradores || [])
+  const mapResp = (arr = []) => arr.map(r => r?.feder ? ({ ...r.feder, es_lider: !!r.es_lider, avatar_url: r.feder.avatar_url || null }) : r)
+  const mapCol = (arr = []) => arr.map(c => c?.feder ? ({ ...c.feder, rol: c.rol ?? null, avatar_url: c.feder.avatar_url || null }) : c)
+  const responsables = mapResp(task?.Responsables || task?.responsables || [])
+  const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
 
   const isFavorita = !!(task.is_favorita || task.favorita)
   const isSeguidor = !!(task.is_seguidor || task.seguidor)
@@ -181,17 +186,19 @@ useEffect(() => {
   // === vencimiento en línea (con aprobación si aplica) ===
   const handleDueChange = async (inputValue) => {
     const iso = fromInputDate(inputValue)  // puede ser null
-    try{
+    try {
       const next = await tareasApi.update(taskId, { vencimiento: iso })
       setTask(next)
+      setHistoryRefresh(prev => prev + 1)
       toast?.success('Vencimiento actualizado')
-    }catch(e1){
-      try{
-        await tareasApi.setAprobacion(taskId, { tipo:'vencimiento', vencimiento: iso })
+    } catch (e1) {
+      try {
+        await tareasApi.setAprobacion(taskId, { tipo: 'vencimiento', vencimiento: iso })
         const next = await tareasApi.get(taskId)
         setTask(next)
+        setHistoryRefresh(prev => prev + 1)
         toast?.success('Solicitud de cambio enviada para aprobación')
-      }catch(e2){
+      } catch (e2) {
         toast?.error(e2?.message || e1?.message || 'No se pudo actualizar el vencimiento')
       }
     }
@@ -215,6 +222,7 @@ useEffect(() => {
     try {
       const next = await tareasApi.update(taskId, { cliente_id: cid })
       setTask(next)
+      setHistoryRefresh(prev => prev + 1)
       toast?.success('Cliente actualizado')
     } catch (e) {
       const msg = e?.response?.data?.message || e?.message || 'No se pudo actualizar el cliente'
@@ -226,7 +234,7 @@ useEffect(() => {
   return (
     <div className="taskDetail">
       {/* === Estados + Volver === */}
-  
+
 
       {/* === Header sticky === */}
       <div className="taskHeader">
@@ -251,19 +259,19 @@ useEffect(() => {
                 document.execCommand?.('insertText', false, txt)
               }}
             />
-            
+
           </div>
           {/* <div className="chips">
             {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
           </div> */}
           <div className="meta">
-             <span className="inlineDue">
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                  onChange={handleDueChange}
-                />
-        </span>
-              <TaskStatusCard
+            <span className="inlineDue">
+              <InlineDue
+                value={toInputDate(vencimientoISO)}
+                onChange={handleDueChange}
+              />
+            </span>
+            <TaskStatusCard
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
               aprobLabel={aprobLabel}
@@ -272,53 +280,53 @@ useEffect(() => {
               etiquetas={etiquetas}
               estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
               onPick={handleEstado}
-        />
-              <span className="inlineClient">
-                
-                <InlineClient
-                  valueId={task?.cliente?.id || task?.cliente_id || null}
-                  valueName={clienteNombre}
-                  options={catalog?.clientes || catalog?.clients || []}
+            />
+            <span className="inlineClient">
+
+              <InlineClient
+                valueId={task?.cliente?.id || task?.cliente_id || null}
+                valueName={clienteNombre}
+                options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-                
-                />
-              </span>
 
-              {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
+              />
+            </span>
 
-             
-          {/* Acciones derechas: sólo acciones rápidas */}
-        <div className="actions">
-          <TaskHeaderActions
-            isFavorita={isFavorita}
-            isSeguidor={isSeguidor}
-            onToggleFav={async on => setTask(await tareasApi.toggleFavorito(id, on))}
-            onToggleFollow={async on => setTask(await tareasApi.toggleSeguidor(id, on))}
-            onRelate={() => alert('Abrir modal de relaciones (WIP)')}
-            onQuickAttach={() => document.querySelector('input[type=file]')?.click()}
-          />
+            {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
+
+
+            {/* Acciones derechas: sólo acciones rápidas */}
+            <div className="actions">
+              <TaskHeaderActions
+                isFavorita={isFavorita}
+                isSeguidor={isSeguidor}
+                onToggleFav={async on => { const t = await tareasApi.toggleFavorito(id, on); setTask(t); setHistoryRefresh(prev => prev + 1); }}
+                onToggleFollow={async on => { const t = await tareasApi.toggleSeguidor(id, on); setTask(t); setHistoryRefresh(prev => prev + 1); }}
+                onRelate={() => alert('Abrir modal de relaciones (WIP)')}
+                onQuickAttach={() => document.querySelector('input[type=file]')?.click()}
+              />
             </div>
-          
-      </div>
+
+          </div>
         </div>
-          
-      
 
-        
-    
-      
 
-      
+
+
+
+
+
+
       </div>
 
       {/* === Layout === */}
       <div className="grid">
         {/* LEFT */}
         <div className="left">
-          <div className="card" style={{minHeight:'300px'}}>
+          <div className="card" style={{ minHeight: '300px' }}>
             <div className="cardHeader">
               <div className="desc">
-                  <p>Descripción</p>
+                <p>Descripción</p>
                 {/* <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button> */}
               </div>
             </div>
@@ -327,7 +335,7 @@ useEffect(() => {
               // Descripción (autosave)
               <div
                 className="txt editable"
-                style={{minHeight:'190px'}}
+                style={{ minHeight: '190px' }}
                 data-placeholder="Escribí la descripción…"
                 contentEditable
                 suppressContentEditableWarning
@@ -350,53 +358,54 @@ useEffect(() => {
               />
             )}
           </div>
-            <TaskAttachments
+          <TaskAttachments
             taskId={Number(taskId)}
             onAfterChange={async () => {
-              try { setTask(await tareasApi.get(taskId)) } catch {}
+              try {
+                setTask(await tareasApi.get(taskId))
+                setHistoryRefresh(prev => prev + 1)
+              } catch { }
             }}
           />
 
-          <div className='historial-section'>
-            <div>SECCIÓN HISTORIAL</div>
-          </div>
+          <TaskHistory taskId={Number(taskId)} key={historyRefresh} />
 
-         
+
         </div>
 
         {/* RIGHT */}
-        <div className="right" style={{alignItems:'center', position:'relative'}}>
+        <div className="right" style={{ alignItems: 'center', position: 'relative' }}>
           <div className='dropzone'>
-            <p>DROPZONE</p>
+            <p>Contenido Listo</p>
             <MdAddComment
               size={30}
               className="commentsToggleBtn"
               onClick={() => setShowCommentsPopup(v => !v)} />
-    
-      
-            
-              
-   
-          
-          
+
+
+
+
+
+
+
           </div>
           {/* === Panel de comentarios === */}
           {showCommentsPopup && (
-    <div className="comments"
-         style={{
-           position: 'absolute',
-           top: 42,
-           right: 0,
-           height: 'calc(100% - 48px)'
-         }}
-    >
-      <TaskComments taskId={Number(taskId)} catalog={catalog} />
-    </div>
-  )}
-        
+            <div className="comments"
+              style={{
+                position: 'absolute',
+                top: 42,
+                right: 0,
+                height: 'calc(100% - 48px)'
+              }}
+            >
+              <TaskComments taskId={Number(taskId)} catalog={catalog} />
+            </div>
+          )}
+
         </div>
 
-          {/* <TaskChecklist
+        {/* <TaskChecklist
             style={{display: 'none'}}
             taskId={Number(taskId)}
             onAfterChange={async () => {
@@ -422,58 +431,58 @@ useEffect(() => {
             }}
           /> */}
 
-         
+
 
       </div>
-       <div className='people-detail'>
-          {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
+      <div className='people-detail'>
+        {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
           <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
-          
-            <AssignedPeople
-                
-                responsables={peopleForm.responsables}
-  colaboradores={peopleForm.colaboradores}
-                candidatesResp={catalog?.feders || []}  // lista de posibles responsables
-                candidatesCol={catalog?.feders || []}   // lista de posibles colaboradores
-                onChange={setPeopleForm}
-   />
-         
-        
+
+        <AssignedPeople
+
+          responsables={peopleForm.responsables}
+          colaboradores={peopleForm.colaboradores}
+          candidatesResp={catalog?.feders || []}  // lista de posibles responsables
+          candidatesCol={catalog?.feders || []}   // lista de posibles colaboradores
+          onChange={setPeopleForm}
+        />
+
+
         <button
-          style={{alignSelf:'flex-end', marginBottom: '1rem'}}
-  className="saveBtn"
-  disabled={saving}
-  // onClick={async () => {
-  //   try {
-  //     setSaving(true)
-  //     await tareasApi.updatePeople(taskId, peopleForm)
-  //     setTask(await tareasApi.get(taskId))
-  //     toast?.success('Cambios guardados')
-  //   } catch(e) {
-  //     toast?.error(e?.message || 'No se pudo guardar')
-  //   } finally {
-  //     setSaving(false)
-  //   }
-  // }}
->
-          <FaRegSave size={ 22} style={{cursor: 'pointer', position:'relative', top:'.3rem'}} color='#489FD4' /> Guardar cambios
-</button>
+          style={{ alignSelf: 'flex-end', marginBottom: '1rem' }}
+          className="saveBtn"
+          disabled={saving}
+        // onClick={async () => {
+        //   try {
+        //     setSaving(true)
+        //     await tareasApi.updatePeople(taskId, peopleForm)
+        //     setTask(await tareasApi.get(taskId))
+        //     toast?.success('Cambios guardados')
+        //   } catch(e) {
+        //     toast?.error(e?.message || 'No se pudo guardar')
+        //   } finally {
+        //     setSaving(false)
+        //   }
+        // }}
+        >
+          <FaRegSave size={22} style={{ cursor: 'pointer', position: 'relative', top: '.3rem' }} color='#489FD4' /> Guardar cambios
+        </button>
       </div>
-    
-     
+
+
     </div>
   )
 }
 
 /* === componente inline para fecha === */
-function InlineDue({ value, onChange }){
+function InlineDue({ value, onChange }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(value || '')
-  useEffect(()=>{ setLocal(value || '') }, [value])
+  useEffect(() => { setLocal(value || '') }, [value])
 
-  if (!editing){
+  if (!editing) {
     return (
-      <button className="dueChip" type="button" onClick={()=>setEditing(true)} title="Editar fecha de vencimiento">
+      <button className="dueChip" type="button" onClick={() => setEditing(true)} title="Editar fecha de vencimiento">
         {value ? new Date(value).toLocaleDateString() : 'Sin fecha'}
       </button>
     )
@@ -483,39 +492,39 @@ function InlineDue({ value, onChange }){
       className="dueInput"
       type="date"
       value={local}
-      onChange={e=>setLocal(e.target.value)}
+      onChange={e => setLocal(e.target.value)}
       onBlur={() => { setEditing(false); onChange?.(local) }}
-      onKeyDown={(e)=>{ if(e.key==='Enter'){ e.currentTarget.blur() } }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
       autoFocus
     />
   )
 }
 
 /* === componente inline para cliente === */
-function InlineClient({ valueId=null, valueName='', options=[], onChange }){
+function InlineClient({ valueId = null, valueName = '', options = [], onChange }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(valueId ?? '')
   useEffect(() => { setLocal(valueId ?? '') }, [valueId])
 
   const opts = useMemo(
-    () => (options || []).slice().sort((a,b)=>
-      String(a?.nombre||'').localeCompare(String(b?.nombre||''))),
+    () => (options || []).slice().sort((a, b) =>
+      String(a?.nombre || '').localeCompare(String(b?.nombre || ''))),
     [options]
   )
 
   if (!editing) {
-    
+
     return (
       <>
-      <button
-        className="clientChip"
-        type="button"
-        onClick={()=>setEditing(true)}
-        title="Cambiar cliente"
-      >
-          {valueName || 'Sin cliente'}  <MdKeyboardArrowDown style={ {position:'relative', top: '2px'}} />
-      </button>
-     
+        <button
+          className="clientChip"
+          type="button"
+          onClick={() => setEditing(true)}
+          title="Cambiar cliente"
+        >
+          {valueName || 'Sin cliente'}  <MdKeyboardArrowDown style={{ position: 'relative', top: '2px' }} />
+        </button>
+
       </>
     )
   }
@@ -526,7 +535,7 @@ function InlineClient({ valueId=null, valueName='', options=[], onChange }){
       value={local ?? ''}
       onChange={e => setLocal(e.target.value || '')}
       onBlur={() => { setEditing(false); onChange?.(local || null) }}
-      onKeyDown={(e)=>{ if(e.key==='Enter'){ e.currentTarget.blur() } }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
       autoFocus
     >
       {opts.map(c => (

@@ -21,7 +21,7 @@ import { initModels } from '../../../models/registry.js';
 const models = await initModels();
 
 // ---------- Helpers de existencia / reglas ----------
-const ensureExists = async (model, id, msg='No encontrado') => {
+const ensureExists = async (model, id, msg = 'No encontrado') => {
   if (id == null) return null;
   const row = await model.findByPk(id, { attributes: ['id'] });
   if (!row) throw Object.assign(new Error(msg), { status: 404 });
@@ -81,11 +81,11 @@ const getUserContext = async (user) => {
     include: [{ model: models.Rol, as: 'roles', attributes: ['nombre'] }]
   });
   const roles = new Set((u?.roles || []).map(r => r.nombre));
-  const feder = await models.Feder.findOne({ where: { user_id: user.id }, attributes: ['id','celula_id'] });
+  const feder = await models.Feder.findOne({ where: { user_id: user.id }, attributes: ['id', 'celula_id'] });
   return { roles, feder_id: feder?.id ?? null, celula_id: feder?.celula_id ?? null };
 };
 
-const isAdmin  = (roles) => roles.has('Admin');
+const isAdmin = (roles) => roles.has('Admin');
 const isCLevel = (roles) => roles.has('CLevel');
 
 // ---- Scoping y SQL de listado ----
@@ -109,7 +109,7 @@ const buildListSQL = (params = {}, currentUser) => {
     // prioridad
     prioridad_min, prioridad_max,
     // orden/paginación
-    orden_by='prioridad', sort='desc', limit=50, offset=0
+    orden_by = 'prioridad', sort = 'desc', limit = 50, offset = 0
   } = params;
 
   const repl = { limit, offset };
@@ -194,16 +194,16 @@ const buildListSQL = (params = {}, currentUser) => {
 
   // Filtros simples
   if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
-  if (hito_id)    { where.push(`t.hito_id = :hito_id`);       repl.hito_id    = hito_id; }
-  if (estado_id)  { where.push(`t.estado_id = :estado_id`);   repl.estado_id  = estado_id; }
+  if (hito_id) { where.push(`t.hito_id = :hito_id`); repl.hito_id = hito_id; }
+  if (estado_id) { where.push(`t.estado_id = :estado_id`); repl.estado_id = estado_id; }
   if (tarea_padre_id) { where.push(`t.tarea_padre_id = :parent_id`); repl.parent_id = tarea_padre_id; }
   if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
-  if (urgencia_id){ where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
+  if (urgencia_id) { where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
   if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
 
   // Filtros múltiples
   addIn('t.cliente_id', cliente_ids, 'cids_');
-  addIn('t.estado_id',  estado_ids,  'eids_');
+  addIn('t.estado_id', estado_ids, 'eids_');
 
   if (etiqueta_ids?.length) {
     const keys = etiqueta_ids.map((_, i) => `et${i}`);
@@ -245,15 +245,15 @@ const buildListSQL = (params = {}, currentUser) => {
 
   // Rangos de fechas
   if (vencimiento_from) { where.push(`t.vencimiento >= :vfrom`); repl.vfrom = vencimiento_from; }
-  if (vencimiento_to)   { where.push(`t.vencimiento <= :vto`);   repl.vto   = vencimiento_to; }
-  if (inicio_from)      { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
-  if (inicio_to)        { where.push(`t.fecha_inicio <= :ito`);   repl.ito   = inicio_to; }
-  if (created_from)     { where.push(`t.created_at >= :cfrom`);   repl.cfrom = created_from; }
-  if (created_to)       { where.push(`t.created_at <= :cto`);     repl.cto   = created_to; }
-  if (updated_from)     { where.push(`t.updated_at >= :ufrom`);   repl.ufrom = updated_from; }
-  if (updated_to)       { where.push(`t.updated_at <= :uto`);     repl.uto   = updated_to; }
-  if (finalizada_from)  { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
-  if (finalizada_to)    { where.push(`t.finalizada_at <= :fto`);   repl.fto   = finalizada_to; }
+  if (vencimiento_to) { where.push(`t.vencimiento <= :vto`); repl.vto = vencimiento_to; }
+  if (inicio_from) { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
+  if (inicio_to) { where.push(`t.fecha_inicio <= :ito`); repl.ito = inicio_to; }
+  if (created_from) { where.push(`t.created_at >= :cfrom`); repl.cfrom = created_from; }
+  if (created_to) { where.push(`t.created_at <= :cto`); repl.cto = created_to; }
+  if (updated_from) { where.push(`t.updated_at >= :ufrom`); repl.ufrom = updated_from; }
+  if (updated_to) { where.push(`t.updated_at <= :uto`); repl.uto = updated_to; }
+  if (finalizada_from) { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
+  if (finalizada_to) { where.push(`t.finalizada_at <= :fto`); repl.fto = finalizada_to; }
 
   // Prioridad
   if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
@@ -263,13 +263,13 @@ const buildListSQL = (params = {}, currentUser) => {
 
   // Orden
   const orderCol =
-      orden_by === 'vencimiento'   ? 't.vencimiento'
-    : orden_by === 'fecha_inicio'  ? 't.fecha_inicio'
-    : orden_by === 'created_at'    ? 't.created_at'
-    : orden_by === 'updated_at'    ? 't.updated_at'
-    : orden_by === 'cliente'       ? 'cliente_nombre'
-    : orden_by === 'titulo'        ? 't.titulo'
-    : 't.prioridad_num'; // default
+    orden_by === 'vencimiento' ? 't.vencimiento'
+      : orden_by === 'fecha_inicio' ? 't.fecha_inicio'
+        : orden_by === 'created_at' ? 't.created_at'
+          : orden_by === 'updated_at' ? 't.updated_at'
+            : orden_by === 'cliente' ? 'cliente_nombre'
+              : orden_by === 'titulo' ? 't.titulo'
+                : 't.prioridad_num'; // default
 
   sql += ` ORDER BY ${orderCol} ${sort.toUpperCase()} NULLS LAST, t.id DESC LIMIT :limit OFFSET :offset`;
 
@@ -284,7 +284,7 @@ const listTasks = async (params, currentUser) => {
 
 const countTasks = async (params, currentUser) => {
   const { sql, repl } = buildListSQL({ ...params, limit: 1, offset: 0 }, currentUser);
-  const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/,'')}) q`;
+  const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/, '')}) q`;
   const rows = await sequelize.query(countSql, { type: QueryTypes.SELECT, replacements: repl });
   return rows[0]?.cnt ?? 0;
 };
@@ -427,7 +427,7 @@ export const getTaskById = async (id, currentUser) => {
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
     WHERE t.id = :id
     LIMIT 1
-  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 }});
+  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 } });
 
   return rows[0] || null;
 };
@@ -439,24 +439,24 @@ export const getTaskById = async (id, currentUser) => {
 const createTask = async (payload, currentFederId) => {
   return sequelize.transaction(async (t) => {
     const {
-      cliente_id, 
-      hito_id, 
-      tarea_padre_id, 
-      titulo, 
+      cliente_id,
+      hito_id,
+      tarea_padre_id,
+      titulo,
       descripcion,
-      estado_id, 
-      requiere_aprobacion=false, 
-      impacto_id=2, 
-      urgencia_id=4,
-      fecha_inicio=null, 
-      vencimiento=null,
-      responsables = [],            
-      colaboradores = [],           
-      adjuntos = []                 
+      estado_id,
+      requiere_aprobacion = false,
+      impacto_id = 2,
+      urgencia_id = 4,
+      fecha_inicio = null,
+      vencimiento = null,
+      responsables = [],
+      colaboradores = [],
+      adjuntos = []
     } = payload;
 
     await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
-    if (hito_id)        await ensureExists(models.ClienteHito, hito_id, 'Hito no encontrado');
+    if (hito_id) await ensureExists(models.ClienteHito, hito_id, 'Hito no encontrado');
     if (tarea_padre_id) await ensureExists(models.Tarea, tarea_padre_id, 'Tarea padre no encontrada');
 
     const [puntos, ponderacion] = await Promise.all([
@@ -468,7 +468,7 @@ const createTask = async (payload, currentFederId) => {
     // Estado default si no vino: 'pendiente'
     let estado = estado_id;
     if (!estado) {
-      const est = await models.TareaEstado.findOne({ where: { codigo:'pendiente' }, transaction: t });
+      const est = await models.TareaEstado.findOne({ where: { codigo: 'pendiente' }, transaction: t });
       estado = est?.id ?? null;
     }
 
@@ -544,13 +544,13 @@ const createTask = async (payload, currentFederId) => {
 };
 
 
-const updateTask = async (id, payload) => {
+const updateTask = async (id, payload, feder_id = null) => {
   return sequelize.transaction(async (t) => {
     const cur = await models.Tarea.findByPk(id, { transaction: t });
     if (!cur) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
 
-    if (payload.cliente_id)     await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
-    if (payload.hito_id)        await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
+    if (payload.cliente_id) await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
+    if (payload.hito_id) await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
     if (payload.tarea_padre_id) await ensureExists(models.Tarea, payload.tarea_padre_id, 'Tarea padre no encontrada');
 
     // recalcular prioridad si cambian ponderacion/impacto/urgencia/cliente
@@ -565,49 +565,206 @@ const updateTask = async (id, payload) => {
       prioridad_num = calcPrioridad(cliente_ponderacion, pts.impacto, pts.urgencia);
     }
 
+    // DETECTAR Y REGISTRAR CAMBIOS EN HISTORIAL
+    const cambios = [];
+
+    // Deadline (vencimiento)
+    if (payload.vencimiento !== undefined && payload.vencimiento !== cur.vencimiento) {
+      const { formatearFecha } = await import('../helpers/historial.helper.js');
+      cambios.push({
+        tipo_cambio: TIPO_CAMBIO.DEADLINE,
+        accion: ACCION.UPDATED,
+        valor_anterior: cur.vencimiento,
+        valor_nuevo: payload.vencimiento,
+        campo: 'vencimiento',
+        descripcion: `Cambió el vencimiento de ${formatearFecha(cur.vencimiento)} a ${formatearFecha(payload.vencimiento)}`
+      });
+    }
+
+    // Fecha de inicio
+    if (payload.fecha_inicio !== undefined && payload.fecha_inicio !== cur.fecha_inicio) {
+      const { formatearFecha } = await import('../helpers/historial.helper.js');
+      cambios.push({
+        tipo_cambio: TIPO_CAMBIO.FECHA_INICIO,
+        accion: ACCION.UPDATED,
+        valor_anterior: cur.fecha_inicio,
+        valor_nuevo: payload.fecha_inicio,
+        campo: 'fecha_inicio',
+        descripcion: `Cambió la fecha de inicio de ${formatearFecha(cur.fecha_inicio)} a ${formatearFecha(payload.fecha_inicio)}`
+      });
+    }
+
+    // Título
+    if (payload.titulo !== undefined && payload.titulo !== cur.titulo) {
+      cambios.push({
+        tipo_cambio: TIPO_CAMBIO.TITULO,
+        accion: ACCION.UPDATED,
+        valor_anterior: cur.titulo,
+        valor_nuevo: payload.titulo,
+        campo: 'titulo',
+        descripcion: `Cambió el título de la tarea`
+      });
+    }
+
+    // Cliente
+    if (payload.cliente_id !== undefined && payload.cliente_id !== cur.cliente_id) {
+      const clienteAnterior = await models.Cliente.findByPk(cur.cliente_id, { attributes: ['nombre'], transaction: t });
+      const clienteNuevo = await models.Cliente.findByPk(payload.cliente_id, { attributes: ['nombre'], transaction: t });
+      cambios.push({
+        tipo_cambio: TIPO_CAMBIO.CLIENTE,
+        accion: ACCION.UPDATED,
+        valor_anterior: { id: cur.cliente_id, nombre: clienteAnterior?.nombre },
+        valor_nuevo: { id: payload.cliente_id, nombre: clienteNuevo?.nombre },
+        campo: 'cliente_id',
+        descripcion: `Cambió el cliente de "${clienteAnterior?.nombre}" a "${clienteNuevo?.nombre}"`
+      });
+    }
+
+    // Hito
+    if (payload.hito_id !== undefined && payload.hito_id !== cur.hito_id) {
+      const hitoAnterior = cur.hito_id ? await models.ClienteHito.findByPk(cur.hito_id, { attributes: ['nombre'], transaction: t }) : null;
+      const hitoNuevo = payload.hito_id ? await models.ClienteHito.findByPk(payload.hito_id, { attributes: ['nombre'], transaction: t }) : null;
+      cambios.push({
+        tipo_cambio: TIPO_CAMBIO.HITO,
+        accion: ACCION.UPDATED,
+        valor_anterior: hitoAnterior ? { id: cur.hito_id, nombre: hitoAnterior.nombre } : null,
+        valor_nuevo: hitoNuevo ? { id: payload.hito_id, nombre: hitoNuevo.nombre } : null,
+        campo: 'hito_id',
+        descripcion: `Cambió el hito de "${hitoAnterior?.nombre || 'ninguno'}" a "${hitoNuevo?.nombre || 'ninguno'}"`
+      });
+    }
+
+    // Actualizar tarea
     await models.Tarea.update({ ...payload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
+
+    // REGISTRAR TODOS LOS CAMBIOS
+    if (feder_id && cambios.length > 0) {
+      for (const cambio of cambios) {
+        await registrarCambio({
+          tarea_id: id,
+          feder_id,
+          ...cambio,
+          transaction: t
+        });
+      }
+    }
+
     return models.Tarea.findByPk(id, { transaction: t });
   });
 };
 
-const archiveTask = async (id, archive=true) => {
+const archiveTask = async (id, archive = true) => {
   await models.Tarea.update({ is_archivada: !!archive }, { where: { id } });
   return { ok: true };
 };
 
 // ---------- Responsables / Colaboradores ----------
-const addResponsable = async (tarea_id, feder_id, es_lider=false) => {
-  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
-  await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
-  const row = await models.TareaResponsable.findOrCreate({
-    where: { tarea_id, feder_id },
-    defaults: { tarea_id, feder_id, es_lider }
+const addResponsable = async (tarea_id, feder_id, es_lider = false, changed_by_feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+
+    const feder = await models.Feder.findByPk(feder_id, { attributes: ['id', 'nombre', 'apellido'], transaction: t });
+    if (!feder) throw Object.assign(new Error('Feder no encontrado'), { status: 404 });
+
+    const [row, created] = await models.TareaResponsable.findOrCreate({
+      where: { tarea_id, feder_id },
+      defaults: { tarea_id, feder_id, es_lider },
+      transaction: t
+    });
+
+    if (changed_by_feder_id) {
+      await registrarCambio({
+        tarea_id,
+        feder_id: changed_by_feder_id,
+        tipo_cambio: TIPO_CAMBIO.RESPONSABLE,
+        accion: created ? ACCION.ADDED : ACCION.UPDATED,
+        valor_nuevo: { feder_id, nombre: `${feder.nombre} ${feder.apellido}`, es_lider },
+        descripcion: created
+          ? `Agregó a ${feder.nombre} ${feder.apellido} como responsable${es_lider ? ' líder' : ''}`
+          : `Modificó el responsable ${feder.nombre} ${feder.apellido}`,
+        transaction: t
+      });
+    }
+
+    if (!row.isNewRecord && row.es_lider !== es_lider) {
+      row.es_lider = es_lider; await row.save({ transaction: t });
+    }
+    return row;
   });
-  if (!row[0].isNewRecord && row[0].es_lider !== es_lider) {
-    row[0].es_lider = es_lider; await row[0].save();
-  }
-  return row[0];
 };
 
-const removeResponsable = async (tarea_id, feder_id) => {
-  await models.TareaResponsable.destroy({ where: { tarea_id, feder_id } });
-  return { ok: true };
-};
+const removeResponsable = async (tarea_id, feder_id, changed_by_feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    const feder = await models.Feder.findByPk(feder_id, { attributes: ['id', 'nombre', 'apellido'], transaction: t });
 
-const addColaborador = async (tarea_id, feder_id, rol=null) => {
-  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
-  await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
-  const [row, created] = await models.TareaColaborador.findOrCreate({
-    where: { tarea_id, feder_id },
-    defaults: { tarea_id, feder_id, rol }
+    await models.TareaResponsable.destroy({ where: { tarea_id, feder_id }, transaction: t });
+
+    if (changed_by_feder_id && feder) {
+      await registrarCambio({
+        tarea_id,
+        feder_id: changed_by_feder_id,
+        tipo_cambio: TIPO_CAMBIO.RESPONSABLE,
+        accion: ACCION.REMOVED,
+        valor_anterior: { feder_id, nombre: `${feder.nombre} ${feder.apellido}` },
+        descripcion: `Eliminó a ${feder.nombre} ${feder.apellido} de los responsables`,
+        transaction: t
+      });
+    }
+    return { ok: true };
   });
-  if (!created && rol !== undefined) { row.rol = rol; await row.save(); }
-  return row;
 };
 
-const removeColaborador = async (tarea_id, feder_id) => {
-  await models.TareaColaborador.destroy({ where: { tarea_id, feder_id } });
-  return { ok: true };
+const addColaborador = async (tarea_id, feder_id, rol = null, changed_by_feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+
+    const feder = await models.Feder.findByPk(feder_id, { attributes: ['id', 'nombre', 'apellido'], transaction: t });
+    if (!feder) throw Object.assign(new Error('Feder no encontrado'), { status: 404 });
+
+    const [row, created] = await models.TareaColaborador.findOrCreate({
+      where: { tarea_id, feder_id },
+      defaults: { tarea_id, feder_id, rol },
+      transaction: t
+    });
+
+    if (changed_by_feder_id) {
+      await registrarCambio({
+        tarea_id,
+        feder_id: changed_by_feder_id,
+        tipo_cambio: TIPO_CAMBIO.COLABORADOR,
+        accion: created ? ACCION.ADDED : ACCION.UPDATED,
+        valor_nuevo: { feder_id, nombre: `${feder.nombre} ${feder.apellido}`, rol },
+        descripcion: created
+          ? `Agregó a ${feder.nombre} ${feder.apellido} como colaborador`
+          : `Actualizó el rol de colaborador de ${feder.nombre} ${feder.apellido}`,
+        transaction: t
+      });
+    }
+
+    if (!created && rol !== undefined) { row.rol = rol; await row.save({ transaction: t }); }
+    return row;
+  });
+};
+
+const removeColaborador = async (tarea_id, feder_id, changed_by_feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    const feder = await models.Feder.findByPk(feder_id, { attributes: ['id', 'nombre', 'apellido'], transaction: t });
+
+    await models.TareaColaborador.destroy({ where: { tarea_id, feder_id }, transaction: t });
+
+    if (changed_by_feder_id && feder) {
+      await registrarCambio({
+        tarea_id,
+        feder_id: changed_by_feder_id,
+        tipo_cambio: TIPO_CAMBIO.COLABORADOR,
+        accion: ACCION.REMOVED,
+        valor_anterior: { feder_id, nombre: `${feder.nombre} ${feder.apellido}` },
+        descripcion: `Eliminó a ${feder.nombre} ${feder.apellido} de los colaboradores`,
+        transaction: t
+      });
+    }
+    return { ok: true };
+  });
 };
 
 // ---------- Etiquetas ----------
@@ -627,12 +784,12 @@ const unassignEtiqueta = async (tarea_id, etiqueta_id) => {
 
 // ---------- Checklist ----------
 const listChecklist = (tarea_id) =>
-  models.TareaChecklistItem.findAll({ where: { tarea_id }, order: [['orden','ASC'],['id','ASC']] });
+  models.TareaChecklistItem.findAll({ where: { tarea_id }, order: [['orden', 'ASC'], ['id', 'ASC']] });
 
 const recomputeProgressPct = async (tarea_id, t = null) => {
   const total = await models.TareaChecklistItem.count({ where: { tarea_id }, transaction: t || undefined });
-  const done  = await models.TareaChecklistItem.count({ where: { tarea_id, is_done: true }, transaction: t || undefined });
-  const pct   = total ? Math.round((done / total) * 10000) / 100 : 0;
+  const done = await models.TareaChecklistItem.count({ where: { tarea_id, is_done: true }, transaction: t || undefined });
+  const pct = total ? Math.round((done / total) * 10000) / 100 : 0;
   await models.Tarea.update({ progreso_pct: pct }, { where: { id: tarea_id }, transaction: t || undefined });
 };
 
@@ -665,7 +822,7 @@ const deleteChecklistItem = async (id) => {
   });
 };
 
-const reorderChecklist = async (tarea_id, ordenPairs=[]) =>
+const reorderChecklist = async (tarea_id, ordenPairs = []) =>
   sequelize.transaction(async (t) => {
     for (const { id, orden } of ordenPairs) {
       await models.TareaChecklistItem.update({ orden }, { where: { id, tarea_id }, transaction: t });
@@ -722,14 +879,14 @@ const listComentarios = async (tarea_id, currentUser) =>
     type: QueryTypes.SELECT,
     replacements: {
       id: tarea_id,
-      uid:     currentUser?.id ?? 0,
+      uid: currentUser?.id ?? 0,
       cur_fid: currentUser?.feder_id ?? 0
     }
   });
 
 
 
-const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, contenido, menciones=[], adjuntos=[], reply_to_id=null }) =>
+const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, contenido, menciones = [], adjuntos = [], reply_to_id = null }) =>
   sequelize.transaction(async (t) => {
     let resolvedTipoId = tipo_id ?? null;
     if (!resolvedTipoId && tipo_codigo) {
@@ -762,89 +919,228 @@ const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, cont
       await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
     }
     return cm;
-});
+  });
 
 // ---------- Adjuntos (a nivel tarea, no comentario) ----------
 const addAdjunto = async (tarea_id, feder_id, meta) => {
-  await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
-  return models.TareaAdjunto.create({ ...meta, tarea_id, subido_por_feder_id: feder_id });
+  return sequelize.transaction(async (t) => {
+    await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
+    const adj = await models.TareaAdjunto.create({ ...meta, tarea_id, subido_por_feder_id: feder_id }, { transaction: t });
+
+    // Historial (opcional, pero pedido)
+    // No tenemos un TIPO_CAMBIO.ADJUNTO específico en helper, usaremos 'adjunto' o genérico si no existe.
+    // Asumimos que TIPO_CAMBIO.ADJUNTO no existe, lo agregamos como string o extendemos.
+    // Revisando helper: no tiene ADJUNTO. Usaremos 'adjunto' raw o agregaremos si fuera necesario.
+    // Para consistencia, usaremos string 'adjunto' que el helper aceptará (es enum en DB o string?)
+    // El modelo TareaHistorial define tipo_cambio como STRING.
+    await registrarCambio({
+      tarea_id,
+      feder_id,
+      tipo_cambio: TIPO_CAMBIO.ADJUNTO,
+      accion: ACCION.ADDED,
+      valor_nuevo: { id: adj.id, nombre: adj.nombre },
+      descripcion: `Subió el adjunto "${adj.nombre}"`,
+      transaction: t
+    });
+
+    return adj;
+  });
 };
 
-const removeAdjunto = async (adjId) => {
-  await models.TareaAdjunto.destroy({ where: { id: adjId } });
-  return { ok: true };
+const removeAdjunto = async (adjId, feder_id) => {
+  return sequelize.transaction(async (t) => {
+    const adj = await models.TareaAdjunto.findByPk(adjId, { transaction: t });
+    if (!adj) return { ok: true };
+
+    await models.TareaAdjunto.destroy({ where: { id: adjId }, transaction: t });
+
+    if (feder_id) {
+      await registrarCambio({
+        tarea_id: adj.tarea_id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.ADJUNTO,
+        accion: ACCION.REMOVED,
+        valor_anterior: { id: adj.id, nombre: adj.nombre },
+        descripcion: `Eliminó el adjunto "${adj.nombre}"`,
+        transaction: t
+      });
+    }
+    return { ok: true };
+  });
 };
 
 // ---------- Relaciones ----------
-const createRelacion = async (tarea_id, { relacionada_id, tipo_id, tipo_codigo }) => {
-  let resolvedTipoId = tipo_id ?? null;
-  if (!resolvedTipoId && tipo_codigo) {
-    const tipo = await models.TareaRelacionTipo.findOne({ where: { codigo: tipo_codigo } });
-    if (!tipo) throw Object.assign(new Error('Tipo de relación no encontrado'), { status: 400 });
-    resolvedTipoId = tipo.id;
-  }
-  await Promise.all([
-    ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
-    ensureExists(models.Tarea, relacionada_id, 'Tarea relacionada no encontrada'),
-    ensureExists(models.TareaRelacionTipo, resolvedTipoId, 'Tipo de relación no encontrado')
-  ]);
-  const [row] = await models.TareaRelacion.findOrCreate({
-    where: { tarea_id, relacionada_id, tipo_id: resolvedTipoId },
-    defaults: { tarea_id, relacionada_id, tipo_id: resolvedTipoId }
+const createRelacion = async (tarea_id, { relacionada_id, tipo_id, tipo_codigo }, feder_id) => {
+  return sequelize.transaction(async (t) => {
+    let resolvedTipoId = tipo_id ?? null;
+    if (!resolvedTipoId && tipo_codigo) {
+      const tipo = await models.TareaRelacionTipo.findOne({ where: { codigo: tipo_codigo }, transaction: t });
+      if (!tipo) throw Object.assign(new Error('Tipo de relación no encontrado'), { status: 400 });
+      resolvedTipoId = tipo.id;
+    }
+    await Promise.all([
+      ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
+      ensureExists(models.Tarea, relacionada_id, 'Tarea relacionada no encontrada'),
+      ensureExists(models.TareaRelacionTipo, resolvedTipoId, 'Tipo de relación no encontrado')
+    ]);
+
+    const [row, created] = await models.TareaRelacion.findOrCreate({
+      where: { tarea_id, relacionada_id, tipo_id: resolvedTipoId },
+      defaults: { tarea_id, relacionada_id, tipo_id: resolvedTipoId },
+      transaction: t
+    });
+
+    if (created && feder_id) {
+      const relTask = await models.Tarea.findByPk(relacionada_id, { attributes: ['titulo'], transaction: t });
+      const tipoRel = await models.TareaRelacionTipo.findByPk(resolvedTipoId, { attributes: ['nombre'], transaction: t });
+
+      await registrarCambio({
+        tarea_id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.RELACION,
+        accion: ACCION.ADDED,
+        valor_nuevo: { relacionada_id, titulo: relTask?.titulo, tipo: tipoRel?.nombre },
+        descripcion: `Agregó relación "${tipoRel?.nombre}" con tarea #${relacionada_id}`,
+        transaction: t
+      });
+    }
+    return row;
   });
-  return row;
 };
 
-const deleteRelacion = async (tarea_id, relId) => {
-  await models.TareaRelacion.destroy({ where: { id: relId, tarea_id } });
-  return { ok: true };
+const deleteRelacion = async (tarea_id, relId, feder_id) => {
+  return sequelize.transaction(async (t) => {
+    const rel = await models.TareaRelacion.findOne({ where: { id: relId, tarea_id }, transaction: t });
+    if (!rel) return { ok: true };
+
+    await models.TareaRelacion.destroy({ where: { id: relId, tarea_id }, transaction: t });
+
+    if (feder_id) {
+      const relTask = await models.Tarea.findByPk(rel.relacionada_id, { attributes: ['titulo'], transaction: t });
+      const tipoRel = await models.TareaRelacionTipo.findByPk(rel.tipo_id, { attributes: ['nombre'], transaction: t });
+
+      await registrarCambio({
+        tarea_id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.RELACION,
+        accion: ACCION.REMOVED,
+        valor_anterior: { relacionada_id: rel.relacionada_id, titulo: relTask?.titulo, tipo: tipoRel?.nombre },
+        descripcion: `Eliminó relación "${tipoRel?.nombre}" con tarea #${rel.relacionada_id}`,
+        transaction: t
+      });
+    }
+    return { ok: true };
+  });
 };
 
 // ---------- Favoritos / Seguidores ----------
 const setFavorito = async (tarea_id, user_id, on) => {
-  if (on) await models.TareaFavorito.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
-  else    await models.TareaFavorito.destroy({ where: { tarea_id, user_id } });
+  if (on) await models.TareaFavorito.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id } });
+  else await models.TareaFavorito.destroy({ where: { tarea_id, user_id } });
   return { ok: true };
 };
 
 const setSeguidor = async (tarea_id, user_id, on) => {
-  if (on) await models.TareaSeguidor.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
-  else    await models.TareaSeguidor.destroy({ where: { tarea_id, user_id } });
+  if (on) await models.TareaSeguidor.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id } });
+  else await models.TareaSeguidor.destroy({ where: { tarea_id, user_id } });
   return { ok: true };
 };
 
 // ---------- Estado / Aprobación / Kanban ----------
-const setEstado = async (id, estado_id) => {
+import { registrarCambio, TIPO_CAMBIO, ACCION } from '../helpers/historial.helper.js';
+
+const setEstado = async (id, estado_id, feder_id) => {
   await ensureExists(models.TareaEstado, estado_id, 'Estado inválido');
 
-  // ¿a qué estado vamos?
-  const estado = await models.TareaEstado.findByPk(estado_id, { attributes: ['codigo'] });
+  return sequelize.transaction(async (t) => {
+    // Obtener tarea y estado actual
+    const tarea = await models.Tarea.findByPk(id, {
+      include: [{ model: models.TareaEstado, as: 'estado', attributes: ['id', 'codigo', 'nombre'] }],
+      transaction: t
+    });
+    if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
 
-  if (estado?.codigo === 'finalizada') {
-    // cerrar la tarea: fecha y progreso al 100
-    await models.Tarea.update(
-      { estado_id, finalizada_at: new Date(), progreso_pct: 100 },
-      { where: { id } }
-    );
-  } else {
-    // sacamos finalizada: limpiamos finalizada_at y recomputamos progreso real desde checklist
-    await models.Tarea.update(
-      { estado_id, finalizada_at: null },
-      { where: { id } }
-    );
-    await recomputeProgressPct(id); // ← ya la tenés definida más arriba
-  }
+    const estadoAnterior = tarea.estado_id;
+    const estadoAnteriorNombre = tarea.estado?.nombre;
 
-  return { ok: true };
+    // ¿a qué estado vamos?
+    const nuevoEstado = await models.TareaEstado.findByPk(estado_id, {
+      attributes: ['id', 'codigo', 'nombre'],
+      transaction: t
+    });
+
+    // Solo actualizar y registrar si cambió
+    if (estadoAnterior !== estado_id) {
+      if (nuevoEstado?.codigo === 'finalizada') {
+        // cerrar la tarea: fecha y progreso al 100
+        await models.Tarea.update(
+          { estado_id, finalizada_at: new Date(), progreso_pct: 100 },
+          { where: { id }, transaction: t }
+        );
+      } else {
+        // sacamos finalizada: limpiamos finalizada_at y recomputamos progreso real desde checklist
+        await models.Tarea.update(
+          { estado_id, finalizada_at: null },
+          { where: { id }, transaction: t }
+        );
+        await recomputeProgressPct(id, t);
+      }
+
+      // REGISTRAR EN HISTORIAL
+      if (feder_id) {
+        await registrarCambio({
+          tarea_id: id,
+          feder_id,
+          tipo_cambio: TIPO_CAMBIO.ESTADO,
+          accion: ACCION.UPDATED,
+          valor_anterior: { id: estadoAnterior, nombre: estadoAnteriorNombre },
+          valor_nuevo: { id: estado_id, nombre: nuevoEstado?.nombre },
+          descripcion: `Cambió el estado de "${estadoAnteriorNombre}" a "${nuevoEstado?.nombre}"`,
+          transaction: t
+        });
+      }
+    }
+
+    return { ok: true };
+  });
 };
 
-const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_motivo=null) => {
+const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_motivo = null, feder_id = null) => {
   await ensureExists(models.TareaAprobacionEstado, aprobacion_estado_id, 'Estado de aprobación inválido');
-  const patch = { aprobacion_estado_id, rechazo_motivo: rechazo_motivo ?? null };
-  if (aprobacion_estado_id === 3) { patch.aprobado_por_user_id = user_id;  patch.aprobado_at = new Date(); }
-  if (aprobacion_estado_id === 4) { patch.rechazado_por_user_id = user_id; patch.rechazado_at = new Date(); }
-  await models.Tarea.update(patch, { where: { id } });
-  return { ok: true };
+
+  return sequelize.transaction(async (t) => {
+    const tarea = await models.Tarea.findByPk(id, { transaction: t });
+    if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+
+    const estadoAnterior = tarea.aprobacion_estado_id;
+
+    // Si no cambia, no hacemos nada
+    if (estadoAnterior === aprobacion_estado_id) return { ok: true };
+
+    const patch = { aprobacion_estado_id, rechazo_motivo: rechazo_motivo ?? null };
+    if (aprobacion_estado_id === 3) { patch.aprobado_por_user_id = user_id; patch.aprobado_at = new Date(); }
+    if (aprobacion_estado_id === 4) { patch.rechazado_por_user_id = user_id; patch.rechazado_at = new Date(); }
+
+    await models.Tarea.update(patch, { where: { id }, transaction: t });
+
+    if (feder_id) {
+      const nuevoEstado = await models.TareaAprobacionEstado.findByPk(aprobacion_estado_id, { transaction: t });
+      const anteriorEstado = await models.TareaAprobacionEstado.findByPk(estadoAnterior, { transaction: t });
+
+      await registrarCambio({
+        tarea_id: id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.APROBACION,
+        accion: ACCION.UPDATED,
+        valor_anterior: { id: estadoAnterior, nombre: anteriorEstado?.nombre },
+        valor_nuevo: { id: aprobacion_estado_id, nombre: nuevoEstado?.nombre },
+        descripcion: `Cambió el estado de aprobación de "${anteriorEstado?.nombre}" a "${nuevoEstado?.nombre}"`,
+        transaction: t
+      });
+    }
+
+    return { ok: true };
+  });
 };
 
 const moveKanban = async (tarea_id, user_id, { stage, orden = 0 }) => {
@@ -860,8 +1156,8 @@ const moveKanban = async (tarea_id, user_id, { stage, orden = 0 }) => {
     defaults: {
       tarea_id,
       user_id,
-      stage_code: stage, 
-      pos: orden,        
+      stage_code: stage,
+      pos: orden,
       updated_at: now
     }
   });
@@ -894,27 +1190,27 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     relacion_tipos,
     clientes
   ] = await Promise.all([
-    customModels.TareaEstado.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    customModels.TareaAprobacionEstado.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    customModels.ImpactoTipo.findAll({ attributes: ['id','codigo','nombre','puntos'], order: [['id','ASC']] }),
-    customModels.UrgenciaTipo.findAll({ attributes: ['id','codigo','nombre','puntos'], order: [['id','ASC']] }),
-    customModels.TareaEtiqueta.findAll({ attributes: ['id','codigo','nombre'], order: [['nombre','ASC']] }),
-    customModels.ComentarioTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    customModels.TareaRelacionTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    customModels.Cliente.findAll({ where: scope, attributes: ['id','nombre','celula_id'], order: [['nombre','ASC']] })
+    customModels.TareaEstado.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    customModels.TareaAprobacionEstado.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    customModels.ImpactoTipo.findAll({ attributes: ['id', 'codigo', 'nombre', 'puntos'], order: [['id', 'ASC']] }),
+    customModels.UrgenciaTipo.findAll({ attributes: ['id', 'codigo', 'nombre', 'puntos'], order: [['id', 'ASC']] }),
+    customModels.TareaEtiqueta.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
+    customModels.ComentarioTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    customModels.TareaRelacionTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'celula_id'], order: [['nombre', 'ASC']] })
   ]);
 
   const clienteIds = clientes.map(c => c.id);
   const hitosWhere = clienteIds.length ? { cliente_id: clienteIds } : {};
   const hitos = await customModels.ClienteHito.findAll({
     where: hitosWhere,
-    attributes: ['id','cliente_id','nombre'],
-    order: [['nombre','ASC']]
+    attributes: ['id', 'cliente_id', 'nombre'],
+    order: [['nombre', 'ASC']]
   });
 
   const feders = await customModels.Feder.findAll({
-    attributes: ['id','user_id','nombre','apellido','celula_id'],
-    order: [['nombre','ASC'], ['apellido','ASC']]
+    attributes: ['id', 'user_id', 'nombre', 'apellido', 'celula_id'],
+    order: [['nombre', 'ASC'], ['apellido', 'ASC']]
   });
 
   return {
@@ -945,62 +1241,74 @@ const getCompose = async (idOrNull, user, customModels = models) => {
 // ========== svc* API =========
 // =============================
 export const svcListCatalogos = (customModels = models) => listCatalogos(customModels);
-export const svcGetCompose    = (idOrNull, user, customModels = models) => getCompose(idOrNull, user, customModels);
+export const svcGetCompose = (idOrNull, user, customModels = models) => getCompose(idOrNull, user, customModels);
 
-export const svcListTasks   = async (q, user) => {
-  const rows  = await listTasks(q, user);
+export const svcListTasks = async (q, user) => {
+  const rows = await listTasks(q, user);
   const total = await countTasks(q, user);
   return { total, rows };
 };
-export const svcGetTask     = (id, user) => getTaskById(id, user);
-export const svcCreateTask  = async (body, user) => {
+export const svcGetTask = (id, user) => getTaskById(id, user);
+export const svcCreateTask = async (body, user) => {
   const row = await createTask(body, user?.feder_id ?? null);
   return getTaskById(row.id, user);
 };
-export const svcUpdateTask  = async (id, body, user) => {
-  await updateTask(id, body);
+export const svcUpdateTask = async (id, body, user) => {
+  await updateTask(id, body, user?.feder_id);
   return getTaskById(id, user);
 };
-export const svcArchiveTask = (id, on=true) => archiveTask(id, on);
+export const svcArchiveTask = (id, on = true) => archiveTask(id, on);
 
 // Responsables / Colaboradores
-export const svcAddResponsable    = (tarea_id, { feder_id, es_lider=false }) => addResponsable(tarea_id, feder_id, es_lider);
-export const svcRemoveResponsable = (tarea_id, feder_id) => removeResponsable(tarea_id, feder_id);
-export const svcAddColaborador    = (tarea_id, { feder_id, rol=null }) => addColaborador(tarea_id, feder_id, rol);
-export const svcRemoveColaborador = (tarea_id, feder_id) => removeColaborador(tarea_id, feder_id);
+export const svcAddResponsable = (tarea_id, { feder_id, es_lider = false }, user) => addResponsable(tarea_id, feder_id, es_lider, user?.feder_id);
+export const svcRemoveResponsable = (tarea_id, feder_id, user) => removeResponsable(tarea_id, feder_id, user?.feder_id);
+export const svcAddColaborador = (tarea_id, { feder_id, rol = null }, user) => addColaborador(tarea_id, feder_id, rol, user?.feder_id);
+export const svcRemoveColaborador = (tarea_id, feder_id, user) => removeColaborador(tarea_id, feder_id, user?.feder_id);
 
 // Etiquetas
-export const svcAssignEtiqueta   = (tarea_id, etiqueta_id) => assignEtiqueta(tarea_id, etiqueta_id);
+export const svcAssignEtiqueta = (tarea_id, etiqueta_id) => assignEtiqueta(tarea_id, etiqueta_id);
 export const svcUnassignEtiqueta = (tarea_id, etiqueta_id) => unassignEtiqueta(tarea_id, etiqueta_id);
 
 // Checklist
-export const svcListChecklist       = (tarea_id) => listChecklist(tarea_id);
+export const svcListChecklist = (tarea_id) => listChecklist(tarea_id);
 export const svcCreateChecklistItem = (tarea_id, titulo) => createChecklistItem(tarea_id, titulo);
 export const svcUpdateChecklistItem = (item_id, patch) => updateChecklistItem(item_id, patch);
 export const svcDeleteChecklistItem = (item_id) => deleteChecklistItem(item_id);
-export const svcReorderChecklist    = (tarea_id, ordenPairs) => reorderChecklist(tarea_id, ordenPairs);
+export const svcReorderChecklist = (tarea_id, ordenPairs) => reorderChecklist(tarea_id, ordenPairs);
 
 // Comentarios
 export const svcListComentarios = (tarea_id, user) => listComentarios(tarea_id, user);
 export const svcCreateComentario = (tarea_id, feder_id, body) => createComentario(tarea_id, feder_id, body);
 
 // Adjuntos (tarea)
-export const svcAddAdjunto    = (tarea_id, feder_id, meta) => addAdjunto(tarea_id, feder_id, meta);
-export const svcRemoveAdjunto = (adjId) => removeAdjunto(adjId);
+export const svcAddAdjunto = (tarea_id, feder_id, meta) => addAdjunto(tarea_id, feder_id, meta);
+export const svcRemoveAdjunto = (adjId, user) => removeAdjunto(adjId, user?.feder_id);
 
 // Relaciones
-export const svcCreateRelacion = (tarea_id, body) => createRelacion(tarea_id, body);
-export const svcDeleteRelacion = (tarea_id, relId) => deleteRelacion(tarea_id, relId);
+export const svcCreateRelacion = (tarea_id, body, user) => createRelacion(tarea_id, body, user?.feder_id);
+export const svcDeleteRelacion = (tarea_id, relId, user) => deleteRelacion(tarea_id, relId, user?.feder_id);
 
 // Favoritos / Seguidores
 export const svcSetFavorito = (tarea_id, user_id, on) => setFavorito(tarea_id, user_id, on);
 export const svcSetSeguidor = (tarea_id, user_id, on) => setSeguidor(tarea_id, user_id, on);
 
 // Estado / Aprobación / Kanban
-export const svcSetEstado = (id, estado_id) => setEstado(id, estado_id);
-export const svcSetAprobacion = (id, user_id, body) => {
-  const { aprobacion_estado_id, rechazo_motivo=null } = body || {};
-  return setAprobacion(id, aprobacion_estado_id, user_id, rechazo_motivo);
+export const svcSetEstado = (id, estado_id, feder_id) => setEstado(id, estado_id, feder_id);
+export const svcSetAprobacion = (id, user_id, body, feder_id) => {
+  const { aprobacion_estado_id, rechazo_motivo = null } = body || {};
+  return setAprobacion(id, aprobacion_estado_id, user_id, rechazo_motivo, feder_id);
 };
 
 export const svcSetResponsableLeader = (tarea_id, feder_id) => setResponsableLeader(tarea_id, feder_id);
+
+// Historial
+import { obtenerHistorial, contarHistorial } from '../helpers/historial.helper.js';
+
+export const svcGetHistorial = async (tarea_id, query) => {
+  const { limit, offset, tipo_cambio } = query;
+  const [rows, total] = await Promise.all([
+    obtenerHistorial(tarea_id, { limit, offset, tipo_cambio }),
+    contarHistorial(tarea_id, tipo_cambio)
+  ]);
+  return { total, rows };
+};
