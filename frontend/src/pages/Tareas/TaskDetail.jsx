@@ -17,6 +17,7 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
+import { useAuth, useAuthCtx } from '../../context/AuthContext.jsx'
 
 import './task-detail.scss'
 
@@ -56,8 +57,14 @@ const [peopleForm, setPeopleForm] = useState({
 });
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
 
+  const [isResponsible, setIsResponsible] = useState(false)
+
+  const {user} = useAuthCtx() || {}
+
+
+  console.log('----------------------------------------->',isResponsible)
+
 const handlePeopleChange = async ({ responsables, colaboradores }) => {
-  // Actualización optimista en UI
   setTask(t => ({
     ...t,
     responsables,
@@ -80,7 +87,7 @@ const handlePeopleChange = async ({ responsables, colaboradores }) => {
 };
 
 
-  const firstLoad = useRef(true);
+ 
 
 useEffect(() => {
   if (!task) return;
@@ -91,6 +98,16 @@ useEffect(() => {
   });
 }, [task]);
 
+useEffect(() => {
+  if (!task || !user?.id) return
+
+  const normalizedResp = mapResp(task.responsables || task.Responsables || [])
+
+  setIsResponsible(prev => prev || normalizedResp.some(r => r.id === user.id))
+
+  const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
+  setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
+}, [task, user?.id])
 
 
   // contentEditable
@@ -103,7 +120,7 @@ useEffect(() => {
     onChange: (v) => setForm(f => (f.descripcion === v ? f : { ...f, descripcion: v }))
   })
 
-  // cargar
+
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
@@ -118,9 +135,12 @@ useEffect(() => {
     document.title = `${t?.titulo || 'Tarea'}`
   }, [id])
 
+    
+
+
   useEffect(() => { (async()=>{ await reload() })() }, [reload])
 
-  // dirty
+ 
   const dirty = useMemo(() => {
     if (!task) return false
     const t = (form.titulo ?? '').trim()
@@ -128,7 +148,7 @@ useEffect(() => {
     return t !== (task.titulo ?? '').trim() || d !== (task.descripcion ?? '')
   }, [form, task])
 
-  // autosave (debounce)
+  
   const saveIfDirty = useCallback(async (source='auto') => {
     if (!dirty || !task || saving) return
     const patch = {}
@@ -291,7 +311,8 @@ useEffect(() => {
              <span className="inlineDue">
                 <InlineDue
                   value={toInputDate(vencimientoISO)}
-                  onChange={handleDueChange}
+                onChange={handleDueChange}
+                disabled={!isResponsible}
                 />
         </span>
               <TaskStatusCard
@@ -311,6 +332,8 @@ useEffect(() => {
                   valueName={clienteNombre}
                   options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
+                
+                  disabled={!isResponsible}
                 
                 />
               </span>
@@ -467,9 +490,11 @@ useEffect(() => {
   candidatesResp={catalog?.feders || []}
   candidatesCol={catalog?.feders || []}
   onChange={async (next) => {
-    setPeopleForm(next);            // actualiza la UI inmediatamente
-    await handlePeopleChange(next); // guarda en backend
+    // if(!isResponsible) return; 
+    setPeopleForm(next);            
+    await handlePeopleChange(next);
   }}
+  disabled={!isResponsible}
    />
          
         
