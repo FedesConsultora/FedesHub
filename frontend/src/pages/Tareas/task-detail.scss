@@ -302,24 +302,17 @@ $text: $fh-text;
   
 
   .people-detail {
+    width: 100%;
     display: flex;
     align-self: flex-end;
     flex-direction: row !important;
     align-items: center;
     justify-content: space-between;
-    
+
     padding-top: 4rem;
 
-    .saveBtn {
-      background-color: #034962;
-      border : solid 2px #67A4FF;
-      border-radius: 1.4rem;
-      color: #fff;
-      padding: 4px  12px 12px;
-      gap: 6px;
 
-     
-    }
+
   }
 
   .commentsToggleBtn {

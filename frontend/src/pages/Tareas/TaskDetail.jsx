@@ -110,7 +110,7 @@ const handlePeopleChange = async ({ responsables, colaboradores }) => {
     }
 
     console.log('Actualización completada');
-    toast?.success("Participantes actualizados en tiempo real");
+    toast?.success("Participantes Actualizados");
   } catch (e) {
     console.error('Error actualizando participantes:', e);
     toast?.error(e?.message || "No se pudieron actualizar los participantes");
@@ -528,26 +528,7 @@ useEffect(() => {
           
    />
          
-        
-        <button
-          style={{alignSelf:'flex-end', marginBottom: '1rem'}}
-  className="saveBtn"
-  disabled={saving}
-  // onClick={async () => {
-  //   try {
-  //     setSaving(true)
-  //     await tareasApi.updatePeople(taskId, peopleForm)
-  //     setTask(await tareasApi.get(taskId))
-  //     toast?.success('Cambios guardados')
-  //   } catch(e) {
-  //     toast?.error(e?.message || 'No se pudo guardar')
-  //   } finally {
-  //     setSaving(false)
-  //   }
-  // }}
->
-          <FaRegSave size={ 22} style={{cursor: 'pointer', position:'relative', top:'.3rem'}} color='#489FD4' /> Guardar cambios
-</button>
+      
       </div>
     
      
