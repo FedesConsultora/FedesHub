@@ -65,26 +65,59 @@ const [peopleForm, setPeopleForm] = useState({
   console.log('----------------------------------------->',isResponsible)
 
 const handlePeopleChange = async ({ responsables, colaboradores }) => {
-  setTask(t => ({
-    ...t,
-    responsables,
-    colaboradores
-  }));
+  if (!task) return;
+
+  // Mapear solo IDs
+  const prevRespIds = (task.responsables || task.Responsables || []).map(p => p.id ?? p.feder_id);
+  const newRespIds  = responsables.map(p => p.id ?? p.feder_id);
+
+  const prevColIds = (task.colaboradores || task.Colaboradores || []).map(p => p.id ?? p.feder_id);
+  const newColIds  = colaboradores.map(p => p.id ?? p.feder_id);
+
+  console.log('Prev Responsables:', prevRespIds, 'New Responsables:', newRespIds);
+  console.log('Prev Colaboradores:', prevColIds, 'New Colaboradores:', newColIds);
+
+  // Actualización optimista en UI
+  setTask(t => ({ ...t, responsables, colaboradores }));
 
   try {
-    const respIds = responsables.map(p => p.id ?? p.feder_id);
-    const colIds  = colaboradores.map(p => p.id ?? p.feder_id);
+    // Responsables
+    for (const rId of newRespIds) {
+      if (!prevRespIds.includes(rId)) {
+        console.log('Agregar responsable:', rId);
+        await tareasApi.addResp(taskId, rId);
+      }
+    }
+    for (const rId of prevRespIds) {
+      if (!newRespIds.includes(rId)) {
+        console.log('Eliminar responsable:', rId);
+        await tareasApi.delResp(taskId, rId);
+      }
+    }
 
-    await tareasApi.update(taskId, {
-      responsables_ids: respIds,
-      colaboradores_ids: colIds
-    });
+    // Colaboradores
+    for (const cId of newColIds) {
+      if (!prevColIds.includes(cId)) {
+        console.log('Agregar colaborador:', cId);
+        await tareasApi.addColab(taskId, cId);
+      }
+    }
+    for (const cId of prevColIds) {
+      if (!newColIds.includes(cId)) {
+        console.log('Eliminar colaborador:', cId);
+        await tareasApi.delColab(taskId, cId);
+      }
+    }
 
-    toast?.success("Participantes actualizados");
+    console.log('Actualización completada');
+    toast?.success("Participantes actualizados en tiempo real");
   } catch (e) {
+    console.error('Error actualizando participantes:', e);
     toast?.error(e?.message || "No se pudieron actualizar los participantes");
   }
 };
+
+
 
 
  
@@ -485,16 +518,14 @@ useEffect(() => {
           
             <AssignedPeople
                 
-                  responsables={peopleForm.responsables}
+      responsables={peopleForm.responsables}
   colaboradores={peopleForm.colaboradores}
   candidatesResp={catalog?.feders || []}
   candidatesCol={catalog?.feders || []}
-  onChange={async (next) => {
-    // if(!isResponsible) return; 
-    setPeopleForm(next);            
-    await handlePeopleChange(next);
-  }}
-  disabled={!isResponsible}
+    onChange={handlePeopleChange} // ← esto asegura persistencia
+
+          disabled={!isResponsible}
+          
    />
          
         

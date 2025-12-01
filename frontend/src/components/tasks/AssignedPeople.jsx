@@ -35,37 +35,35 @@ const dropdownRef = useRef(null);
   };
 
   /** Agregar persona */
- const handleAdd = (groupKey, person) => {
-  const newPerson = { ...person, isNew: true };
-
- 
+const handleAdd = (groupKey, person) => {
   if (groupKey === "responsables") {
     update({
-      responsables: [newPerson],
+      responsables: [...responsables, person],
       colaboradores
     });
   } else {
-   
     update({
       responsables,
-      colaboradores: [...colaboradores, newPerson]
+      colaboradores: [...colaboradores, person]
     });
   }
-
   setOpenAdd(null);
 };
 
 
   /** Eliminar persona */
-  const handleRemove = (groupKey, index) => {
-    const list = groupKey === 'responsables' ? [...responsables] : [...colaboradores];
-    list.splice(index, 1);
+ const handleRemove = (groupKey, index) => {
+  const list = groupKey === 'responsables' ? [...responsables] : [...colaboradores];
+  const removed = list.splice(index, 1); // lo quitamos
 
-    update({
-      responsables: groupKey === 'responsables' ? list : responsables,
-      colaboradores: groupKey === 'colaboradores' ? list : colaboradores
-    });
+  const nextState = {
+    responsables: groupKey === 'responsables' ? list : responsables,
+    colaboradores: groupKey === 'colaboradores' ? list : colaboradores
   };
+
+  update(nextState); // llama a onChange
+};
+
 
   const Group = ({ title, groupKey, items, candidates }) => (
     <div className="peopleGroup">

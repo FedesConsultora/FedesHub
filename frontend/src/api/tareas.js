@@ -1,6 +1,5 @@
 import { api } from './client'
 
-
 const base = '/tareas'
 
 const compactParams = (obj = {}) =>
