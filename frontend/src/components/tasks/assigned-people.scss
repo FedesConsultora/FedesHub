@@ -25,7 +25,7 @@ $text: $fh-text;
 }
 
 .peopleGrid{ display:flex; flex-direction: row; justify-content: space-between; align-items: center; 
- padding: 0px 20px; 
+ padding: 20px 60px 6px 20px; 
 width: 100%; }
 .add-col {
 background-color :#2C4450;
@@ -123,16 +123,52 @@ border-radius: 36px;
 .dropdown {
   cursor: pointer;
   position: absolute;
-  top: 0;        
-  left: 0;
+  bottom: 100%;
+top: auto;
+
+left: 50%;
+transform: translateX(-60%);
   z-index: 10;
+  max-height: 180px;
+  overflow-y: auto;
   background:rgba(0,0,0,0.55);
   border: 1px solid #a9a9a9;
   border-radius: 6px;
-  padding: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   min-width: 200px;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-arrow-color: transparent !important;
+  &::-webkit-scrollbar {
+    width: 4px;      
+    background: transparent !important;
+    display: none;
+  }
+    &::-webkit-scrollbar-button {
+    display: none !important;
+       width: 0 !important;
+    height: 0 !important;
+  }
+ &::-webkit-scrollbar-corner{
+  display:none !important;
+ }
+  &::-webkit-scrollbar-track {
+   display: none !important;
+  }
+
+  /* Solo el "cursor" visible */
+  &::-webkit-scrollbar-thumb {
+    background: rgba(39, 38, 38, 0.25); 
+    border-radius: 6px;
+  }
+
+  /* Para Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.35) transparent;
+
+  
 }
+
+
 
 .empty{ color:$muted; }
 .dd-item {
@@ -145,9 +181,9 @@ border-radius: 36px;
     &:hover {
       background-color:  rgba(109, 108, 108, 0.25);
       border-radius: 12px;
-  transform:  scale(1.1);
+
       padding: 7px 11px;
-  transition: transform 0.1s ease, box-shadow 0.1s ease; // transición suave
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
     
       &:last-child {
         padding-bottom: 0;
