@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useState, useCallback, useRef} from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import { tareasApi } from '../../api/tareas'
@@ -48,24 +48,50 @@ export default function TaskDetail({ taskId, onUpdated, onClose}){
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
+    const [form, setForm] = useState({ titulo:'', descripcion:'' })
+  const [saving, setSaving] = useState(false)
 const [peopleForm, setPeopleForm] = useState({
   responsables: [],
   colaboradores: []
 });
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
 
+const handlePeopleChange = async ({ responsables, colaboradores }) => {
+  // Actualización optimista en UI
+  setTask(t => ({
+    ...t,
+    responsables,
+    colaboradores
+  }));
 
-// Inicializar al cargar tarea
+  try {
+    const respIds = responsables.map(p => p.id ?? p.feder_id);
+    const colIds  = colaboradores.map(p => p.id ?? p.feder_id);
+
+    await tareasApi.update(taskId, {
+      responsables_ids: respIds,
+      colaboradores_ids: colIds
+    });
+
+    toast?.success("Participantes actualizados");
+  } catch (e) {
+    toast?.error(e?.message || "No se pudieron actualizar los participantes");
+  }
+};
+
+
+  const firstLoad = useRef(true);
+
 useEffect(() => {
-  if (!task) return
+  if (!task) return;
+
   setPeopleForm({
-    responsables: mapResp(task?.Responsables || task?.responsables || []),
-    colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
-  })
-}, [task])
-  // estado editable
-  const [form, setForm] = useState({ titulo:'', descripcion:'' })
-  const [saving, setSaving] = useState(false)
+    responsables: mapResp(task.responsables || task.Responsables || []),
+    colaboradores: mapCol(task.colaboradores || task.Colaboradores || [])
+  });
+}, [task]);
+
+
 
   // contentEditable
   const titleCE = useContentEditable({
@@ -81,8 +107,11 @@ useEffect(() => {
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
-      tareasApi.catalog().catch(()=>({}))
+      
+      tareasApi.catalog().catch(() => ({}))
+      
     ])
+
     setTask(t)
     setCatalog(cat || {})
     setForm({ titulo: t?.titulo || '', descripcion: t?.descripcion || '' })
@@ -221,6 +250,8 @@ useEffect(() => {
       toast?.error(msg)
     }
   }
+
+
 
 
   return (
@@ -431,11 +462,14 @@ useEffect(() => {
           
             <AssignedPeople
                 
-                responsables={peopleForm.responsables}
+                  responsables={peopleForm.responsables}
   colaboradores={peopleForm.colaboradores}
-                candidatesResp={catalog?.feders || []}  // lista de posibles responsables
-                candidatesCol={catalog?.feders || []}   // lista de posibles colaboradores
-                onChange={setPeopleForm}
+  candidatesResp={catalog?.feders || []}
+  candidatesCol={catalog?.feders || []}
+  onChange={async (next) => {
+    setPeopleForm(next);            // actualiza la UI inmediatamente
+    await handlePeopleChange(next); // guarda en backend
+  }}
    />
          
         

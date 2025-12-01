@@ -190,15 +190,25 @@ $text: $fh-text;
 
   /* ===== Uploader mini ===== */
   .uploader{
-    border:1px dashed $border-strong; background:rgba(255,255,255,.03);
+    border:1px dashed $muted !important;
+    border-radius: 6px;
+    background:rgba(255,255,255,.03);
+    padding: 6px;
    
     &.is-over{ background:rgba(255,255,255,.06); border-color:rgba($fh-accent,.5) }
-    .pickRow{ display:flex; align-items:center; gap:8px; margin: 1rem;}
-    .list{ margin-top:8px; display:grid; gap:6px; }
+    .pickRow{ display:flex; align-items: flex-start; gap:8px; 
+    .hint {
+      align-self: flex-start;
+    }
+   .muted {
+    font-size: .7rem;
+  }}
+    .list{  display:grid; gap:6px; padding: 6px 14px; margin-top: 1rem;}
     .fileItem{
       display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid $border;
-      .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-      .rm{ margin-left:auto; background:transparent; border:0; color:$muted; cursor:pointer; }
+      .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: $muted; font-size: .7rem; font-weight: 400;}
+      .rm{ margin-left:auto; background:transparent; border:0; color:$muted; cursor:pointer; font-size: .7rem; }
+      .muted {font-size: .7rem;}
     }
   }
 
