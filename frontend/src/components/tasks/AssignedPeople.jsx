@@ -38,7 +38,7 @@ const dropdownRef = useRef(null);
 const handleAdd = (groupKey, person) => {
   if (groupKey === "responsables") {
     update({
-      responsables: [...responsables, person],
+      responsables: [person],
       colaboradores
     });
   } else {
