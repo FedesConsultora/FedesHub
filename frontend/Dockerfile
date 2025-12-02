@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN rm -f package-lock.json && npm install
+RUN npm install
 
 
 
