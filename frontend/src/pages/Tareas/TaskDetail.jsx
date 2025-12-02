@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useState, useCallback, useRef} from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import { tareasApi } from '../../api/tareas'
@@ -17,7 +17,11 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
+<<<<<<< HEAD
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
+=======
+import { useAuth, useAuthCtx } from '../../context/AuthContext.jsx'
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
 
 import './task-detail.scss'
 
@@ -49,14 +53,88 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
+<<<<<<< HEAD
   const [peopleForm, setPeopleForm] = useState({
     responsables: [],
     colaboradores: []
   });
+=======
+    const [form, setForm] = useState({ titulo:'', descripcion:'' })
+  const [saving, setSaving] = useState(false)
+const [peopleForm, setPeopleForm] = useState({
+  responsables: [],
+  colaboradores: []
+});
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
 
+  const [isResponsible, setIsResponsible] = useState(false)
 
+  const {user} = useAuthCtx() || {}
+
+
+  console.log('----------------------------------------->',isResponsible)
+
+const handlePeopleChange = async ({ responsables, colaboradores }) => {
+  if (!task) return;
+
+  // Mapear solo IDs
+  const prevRespIds = (task.responsables || task.Responsables || []).map(p => p.id ?? p.feder_id);
+  const newRespIds  = responsables.map(p => p.id ?? p.feder_id);
+
+  const prevColIds = (task.colaboradores || task.Colaboradores || []).map(p => p.id ?? p.feder_id);
+  const newColIds  = colaboradores.map(p => p.id ?? p.feder_id);
+
+  console.log('Prev Responsables:', prevRespIds, 'New Responsables:', newRespIds);
+  console.log('Prev Colaboradores:', prevColIds, 'New Colaboradores:', newColIds);
+
+  // Actualización optimista en UI
+  setTask(t => ({ ...t, responsables, colaboradores }));
+
+  try {
+    // Responsables
+    for (const rId of newRespIds) {
+      if (!prevRespIds.includes(rId)) {
+        console.log('Agregar responsable:', rId);
+        await tareasApi.addResp(taskId, rId);
+      }
+    }
+    for (const rId of prevRespIds) {
+      if (!newRespIds.includes(rId)) {
+        console.log('Eliminar responsable:', rId);
+        await tareasApi.delResp(taskId, rId);
+      }
+    }
+
+    // Colaboradores
+    for (const cId of newColIds) {
+      if (!prevColIds.includes(cId)) {
+        console.log('Agregar colaborador:', cId);
+        await tareasApi.addColab(taskId, cId);
+      }
+    }
+    for (const cId of prevColIds) {
+      if (!newColIds.includes(cId)) {
+        console.log('Eliminar colaborador:', cId);
+        await tareasApi.delColab(taskId, cId);
+      }
+    }
+
+    console.log('Actualización completada');
+    toast?.success("Participantes Actualizados");
+  } catch (e) {
+    console.error('Error actualizando participantes:', e);
+    toast?.error(e?.message || "No se pudieron actualizar los participantes");
+  }
+};
+
+
+
+
+ 
+
+<<<<<<< HEAD
   // Inicializar al cargar tarea
   useEffect(() => {
     if (!task) return
@@ -68,6 +146,28 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   // estado editable
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
+=======
+useEffect(() => {
+  if (!task) return;
+
+  setPeopleForm({
+    responsables: mapResp(task.responsables || task.Responsables || []),
+    colaboradores: mapCol(task.colaboradores || task.Colaboradores || [])
+  });
+}, [task]);
+
+useEffect(() => {
+  if (!task || !user?.id) return
+
+  const normalizedResp = mapResp(task.responsables || task.Responsables || [])
+
+  setIsResponsible(prev => prev || normalizedResp.some(r => r.id === user.id))
+
+  const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
+  setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
+}, [task, user?.id])
+
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
 
   // contentEditable
   const titleCE = useContentEditable({
@@ -79,12 +179,19 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     onChange: (v) => setForm(f => (f.descripcion === v ? f : { ...f, descripcion: v }))
   })
 
-  // cargar
+
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
+<<<<<<< HEAD
       tareasApi.catalog().catch(() => ({}))
+=======
+      
+      tareasApi.catalog().catch(() => ({}))
+      
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
     ])
+
     setTask(t)
     setHistoryRefresh(prev => prev + 1) // Trigger history refresh
     setCatalog(cat || {})
@@ -92,9 +199,16 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     document.title = `${t?.titulo || 'Tarea'}`
   }, [id])
 
+<<<<<<< HEAD
   useEffect(() => { (async () => { await reload() })() }, [reload])
+=======
+    
 
-  // dirty
+
+  useEffect(() => { (async()=>{ await reload() })() }, [reload])
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
+
+ 
   const dirty = useMemo(() => {
     if (!task) return false
     const t = (form.titulo ?? '').trim()
@@ -102,8 +216,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     return t !== (task.titulo ?? '').trim() || d !== (task.descripcion ?? '')
   }, [form, task])
 
+<<<<<<< HEAD
   // autosave (debounce)
   const saveIfDirty = useCallback(async (source = 'auto') => {
+=======
+  
+  const saveIfDirty = useCallback(async (source='auto') => {
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
     if (!dirty || !task || saving) return
     const patch = {}
     const currTitulo = (form.titulo ?? '').trim()
@@ -231,6 +350,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   }
 
 
+
+
   return (
     <div className="taskDetail">
       {/* === Estados + Volver === */}
@@ -265,6 +386,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
           </div> */}
           <div className="meta">
+<<<<<<< HEAD
             <span className="inlineDue">
               <InlineDue
                 value={toInputDate(vencimientoISO)}
@@ -272,6 +394,16 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               />
             </span>
             <TaskStatusCard
+=======
+             <span className="inlineDue">
+                <InlineDue
+                  value={toInputDate(vencimientoISO)}
+                onChange={handleDueChange}
+                disabled={!isResponsible}
+                />
+        </span>
+              <TaskStatusCard
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
               aprobLabel={aprobLabel}
@@ -288,6 +420,14 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 valueName={clienteNombre}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
+<<<<<<< HEAD
+=======
+                
+                  disabled={!isResponsible}
+                
+                />
+              </span>
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
 
               />
             </span>
@@ -437,6 +577,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       <div className='people-detail'>
         {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
           <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
+<<<<<<< HEAD
 
         <AssignedPeople
 
@@ -467,6 +608,22 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
         >
           <FaRegSave size={22} style={{ cursor: 'pointer', position: 'relative', top: '.3rem' }} color='#489FD4' /> Guardar cambios
         </button>
+=======
+          
+            <AssignedPeople
+                
+      responsables={peopleForm.responsables}
+  colaboradores={peopleForm.colaboradores}
+  candidatesResp={catalog?.feders || []}
+  candidatesCol={catalog?.feders || []}
+    onChange={handlePeopleChange} // ← esto asegura persistencia
+
+          disabled={!isResponsible}
+          
+   />
+         
+      
+>>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
       </div>
 
 

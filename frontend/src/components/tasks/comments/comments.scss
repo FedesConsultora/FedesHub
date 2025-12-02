@@ -23,7 +23,7 @@
    
 
     &::-webkit-scrollbar {
-    width: 4px;
+    display: none;
   }
 
   /* fondo del track */
@@ -43,7 +43,7 @@
   }
 
   .card .comments {
-
+background-color: #fff;
     margin-top: 0;
     
     &::-webkit-scrollbar {
@@ -81,7 +81,7 @@ display: none;  }
 
     .title {
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 400;
       color: #202124;
     }
     .subtitle {
@@ -251,7 +251,7 @@ display: none;  }
 
   /* ==== COMPOSER (input para escribir) === */
   .composer {
-    border-top: 1px solid rgba(0,0,0,.1);
+ 
     padding: 2px;
     background: #fff;
     display: grid;
@@ -259,10 +259,14 @@ display: none;  }
     max-height: 50px;
 
     .mentionInput {
-      max-height: 30px;
+      min-width: 120px;
+      width: 100%;
+      height: auto;
+      max-height: 300px;
       border-radius: 16px;
       border: 1px solid #dadce0;
       background: #f8f9fa;
+      padding: 20px 22px;
    
 
       &:focus {

@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
       await auth.login(email, password)
       await ensureCsrf(true)
       const { data } = await auth.getSession()
+      console.log('----------------------------------->Sesion recibida:', data)
       setUser(data?.user || null)
       setRoles(data?.roles || [])
       setPerms(data?.permisos || [])

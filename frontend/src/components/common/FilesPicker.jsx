@@ -41,7 +41,7 @@ export default function FilesPicker({
       onDrop={(e)=>{ e.preventDefault(); setOver(false); add(e.dataTransfer.files) }}
     >
       <div className="pickRow">
-        <MdOutlineUploadFile size={30} color={'#1A73E8'} onClick={()=>inputRef.current?.click()}/>
+        <MdOutlineUploadFile size={36} color={'#1A73E8'} onClick={()=>inputRef.current?.click()} style={{cursor:'pointer'}}/>
         <input ref={inputRef} type="file" multiple hidden onChange={(e)=> add(e.target.files)} />
         <span className="hint">Soltá aquí o elegí archivos. (Imágenes, PDF, docs…)</span>
         {!!files.length && <span className="muted" style={{marginLeft:'auto'}}>{bytesToMB(sizeOf(files)).toFixed(1)} MB totales</span>}

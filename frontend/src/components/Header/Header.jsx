@@ -7,7 +7,8 @@ import BellCluster from '../notifications/BellCluster.jsx'
 import './Header.scss'
 
 export default function Header() {
-  const { user, logout, hasPerm } = useAuthCtx()
+  const { user, logout, hasPerm} = useAuthCtx()
+
   const nav = useNavigate()
   const [open, setOpen] = useState(false) 
 

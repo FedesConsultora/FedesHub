@@ -72,7 +72,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
             <button className="ghost" onClick={onCancelReply} title="Cancelar">✕</button>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexDirection: 'row', padding: 0 }}>
+        <div className='type'  >
            <button className="primary" onClick={handleSend} disabled={!canPost || (!msg.trim() && files.length===0)}>
             <IoMdSend aria-hidden="true" />
           </button>
@@ -87,9 +87,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
           inputRef={inputRef}
         />
 
-        
-         
-      
+          
         </div>
       </div>
 
