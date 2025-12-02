@@ -17,12 +17,8 @@ import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
-<<<<<<< HEAD
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import { useAuth, useAuthCtx } from '../../context/AuthContext.jsx'
-=======
-import {  useAuthCtx } from '../../context/AuthContext.jsx'
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
 
 import './task-detail.scss'
 
@@ -57,19 +53,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
-<<<<<<< HEAD
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
   const [peopleForm, setPeopleForm] = useState({
     responsables: [],
     colaboradores: []
   });
-=======
-const [peopleForm, setPeopleForm] = useState({
-  responsables: [],
-  colaboradores: []
-});
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
 
@@ -136,11 +125,6 @@ const [peopleForm, setPeopleForm] = useState({
 
 
 
-<<<<<<< HEAD
-=======
- 
-
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
   // Inicializar al cargar tarea
   useEffect(() => {
     if (!task) return
@@ -149,14 +133,6 @@ const [peopleForm, setPeopleForm] = useState({
       colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
     })
   }, [task])
-<<<<<<< HEAD
-=======
-  // estado editable
-  const [form, setForm] = useState({ titulo: '', descripcion: '' })
-  const [saving, setSaving] = useState(false)
-useEffect(() => {
-  if (!task) return;
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
 
   useEffect(() => {
     if (!task || !user?.id) return
@@ -169,13 +145,6 @@ useEffect(() => {
     setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
   }, [task, user?.id])
 
-<<<<<<< HEAD
-=======
-  const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
-  setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
-}, [task, user?.id])
-
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
 
   // contentEditable
   const titleCE = useContentEditable({
@@ -191,15 +160,9 @@ useEffect(() => {
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
-<<<<<<< HEAD
 
       tareasApi.catalog().catch(() => ({}))
 
-=======
-      
-      tareasApi.catalog().catch(() => ({}))
-      
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
     ])
 
     setTask(t)
@@ -209,18 +172,9 @@ useEffect(() => {
     document.title = `${t?.titulo || 'Tarea'}`
   }, [id])
 
-<<<<<<< HEAD
   useEffect(() => { (async () => { await reload() })() }, [reload])
 
 
-=======
-    
-
-
-  useEffect(() => { (async()=>{ await reload() })() }, [reload])
-
- 
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
   const dirty = useMemo(() => {
     if (!task) return false
     const t = (form.titulo ?? '').trim()
@@ -228,13 +182,8 @@ useEffect(() => {
     return t !== (task.titulo ?? '').trim() || d !== (task.descripcion ?? '')
   }, [form, task])
 
-<<<<<<< HEAD
 
   const saveIfDirty = useCallback(async (source = 'auto') => {
-=======
-  
-  const saveIfDirty = useCallback(async (source='auto') => {
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
     if (!dirty || !task || saving) return
     const patch = {}
     const currTitulo = (form.titulo ?? '').trim()
@@ -405,7 +354,6 @@ useEffect(() => {
             {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
           </div> */}
           <div className="meta">
-<<<<<<< HEAD
             <span className="inlineDue">
               <InlineDue
                 value={toInputDate(vencimientoISO)}
@@ -414,16 +362,6 @@ useEffect(() => {
               />
             </span>
             <TaskStatusCard
-=======
-             <span className="inlineDue">
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                onChange={handleDueChange}
-                disabled={!isResponsible}
-                />
-        </span>
-              <TaskStatusCard
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
               aprobLabel={aprobLabel}
@@ -440,18 +378,11 @@ useEffect(() => {
                 valueName={clienteNombre}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-<<<<<<< HEAD
 
                 disabled={!isResponsible}
-=======
-                
-                  disabled={!isResponsible}
-                
-                />
-              </span>
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
 
-             
+              />
+            </span>
 
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
@@ -585,7 +516,6 @@ useEffect(() => {
       <div className='people-detail'>
         {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
           <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
-<<<<<<< HEAD
 
         <AssignedPeople
 
@@ -607,22 +537,6 @@ useEffect(() => {
         )}
 
 
-=======
-          
-            <AssignedPeople
-                
-      responsables={peopleForm.responsables}
-  colaboradores={peopleForm.colaboradores}
-  candidatesResp={catalog?.feders || []}
-  candidatesCol={catalog?.feders || []}
-    onChange={handlePeopleChange} // ← esto asegura persistencia
-
-          disabled={!isResponsible}
-          
-   />
-         
-      
->>>>>>> 5619d5e88de667d40085db04469052b5445c2628
       </div>
 
 
