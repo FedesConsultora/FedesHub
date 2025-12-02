@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef} from 'react'
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FaArrowLeft } from 'react-icons/fa'
 import { tareasApi } from '../../api/tareas'
 import TaskStatusCard from '../../components/tasks/TaskStatusCard'
 import TaskHeaderActions from '../../components/tasks/TaskHeaderActions'
@@ -17,14 +16,15 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
 import { FaRegSave } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
-<<<<<<< HEAD
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
-=======
+import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import { useAuth, useAuthCtx } from '../../context/AuthContext.jsx'
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
 
 import './task-detail.scss'
 
+/* === helpers normalization === */
+const mapResp = (arr = []) => arr.map(r => r?.feder ? ({ ...r.feder, es_lider: !!r.es_lider, avatar_url: r.feder.avatar_url || null }) : r)
+const mapCol = (arr = []) => arr.map(c => c?.feder ? ({ ...c.feder, rol: c.rol ?? null, avatar_url: c.feder.avatar_url || null }) : c)
 
 /* === helpers fecha === */
 const toInputDate = (iso) => {
@@ -53,88 +53,78 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
   const [tab, setTab] = useState('desc')
-<<<<<<< HEAD
+  const [form, setForm] = useState({ titulo: '', descripcion: '' })
+  const [saving, setSaving] = useState(false)
   const [peopleForm, setPeopleForm] = useState({
     responsables: [],
     colaboradores: []
   });
-=======
-    const [form, setForm] = useState({ titulo:'', descripcion:'' })
-  const [saving, setSaving] = useState(false)
-const [peopleForm, setPeopleForm] = useState({
-  responsables: [],
-  colaboradores: []
-});
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
   const [showCommentsPopup, setShowCommentsPopup] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
 
   const [isResponsible, setIsResponsible] = useState(false)
 
-  const {user} = useAuthCtx() || {}
+  const { user } = useAuthCtx() || {}
 
 
-  console.log('----------------------------------------->',isResponsible)
+  console.log('----------------------------------------->', isResponsible)
 
-const handlePeopleChange = async ({ responsables, colaboradores }) => {
-  if (!task) return;
+  const handlePeopleChange = async ({ responsables, colaboradores }) => {
+    if (!task) return;
 
-  // Mapear solo IDs
-  const prevRespIds = (task.responsables || task.Responsables || []).map(p => p.id ?? p.feder_id);
-  const newRespIds  = responsables.map(p => p.id ?? p.feder_id);
+    // Mapear solo IDs
+    const prevRespIds = (task.responsables || task.Responsables || []).map(p => p.id ?? p.feder_id);
+    const newRespIds = responsables.map(p => p.id ?? p.feder_id);
 
-  const prevColIds = (task.colaboradores || task.Colaboradores || []).map(p => p.id ?? p.feder_id);
-  const newColIds  = colaboradores.map(p => p.id ?? p.feder_id);
+    const prevColIds = (task.colaboradores || task.Colaboradores || []).map(p => p.id ?? p.feder_id);
+    const newColIds = colaboradores.map(p => p.id ?? p.feder_id);
 
-  console.log('Prev Responsables:', prevRespIds, 'New Responsables:', newRespIds);
-  console.log('Prev Colaboradores:', prevColIds, 'New Colaboradores:', newColIds);
+    console.log('Prev Responsables:', prevRespIds, 'New Responsables:', newRespIds);
+    console.log('Prev Colaboradores:', prevColIds, 'New Colaboradores:', newColIds);
 
-  // Actualización optimista en UI
-  setTask(t => ({ ...t, responsables, colaboradores }));
+    // Actualización optimista en UI
+    setTask(t => ({ ...t, responsables, colaboradores }));
 
-  try {
-    // Responsables
-    for (const rId of newRespIds) {
-      if (!prevRespIds.includes(rId)) {
-        console.log('Agregar responsable:', rId);
-        await tareasApi.addResp(taskId, rId);
+    try {
+      // Responsables
+      for (const rId of newRespIds) {
+        if (!prevRespIds.includes(rId)) {
+          console.log('Agregar responsable:', rId);
+          await tareasApi.addResp(taskId, rId);
+        }
       }
-    }
-    for (const rId of prevRespIds) {
-      if (!newRespIds.includes(rId)) {
-        console.log('Eliminar responsable:', rId);
-        await tareasApi.delResp(taskId, rId);
+      for (const rId of prevRespIds) {
+        if (!newRespIds.includes(rId)) {
+          console.log('Eliminar responsable:', rId);
+          await tareasApi.delResp(taskId, rId);
+        }
       }
-    }
 
-    // Colaboradores
-    for (const cId of newColIds) {
-      if (!prevColIds.includes(cId)) {
-        console.log('Agregar colaborador:', cId);
-        await tareasApi.addColab(taskId, cId);
+      // Colaboradores
+      for (const cId of newColIds) {
+        if (!prevColIds.includes(cId)) {
+          console.log('Agregar colaborador:', cId);
+          await tareasApi.addColab(taskId, cId);
+        }
       }
-    }
-    for (const cId of prevColIds) {
-      if (!newColIds.includes(cId)) {
-        console.log('Eliminar colaborador:', cId);
-        await tareasApi.delColab(taskId, cId);
+      for (const cId of prevColIds) {
+        if (!newColIds.includes(cId)) {
+          console.log('Eliminar colaborador:', cId);
+          await tareasApi.delColab(taskId, cId);
+        }
       }
+
+      console.log('Actualización completada');
+      toast?.success("Participantes Actualizados");
+    } catch (e) {
+      console.error('Error actualizando participantes:', e);
+      toast?.error(e?.message || "No se pudieron actualizar los participantes");
     }
-
-    console.log('Actualización completada');
-    toast?.success("Participantes Actualizados");
-  } catch (e) {
-    console.error('Error actualizando participantes:', e);
-    toast?.error(e?.message || "No se pudieron actualizar los participantes");
-  }
-};
+  };
 
 
 
 
- 
-
-<<<<<<< HEAD
   // Inicializar al cargar tarea
   useEffect(() => {
     if (!task) return
@@ -143,31 +133,18 @@ const handlePeopleChange = async ({ responsables, colaboradores }) => {
       colaboradores: mapCol(task?.Colaboradores || task?.colaboradores || [])
     })
   }, [task])
-  // estado editable
-  const [form, setForm] = useState({ titulo: '', descripcion: '' })
-  const [saving, setSaving] = useState(false)
-=======
-useEffect(() => {
-  if (!task) return;
 
-  setPeopleForm({
-    responsables: mapResp(task.responsables || task.Responsables || []),
-    colaboradores: mapCol(task.colaboradores || task.Colaboradores || [])
-  });
-}, [task]);
+  useEffect(() => {
+    if (!task || !user?.id) return
 
-useEffect(() => {
-  if (!task || !user?.id) return
+    const normalizedResp = mapResp(task.responsables || task.Responsables || [])
 
-  const normalizedResp = mapResp(task.responsables || task.Responsables || [])
+    setIsResponsible(prev => prev || normalizedResp.some(r => r.id === user.id))
 
-  setIsResponsible(prev => prev || normalizedResp.some(r => r.id === user.id))
+    const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
+    setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
+  }, [task, user?.id])
 
-  const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
-  setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
-}, [task, user?.id])
-
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
 
   // contentEditable
   const titleCE = useContentEditable({
@@ -183,13 +160,9 @@ useEffect(() => {
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
-<<<<<<< HEAD
+
       tareasApi.catalog().catch(() => ({}))
-=======
-      
-      tareasApi.catalog().catch(() => ({}))
-      
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
+
     ])
 
     setTask(t)
@@ -199,16 +172,9 @@ useEffect(() => {
     document.title = `${t?.titulo || 'Tarea'}`
   }, [id])
 
-<<<<<<< HEAD
   useEffect(() => { (async () => { await reload() })() }, [reload])
-=======
-    
 
 
-  useEffect(() => { (async()=>{ await reload() })() }, [reload])
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
-
- 
   const dirty = useMemo(() => {
     if (!task) return false
     const t = (form.titulo ?? '').trim()
@@ -216,13 +182,8 @@ useEffect(() => {
     return t !== (task.titulo ?? '').trim() || d !== (task.descripcion ?? '')
   }, [form, task])
 
-<<<<<<< HEAD
-  // autosave (debounce)
+
   const saveIfDirty = useCallback(async (source = 'auto') => {
-=======
-  
-  const saveIfDirty = useCallback(async (source='auto') => {
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
     if (!dirty || !task || saving) return
     const patch = {}
     const currTitulo = (form.titulo ?? '').trim()
@@ -292,8 +253,6 @@ useEffect(() => {
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
 
-  const mapResp = (arr = []) => arr.map(r => r?.feder ? ({ ...r.feder, es_lider: !!r.es_lider, avatar_url: r.feder.avatar_url || null }) : r)
-  const mapCol = (arr = []) => arr.map(c => c?.feder ? ({ ...c.feder, rol: c.rol ?? null, avatar_url: c.feder.avatar_url || null }) : c)
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
 
@@ -349,7 +308,16 @@ useEffect(() => {
     }
   }
 
-
+  const handleBoostChange = async (enabled) => {
+    try {
+      const next = await tareasApi.setBoost(taskId, enabled);
+      setTask(next);
+      setHistoryRefresh(prev => prev + 1);
+      toast?.success(enabled ? 'Prioridad aumentada' : 'Prioridad normal');
+    } catch (e) {
+      toast?.error(e?.message || 'No se pudo cambiar la prioridad');
+    }
+  }
 
 
   return (
@@ -386,24 +354,14 @@ useEffect(() => {
             {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
           </div> */}
           <div className="meta">
-<<<<<<< HEAD
             <span className="inlineDue">
               <InlineDue
                 value={toInputDate(vencimientoISO)}
                 onChange={handleDueChange}
+                disabled={!isResponsible}
               />
             </span>
             <TaskStatusCard
-=======
-             <span className="inlineDue">
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                onChange={handleDueChange}
-                disabled={!isResponsible}
-                />
-        </span>
-              <TaskStatusCard
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
               aprobLabel={aprobLabel}
@@ -420,14 +378,8 @@ useEffect(() => {
                 valueName={clienteNombre}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-<<<<<<< HEAD
-=======
-                
-                  disabled={!isResponsible}
-                
-                />
-              </span>
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
+
+                disabled={!isResponsible}
 
               />
             </span>
@@ -450,16 +402,8 @@ useEffect(() => {
           </div>
         </div>
 
-
-
-
-
-
-
-
       </div>
 
-      {/* === Layout === */}
       <div className="grid">
         {/* LEFT */}
         <div className="left">
@@ -522,12 +466,7 @@ useEffect(() => {
               className="commentsToggleBtn"
               onClick={() => setShowCommentsPopup(v => !v)} />
 
-
-
-
-
-
-
+            
           </div>
           {/* === Panel de comentarios === */}
           {showCommentsPopup && (
@@ -577,53 +516,27 @@ useEffect(() => {
       <div className='people-detail'>
         {/* <button  onClick={()=>setEditPeople(false)}>Ver</button>
           <button  onClick={()=>setEditPeople(true)}>Editar</button> */}
-<<<<<<< HEAD
 
         <AssignedPeople
 
           responsables={peopleForm.responsables}
           colaboradores={peopleForm.colaboradores}
-          candidatesResp={catalog?.feders || []}  // lista de posibles responsables
-          candidatesCol={catalog?.feders || []}   // lista de posibles colaboradores
-          onChange={setPeopleForm}
-        />
-
-
-        <button
-          style={{ alignSelf: 'flex-end', marginBottom: '1rem' }}
-          className="saveBtn"
-          disabled={saving}
-        // onClick={async () => {
-        //   try {
-        //     setSaving(true)
-        //     await tareasApi.updatePeople(taskId, peopleForm)
-        //     setTask(await tareasApi.get(taskId))
-        //     toast?.success('Cambios guardados')
-        //   } catch(e) {
-        //     toast?.error(e?.message || 'No se pudo guardar')
-        //   } finally {
-        //     setSaving(false)
-        //   }
-        // }}
-        >
-          <FaRegSave size={22} style={{ cursor: 'pointer', position: 'relative', top: '.3rem' }} color='#489FD4' /> Guardar cambios
-        </button>
-=======
-          
-            <AssignedPeople
-                
-      responsables={peopleForm.responsables}
-  colaboradores={peopleForm.colaboradores}
-  candidatesResp={catalog?.feders || []}
-  candidatesCol={catalog?.feders || []}
-    onChange={handlePeopleChange} // ← esto asegura persistencia
+          candidatesResp={catalog?.feders || []}
+          candidatesCol={catalog?.feders || []}
+          onChange={handlePeopleChange} // ← esto asegura persistencia
 
           disabled={!isResponsible}
-          
-   />
-         
-      
->>>>>>> 876088993320cb6c582a59daba3bd64b7b99bf62
+
+        />
+        {isResponsible && (
+              <PriorityBoostCheckbox
+                taskId={Number(taskId)}
+                enabled={task?.boost_manual > 0}
+                onChange={handleBoostChange}
+              />
+        )}
+
+
       </div>
 
 

@@ -81,4 +81,8 @@ export const tareasApi = {
   // Historial
   getHistorial: (id, params = {}) =>
     api.get(`${base}/${id}/historial`, { params: compactParams(params) }).then(r => r.data),
+
+  // Boost manual
+  setBoost: (id, enabled) =>
+    api.patch(`${base}/${id}/boost`, { enabled }).then(r => r.data),
 }

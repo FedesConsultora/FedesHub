@@ -16,7 +16,7 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial
+  getHistorial, patchBoostManual
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -75,6 +75,9 @@ router.post('/:id/comentarios', requireAuth, requirePermission('tareas', 'commen
 
 // Historial de cambios
 router.get('/:id/historial', requireAuth, requirePermission('tareas', 'read'), getHistorial);
+
+// Boost manual (prioridad)
+router.patch('/:id/boost', requireAuth, requirePermission('tareas', 'update'), patchBoostManual);
 
 // Adjuntos de tarea (no los del comentario, que se suben junto al comentario)
 router.get('/:id/adjuntos', requireAuth, requirePermission('tareas', 'read'), getAdjuntos);

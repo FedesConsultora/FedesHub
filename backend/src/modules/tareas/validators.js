@@ -170,7 +170,11 @@ export const comentarioIdParam = z.object({ comentarioId: intId });
 
 // ---------- Historial ----------
 export const historialQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
   offset: z.coerce.number().int().min(0).optional().default(0),
-  tipo_cambio: z.string().min(1).max(50).optional()
+  tipo_cambio: z.string().trim().min(1).optional()
+});
+
+export const boostManualSchema = z.object({
+  enabled: z.boolean()
 });

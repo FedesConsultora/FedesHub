@@ -21,15 +21,18 @@ export default (sequelize, DataTypes) => {
     impacto_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 2 },
     urgencia_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
     prioridad_num: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    boost_manual: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     cliente_ponderacion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
-    progreso_pct: { type: DataTypes.DECIMAL(5,2), allowNull: false, defaultValue: 0.00 },
+    progreso_pct: { type: DataTypes.DECIMAL(5, 2), allowNull: false, defaultValue: 0.00 },
     orden_kanban: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     is_archivada: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     finalizada_at: { type: DataTypes.DATE },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'Tarea', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
-       indexes: [{ fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
-                 { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }] });
+  }, {
+    tableName: 'Tarea', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
+    indexes: [{ fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
+    { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }]
+  });
   return Tarea;
 };

@@ -71,7 +71,7 @@ $muted: v.$fh-muted;
   .historyList {
     display: flex;
     flex-direction: column;
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
 
     /* Custom scrollbar */

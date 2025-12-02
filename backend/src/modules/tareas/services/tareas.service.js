@@ -121,7 +121,7 @@ const buildListSQL = (params = {}, currentUser) => {
       t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       t.impacto_id, it.puntos AS impacto_puntos, t.urgencia_id, ut.puntos AS urgencia_puntos,
       t.aprobacion_estado_id,
-      t.prioridad_num, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
+      t.prioridad_num, t.boost_manual, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
       t.progreso_pct, t.created_at, t.updated_at,
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.nombre AS cliente_nombre,
@@ -269,7 +269,7 @@ const buildListSQL = (params = {}, currentUser) => {
           : orden_by === 'updated_at' ? 't.updated_at'
             : orden_by === 'cliente' ? 'cliente_nombre'
               : orden_by === 'titulo' ? 't.titulo'
-                : 't.prioridad_num'; // default
+                : '(t.prioridad_num + t.boost_manual)'; // default con boost
 
   sql += ` ORDER BY ${orderCol} ${sort.toUpperCase()} NULLS LAST, t.id DESC LIMIT :limit OFFSET :offset`;
 
@@ -1257,6 +1257,52 @@ export const svcUpdateTask = async (id, body, user) => {
   await updateTask(id, body, user?.feder_id);
   return getTaskById(id, user);
 };
+// ========== BOOST MANUAL ========== //
+export const svcSetBoostManual = async (tarea_id, enabled, user) => {
+  const feder_id = user?.feder_id;
+  if (!feder_id) throw new Error('Usuario no autenticado');
+
+  return await sequelize.transaction(async (t) => {
+    const tarea = await models.Tarea.findByPk(tarea_id, { transaction: t });
+    if (!tarea) throw new Error('Tarea no encontrada');
+
+    // Validar que sea responsable
+    const isResponsable = await models.TareaResponsable.findOne({
+      where: { tarea_id, feder_id },
+      transaction: t
+    });
+
+    if (!isResponsable) {
+      throw new Error('Solo los responsables pueden dar prioridad a la tarea');
+    }
+
+    const boost_manual = enabled ? 300 : 0;
+    const anterior = tarea.boost_manual;
+
+    // Actualizar boost
+    await models.Tarea.update(
+      { boost_manual },
+      { where: { id: tarea_id }, transaction: t }
+    );
+
+    // Registrar en historial
+    await registrarCambio({
+      tarea_id,
+      feder_id,
+      tipo_cambio: TIPO_CAMBIO.PRIORIDAD,
+      accion: enabled ? ACCION.UPDATED : ACCION.UPDATED,
+      valor_anterior: { boost: anterior },
+      valor_nuevo: { boost: boost_manual },
+      descripcion: enabled
+        ? 'Dio prioridad manual a la tarea'
+        : 'Quitó prioridad manual de la tarea',
+      transaction: t
+    });
+
+    return await models.Tarea.findByPk(tarea_id, { transaction: t });
+  });
+};
+
 export const svcArchiveTask = (id, on = true) => archiveTask(id, on);
 
 // Responsables / Colaboradores

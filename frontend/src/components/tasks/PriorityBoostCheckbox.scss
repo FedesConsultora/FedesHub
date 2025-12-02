@@ -1,0 +1,57 @@
+@use '../../styles/variables' as v;
+
+.priorityBoostCheckbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    min-width: 140px;
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    .icon {
+        color: v.$fh-muted;
+        font-size: 0.9rem;
+        transition: color 0.2s ease;
+    }
+
+    .label {
+        color: v.$fh-text;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    &:hover:not(.busy) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 139, 61, 0.3);
+
+        .icon {
+            color: rgba(255, 139, 61, 0.8);
+        }
+    }
+
+    &.active {
+        background: rgba(255, 139, 61, 0.15);
+        border-color: rgba(255, 139, 61, 0.4);
+
+        .icon {
+            color: #ff8b3d;
+        }
+
+        .label {
+            color: #ff8b3d;
+        }
+    }
+
+    &.busy {
+        opacity: 0.6;
+        cursor: wait;
+    }
+}

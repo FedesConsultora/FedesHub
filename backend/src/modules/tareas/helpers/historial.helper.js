@@ -27,6 +27,7 @@ export const TIPO_CAMBIO = {
     ETIQUETA: 'etiqueta',
     PROGRESO: 'progreso',
     ARCHIVADO: 'archivado',
+    PRIORIDAD: 'prioridad',
     ADJUNTO: 'adjunto',
     RELACION: 'relacion'
 };

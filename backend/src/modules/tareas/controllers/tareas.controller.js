@@ -8,7 +8,7 @@ import {
   commentCreateSchema, adjuntoCreateSchema, relacionCreateSchema,
   toggleBoolSchema,
   idParam, itemIdParam, federIdParam, etiquetaIdParam, adjIdParam, relIdParam, comentarioIdParam, composeQuerySchema, setLeaderBodySchema,
-  historialQuerySchema
+  historialQuerySchema, boostManualSchema
 } from '../validators.js';
 
 import {
@@ -20,7 +20,7 @@ import {
   svcCreateRelacion, svcDeleteRelacion,
   svcSetFavorito, svcSetSeguidor, svcSetEstado, svcSetAprobacion, svcMoveKanban,
   svcGetCompose, svcSetResponsableLeader,
-  svcGetHistorial
+  svcGetHistorial, svcSetBoostManual
 } from '../services/tareas.service.js';
 
 import { saveUploadedFiles, getFolderLink } from '../../../infra/storage/index.js';
@@ -522,6 +522,15 @@ export const getHistorial = async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const query = historialQuerySchema.parse(req.query);
     const result = await svcGetHistorial(id, query);
+    res.json(result);
+  } catch (e) { next(e); }
+};
+
+export const patchBoostManual = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const { enabled } = boostManualSchema.parse(req.body);
+    const result = await svcSetBoostManual(id, enabled, req.user);
     res.json(result);
   } catch (e) { next(e); }
 };
