@@ -4,23 +4,12 @@ import { tareasApi } from '../../api/tareas'
 import './task-history.scss'
 
 const TIPO_CAMBIO_LABELS = {
-    estado: 'Estado',
+    estado: 'Cambios de estado',
+    cliente: 'Cambios de cliente',
+    deadline: 'Cambios de deadline',
+    adjunto: 'Carga de archivos',
     responsable: 'Responsable',
-    colaborador: 'Colaborador',
-    deadline: 'Fecha de vencimiento',
-    fecha_inicio: 'Fecha de inicio',
-    aprobacion: 'Aprobación',
-    cliente: 'Cliente',
-    hito: 'Hito',
-    titulo: 'Título',
-    descripcion: 'Descripción',
-    impacto: 'Impacto',
-    urgencia: 'Urgencia',
-    etiqueta: 'Etiqueta',
-    progreso: 'Progreso',
-    archivado: 'Archivado',
-    adjunto: 'Adjunto',
-    relacion: 'Relación'
+    colaborador: 'Colaborador'
 }
 
 const ACCION_LABELS = {

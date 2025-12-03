@@ -1,11 +1,12 @@
 @use '../../styles/variables' as *;
 
 /* ===== Personas asignadas (modo Ver) ===== */
-$surface: rgba(14,18,26,.78);
-$border: rgba(255,255,255,.08);
-$border-strong: rgba(255,255,255,.14);
+$surface: rgba(14, 18, 26, .78);
+$border: rgba(255, 255, 255, .08);
+$border-strong: rgba(255, 255, 255, .14);
 $muted: $fh-muted;
 $text: $fh-text;
+
 .addWrapper {
   position: relative;
   display: inline-block;
@@ -24,23 +25,35 @@ $text: $fh-text;
   z-index: 20;
 }
 
-.peopleGrid{ display:flex; flex-direction: row; justify-content: space-between; align-items: center; 
- padding: 20px 60px 6px 20px; 
-width: 100%; }
-.add-col {
-background-color :#2C4450;
-color: #fff;
-border-radius: 36px;
-}
-.peopleGroup{
-  
-  padding:10px; 
- 
+.peopleGrid {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px 6px 20px;
+  width: 100%;
 }
 
-.pgHead{
-  display:flex; align-items:center; justify-content: flex-start ;gap: 4px;
-  margin-bottom:8px; font-weight:800; color:$text;
+.add-col {
+  background-color: #2C4450;
+  color: #fff;
+  border-radius: 36px;
+}
+
+.peopleGroup {
+
+  padding: 10px;
+
+}
+
+.pgHead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-weight: 800;
+  color: $text;
 
   span {
     font-weight: 400;
@@ -50,44 +63,80 @@ border-radius: 36px;
 }
 
 /* pequeño espacio entre personas */
-.peopleList{ display:flex;  flex-direction: row; 
-  flex-wrap: wrap;       
-  gap: 1px; cursor: pointer; }
-
-.person{
-  position: relative;
- display: flex;
- flex-wrap: wrap;
-  align-items:center; 
-  padding: 1px; border-radius:24px;
-   background: transparent;
-   cursor: pointer;
-
-
-  img, .fhAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:1px solid $border }
-
-  .info{
-    display:grid; gap:2px; min-width:0;
-    .name{ font-size:.9rem; font-weight: 400; color:$text; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-    .newTag {
-  margin-left: 6px;
-  background: #10bc83;
-  color: #fff;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 12px;
+.peopleList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1px;
+  cursor: pointer;
 }
 
-  
+.person {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 1px;
+  border-radius: 24px;
+  background: transparent;
+  cursor: pointer;
+
+
+  img,
+  .fhAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 1px solid $border
   }
 
-  .badge:empty{ display:none; }
-  .badge{
-    margin-left:auto; display:inline-flex; align-items:center; gap:6px;
-    padding:4px 8px; border-radius:999px; font-size:.78rem; font-weight:700;
-    color:#f6e7b1; background:rgba(245,184,0,.12); border:1px solid rgba(245,184,0,.35);
-    .crown{ color:#f5b800 }
+  .info {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+
+    .name {
+      font-size: .9rem;
+      font-weight: 400;
+      color: $text;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .newTag {
+      margin-left: 6px;
+      background: #10bc83;
+      color: #fff;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 12px;
+    }
+
+
+  }
+
+  .badge:empty {
+    display: none;
+  }
+
+  .badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #f6e7b1;
+    background: rgba(245, 184, 0, .12);
+    border: 1px solid rgba(245, 184, 0, .35);
+
+    .crown {
+      color: #f5b800
+    }
   }
 }
 
@@ -124,53 +173,60 @@ border-radius: 36px;
   cursor: pointer;
   position: absolute;
   bottom: 100%;
-top: auto;
+  top: auto;
 
-left: 50%;
-transform: translateX(-60%);
+  left: 50%;
+  transform: translateX(-60%);
   z-index: 10;
   max-height: 180px;
   overflow-y: auto;
-  background:rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.55);
   border: 1px solid #a9a9a9;
   border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   min-width: 200px;
   scrollbar-gutter: stable both-edges;
   scrollbar-arrow-color: transparent !important;
+
   &::-webkit-scrollbar {
-    width: 4px;      
+    width: 4px;
     background: transparent !important;
     display: none;
   }
-    &::-webkit-scrollbar-button {
+
+  &::-webkit-scrollbar-button {
     display: none !important;
-       width: 0 !important;
+    width: 0 !important;
     height: 0 !important;
   }
- &::-webkit-scrollbar-corner{
-  display:none !important;
- }
+
+  &::-webkit-scrollbar-corner {
+    display: none !important;
+  }
+
   &::-webkit-scrollbar-track {
-   display: none !important;
+    display: none !important;
   }
 
   /* Solo el "cursor" visible */
   &::-webkit-scrollbar-thumb {
-    background: rgba(39, 38, 38, 0.25); 
+    background: rgba(39, 38, 38, 0.25);
     border-radius: 6px;
   }
 
   /* Para Firefox */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.35) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
 
-  
+
 }
 
 
 
-.empty{ color:$muted; }
+.empty {
+  color: $muted;
+}
+
 .dd-item {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   display: flex;
@@ -178,27 +234,27 @@ transform: translateX(-60%);
   justify-content: space-between;
   padding: 6px 10px;
 
-    &:hover {
-      background-color:  rgba(109, 108, 108, 0.25);
-      border-radius: 12px;
+  &:hover {
+    background-color: rgba(109, 108, 108, 0.25);
+    border-radius: 12px;
 
-      padding: 7px 11px;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-    
-      &:last-child {
-        padding-bottom: 0;
-        margin:0;
-      }
+    padding: 7px 11px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    &:last-child {
+      padding-bottom: 0;
+      margin: 0;
     }
+  }
 
-  
+
 
   .dd-name {
     cursor: pointer;
     flex: 1;
     font-size: 1rem;
 
-  
+
   }
 
   .dd-remove {

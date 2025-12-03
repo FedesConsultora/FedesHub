@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { tareasApi } from '../../api/tareas'
 import TaskStatusCard from '../../components/tasks/TaskStatusCard'
-import TaskHeaderActions from '../../components/tasks/TaskHeaderActions'
+
 import AssignedPeople from '../../components/tasks/AssignedPeople'
 import LabelChip from '../../components/common/LabelChip'
 import TaskComments from '../../components/tasks/comments'
@@ -14,7 +14,7 @@ import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown } from 'react-icons/md'
-import { FaRegSave } from "react-icons/fa";
+import { FaRegSave, FaStar } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
@@ -79,23 +79,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     const prevColIds = (task.colaboradores || task.Colaboradores || []).map(p => p.id ?? p.feder_id);
     const newColIds = colaboradores.map(p => p.id ?? p.feder_id);
 
-    console.log('Prev Responsables:', prevRespIds, 'New Responsables:', newRespIds);
-    console.log('Prev Colaboradores:', prevColIds, 'New Colaboradores:', newColIds);
-
-    // Actualización optimista en UI
-    setTask(t => ({ ...t, responsables, colaboradores }));
+    // Actualización optimista SOLO en peopleForm (evita parpadeo del header)
+    setPeopleForm({ responsables, colaboradores });
 
     try {
       // Responsables
       for (const rId of newRespIds) {
         if (!prevRespIds.includes(rId)) {
-          console.log('Agregar responsable:', rId);
           await tareasApi.addResp(taskId, rId);
         }
       }
       for (const rId of prevRespIds) {
         if (!newRespIds.includes(rId)) {
-          console.log('Eliminar responsable:', rId);
           await tareasApi.delResp(taskId, rId);
         }
       }
@@ -103,21 +98,30 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       // Colaboradores
       for (const cId of newColIds) {
         if (!prevColIds.includes(cId)) {
-          console.log('Agregar colaborador:', cId);
           await tareasApi.addColab(taskId, cId);
         }
       }
       for (const cId of prevColIds) {
         if (!newColIds.includes(cId)) {
-          console.log('Eliminar colaborador:', cId);
           await tareasApi.delColab(taskId, cId);
         }
       }
 
-      console.log('Actualización completada');
+      setHistoryRefresh(prev => prev + 1);
       toast?.success("Participantes Actualizados");
     } catch (e) {
-      console.error('Error actualizando participantes:', e);
+      // Si falla, revertir a los valores originales de task
+      const revertResp = (task.responsables || task.Responsables || []).map(p => ({
+        ...p,
+        id: p.id || p.feder_id,
+        feder_id: p.feder_id || p.id
+      }));
+      const revertCol = (task.colaboradores || task.Colaboradores || []).map(p => ({
+        ...p,
+        id: p.id || p.feder_id,
+        feder_id: p.feder_id || p.id
+      }));
+      setPeopleForm({ responsables: revertResp, colaboradores: revertCol });
       toast?.error(e?.message || "No se pudieron actualizar los participantes");
     }
   };
@@ -192,14 +196,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     if (currDesc !== (task.descripcion ?? '')) patch.descripcion = currDesc
     if (!Object.keys(patch).length) return
 
+    console.log('[TaskDetail] Guardando cambios:', { taskId, patch })
+
     try {
       setSaving(true)
-      const next = await tareasApi.update(id, patch)
+      const next = await tareasApi.update(taskId, patch)
+      console.log('[TaskDetail] Guardado exitoso:', next)
       setTask(next)
       setHistoryRefresh(prev => prev + 1)
       setForm({ titulo: next?.titulo || '', descripcion: next?.descripcion || '' })
       toast?.success(source === 'auto' ? 'Cambios guardados' : 'Guardado')
     } catch (e) {
+      console.error('[TaskDetail] Error al guardar:', e)
       toast?.error(e?.message || 'No se pudo guardar')
     } finally { setSaving(false) }
   }, [dirty, form, taskId, task, saving, toast])
@@ -257,7 +265,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
 
   const isFavorita = !!(task.is_favorita || task.favorita)
-  const isSeguidor = !!(task.is_seguidor || task.seguidor)
 
   const fmtDate = (d) => { try { return new Date(d).toLocaleDateString() } catch { return '' } }
 
@@ -384,20 +391,20 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               />
             </span>
 
+            <button
+              className={`favBtn ${isFavorita ? 'active' : ''}`}
+              onClick={async () => {
+                const t = await tareasApi.toggleFavorito(taskId, !isFavorita);
+                setTask(t);
+                setHistoryRefresh(prev => prev + 1);
+                toast?.success(isFavorita ? 'Quitado de favoritos' : 'Agregado a favoritos');
+              }}
+              title={isFavorita ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+            >
+              <FaStar />
+            </button>
+
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
-
-
-            {/* Acciones derechas: sólo acciones rápidas */}
-            <div className="actions">
-              <TaskHeaderActions
-                isFavorita={isFavorita}
-                isSeguidor={isSeguidor}
-                onToggleFav={async on => { const t = await tareasApi.toggleFavorito(id, on); setTask(t); setHistoryRefresh(prev => prev + 1); }}
-                onToggleFollow={async on => { const t = await tareasApi.toggleSeguidor(id, on); setTask(t); setHistoryRefresh(prev => prev + 1); }}
-                onRelate={() => alert('Abrir modal de relaciones (WIP)')}
-                onQuickAttach={() => document.querySelector('input[type=file]')?.click()}
-              />
-            </div>
 
           </div>
         </div>
@@ -466,7 +473,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               className="commentsToggleBtn"
               onClick={() => setShowCommentsPopup(v => !v)} />
 
-            
+
           </div>
           {/* === Panel de comentarios === */}
           {showCommentsPopup && (
@@ -529,11 +536,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
         />
         {isResponsible && (
-              <PriorityBoostCheckbox
-                taskId={Number(taskId)}
-                enabled={task?.boost_manual > 0}
-                onChange={handleBoostChange}
-              />
+          <PriorityBoostCheckbox
+            taskId={Number(taskId)}
+            enabled={task?.boost_manual > 0}
+            onChange={handleBoostChange}
+          />
         )}
 
 

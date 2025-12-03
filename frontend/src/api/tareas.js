@@ -62,7 +62,6 @@ export const tareasApi = {
 
   // Favoritos / Seguidores
   toggleFavorito: (id, on) => api.post(`${base}/${id}/favorite`, { on }).then(r => r.data),
-  toggleSeguidor: (id, on) => api.post(`${base}/${id}/follow`, { on }).then(r => r.data),
   uploadAdjuntos: (id, files = []) => {
     const fd = new FormData();
     (files || []).forEach(f => fd.append('files', f));

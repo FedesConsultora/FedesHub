@@ -581,30 +581,9 @@ const updateTask = async (id, payload, feder_id = null) => {
       });
     }
 
-    // Fecha de inicio
-    if (payload.fecha_inicio !== undefined && payload.fecha_inicio !== cur.fecha_inicio) {
-      const { formatearFecha } = await import('../helpers/historial.helper.js');
-      cambios.push({
-        tipo_cambio: TIPO_CAMBIO.FECHA_INICIO,
-        accion: ACCION.UPDATED,
-        valor_anterior: cur.fecha_inicio,
-        valor_nuevo: payload.fecha_inicio,
-        campo: 'fecha_inicio',
-        descripcion: `Cambió la fecha de inicio de ${formatearFecha(cur.fecha_inicio)} a ${formatearFecha(payload.fecha_inicio)}`
-      });
-    }
 
-    // Título
-    if (payload.titulo !== undefined && payload.titulo !== cur.titulo) {
-      cambios.push({
-        tipo_cambio: TIPO_CAMBIO.TITULO,
-        accion: ACCION.UPDATED,
-        valor_anterior: cur.titulo,
-        valor_nuevo: payload.titulo,
-        campo: 'titulo',
-        descripcion: `Cambió el título de la tarea`
-      });
-    }
+
+
 
     // Cliente
     if (payload.cliente_id !== undefined && payload.cliente_id !== cur.cliente_id) {
@@ -620,19 +599,7 @@ const updateTask = async (id, payload, feder_id = null) => {
       });
     }
 
-    // Hito
-    if (payload.hito_id !== undefined && payload.hito_id !== cur.hito_id) {
-      const hitoAnterior = cur.hito_id ? await models.ClienteHito.findByPk(cur.hito_id, { attributes: ['nombre'], transaction: t }) : null;
-      const hitoNuevo = payload.hito_id ? await models.ClienteHito.findByPk(payload.hito_id, { attributes: ['nombre'], transaction: t }) : null;
-      cambios.push({
-        tipo_cambio: TIPO_CAMBIO.HITO,
-        accion: ACCION.UPDATED,
-        valor_anterior: hitoAnterior ? { id: cur.hito_id, nombre: hitoAnterior.nombre } : null,
-        valor_nuevo: hitoNuevo ? { id: payload.hito_id, nombre: hitoNuevo.nombre } : null,
-        campo: 'hito_id',
-        descripcion: `Cambió el hito de "${hitoAnterior?.nombre || 'ninguno'}" a "${hitoNuevo?.nombre || 'ninguno'}"`
-      });
-    }
+
 
     // Actualizar tarea
     await models.Tarea.update({ ...payload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
