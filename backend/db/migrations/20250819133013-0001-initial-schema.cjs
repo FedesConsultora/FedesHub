@@ -1222,6 +1222,10 @@ module.exports = {
     // Feders / Cargos / Células
     await drop('FederCargo');
     await drop('FederModalidadDia');
+
+    // Remove FK constraint before dropping Feder
+    await queryInterface.removeConstraint('CelulaRolAsignacion', 'FK_CelulaRolAsignacion_Feder');
+
     await drop('Feder');
     await drop('DiaSemana');
     await drop('ModalidadTrabajoTipo');

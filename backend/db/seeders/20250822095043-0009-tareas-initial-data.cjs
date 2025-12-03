@@ -45,7 +45,7 @@ function addDays(baseDate, days) {
 }
 
 module.exports = {
-  async up (queryInterface) {
+  async up(queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       const now = new Date();
@@ -54,21 +54,21 @@ module.exports = {
       // -- Relaciones
       if (await hasTable(queryInterface, 'TareaRelacionTipo')) {
         await ensureCodes(queryInterface, 'TareaRelacionTipo', [
-          { codigo: 'depende_de',    nombre: 'Depende de',    created_at: now },
-          { codigo: 'bloquea',       nombre: 'Bloquea',       created_at: now },
-          { codigo: 'duplicado_de',  nombre: 'Duplicado de',  created_at: now },
-          { codigo: 'relacionado',   nombre: 'Relacionado',   created_at: now },
+          { codigo: 'depende_de', nombre: 'Depende de', created_at: now },
+          { codigo: 'bloquea', nombre: 'Bloquea', created_at: now },
+          { codigo: 'duplicado_de', nombre: 'Duplicado de', created_at: now },
+          { codigo: 'relacionado', nombre: 'Relacionado', created_at: now },
         ], t);
       }
 
       // -- Etiquetas
       if (await hasTable(queryInterface, 'TareaEtiqueta')) {
         await ensureCodes(queryInterface, 'TareaEtiqueta', [
-          { codigo: 'cliente-demo',   nombre: 'Cliente Demo',   color_hex: '#607D8B', created_at: now, updated_at: now },
+          { codigo: 'cliente-demo', nombre: 'Cliente Demo', color_hex: '#607D8B', created_at: now, updated_at: now },
           { codigo: 'prioridad-alta', nombre: 'Prioridad alta', color_hex: '#F44336', created_at: now, updated_at: now },
-          { codigo: 'plan',           nombre: 'Planificación',  color_hex: '#3F51B5', created_at: now, updated_at: now },
-          { codigo: 'roadmap',        nombre: 'Roadmap',        color_hex: '#009688', created_at: now, updated_at: now },
-          { codigo: 'setup',          nombre: 'Setup',          color_hex: '#9C27B0', created_at: now, updated_at: now },
+          { codigo: 'plan', nombre: 'Planificación', color_hex: '#3F51B5', created_at: now, updated_at: now },
+          { codigo: 'roadmap', nombre: 'Roadmap', color_hex: '#009688', created_at: now, updated_at: now },
+          { codigo: 'setup', nombre: 'Setup', color_hex: '#9C27B0', created_at: now, updated_at: now },
         ], t);
       }
 
@@ -85,9 +85,9 @@ module.exports = {
       const estadoPend = await idByCodigo(queryInterface, 'TareaEstado', 'pendiente', t);
       const estadoCurso = await idByCodigo(queryInterface, 'TareaEstado', 'en_curso', t);
       const impactoMedio = await idByCodigo(queryInterface, 'ImpactoTipo', 'medio', t);
-      const impactoAlto  = await idByCodigo(queryInterface, 'ImpactoTipo', 'alto', t);
-      const urg72        = await idByCodigo(queryInterface, 'UrgenciaTipo', 'lt_72h', t);
-      const urg7d        = await idByCodigo(queryInterface, 'UrgenciaTipo', 'lt_7d', t);
+      const impactoAlto = await idByCodigo(queryInterface, 'ImpactoTipo', 'alto', t);
+      const urg72 = await idByCodigo(queryInterface, 'UrgenciaTipo', 'lt_72h', t);
+      const urg7d = await idByCodigo(queryInterface, 'UrgenciaTipo', 'lt_7d', t);
 
       const [impRows] = await queryInterface.sequelize.query(
         `SELECT id, puntos FROM "ImpactoTipo"`,
@@ -111,9 +111,9 @@ module.exports = {
       const byEmail = Object.fromEntries(users.map(u => [u.email, u]));
       const FEDS = {
         sistemas: byEmail['sistemas@fedes.ai']?.feder_id,
-        romina:   byEmail['ralbanesi@fedes.ai']?.feder_id,
-        enzo:     byEmail['epinotti@fedes.ai']?.feder_id,
-        gonzalo:  byEmail['gcanibano@fedes.ai']?.feder_id,
+        romina: byEmail['ralbanesi@fedes.ai']?.feder_id,
+        enzo: byEmail['epinotti@fedes.ai']?.feder_id,
+        gonzalo: byEmail['gcanibano@fedes.ai']?.feder_id,
       };
 
       // Etiquetas ids (si existen)
@@ -142,7 +142,7 @@ module.exports = {
           urgencia_id: urg7d,
           vencimiento: addDays(now, 5),
           creado_por_feder_id: FEDS.enzo || FEDS.romina || FEDS.sistemas,
-          etiquetas: ['cliente-demo','plan'],
+          etiquetas: ['cliente-demo', 'plan'],
           responsables: [{ feder_id: FEDS.enzo, es_lider: true }],
           colaboradores: [{ feder_id: FEDS.gonzalo, rol: 'Cuentas' }]
         },
@@ -154,7 +154,7 @@ module.exports = {
           urgencia_id: urg72,
           vencimiento: addDays(now, 2),
           creado_por_feder_id: FEDS.gonzalo || FEDS.enzo || FEDS.sistemas,
-          etiquetas: ['cliente-demo','roadmap','prioridad-alta'],
+          etiquetas: ['cliente-demo', 'roadmap', 'prioridad-alta'],
           responsables: [{ feder_id: FEDS.gonzalo, es_lider: true }]
         },
         {
@@ -165,7 +165,7 @@ module.exports = {
           urgencia_id: urg7d,
           vencimiento: addDays(now, 3),
           creado_por_feder_id: FEDS.sistemas || FEDS.enzo,
-          etiquetas: ['setup','cliente-demo'],
+          etiquetas: ['setup', 'cliente-demo'],
           responsables: [{ feder_id: FEDS.sistemas, es_lider: true }],
           colaboradores: [{ feder_id: FEDS.enzo, rol: 'Tech' }]
         }
@@ -275,7 +275,7 @@ module.exports = {
       const segTable = await hasTable(queryInterface, 'TareaSeguidor');
 
       const userEnzo = byEmail['epinotti@fedes.ai']?.id;
-      const userRom  = byEmail['ralbanesi@fedes.ai']?.id;
+      const userRom = byEmail['ralbanesi@fedes.ai']?.id;
 
       if (createdIds[0]) {
         if (favTable && userEnzo) {
@@ -297,7 +297,7 @@ module.exports = {
     }
   },
 
-  async down (queryInterface) {
+  async down(queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       // Borrar relaciones/favoritos/seguidores (si existen tablas)
@@ -323,24 +323,24 @@ module.exports = {
         if (relTable) await queryInterface.bulkDelete('TareaRelacion', { tarea_id: ids }, { transaction: t });
         if (favTable) await queryInterface.bulkDelete('TareaFavorito', { tarea_id: ids }, { transaction: t });
         if (segTable) await queryInterface.bulkDelete('TareaSeguidor', { tarea_id: ids }, { transaction: t });
-      }
 
-      // Eliminar tareas (cascada limpiará responsables/colaboradores/etiquetas/checklist/comentarios/adjuntos)
-      await queryInterface.sequelize.query(`
-        DELETE FROM "Tarea"
-        WHERE id = ANY(:ids)
-      `, { transaction: t, replacements: { ids } });
+        // Eliminar tareas (cascada limpiará responsables/colaboradores/etiquetas/checklist/comentarios/adjuntos)
+        await queryInterface.sequelize.query(`
+          DELETE FROM "Tarea"
+          WHERE id = ANY(:ids)
+        `, { transaction: t, replacements: { ids } });
+      }
 
       // Borrar etiquetas de demo (si existen)
       if (await hasTable(queryInterface, 'TareaEtiqueta')) {
         await queryInterface.bulkDelete('TareaEtiqueta',
-          { codigo: ['cliente-demo','prioridad-alta','plan','roadmap','setup'] }, { transaction: t });
+          { codigo: ['cliente-demo', 'prioridad-alta', 'plan', 'roadmap', 'setup'] }, { transaction: t });
       }
 
       // Borrar tipos de relación de demo (si existen)
       if (await hasTable(queryInterface, 'TareaRelacionTipo')) {
         await queryInterface.bulkDelete('TareaRelacionTipo',
-          { codigo: ['depende_de','bloquea','duplicado_de','relacionado'] }, { transaction: t });
+          { codigo: ['depende_de', 'bloquea', 'duplicado_de', 'relacionado'] }, { transaction: t });
       }
 
       await t.commit();

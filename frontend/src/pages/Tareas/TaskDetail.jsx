@@ -18,7 +18,9 @@ import { FaRegSave, FaStar } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
-import { useAuth, useAuthCtx } from '../../context/AuthContext.jsx'
+import { useAuthCtx } from '../../context/AuthContext.jsx'
+import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
+
 
 import './task-detail.scss'
 
@@ -66,6 +68,33 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const { user } = useAuthCtx() || {}
 
+  const { adjuntos, loading, add, remove, upload } = useTaskAttachments(taskId)
+
+
+  const [isOver, setIsOver] = useState(false)
+
+  const onDrop = async (e) => {
+    e.preventDefault()
+    setIsOver(false)
+    const files = e.dataTransfer?.files
+    if (files?.length) {
+      try {
+        await upload(Array.from(files)) // 🚀 Subida automática usando el hook
+        console.log('Archivos subidos desde la segunda dropzone')
+      } catch (err) {
+        console.error('Error al subir archivos', err)
+      }
+    }
+  }
+
+  const onDragOver = (e) => {
+    e.preventDefault()
+    setIsOver(true)
+  }
+
+  const onDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false)
+  }
 
   console.log('----------------------------------------->', isResponsible)
 
@@ -466,7 +495,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
         {/* RIGHT */}
         <div className="right" style={{ alignItems: 'center', position: 'relative' }}>
-          <div className='dropzone'>
+          <div className={`dropzone ${isOver ? 'is-over' : ''}`}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+          >
             <p>Contenido Listo</p>
             <MdAddComment
               size={30}

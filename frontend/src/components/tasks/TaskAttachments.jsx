@@ -5,7 +5,7 @@ import { useModal } from '../../components/modal/ModalProvider.jsx'
 import { FaPaperclip, FaTrashAlt, FaExternalLinkAlt, FaPlus, FaUpload } from 'react-icons/fa'
 import './TaskAttachments.scss'
 
-export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
+export default function TaskAttachments({ taskId, onAfterChange = () => { } }) {
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(taskId, onAfterChange)
   const toast = useToast()
   const modal = useModal()
@@ -13,13 +13,13 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
   const [nombre, setNombre] = useState('')
   const [url, setUrl] = useState('')
   const [mime, setMime] = useState('')
-  const [busy, setBusy] = useState(null) 
+  const [busy, setBusy] = useState(null)
   const [isOver, setIsOver] = useState(false)
 
   const fileInputRef = useRef(null)
 
   const canAdd = useMemo(() => !!nombre.trim() && !!url.trim(), [nombre, url])
-  const normalizeUrl = (s='') => (/^https?:\/\//i.test(s.trim()) ? s.trim() : `https://${s.trim()}`)
+  const normalizeUrl = (s = '') => (/^https?:\/\//i.test(s.trim()) ? s.trim() : `https://${s.trim()}`)
 
   const resetForm = () => { setNombre(''); setUrl(''); setMime('') }
 
@@ -46,7 +46,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
   }
 
   // ---- Subida de archivos (drop/picker)
-  const performUpload = async (files=[]) => {
+  const performUpload = async (files = []) => {
     if (!files?.length || busy) return
     setBusy('upload')
     try { await upload(Array.from(files)); toast?.success(`${files.length} archivo(s) subido(s)`) }
@@ -69,7 +69,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
         className={`att-drop ${isOver ? 'is-over' : ''}`}
         onDragOver={onDragOver} onDragEnter={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
         role="button" tabIndex={0}
-        onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' ') fileInputRef.current?.click() }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click() }}
         title="Soltá archivos aquí o hacé clic para elegir"
         aria-label="Soltar archivos o elegir desde tu equipo"
       >
@@ -83,29 +83,29 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
           <FaUpload /> <span>Adjuntar archivos</span>
         </button>
         <div className="muted drop-help">
-          
+
         </div>
         <input ref={fileInputRef} type="file" hidden multiple onChange={onPickFiles} />
       </div>
 
       {/* Lista */}
-      {loading && <div className="att-skeleton"><div className="skl"/><div className="skl"/></div>}
+      {loading && <div className="att-skeleton"><div className="skl" /><div className="skl" /></div>}
       {!loading && adjuntos.length === 0 && <div className="empty">Sin adjuntos</div>}
 
       {!!adjuntos.length && !loading && (
         <ul className="att-list">
           {adjuntos.map(a => (
             <li key={a.id} className="attItem">
-              <span className="ico"><FaPaperclip/></span>
+              <span className="ico"><FaPaperclip /></span>
               {a.drive_url ? (
                 <a className="name link" href={a.drive_url} target="_blank" rel="noreferrer" title={a.drive_url}>
-                  {a.nombre} <FaExternalLinkAlt className="ext"/>
+                  {a.nombre} <FaExternalLinkAlt className="ext" />
                 </a>
               ) : <span className="name" title={a.nombre}>{a.nombre}</span>}
               <span className="muted mime" title={a.mime || ''}>{a.mime || ''}</span>
               <button className="rm" title={`Eliminar ${a.nombre}`} aria-label={`Eliminar ${a.nombre}`}
-                      onClick={() => handleRemove(a)} disabled={busy === a.id}>
-                <FaTrashAlt/>
+                onClick={() => handleRemove(a)} disabled={busy === a.id}>
+                <FaTrashAlt />
               </button>
             </li>
           ))}
@@ -122,7 +122,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
             onChange={e => setNombre(e.target.value)} onKeyDown={onKeyDownNew} maxLength={255} required
           />
         </div> */}
-        {/* <div className="fld urlfld">
+      {/* <div className="fld urlfld">
           <label className="label" htmlFor="att-url">URL pública</label>
           <input
             id="att-url" className="att-input" placeholder="https://…"
@@ -131,7 +131,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
             aria-describedby="att-url-help"
           />
         </div> */}
-        {/* <div className="fld mimefld">
+      {/* <div className="fld mimefld">
           <label className="label" htmlFor="att-mime">MIME (opcional)</label>
           <input
             id="att-mime" className="att-input" placeholder="application/pdf"
@@ -139,7 +139,7 @@ export default function TaskAttachments({ taskId, onAfterChange = () => {} }) {
             onChange={e => setMime(e.target.value)} onKeyDown={onKeyDownNew}
           />
         </div> */}
-        {/* <button
+      {/* <button
           className="addBtn" onClick={handleAdd}
           disabled={!canAdd || busy === 'add'}
           title={canAdd ? 'Agregar adjunto por URL' : 'Completá nombre y URL'}
