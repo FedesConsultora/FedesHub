@@ -62,9 +62,12 @@ export const tareasApi = {
 
   // Favoritos / Seguidores
   toggleFavorito: (id, on) => api.post(`${base}/${id}/favorite`, { on }).then(r => r.data),
-  uploadAdjuntos: (id, files = []) => {
+  uploadAdjuntos: (id, files = [], esEmbebido = false) => {
     const fd = new FormData();
     (files || []).forEach(f => fd.append('files', f));
+    if (esEmbebido) {
+      fd.append('es_embebido', 'true');
+    }
     return api.post(`${base}/${id}/adjuntos/upload`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(r => r.data);

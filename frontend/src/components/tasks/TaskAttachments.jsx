@@ -102,21 +102,23 @@ export default function TaskAttachments({ taskId, onAfterChange = () => { } }) {
 
       {!!adjuntos.length && !loading && (
         <ul className="att-list">
-          {adjuntos.map(a => (
-            <li key={a.id} className="attItem">
-              <span className="ico"><FaPaperclip /></span>
-              {a.drive_url ? (
-                <a className="name link" href={a.drive_url} target="_blank" rel="noreferrer" title={a.drive_url}>
-                  {a.nombre} <FaExternalLinkAlt className="ext" />
-                </a>
-              ) : <span className="name" title={a.nombre}>{a.nombre}</span>}
-              <span className="muted mime" title={a.mime || ''}>{a.mime || ''}</span>
-              <button className="rm" title={`Eliminar ${a.nombre}`} aria-label={`Eliminar ${a.nombre}`}
-                onClick={() => handleRemove(a)} disabled={busy === a.id}>
-                <FaTrashAlt />
-              </button>
-            </li>
-          ))}
+          {adjuntos
+            .filter(a => !a.es_embebido) // Excluir archivos embebidos
+            .map(a => (
+              <li key={a.id} className="attItem">
+                <span className="ico"><FaPaperclip /></span>
+                {a.drive_url ? (
+                  <a className="name link" href={a.drive_url} target="_blank" rel="noreferrer" title={a.drive_url}>
+                    {a.nombre} <FaExternalLinkAlt className="ext" />
+                  </a>
+                ) : <span className="name" title={a.nombre}>{a.nombre}</span>}
+                <span className="muted mime" title={a.mime || ''}>{a.mime || ''}</span>
+                <button className="rm" title={`Eliminar ${a.nombre}`} aria-label={`Eliminar ${a.nombre}`}
+                  onClick={() => handleRemove(a)} disabled={busy === a.id}>
+                  <FaTrashAlt />
+                </button>
+              </li>
+            ))}
         </ul>
       )}
 

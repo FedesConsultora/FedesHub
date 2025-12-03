@@ -9,6 +9,7 @@ import LabelChip from '../../components/common/LabelChip'
 import TaskComments from '../../components/tasks/comments'
 import TaskAttachments from '../../components/tasks/TaskAttachments.jsx'
 import TaskChecklist from '../../components/tasks/TaskChecklist.jsx'
+import RichTextEditor from '../../components/common/RichTextEditor.jsx'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
 import SubtasksPanel from '../../components/tasks/SubtasksPanel.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
@@ -69,6 +70,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const [isResponsible, setIsResponsible] = useState(false)
 
+  // Ref to prevent race conditions on saves
+  const saveInProgressRef = useRef(false)
+  const saveTimeoutRef = useRef(null)
+
   const { user } = useAuthCtx() || {}
 
   // Verificar si es C-Level
@@ -101,8 +106,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const onDragLeave = (e) => {
     if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false)
   }
-
-  console.log('----------------------------------------->', isResponsible)
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -221,19 +224,19 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     return t !== (task.titulo ?? '').trim() || d !== (task.descripcion ?? '')
   }, [form, task])
 
+  // Separate function to save with race condition protection
+  const performSave = useCallback(async (patch, source = 'auto') => {
+    if (saveInProgressRef.current) {
+      console.log('[TaskDetail] Save already in progress, skipping')
+      return
+    }
 
-  const saveIfDirty = useCallback(async (source = 'auto') => {
-    if (!dirty || !task || saving) return
-    const patch = {}
-    const currTitulo = (form.titulo ?? '').trim()
-    const currDesc = (form.descripcion ?? '')
-    if (currTitulo !== (task.titulo ?? '').trim()) patch.titulo = currTitulo
-    if (currDesc !== (task.descripcion ?? '')) patch.descripcion = currDesc
     if (!Object.keys(patch).length) return
 
     console.log('[TaskDetail] Guardando cambios:', { taskId, patch })
 
     try {
+      saveInProgressRef.current = true
       setSaving(true)
       const next = await tareasApi.update(taskId, patch)
       console.log('[TaskDetail] Guardado exitoso:', next)
@@ -244,18 +247,67 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     } catch (e) {
       console.error('[TaskDetail] Error al guardar:', e)
       toast?.error(e?.message || 'No se pudo guardar')
-    } finally { setSaving(false) }
-  }, [dirty, form, taskId, task, saving, toast])
+    } finally {
+      setSaving(false)
+      saveInProgressRef.current = false
+    }
+  }, [taskId, toast])
 
-  // dispara cada vez que cambia título/desc (debounce 800ms)
+  // Auto-save ONLY for title changes (debounced)
   useEffect(() => {
     if (!task) return
-    const t = setTimeout(() => saveIfDirty('auto'), 800)
-    return () => clearTimeout(t)
-  }, [form.titulo, form.descripcion, task, saveIfDirty])
 
-  // forzar guardado al salir del campo
-  const flushOnBlur = () => saveIfDirty('blur')
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    const currTitulo = (form.titulo ?? '').trim()
+    const taskTitulo = (task.titulo ?? '').trim()
+
+    // Only save if title changed
+    if (currTitulo !== taskTitulo && currTitulo.length > 0) {
+      saveTimeoutRef.current = setTimeout(() => {
+        performSave({ titulo: currTitulo }, 'auto')
+      }, 800)
+    }
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [form.titulo, task, performSave])
+
+  // Save description ONLY on blur
+  const flushDescriptionOnBlur = useCallback(() => {
+    if (!task || saveInProgressRef.current) return
+
+    const currDesc = (form.descripcion ?? '')
+    const taskDesc = (task.descripcion ?? '')
+
+    if (currDesc !== taskDesc) {
+      performSave({ descripcion: currDesc }, 'blur')
+    }
+  }, [form.descripcion, task, performSave])
+
+  // Save title on blur (immediate, cancel debounce)
+  const flushTitleOnBlur = useCallback(() => {
+    if (!task || saveInProgressRef.current) return
+
+    // Cancel pending auto-save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
+
+    const currTitulo = (form.titulo ?? '').trim()
+    const taskTitulo = (task.titulo ?? '').trim()
+
+    if (currTitulo !== taskTitulo && currTitulo.length > 0) {
+      performSave({ titulo: currTitulo }, 'blur')
+    }
+  }, [form.titulo, task, performSave])
 
   // beforeunload
   useEffect(() => {
@@ -408,7 +460,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                   toast?.error('El título no puede estar vacío');
                   return;
                 }
-                flushOnBlur();
+                flushTitleOnBlur();
               }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
               onPaste={(e) => {
@@ -485,23 +537,15 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             </div>
 
             {tab === 'desc' ? (
-              // Descripción (autosave)
-              <div
-                className="txt editable"
-                style={{ minHeight: '190px' }}
-                data-placeholder="Escribí la descripción…"
-                contentEditable
-                suppressContentEditableWarning
-                role="textbox"
-                aria-label="Descripción de la tarea"
-                ref={descCE.ref}
-                onInput={descCE.handleInput}
-                onBlur={flushOnBlur}
-                onPaste={(e) => {
-                  e.preventDefault()
-                  const txt = e.clipboardData?.getData('text/plain') ?? ''
-                  document.execCommand?.('insertText', false, txt)
-                }}
+              // Descripción con editor de texto enriquecido
+              <RichTextEditor
+                value={form.descripcion}
+                onChange={(content) => setForm(f => ({ ...f, descripcion: content }))}
+                onBlur={flushDescriptionOnBlur}
+                taskId={Number(id)}
+                placeholder="Escribí la descripción…"
+                maxLength={600}
+                minHeight="190px"
               />
             ) : (
               <SubtasksPanel

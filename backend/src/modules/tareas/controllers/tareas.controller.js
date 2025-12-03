@@ -104,9 +104,11 @@ export const postAdjuntoUpload = async (req, res, next) => {
   try {
     const tareaId = Number(req.params.id);
     const files = req.files || [];
+    const esEmbebido = req.body?.es_embebido === 'true' || req.body?.es_embebido === true;
 
     req.log?.info('tareas.upload:start', {
       tareaId,
+      esEmbebido,
       filesMeta: files.map(f => ({
         originalname: f.originalname, mimetype: f.mimetype, size: f.size
       }))
@@ -130,7 +132,8 @@ export const postAdjuntoUpload = async (req, res, next) => {
         mime,
         tamano_bytes: bytes,
         drive_url: url,
-        drive_file_id: fileId
+        drive_file_id: fileId,
+        es_embebido: esEmbebido
       };
 
       const adj = await svcAddAdjunto(tareaId, req.user.feder_id, meta);

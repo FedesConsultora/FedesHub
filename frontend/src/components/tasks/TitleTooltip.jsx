@@ -40,6 +40,10 @@ export default function TitleTooltip() {
                 >
                     
                     <div className="tooltipHeader">Formato de título</div>
+                    <div className="tooltipForm">
+                        <p>[Área/Tipo de tarea] — [Acción concreta]</p>
+                        
+                    </div>
                     <div className="tooltipExamples">
                         <div className="example">
                             <strong>Contenido</strong> - Redacción de copies de enero
@@ -47,7 +51,9 @@ export default function TitleTooltip() {
                         <div className="example">
                             <strong>IT</strong> - Creación de email corporativo
                         </div>
+
                     </div>
+                    
                 </div>,
                 document.body
             )}

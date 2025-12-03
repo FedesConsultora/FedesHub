@@ -1,0 +1,343 @@
+@use '../../styles/variables' as *;
+
+.richTextEditor {
+    position: relative;
+
+    .editor-container {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        color: $fh-text;
+        transition: border-color 0.2s ease;
+
+        &:focus-within {
+            border-color: $fh-primary;
+            box-shadow: 0 0 0 1px $fh-primary;
+        }
+    }
+
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 6px 8px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px 8px 0 0;
+
+        .tb {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: all 0.12s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: rgba(255, 255, 255, 0.95);
+            }
+
+            &.active {
+                background: rgba($fh-primary, 0.2);
+                color: $fh-primary;
+            }
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 4px;
+        }
+
+        .dropdown {
+            display: contents;
+        }
+    }
+
+    // Portals (rendered in body)
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+        z-index: 9999;
+    }
+
+    .color-picker-simple {
+        .chrome-picker {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+        }
+    }
+
+    .font-size-picker {
+        background: #1a1f2e;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        padding: 4px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 100px;
+
+        .size-option {
+            background: transparent;
+            border: none;
+            color: $fh-text;
+            padding: 8px 12px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+            font-weight: 500;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+
+            &.active {
+                background: rgba($fh-primary, 0.2);
+                color: $fh-primary;
+            }
+        }
+    }
+
+    .link-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1a1f2e;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 24px;
+        min-width: 400px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+
+        h3 {
+            margin: 0 0 16px 0;
+            color: $fh-text;
+            font-size: 1.1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            color: $fh-text;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+
+            &:focus {
+                outline: none;
+                border-color: $fh-primary;
+                box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+            }
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+
+            button {
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                border: none;
+
+                &.btn-cancel {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: rgba(255, 255, 255, 0.7);
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.12);
+                    }
+                }
+
+                &.btn-insert {
+                    background: $fh-primary;
+                    color: white;
+
+                    &:hover {
+                        background: lighten($fh-primary, 5%);
+                    }
+                }
+            }
+        }
+    }
+
+    .editor-inner {
+        position: relative;
+        background: transparent;
+    }
+
+    .editor-input {
+        min-height: 190px;
+        resize: none;
+        font-size: 0.95rem;
+        caret-color: $fh-primary;
+        position: relative;
+        tab-size: 1;
+        outline: 0;
+        padding: 12px 16px;
+        color: $fh-text;
+        line-height: 1.6;
+
+        &.dragging-file {
+            background: rgba($fh-primary, 0.05);
+            border: 2px dashed $fh-primary;
+            border-radius: 8px;
+        }
+    }
+
+    .editor-placeholder {
+        color: rgba(255, 255, 255, 0.35);
+        overflow: hidden;
+        position: absolute;
+        text-overflow: ellipsis;
+        top: 12px;
+        left: 16px;
+        font-size: 0.95rem;
+        user-select: none;
+        display: inline-block;
+        pointer-events: none;
+    }
+
+    .editor-paragraph {
+        margin: 0 0 8px 0;
+        position: relative;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .editor-text-bold {
+        font-weight: 700;
+    }
+
+    .editor-text-italic {
+        font-style: italic;
+    }
+
+    .editor-text-strikethrough {
+        text-decoration: line-through;
+    }
+
+    .editor-text-underline {
+        text-decoration: underline;
+    }
+
+    .editor-text-code {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #FF6B6B;
+    }
+
+    .editor-link {
+        color: $fh-primary;
+        text-decoration: underline;
+        cursor: pointer;
+        transition: color 0.15s ease;
+
+        &:hover {
+            color: lighten($fh-primary, 15%);
+        }
+    }
+
+    .editor-list-ol,
+    .editor-list-ul {
+        padding: 0;
+        margin: 0 0 8px 0;
+        padding-left: 24px;
+    }
+
+    .editor-list-ul {
+        list-style-type: disc;
+    }
+
+    .editor-list-ol {
+        list-style-type: decimal;
+    }
+
+    .editor-listitem {
+        margin: 4px 0;
+        line-height: 1.6;
+    }
+
+    .editor-quote {
+        margin: 12px 0;
+        padding: 12px 16px;
+        border-left: 4px solid $fh-primary;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .charCounter {
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 600;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 3px 8px;
+        border-radius: 12px;
+        pointer-events: none;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+        transition: all 0.2s ease;
+
+        &.warning {
+            color: #FFA500;
+            background: rgba(255, 165, 0, 0.15);
+        }
+
+        &.limit {
+            color: #FF5151;
+            background: rgba(255, 81, 81, 0.15);
+            font-weight: 700;
+            animation: pulse 1s ease-in-out infinite;
+        }
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}

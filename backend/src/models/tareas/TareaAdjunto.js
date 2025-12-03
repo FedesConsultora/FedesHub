@@ -11,8 +11,11 @@ export default (sequelize, DataTypes) => {
     drive_file_id: { type: DataTypes.STRING(255) },
     drive_url: { type: DataTypes.STRING(512) },
     subido_por_feder_id: { type: DataTypes.INTEGER },
+    es_embebido: { type: DataTypes.BOOLEAN, defaultValue: false },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'TareaAdjunto', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: false,
-       indexes: [{ fields: ['tarea_id'] }] });
+  }, {
+    tableName: 'TareaAdjunto', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: false,
+    indexes: [{ fields: ['tarea_id'] }]
+  });
   return TareaAdjunto;
 };
