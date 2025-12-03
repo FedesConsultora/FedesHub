@@ -17,44 +17,72 @@
 .statusMenu {
   position: absolute;
   top: calc(100% + 6px);
- left: -.8rem;
-  background: transparent;
+  left: -.8rem;
+  background: #0f1720;
   border: 1px solid #2c3441;
   border-radius: 12px;
   padding: 1rem;
   width: 140px;
-  z-index: 50;
-  
-  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  z-index: 90;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
   animation: fadeIn .15s ease;
+
+  // Cuando está en portal (fixed positioning)
+  &--portal {
+    position: fixed;
+    z-index: 9999;
+  }
 }
 
 .statusMenu .item {
   padding: 6px 11px;
   color: #fff;
-  display: flex;
-  border-radius: 1rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  border-radius: 1rem;
   cursor: pointer;
+  white-space: nowrap;
 
-   margin-bottom: 10px;   
+  margin-bottom: 10px;
 
   &:last-child {
-    margin-bottom: 0;  
+    margin-bottom: 0;
   }
 
   &:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &.active {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  .lock-icon {
+    display: inline;
+    margin-left: 4px;
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

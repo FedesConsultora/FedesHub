@@ -1,0 +1,86 @@
+@use '../../styles/variables' as *;
+
+.titleTooltipWrap {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.5rem;
+
+    .infoIcon {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.4);
+        cursor: help;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: $fh-primary;
+        }
+    }
+}
+
+.titleTooltipContent {
+    z-index: 9999;
+    min-width: 320px;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.60);
+    color: $fh-text;
+    animation: fadeIn 0.15s ease;
+    pointer-events: auto;
+
+    // Flecha arriba
+    &::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 16px;
+        height: 16px;
+        background: rgba(0, 0, 0, 0.98);
+        border-left: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .tooltipHeader {
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: $fh-primary;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .tooltipExamples {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .example {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+
+            strong {
+                color: $fh-primary;
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}

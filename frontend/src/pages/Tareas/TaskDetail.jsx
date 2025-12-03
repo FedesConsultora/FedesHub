@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { tareasApi } from '../../api/tareas'
 import TaskStatusCard from '../../components/tasks/TaskStatusCard'
@@ -18,6 +19,7 @@ import { FaRegSave, FaStar } from "react-icons/fa";
 import { MdAddComment } from "react-icons/md";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
+import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import './task-detail.scss'
@@ -68,6 +70,9 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [isResponsible, setIsResponsible] = useState(false)
 
   const { user } = useAuthCtx() || {}
+
+  // Verificar si es C-Level
+  const isCLevel = user?.rol?.nombre === 'CLevel' || user?.rol?.nombre === 'Admin'
 
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
 
@@ -365,8 +370,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       {/* === Header sticky === */}
       <div className="taskHeader">
         <div className="titleWrap">
-          <div>
-            {/* Título (autosave) */}
+          {/* Título con truncamiento visual */}
+          <div className="titleSection">
             <div
               className="ttl editable"
               data-placeholder="Escribí un título…"
@@ -376,20 +381,48 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               role="textbox"
               aria-label="Título de la tarea"
               ref={titleCE.ref}
-              onInput={titleCE.handleInput}
-              onBlur={flushOnBlur}
+              onInput={(e) => {
+                const text = e.currentTarget.textContent || '';
+
+                // Limitar a 50 caracteres
+                if (text.length > 50) {
+                  e.currentTarget.textContent = text.substring(0, 50);
+                  // Mover cursor al final
+                  const range = document.createRange();
+                  const sel = window.getSelection();
+                  range.selectNodeContents(e.currentTarget);
+                  range.collapse(false);
+                  sel?.removeAllRanges();
+                  sel?.addRange(range);
+                  return;
+                }
+
+                titleCE.handleInput(e);
+              }}
+              onBlur={(e) => {
+                const text = e.currentTarget.textContent?.trim() || '';
+                if (!text) {
+                  // Evitar título vacío
+                  e.currentTarget.textContent = task?.titulo || 'Sin título';
+                  setForm(f => ({ ...f, titulo: task?.titulo || 'Sin título' }));
+                  toast?.error('El título no puede estar vacío');
+                  return;
+                }
+                flushOnBlur();
+              }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
               onPaste={(e) => {
                 e.preventDefault()
                 const txt = (e.clipboardData?.getData('text/plain') ?? '').replace(/\n/g, ' ')
-                document.execCommand?.('insertText', false, txt)
+                // Limitar a 50 caracteres al pegar
+                const limited = txt.substring(0, 50);
+                document.execCommand?.('insertText', false, limited)
               }}
             />
-
+            <TitleTooltip />
           </div>
-          {/* <div className="chips">
-            {etiquetas.slice(0,6).map(e => <LabelChip key={e.id||e.codigo} label={e} />)}
-          </div> */}
+
+          {/* Meta info - ahora puede hacer wrap */}
           <div className="meta">
             <span className="inlineDue">
               <InlineDue
@@ -407,6 +440,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               etiquetas={etiquetas}
               estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
               onPick={handleEstado}
+              isResponsible={isResponsible}
             />
             <span className="inlineClient">
 
@@ -415,9 +449,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 valueName={clienteNombre}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-
                 disabled={!isResponsible}
-
               />
             </span>
 
@@ -612,10 +644,22 @@ function InlineDue({ value, onChange }) {
 }
 
 /* === componente inline para cliente === */
-function InlineClient({ valueId = null, valueName = '', options = [], onChange }) {
+function InlineClient({ valueId = null, valueName = '', options = [], onChange, disabled = false }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(valueId ?? '')
+  const selectRef = useRef(null)
+  const toast = useToast()
+
   useEffect(() => { setLocal(valueId ?? '') }, [valueId])
+
+  // Auto-focus y abrir el select cuando entra en modo edición
+  useEffect(() => {
+    if (editing && selectRef.current) {
+      selectRef.current.focus()
+      // Abrir el dropdown automáticamente
+      selectRef.current.click()
+    }
+  }, [editing])
 
   const opts = useMemo(
     () => (options || []).slice().sort((a, b) =>
@@ -623,31 +667,37 @@ function InlineClient({ valueId = null, valueName = '', options = [], onChange }
     [options]
   )
 
+  const handleClick = () => {
+    if (disabled) {
+      toast?.error('Solo el responsable de la tarea puede cambiar el cliente');
+      return;
+    }
+    setEditing(true);
+  }
+
   if (!editing) {
-
     return (
-      <>
-        <button
-          className="clientChip"
-          type="button"
-          onClick={() => setEditing(true)}
-          title="Cambiar cliente"
-        >
-          {valueName || 'Sin cliente'}  <MdKeyboardArrowDown style={{ position: 'relative', top: '2px' }} />
-        </button>
-
-      </>
+      <button
+        className={`clientChip ${disabled ? 'disabled' : ''}`}
+        type="button"
+        onClick={handleClick}
+        title={disabled ? 'Solo el responsable puede cambiar' : 'Cambiar cliente'}
+      >
+        {valueName || 'Sin cliente'}
+        {!disabled && <MdKeyboardArrowDown style={{ position: 'relative', top: '2px' }} />}
+        {disabled && <span className="lock-icon">🔒</span>}
+      </button>
     )
   }
 
   return (
     <select
+      ref={selectRef}
       className="clientSelect"
       value={local ?? ''}
       onChange={e => setLocal(e.target.value || '')}
       onBlur={() => { setEditing(false); onChange?.(local || null) }}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-      autoFocus
     >
       {opts.map(c => (
         <option key={c.id} value={c.id}>{c.nombre}</option>
