@@ -48,9 +48,17 @@ export default function TaskAttachments({ taskId, onAfterChange = () => { } }) {
   // ---- Subida de archivos (drop/picker)
   const performUpload = async (files = []) => {
     if (!files?.length || busy) return
+    console.log('[TaskAttachments] Uploading files:', files.length, 'taskId:', taskId)
     setBusy('upload')
-    try { await upload(Array.from(files)); toast?.success(`${files.length} archivo(s) subido(s)`) }
-    catch (e) { toast?.error(e?.message || 'No se pudieron subir los archivos') }
+    try {
+      await upload(Array.from(files))
+      toast?.success(`${files.length} archivo(s) subido(s)`)
+    }
+    catch (e) {
+      console.error('[TaskAttachments] Upload error:', e)
+      const errorMsg = e?.response?.data?.message || e?.message || 'No se pudieron subir los archivos'
+      toast?.error(errorMsg)
+    }
     finally { setBusy(null) }
   }
   const onPickFiles = (e) => { const f = e.target.files; if (f?.length) performUpload(f); e.target.value = '' }

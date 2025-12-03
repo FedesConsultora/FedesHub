@@ -20,8 +20,6 @@ import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
-
-
 import './task-detail.scss'
 
 /* === helpers normalization === */
@@ -47,10 +45,13 @@ const fromInputDate = (val) => {
 }
 
 export default function TaskDetail({ taskId, onUpdated, onClose }) {
-  const { id } = useParams()
+  const { id: urlId } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
   const toast = useToast()
+
+  // Use taskId prop if provided, otherwise use id from URL params
+  const id = taskId || urlId
 
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
@@ -68,7 +69,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const { user } = useAuthCtx() || {}
 
-  const { adjuntos, loading, add, remove, upload } = useTaskAttachments(taskId)
+  const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
 
 
   const [isOver, setIsOver] = useState(false)
@@ -472,23 +473,23 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               />
             ) : (
               <SubtasksPanel
-                parentId={Number(taskId)}
+                parentId={Number(id)}
                 defaultClienteId={task?.cliente_id || task?.cliente?.id || null}
                 catalog={catalog}
               />
             )}
           </div>
           <TaskAttachments
-            taskId={Number(taskId)}
+            taskId={Number(id)}
             onAfterChange={async () => {
               try {
-                setTask(await tareasApi.get(taskId))
+                setTask(await tareasApi.get(id))
                 setHistoryRefresh(prev => prev + 1)
               } catch { }
             }}
           />
 
-          <TaskHistory taskId={Number(taskId)} key={historyRefresh} />
+          <TaskHistory taskId={Number(id)} key={historyRefresh} />
 
 
         </div>

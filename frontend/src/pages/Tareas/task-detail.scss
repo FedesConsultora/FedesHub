@@ -271,10 +271,7 @@ $text: $fh-text;
     display: flex;
 
     .dropzone {
-<<<<<<< Updated upstream
-=======
       border: red solid 1px;
->>>>>>> Stashed changes
       position: relative;
       width: 100%;
       display: flex;
@@ -624,43 +621,6 @@ $text: $fh-text;
         border-color: rgba($fh-primary, .7);
         box-shadow: 0 0 0 3px rgba($fh-primary, .18);
       }
-<<<<<<< Updated upstream
-    }
-  }
-
-  /* ===== Botón de favoritos ===== */
-  .favBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: 1px solid $border;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    color: $muted;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 1rem;
-    margin-left: 0.5rem;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 215, 0, 0.3);
-      color: rgba(255, 215, 0, 0.8);
-    }
-
-    &.active {
-      background: rgba(255, 215, 0, 0.15);
-      border-color: rgba(255, 215, 0, 0.4);
-      color: #FFD700;
-
-      &:hover {
-        background: rgba(255, 215, 0, 0.25);
-      }
-=======
->>>>>>> Stashed changes
     }
   }
 
