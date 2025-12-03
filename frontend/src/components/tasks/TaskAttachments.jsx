@@ -5,8 +5,8 @@ import { useModal } from '../../components/modal/ModalProvider.jsx'
 import { FaPaperclip, FaTrashAlt, FaExternalLinkAlt, FaPlus, FaUpload } from 'react-icons/fa'
 import './TaskAttachments.scss'
 
-export default function TaskAttachments({ taskId, onAfterChange = () => { } }) {
-  const { adjuntos, loading, add, remove, upload } = useTaskAttachments(taskId, onAfterChange)
+export default function TaskAttachments({ taskId }) {
+  const { adjuntos, loading, add, remove, upload } = useTaskAttachments(taskId)
   const toast = useToast()
   const modal = useModal()
 

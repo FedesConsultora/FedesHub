@@ -371,16 +371,129 @@ $text: $fh-text;
     display: flex;
 
     .dropzone {
-      border: red solid 1px;
+
       position: relative;
       width: 100%;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 8px;
       border: solid 6px #121B25;
       background-color: #1B2C49;
       min-height: 600px;
       min-width: 265px;
+
+      div p {
+        display: flex;
+        position: absolute;
+        top: 0;
+        left: 1rem;
+        width: 100%;
+        align-self: flex-start;
+        justify-self: flex-start;
+
+      }
+
+      .main-image {
+        width: 260px;
+        height: 500px;
+        object-fit: cover;
+        border: solid black 1px;
+      }
+
+      .previews-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+
+        &::-webkit-scrollbar {
+          width: 2px !important;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+          width: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          width: 3px;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.3);
+          }
+        }
+
+
+        .thumbnails-slider {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding: 8px 8px;
+          overflow: auto;
+
+          &::-webkit-scrollbar {
+            width: 2px !important;
+          }
+
+          &::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            width: 3px;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            width: 3px;
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.3);
+            }
+          }
+        }
+
+        .thumbnail-item {
+          width: 100px;
+          height: 100px;
+          flex: 0 0 auto;
+          border: 2px solid transparent;
+          cursor: pointer;
+          position: relative;
+        }
+
+        .thumbnail-item.selected {
+          border-color: #2d6bc8;
+        }
+
+        .thumbnail-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .thumbnail-item .remove-btn {
+          display: flex;
+          position: absolute;
+          z-index: 1;
+          align-items: flex-start;
+          justify-content: flex-end;
+          top: -2px;
+          right: -2px;
+          background: transparent;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+        }
+      }
+
 
 
     }

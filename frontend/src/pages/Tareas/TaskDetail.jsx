@@ -81,8 +81,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
 
-
+  console.log('------------------------------->adjuntos', adjuntos)
   const [isOver, setIsOver] = useState(false)
+  const [mainImage, setMainImage] = useState(null);
+
+  // Cuando se agregan nuevas imágenes, si no hay mainImage, toma la primera
+
 
   const onDrop = async (e) => {
     e.preventDefault()
@@ -90,7 +94,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     const files = e.dataTransfer?.files
     if (files?.length) {
       try {
-        await upload(Array.from(files)) // 🚀 Subida automática usando el hook
+        await upload(Array.from(files))
         console.log('Archivos subidos desde la segunda dropzone')
       } catch (err) {
         console.error('Error al subir archivos', err)
@@ -106,6 +110,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const onDragLeave = (e) => {
     if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false)
   }
+
+  useEffect(() => {
+    if (!mainImage && adjuntos.length > 0) {
+      setMainImage(adjuntos[0]);
+    }
+  }, [adjuntos]);
+  console.log('----------------------------------------->', isResponsible)
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -576,8 +587,35 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-          >
-            <p>Contenido Listo</p>
+          >  {mainImage ? (
+            <img src={mainImage.url} className="main-image" />
+          ) : (
+            <p>Arrastra tus archivos aquí</p>
+          )}
+
+            <div>
+              <p>Contenido Listo</p>
+            </div>
+
+            <div className="previews-container">
+              {adjuntos.length > 1 && (
+                <div className="thumbnails-slider">
+                  {adjuntos.map((file) => (
+                    <div
+                      key={file.id}
+                      className={`thumbnail-item ${mainImage?.id === file.id ? "selected" : ""
+                        }`}
+                      onClick={() => setMainImage(file)}
+                    >
+                      <img src={file.url} />
+                      <button className="remove-btn" onClick={() => remove(file.id)}>
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <MdAddComment
               size={30}
               className="commentsToggleBtn"
