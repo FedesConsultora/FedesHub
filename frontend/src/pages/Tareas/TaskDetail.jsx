@@ -613,6 +613,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               <InlineClient
                 valueId={task?.cliente?.id || task?.cliente_id || null}
                 valueName={clienteNombre}
+                valueColor={task?.cliente?.color || null}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
                 disabled={!isResponsible}
@@ -848,7 +849,7 @@ function InlineDue({ value, onChange }) {
 }
 
 /* === componente inline para cliente === */
-function InlineClient({ valueId = null, valueName = '', options = [], onChange, disabled = false }) {
+function InlineClient({ valueId = null, valueName = '', valueColor = null, options = [], onChange, disabled = false }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(valueId ?? '')
   const selectRef = useRef(null)
@@ -886,6 +887,12 @@ function InlineClient({ valueId = null, valueName = '', options = [], onChange, 
         type="button"
         onClick={handleClick}
         title={disabled ? 'Solo el responsable puede cambiar' : 'Cambiar cliente'}
+        style={{
+          backgroundColor: valueColor || '#3B82F6',
+          color: '#ffffff',
+          border: `2px solid ${valueColor || '#3B82F6'}`,
+          fontWeight: '500'
+        }}
       >
         {valueName || 'Sin cliente'}
         {!disabled && <MdKeyboardArrowDown style={{ position: 'relative', top: '2px' }} />}

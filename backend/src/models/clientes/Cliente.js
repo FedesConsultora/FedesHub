@@ -12,9 +12,12 @@ export default (sequelize, DataTypes) => {
     sitio_web: { type: DataTypes.STRING(255) },
     descripcion: { type: DataTypes.TEXT },
     ponderacion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
+    color: { type: DataTypes.STRING(7), allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-  }, { tableName: 'Cliente', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
-       indexes: [{ fields: ['celula_id'] },{ fields: ['tipo_id'] },{ fields: ['estado_id'] },{ fields: ['ponderacion'] }] });
+  }, {
+    tableName: 'Cliente', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
+    indexes: [{ fields: ['celula_id'] }, { fields: ['tipo_id'] }, { fields: ['estado_id'] }, { fields: ['ponderacion'] }]
+  });
   return Cliente;
 };

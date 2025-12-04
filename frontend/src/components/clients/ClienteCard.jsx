@@ -22,7 +22,16 @@ export default function ClienteCard({ c }) {
     >
       {/* layout: avatar | main | actions */}
       <div className="cardGrid">
-        <div className="avatar" aria-hidden="true">{initials || 'C'}</div>
+        <div
+          className="avatar"
+          aria-hidden="true"
+          style={{
+            backgroundColor: c.color || '#3B82F6',
+            borderColor: c.color || '#3B82F6'
+          }}
+        >
+          {initials || 'C'}
+        </div>
 
         <div className="main">
           <header className="head">

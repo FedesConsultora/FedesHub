@@ -26,6 +26,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
   const [tipoId, setTipoId] = useState('')
   const [estadoId, setEstadoId] = useState('')
   const [ponderacion, setPonderacion] = useState('3') // default UI
+  const [color, setColor] = useState('#3B82F6') // default blue
 
   // validaciones mínimas
   const nombreError = useMemo(() => {
@@ -75,6 +76,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
       ponderacion: numOrUndef(ponderacion),
       tipo_id: numOrUndef(tipoId),
       estado_id: numOrUndef(estadoId),
+      color: strOrUndef(color),
     }
     Object.keys(body).forEach(k => body[k] === undefined && delete body[k])
     return body
@@ -126,7 +128,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                   ref={firstFieldRef}
                   name="celula_id"
                   value={celulaId}
-                  onChange={(e)=>setCelulaId(e.target.value)}
+                  onChange={(e) => setCelulaId(e.target.value)}
                   aria-invalid={!!celulaError}
                   aria-describedby={celulaError ? 'err-celula' : undefined}
                   disabled={loading || submitting}
@@ -148,7 +150,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                     <FiTag className="ico" aria-hidden />
                     <select
                       id="tipo" name="tipo_id" value={tipoId}
-                      onChange={(e)=>setTipoId(e.target.value)}
+                      onChange={(e) => setTipoId(e.target.value)}
                       disabled={loading || submitting}
                     >
                       <option value="">— Automático —</option>
@@ -169,7 +171,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                     <FiTag className="ico" aria-hidden />
                     <select
                       id="estado" name="estado_id" value={estadoId}
-                      onChange={(e)=>setEstadoId(e.target.value)}
+                      onChange={(e) => setEstadoId(e.target.value)}
                       disabled={loading || submitting}
                     >
                       <option value="">— Activo (default) —</option>
@@ -190,10 +192,10 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                     <FiTag className="ico" aria-hidden />
                     <select
                       id="pond" name="ponderacion" value={ponderacion}
-                      onChange={(e)=>setPonderacion(e.target.value)}
+                      onChange={(e) => setPonderacion(e.target.value)}
                       disabled={loading || submitting}
                     >
-                      {(cat.ponderaciones || [1,2,3,4,5]).map(p => (
+                      {(cat.ponderaciones || [1, 2, 3, 4, 5]).map(p => (
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
@@ -201,6 +203,30 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                   </div>
                 </>
               )}
+
+              {/* Color */}
+              <label className="lbl" htmlFor="color">Color</label>
+              <div className="field" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  id="color"
+                  name="color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  disabled={loading || submitting}
+                  style={{ width: '60px', height: '38px', border: 'none', cursor: 'pointer' }}
+                />
+                <input
+                  type="text"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  placeholder="#3B82F6"
+                  maxLength={7}
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  disabled={loading || submitting}
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             {/* Columna derecha */}
@@ -211,7 +237,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                 <FiBriefcase className="ico" aria-hidden />
                 <input
                   id="nombre" name="nombre" type="text"
-                  value={nombre} onChange={(e)=>setNombre(e.target.value)}
+                  value={nombre} onChange={(e) => setNombre(e.target.value)}
                   placeholder="Acme Corp" maxLength={160}
                   aria-invalid={!!nombreError}
                   aria-describedby={nombreError ? 'err-nombre' : undefined}
@@ -226,8 +252,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
               <div className="field">
                 <FiTag className="ico" aria-hidden />
                 <input id="alias" name="alias" type="text" value={alias}
-                       onChange={(e)=>setAlias(e.target.value)}
-                       disabled={loading || submitting} />
+                  onChange={(e) => setAlias(e.target.value)}
+                  disabled={loading || submitting} />
                 <div className="addon" aria-hidden />
               </div>
 
@@ -236,8 +262,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
               <div className="field">
                 <FiMail className="ico" aria-hidden />
                 <input id="email" name="email" type="email" value={email}
-                       onChange={(e)=>setEmail(e.target.value)}
-                       disabled={loading || submitting} />
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading || submitting} />
                 <div className="addon" aria-hidden />
               </div>
 
@@ -246,8 +272,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
               <div className="field">
                 <FiPhone className="ico" aria-hidden />
                 <input id="tel" name="telefono" type="tel" value={telefono}
-                       onChange={(e)=>setTelefono(e.target.value)}
-                       disabled={loading || submitting} />
+                  onChange={(e) => setTelefono(e.target.value)}
+                  disabled={loading || submitting} />
                 <div className="addon" aria-hidden />
               </div>
 
@@ -256,8 +282,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
               <div className="field">
                 <FiGlobe className="ico" aria-hidden />
                 <input id="web" name="sitio_web" type="url" value={sitioWeb}
-                       onChange={(e)=>setSitioWeb(e.target.value)}
-                       disabled={loading || submitting} placeholder="https://…" />
+                  onChange={(e) => setSitioWeb(e.target.value)}
+                  disabled={loading || submitting} placeholder="https://…" />
                 <div className="addon" aria-hidden />
               </div>
 
@@ -266,8 +292,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
               <div className="field area">
                 <FiTag className="ico" aria-hidden />
                 <textarea id="desc" name="descripcion" rows={5} value={descripcion}
-                          onChange={(e)=>setDescripcion(e.target.value)}
-                          disabled={loading || submitting} />
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  disabled={loading || submitting} />
               </div>
             </div>
           </div>
