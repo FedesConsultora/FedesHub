@@ -7,7 +7,15 @@ export function useTaskAttachments(taskId, onAfterChange = () => { }) {
 
     const load = useCallback(async () => {
         setLoading(true);
-        try { setAdjuntos(await tareasApi.getAdjuntos(taskId)); }
+        try {
+            const data = await tareasApi.getAdjuntos(taskId);
+            // Map drive_url to url for frontend compatibility
+            const mappedData = data.map(adj => ({
+                ...adj,
+                url: adj.drive_url || adj.url
+            }));
+            setAdjuntos(mappedData);
+        }
         finally { setLoading(false); }
     }, [taskId]);
 
@@ -31,9 +39,9 @@ export function useTaskAttachments(taskId, onAfterChange = () => { }) {
         await onAfterChange();
     }, [load, onAfterChange]);
 
-    const upload = useCallback(async (files = []) => {
+    const upload = useCallback(async (files = [], esEmbebido = true) => {
         if (!files || !files.length) return;
-        await tareasApi.uploadAdjuntos(taskId, files);
+        await tareasApi.uploadAdjuntos(taskId, files, esEmbebido);
         await load();
         await onAfterChange();
     }, [taskId, load, onAfterChange]);

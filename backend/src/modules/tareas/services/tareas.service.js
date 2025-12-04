@@ -389,7 +389,7 @@ export const getTaskById = async (id, currentUser) => {
         WHERE cm.tarea_id = t.id) AS comentarios,
 
       /* ===== Adjuntos a nivel tarea (no comentario) ===== */
-      (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'created_at',a.created_at))
+      (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'es_embebido',a.es_embebido,'created_at',a.created_at))
          FROM "TareaAdjunto" a
         WHERE a.tarea_id = t.id AND a.comentario_id IS NULL) AS adjuntos,
 

@@ -47,6 +47,32 @@ const fromInputDate = (val) => {
   return dt.toISOString()
 }
 
+// Helper para convertir URLs de Google Drive a formato de imagen directa
+const getDirectImageUrl = (url) => {
+  if (!url) return null;
+
+  // Si es una URL local (empieza con /uploads), devolverla tal cual
+  if (url.startsWith('/uploads') || url.startsWith('http://localhost') || url.startsWith('http://127.0.0.1')) {
+    console.log('🔍 Local URL detected:', url);
+    return url;
+  }
+
+  // Si es una URL de Google Drive en formato /view
+  if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([^\/]+)/);
+    if (match && match[1]) {
+      const fileId = match[1];
+      // Formato para mostrar imagen directamente
+      const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+      console.log('🔍 Converting URL:', url, '→', directUrl);
+      return directUrl;
+    }
+  }
+
+  // Si ya es una URL directa o de otro tipo, devolverla tal cual
+  return url;
+}
+
 export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const { id: urlId } = useParams()
   const navigate = useNavigate()
@@ -111,10 +137,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   }
 
   useEffect(() => {
-    if (!mainImage && adjuntos.length > 0) {
-      setMainImage(adjuntos[0]);
+    const embeddedImages = adjuntos.filter(a => a.es_embebido);
+    if (!mainImage && embeddedImages.length > 0) {
+      setMainImage(embeddedImages[0]);
     }
-  }, [adjuntos]);
+  }, [adjuntos, mainImage]);
+  console.log('----------------------------------------->', isResponsible)
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -662,28 +690,47 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-          >  {mainImage ? (
-            <img src={mainImage.url} className="main-image" />
-          ) : (
-            <p>Arrastra tus archivos aquí</p>
-          )}
+          >
+            {console.log('🔍 mainImage state:', mainImage)}
+            {mainImage ? (
+              <img
+                src={getDirectImageUrl(mainImage.url)}
 
-            <div>
+                className="main-image"
+                style={{ border: '2px solid yellow', display: 'block' }}
+                onError={(e) => {
+                  console.error('❌ Error loading main image:', mainImage.url);
+                  console.error('❌ Converted URL:', getDirectImageUrl(mainImage.url));
+                  e.target.style.border = '3px solid red';
+                }}
+                onLoad={(e) => {
+                  console.log('✅ Main image loaded successfully');
+                  e.target.style.border = '2px solid green';
+                }}
+              />
+            ) : (
+              <p className='dropzone-text'>Arrastra tus archivos aquí</p>
+            )}
+
+            <div className="dropzone-desc">
               <p>Contenido Listo</p>
             </div>
 
             <div className="previews-container">
-              {adjuntos.length > 1 && (
+              {adjuntos.filter(a => a.es_embebido).length > 1 && (
                 <div className="thumbnails-slider">
-                  {adjuntos.map((file) => (
+                  {adjuntos.filter(a => a.es_embebido).map((file) => (
                     <div
                       key={file.id}
                       className={`thumbnail-item ${mainImage?.id === file.id ? "selected" : ""
                         }`}
                       onClick={() => setMainImage(file)}
                     >
-                      <img src={file.url} />
-                      <button className="remove-btn" onClick={() => remove(file.id)}>
+                      <img src={getDirectImageUrl(file.url)} />
+                      <button className="remove-btn" onClick={(e) => {
+                        e.stopPropagation();
+                        remove(file.id);
+                      }}>
                         ✕
                       </button>
                     </div>

@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 export class LocalStorageProvider {
-  constructor({ baseDir, publicBase='/uploads' }) {
+  constructor({ baseDir, publicBase = '/uploads' }) {
     this.baseDir = path.resolve(baseDir || 'uploads')
-    this.publicBase = String(publicBase || '/uploads').replace(/\/+$/,'')
+    this.publicBase = String(publicBase || '/uploads').replace(/\/+$/, '')
     fs.mkdirSync(this.baseDir, { recursive: true })
   }
 
@@ -32,8 +32,9 @@ export class LocalStorageProvider {
         name: f.originalname,
         mime: f.mimetype,
         size: f.size,
-        webViewLink: publicUrl,     // 👈 listo para <img src>
-        webContentLink: publicUrl,  // 👈 idem
+        publicUrl: publicUrl,        // 👈 agregado para compatibilidad con controlador
+        webViewLink: publicUrl,      // 👈 listo para <img src>
+        webContentLink: publicUrl,   // 👈 idem
         relpath,
         diskPath: dest,
       })
@@ -47,8 +48,8 @@ export class LocalStorageProvider {
       ? relpathOrAbs
       : path.join(this.baseDir, relpathOrAbs)
 
-    try { fs.unlinkSync(p); return { ok:true } }
-    catch (e) { if (e.code==='ENOENT') return { ok:true, note:'not found' }; throw e }
+    try { fs.unlinkSync(p); return { ok: true } }
+    catch (e) { if (e.code === 'ENOENT') return { ok: true, note: 'not found' }; throw e }
   }
 
   async getFolderWebLink(parts = []) {
