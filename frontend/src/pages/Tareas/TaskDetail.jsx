@@ -242,7 +242,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     const [t, cat] = await Promise.all([
       tareasApi.get(taskId),
 
-      tareasApi.catalog().catch(() => ({}))
+      tareasApi.catalog().catch((err) => {
+        console.error('ERROR LOADING CATALOG:', err)
+        return {}
+      })
 
     ])
 
@@ -461,6 +464,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const vencimientoISO = task?.vencimiento || null
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
+  const clienteColor = task?.cliente?.color || task?.cliente_color || null
 
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
@@ -613,7 +617,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               <InlineClient
                 valueId={task?.cliente?.id || task?.cliente_id || null}
                 valueName={clienteNombre}
-                valueColor={task?.cliente?.color || null}
+                valueColor={clienteColor}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
                 disabled={!isResponsible}

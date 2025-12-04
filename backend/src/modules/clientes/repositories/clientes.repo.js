@@ -26,7 +26,7 @@ export const ensureCelulaExists = async (celula_id) => {
 // === Consultas enriquecidas ===
 const baseSelect = `
   SELECT
-    c.id, c.nombre, c.alias, c.email, c.telefono, c.sitio_web, c.descripcion,
+    c.id, c.nombre, c.alias, c.email, c.telefono, c.sitio_web, c.descripcion, c.color,
     c.celula_id, ce.nombre AS celula_nombre,
     c.tipo_id, ct.codigo AS tipo_codigo, ct.nombre AS tipo_nombre,
     c.estado_id, es.codigo AS estado_codigo, es.nombre AS estado_nombre,
@@ -58,34 +58,34 @@ const metricsCTE = `
 
 export const listClienteTipos = async () =>
   models.ClienteTipo.findAll({
-    attributes: ['id','codigo','nombre','ponderacion'],
-    order: [['ponderacion','DESC'], ['nombre','ASC']]
+    attributes: ['id', 'codigo', 'nombre', 'ponderacion'],
+    order: [['ponderacion', 'DESC'], ['nombre', 'ASC']]
   });
 
 export const listClienteEstados = async () =>
   models.ClienteEstado.findAll({
-    attributes: ['id','codigo','nombre'],
-    order: [['nombre','ASC']]
+    attributes: ['id', 'codigo', 'nombre'],
+    order: [['nombre', 'ASC']]
   });
 
 export const listCelulasLite = async () =>
   models.Celula.findAll({
-    attributes: ['id','nombre','slug'],
-    order: [['nombre','ASC']]
+    attributes: ['id', 'nombre', 'slug'],
+    order: [['nombre', 'ASC']]
   });
 
 // Listado con filtros + métricas opcionales
 export const listClientes = async (q) => {
   const {
     q: search, celula_id, tipo_id, tipo_codigo, estado_id, estado_codigo,
-    ponderacion_min, ponderacion_max, limit=50, offset=0, order_by, order, with_metrics
+    ponderacion_min, ponderacion_max, limit = 50, offset = 0, order_by, order, with_metrics
   } = q;
 
   const repl = { limit, offset };
   let sql = baseSelect;
   const where = [];
   if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
-  if (tipo_id)   { where.push('c.tipo_id = :tipo_id');     repl.tipo_id = tipo_id; }
+  if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
   if (estado_id) { where.push('c.estado_id = :estado_id'); repl.estado_id = estado_id; }
   if (ponderacion_min) { where.push('c.ponderacion >= :pmin'); repl.pmin = ponderacion_min; }
   if (ponderacion_max) { where.push('c.ponderacion <= :pmax'); repl.pmax = ponderacion_max; }
@@ -95,8 +95,8 @@ export const listClientes = async (q) => {
   }
 
   // Resolver por códigos si vienen
-  if (tipo_codigo)  { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
-  if (estado_codigo){ where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
+  if (tipo_codigo) { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
+  if (estado_codigo) { where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
 
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
 
@@ -132,13 +132,13 @@ export const countClientes = async (q) => {
   `;
   const where = [];
   if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
-  if (tipo_id)   { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
+  if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
   if (estado_id) { where.push('c.estado_id = :estado_id'); repl.estado_id = estado_id; }
   if (ponderacion_min) { where.push('c.ponderacion >= :pmin'); repl.pmin = ponderacion_min; }
   if (ponderacion_max) { where.push('c.ponderacion <= :pmax'); repl.pmax = ponderacion_max; }
   if (search) { where.push(`(LOWER(c.nombre) LIKE :search OR LOWER(COALESCE(c.alias,'')) LIKE :search OR LOWER(COALESCE(c.email,'')) LIKE :search)`); repl.search = `%${search.toLowerCase()}%`; }
-  if (tipo_codigo)  { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
-  if (estado_codigo){ where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
+  if (tipo_codigo) { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
+  if (estado_codigo) { where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
   const rows = await sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
   return rows[0]?.cnt ?? 0;
@@ -165,7 +165,7 @@ export const getClienteById = async (id) => {
   if (!cliente) return null;
 
   const contactos = await models.ClienteContacto.findAll({
-    where: { cliente_id: id }, order: [['es_principal','DESC'], ['nombre','ASC']]
+    where: { cliente_id: id }, order: [['es_principal', 'DESC'], ['nombre', 'ASC']]
   });
 
   // Gerentes de la célula: asignaciones activas (hasta null o >= hoy)
@@ -228,7 +228,7 @@ export const hardDeleteCliente = async (id) => {
 export const listContactos = async (cliente_id, q = {}) => {
   const where = { cliente_id };
   if (typeof q.principal === 'boolean') Object.assign(where, { es_principal: q.principal });
-  return models.ClienteContacto.findAll({ where, order: [['es_principal','DESC'],['nombre','ASC']] });
+  return models.ClienteContacto.findAll({ where, order: [['es_principal', 'DESC'], ['nombre', 'ASC']] });
 };
 export const createContacto = async (cliente_id, body) => {
   await getClienteById(cliente_id).then(c => { if (!c) throw Object.assign(new Error('Cliente no encontrado'), { status: 404 }); });
