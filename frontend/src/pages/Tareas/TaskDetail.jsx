@@ -81,7 +81,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
 
-  console.log('------------------------------->adjuntos', adjuntos)
   const [isOver, setIsOver] = useState(false)
   const [mainImage, setMainImage] = useState(null);
 
@@ -116,7 +115,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       setMainImage(adjuntos[0]);
     }
   }, [adjuntos]);
-  console.log('----------------------------------------->', isResponsible)
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -187,16 +185,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     })
   }, [task])
 
+  // Recalcular isResponsible basado en peopleForm (reactivo a cambios)
   useEffect(() => {
-    if (!task || !user?.id) return
+    if (!user?.id) return
 
-    const normalizedResp = mapResp(task.responsables || task.Responsables || [])
+    const currentResponsables = peopleForm.responsables || []
+    const isResp = currentResponsables.some(r =>
+      (r.id === user.id) || (r.feder_id === user.id)
+    )
 
-    setIsResponsible(prev => prev || normalizedResp.some(r => r.id === user.id))
-
-    const normalizedCol = mapCol(task.colaboradores || task.Colaboradores || [])
-    setPeopleForm({ responsables: normalizedResp, colaboradores: normalizedCol })
-  }, [task, user?.id])
+    // También considerar C-Level como "responsable" para edición
+    setIsResponsible(isResp || isCLevel)
+  }, [peopleForm.responsables, user?.id, isCLevel])
 
 
   // contentEditable
@@ -302,6 +302,39 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }, [form.descripcion, task, performSave])
 
+  // Keep refs updated for unmount cleanup
+  const formRef = useRef(form)
+  const taskRef = useRef(task)
+  useEffect(() => { formRef.current = form }, [form])
+  useEffect(() => { taskRef.current = task }, [task])
+
+  // Save on unmount (when modal closes)
+  useEffect(() => {
+    return () => {
+      const currDesc = (formRef.current?.descripcion ?? '')
+      const savedDesc = (taskRef.current?.descripcion ?? '')
+      if (currDesc !== savedDesc && taskRef.current && !saveInProgressRef.current) {
+        console.log('[TaskDetail] Saving on unmount')
+        // Get CSRF token from cookie
+        const csrfCookie = document.cookie.split('; ').find(c => c.startsWith('fh_csrf='))
+        const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : ''
+
+        // Use fetch with keepalive for reliable save on unmount
+        fetch(`/api/tareas/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+            'X-CSRF': csrfToken
+          },
+          body: JSON.stringify({ descripcion: currDesc }),
+          credentials: 'include',
+          keepalive: true
+        }).catch(() => { })
+      }
+    }
+  }, [taskId])
+
   // Save title on blur (immediate, cancel debounce)
   const flushTitleOnBlur = useCallback(() => {
     if (!task || saveInProgressRef.current) return
@@ -320,12 +353,54 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }, [form.titulo, task, performSave])
 
-  // beforeunload
+  // beforeunload - attempt to save and warn user
   useEffect(() => {
-    const onBeforeUnload = (e) => { if (dirty) { e.preventDefault(); e.returnValue = '' } }
+    const saveBeforeLeave = () => {
+      if (!task || saveInProgressRef.current) return
+      const currDesc = (form.descripcion ?? '')
+      const taskDesc = (task.descripcion ?? '')
+      if (currDesc !== taskDesc) {
+        // Get CSRF token from cookie
+        const csrfCookie = document.cookie.split('; ').find(c => c.startsWith('fh_csrf='))
+        const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : ''
+
+        fetch(`/api/tareas/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+            'X-CSRF': csrfToken
+          },
+          body: JSON.stringify({ descripcion: currDesc }),
+          credentials: 'include',
+          keepalive: true
+        }).catch(() => { })
+      }
+    }
+
+    const onBeforeUnload = (e) => {
+      if (dirty) {
+        saveBeforeLeave()
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    // Also save when tab loses visibility (user switches tabs)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && dirty) {
+        flushDescriptionOnBlur()
+      }
+    }
+
     window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [dirty])
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [dirty, form.descripcion, task, taskId, flushDescriptionOnBlur])
 
   const handleBack = async () => {
     if (dirty) {

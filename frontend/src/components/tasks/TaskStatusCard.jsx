@@ -47,12 +47,18 @@ export default function TaskStatusCard({
   }, [open])
 
   // Cerrar dropdown con scroll o click fuera
+  const menuRef = useRef(null)
+
   useEffect(() => {
     if (!open) return
 
     const handleScroll = () => setOpen(false)
     const handleClickOutside = (e) => {
-      if (buttonRef.current && !buttonRef.current.contains(e.target)) {
+      // Check if click is outside both the button AND the menu
+      const isOutsideButton = buttonRef.current && !buttonRef.current.contains(e.target)
+      const isOutsideMenu = menuRef.current && !menuRef.current.contains(e.target)
+
+      if (isOutsideButton && isOutsideMenu) {
         setOpen(false)
       }
     }
@@ -121,6 +127,7 @@ export default function TaskStatusCard({
 
       {open && createPortal(
         <div
+          ref={menuRef}
           className="statusMenu statusMenu--portal"
           style={{
             position: 'fixed',

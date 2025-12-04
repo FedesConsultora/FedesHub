@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -10,8 +10,9 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
-import { $generateHtmlFromNodes } from '@lexical/html';
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $getRoot, $insertNodes } from 'lexical';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import CharacterLimitPlugin from './plugins/CharacterLimitPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
@@ -20,7 +21,7 @@ import { FileNode } from './nodes/FileNode';
 import './RichTextEditor.scss';
 
 // Configuración inicial del editor
-const editorConfig = {
+const getEditorConfig = () => ({
     namespace: 'TaskDescriptionEditor',
     theme: {
         paragraph: 'editor-paragraph',
@@ -51,7 +52,33 @@ const editorConfig = {
     onError(error) {
         console.error('Lexical Error:', error);
     },
-};
+});
+
+// Plugin para inicializar el contenido HTML
+function InitialValuePlugin({ initialValue }) {
+    const [editor] = useLexicalComposerContext();
+    const hasInitialized = useRef(false);
+
+    useEffect(() => {
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+
+        if (!initialValue) return;
+
+        editor.update(() => {
+            const root = $getRoot();
+            const parser = new DOMParser();
+            const dom = parser.parseFromString(initialValue, 'text/html');
+            const nodes = $generateNodesFromDOM(editor, dom);
+            root.clear();
+            if (nodes.length > 0) {
+                $insertNodes(nodes);
+            }
+        });
+    }, [editor, initialValue]);
+
+    return null;
+}
 
 // Plugin para capturar cambios y convertir a HTML
 function OnChangeHTMLPlugin({ onChange }) {
@@ -72,15 +99,27 @@ function OnBlurPlugin({ onBlur }) {
     const [editor] = useLexicalComposerContext();
 
     useEffect(() => {
-        return editor.registerRootListener((rootElement) => {
+        return editor.registerRootListener((rootElement, prevRootElement) => {
+            // Remove from previous root using stored handler
+            if (prevRootElement && prevRootElement._focusOutHandler) {
+                prevRootElement.removeEventListener('focusout', prevRootElement._focusOutHandler);
+                delete prevRootElement._focusOutHandler;
+            }
+
+            // Add to new root
             if (rootElement) {
-                const handleBlur = () => {
-                    onBlur?.();
+                const handleFocusOut = (e) => {
+                    // Check if focus is leaving the editor entirely
+                    const editorContainer = rootElement.closest('.editor-container');
+                    if (!editorContainer?.contains(e.relatedTarget)) {
+                        console.log('[OnBlurPlugin] Editor lost focus, triggering save');
+                        onBlur?.();
+                    }
                 };
-                rootElement.addEventListener('blur', handleBlur, true);
-                return () => {
-                    rootElement.removeEventListener('blur', handleBlur, true);
-                };
+
+                rootElement.addEventListener('focusout', handleFocusOut);
+                // Store handler for cleanup
+                rootElement._focusOutHandler = handleFocusOut;
             }
         });
     }, [editor, onBlur]);
@@ -97,9 +136,25 @@ export default function RichTextEditor({
     maxLength = 600,
     minHeight = '190px'
 }) {
+    // Generate a stable key based on taskId - only remount when taskId changes
+    const mountIdRef = useRef(Date.now());
+    const editorKey = `editor-${taskId || 'new'}-${mountIdRef.current}`;
+
+    // Memoize config to avoid unnecessary recreation
+    const editorConfig = useMemo(() => getEditorConfig(), []);
+
+    // Stop propagation to prevent parent modal from closing on text selection
+    const handleMouseDown = (e) => {
+        e.stopPropagation();
+    };
+
     return (
-        <div className="richTextEditor" style={{ minHeight }}>
-            <LexicalComposer initialConfig={editorConfig}>
+        <div
+            className="richTextEditor"
+            style={{ minHeight }}
+            onMouseDown={handleMouseDown}
+        >
+            <LexicalComposer key={editorKey} initialConfig={editorConfig}>
                 <div className="editor-container">
                     <ToolbarPlugin />
                     <div className="editor-inner">
@@ -116,6 +171,7 @@ export default function RichTextEditor({
                             }
                             ErrorBoundary={LexicalErrorBoundary}
                         />
+                        <InitialValuePlugin initialValue={value} />
                         <HistoryPlugin />
                         <LinkPlugin />
                         <ListPlugin />

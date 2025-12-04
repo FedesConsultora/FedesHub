@@ -121,42 +121,78 @@ export default function ToolbarPlugin() {
     const applyColor = (color) => {
         editor.update(() => {
             const selection = $getSelection();
-            if ($isRangeSelection(selection) && !selection.isCollapsed()) {
-                const nodes = selection.getNodes();
-                const anchor = selection.anchor;
-                const focus = selection.focus;
-
-                nodes.forEach((node) => {
-                    if ($isTextNode(node)) {
-                        const isFirst = node === nodes[0];
-                        const isLast = node === nodes[nodes.length - 1];
-
-                        let targetNode = node;
-
-                        // Si es el primer nodo y la selección no empieza al inicio
-                        if (isFirst && anchor.offset > 0) {
-                            const [, rightNode] = node.splitText(anchor.offset);
-                            targetNode = rightNode;
-                        }
-
-                        // Si es el último nodo y la selección no termina al final
-                        if (isLast && focus.offset < targetNode.getTextContent().length) {
-                            const [leftNode] = targetNode.splitText(
-                                isFirst ? focus.offset - anchor.offset : focus.offset
-                            );
-                            targetNode = leftNode;
-                        }
-
-                        // Aplicar color solo al nodo objetivo
-                        const existingStyle = targetNode.getStyle() || '';
-                        const styleWithoutColor = existingStyle.replace(/color:\s*[^;]+;?/gi, '').trim();
-                        const newStyle = styleWithoutColor
-                            ? `${styleWithoutColor}; color: ${color}`
-                            : `color: ${color}`;
-                        targetNode.setStyle(newStyle);
-                    }
-                });
+            if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+                return;
             }
+
+            // Get nodes in proper order regardless of selection direction
+            const nodes = selection.getNodes();
+            if (!nodes.length) return;
+
+            // For proper offset handling, we need to ensure anchor comes before focus
+            const anchorNode = selection.anchor.getNode();
+            const focusNode = selection.focus.getNode();
+            const anchorOffset = selection.anchor.offset;
+            const focusOffset = selection.focus.offset;
+
+            // Determine if selection is backwards
+            const isBackward = selection.isBackward();
+            const startOffset = isBackward ? focusOffset : anchorOffset;
+            const endOffset = isBackward ? anchorOffset : focusOffset;
+
+            nodes.forEach((node, index) => {
+                if (!$isTextNode(node)) return;
+
+                const isFirst = index === 0;
+                const isLast = index === nodes.length - 1;
+                const textContent = node.getTextContent();
+                const nodeLength = textContent.length;
+
+                let targetNode = node;
+                let sliceStart = 0;
+                let sliceEnd = nodeLength;
+
+                // Calculate the slice for this node
+                if (isFirst && isLast) {
+                    // Only one node - use both offsets
+                    sliceStart = Math.min(startOffset, endOffset);
+                    sliceEnd = Math.max(startOffset, endOffset);
+                } else if (isFirst) {
+                    // First node - start from offset to end
+                    sliceStart = isBackward ? focusOffset : anchorOffset;
+                    sliceEnd = nodeLength;
+                } else if (isLast) {
+                    // Last node - from start to offset
+                    sliceStart = 0;
+                    sliceEnd = isBackward ? anchorOffset : focusOffset;
+                }
+                // Middle nodes get full selection (sliceStart = 0, sliceEnd = nodeLength)
+
+                // Split if needed
+                if (sliceStart > 0) {
+                    const [, rightNode] = node.splitText(sliceStart);
+                    if (rightNode) {
+                        targetNode = rightNode;
+                        sliceEnd = sliceEnd - sliceStart;
+                        sliceStart = 0;
+                    }
+                }
+
+                if (sliceEnd < targetNode.getTextContent().length) {
+                    const [leftNode] = targetNode.splitText(sliceEnd);
+                    if (leftNode) {
+                        targetNode = leftNode;
+                    }
+                }
+
+                // Apply color to target node
+                const existingStyle = targetNode.getStyle() || '';
+                const styleWithoutColor = existingStyle.replace(/color:\s*[^;]+;?/gi, '').trim();
+                const newStyle = styleWithoutColor
+                    ? `${styleWithoutColor}; color: ${color}`
+                    : `color: ${color}`;
+                targetNode.setStyle(newStyle);
+            });
         });
         setCurrentColor(color);
         setShowColorPicker(false);
@@ -165,42 +201,63 @@ export default function ToolbarPlugin() {
     const applyFontSize = (size) => {
         editor.update(() => {
             const selection = $getSelection();
-            if ($isRangeSelection(selection) && !selection.isCollapsed()) {
-                const nodes = selection.getNodes();
-                const anchor = selection.anchor;
-                const focus = selection.focus;
-
-                nodes.forEach((node) => {
-                    if ($isTextNode(node)) {
-                        const isFirst = node === nodes[0];
-                        const isLast = node === nodes[nodes.length - 1];
-
-                        let targetNode = node;
-
-                        // Si es el primer nodo y la selección no empieza al inicio
-                        if (isFirst && anchor.offset > 0) {
-                            const [, rightNode] = node.splitText(anchor.offset);
-                            targetNode = rightNode;
-                        }
-
-                        // Si es el último nodo y la selección no termina al final
-                        if (isLast && focus.offset < targetNode.getTextContent().length) {
-                            const [leftNode] = targetNode.splitText(
-                                isFirst ? focus.offset - anchor.offset : focus.offset
-                            );
-                            targetNode = leftNode;
-                        }
-
-                        // Aplicar tamaño de fuente
-                        const existingStyle = targetNode.getStyle() || '';
-                        const styleWithoutSize = existingStyle.replace(/font-size:\s*[^;]+;?/gi, '').trim();
-                        const newStyle = styleWithoutSize
-                            ? `${styleWithoutSize}; font-size: ${size}`
-                            : `font-size: ${size}`;
-                        targetNode.setStyle(newStyle);
-                    }
-                });
+            if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+                return;
             }
+
+            const nodes = selection.getNodes();
+            if (!nodes.length) return;
+
+            const anchorOffset = selection.anchor.offset;
+            const focusOffset = selection.focus.offset;
+            const isBackward = selection.isBackward();
+            const startOffset = isBackward ? focusOffset : anchorOffset;
+            const endOffset = isBackward ? anchorOffset : focusOffset;
+
+            nodes.forEach((node, index) => {
+                if (!$isTextNode(node)) return;
+
+                const isFirst = index === 0;
+                const isLast = index === nodes.length - 1;
+                const nodeLength = node.getTextContent().length;
+
+                let targetNode = node;
+                let sliceStart = 0;
+                let sliceEnd = nodeLength;
+
+                if (isFirst && isLast) {
+                    sliceStart = Math.min(startOffset, endOffset);
+                    sliceEnd = Math.max(startOffset, endOffset);
+                } else if (isFirst) {
+                    sliceStart = isBackward ? focusOffset : anchorOffset;
+                    sliceEnd = nodeLength;
+                } else if (isLast) {
+                    sliceStart = 0;
+                    sliceEnd = isBackward ? anchorOffset : focusOffset;
+                }
+
+                if (sliceStart > 0) {
+                    const [, rightNode] = node.splitText(sliceStart);
+                    if (rightNode) {
+                        targetNode = rightNode;
+                        sliceEnd = sliceEnd - sliceStart;
+                    }
+                }
+
+                if (sliceEnd < targetNode.getTextContent().length) {
+                    const [leftNode] = targetNode.splitText(sliceEnd);
+                    if (leftNode) {
+                        targetNode = leftNode;
+                    }
+                }
+
+                const existingStyle = targetNode.getStyle() || '';
+                const styleWithoutSize = existingStyle.replace(/font-size:\s*[^;]+;?/gi, '').trim();
+                const newStyle = styleWithoutSize
+                    ? `${styleWithoutSize}; font-size: ${size}`
+                    : `font-size: ${size}`;
+                targetNode.setStyle(newStyle);
+            });
         });
         setCurrentFontSize(size);
         setShowFontSizePicker(false);

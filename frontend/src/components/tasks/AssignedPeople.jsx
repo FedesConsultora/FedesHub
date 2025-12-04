@@ -6,38 +6,39 @@ import { MdEdit } from "react-icons/md";
 
 import './assigned-people.scss';
 
-const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handleAdd, handleRemove }) => (
+const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handleAdd, handleRemove, disabled }) => (
   <div className="peopleGroup">
     <div className="pgHead">
       <span>{title}</span>
 
-      {/* Wrapper para posicionar dropdown */}
-      <div className="addWrapper">
-        {groupKey === "responsables" ? (
-          <MdEdit
-            size={16}
-            style={{ cursor: 'pointer' }}
-            className="addBtn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenAdd(openAdd === groupKey ? null : groupKey);
-            }}
-          />
-        ) : (
-          <CiCirclePlus
-            size={26}
-            style={{ cursor: 'pointer', position: 'relative', top: '.2rem' }}
-            className="addBtn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenAdd(openAdd === groupKey ? null : groupKey);
-            }}
-          />
-        )}
+      {/* Solo mostrar botón de editar/agregar si NO está disabled */}
+      {!disabled && (
+        <div className="addWrapper">
+          {groupKey === "responsables" ? (
+            <MdEdit
+              size={16}
+              style={{ cursor: 'pointer' }}
+              className="addBtn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenAdd(openAdd === groupKey ? null : groupKey);
+              }}
+            />
+          ) : (
+            <CiCirclePlus
+              size={26}
+              style={{ cursor: 'pointer', position: 'relative', top: '.2rem' }}
+              className="addBtn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenAdd(openAdd === groupKey ? null : groupKey);
+              }}
+            />
+          )}
 
 
-        {openAdd === groupKey && (
-          <div className="dropdown global dd-add" onClick={(e) => e.stopPropagation()}>
+          {openAdd === groupKey && (
+            <div className="dropdown global dd-add" onClick={(e) => e.stopPropagation()}>
               {candidates.length ? (
                 candidates.map((c) => {
                   const fullName =
@@ -89,8 +90,9 @@ const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handle
                 <div className="empty">No hay opciones</div>
               )}
             </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
 
     {/* Lista */}
@@ -128,7 +130,8 @@ export default function AssignedPeople({
   colaboradores = [],
   candidatesResp = [],
   candidatesCol = [],
-  onChange
+  onChange,
+  disabled = false
 }) {
   const [openAdd, setOpenAdd] = useState(null);
 
@@ -198,6 +201,7 @@ export default function AssignedPeople({
         setOpenAdd={setOpenAdd}
         handleAdd={handleAdd}
         handleRemove={handleRemove}
+        disabled={disabled}
       />
 
       <Group
@@ -209,6 +213,7 @@ export default function AssignedPeople({
         setOpenAdd={setOpenAdd}
         handleAdd={handleAdd}
         handleRemove={handleRemove}
+        disabled={disabled}
       />
     </div>
   );
