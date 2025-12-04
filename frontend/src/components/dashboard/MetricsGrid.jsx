@@ -3,13 +3,12 @@ import './metrics.scss'
 import MetricCard from './MetricCard'
 
 export default function MetricsGrid({ data }) {
-  const metrics = data ?? { tareas_hoy: 2, tareas_semana: 3, clientes_activos: 1, eventos_prox: 2 }
+  const metrics = data ?? { tareas_hoy: 2, tareas_semana: 3, clientes_activos: 1, reuniones_prox: 2, tareas_prioritarias: 2 }
 
   const items = [
-    { k:'tareas_hoy',       label:'Tareas para hoy',  value: metrics.tareas_hoy ?? 0 },
-    { k:'tareas_semana',    label:'Tareas semana',    value: metrics.tareas_semana ?? 0 },
-    { k:'clientes_activos', label:'Clientes activos', value: metrics.clientes_activos ?? 0 },
-    { k:'eventos_prox',     label:'Próximos eventos', value: metrics.eventos_prox ?? 0 },
+    { k: 'tareas_prioritarias', label: 'Tareas prioritarias', value: metrics.tareas_prioritarias ?? 0 },
+    { k: 'tareas_semana', label: 'Tareas semana', value: metrics.tareas_semana + metrics.tareas_hoy ?? 0 },
+    { k: 'reuniones_prox', label: 'Próximas reuniones', value: metrics.eventos_prox ?? 0 },
   ]
 
   return (
