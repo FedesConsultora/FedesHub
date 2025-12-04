@@ -8,7 +8,7 @@ export default function ClienteCard({ c }) {
   const goClient = (e) => { e.stopPropagation(); nav(`/clientes/${c.id}`) }
 
   // Iniciales simples (fallback)
-  const initials = (c.nombre || '').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase()
+  const initials = (c.nombre || '').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 
   return (
     <article
@@ -16,7 +16,7 @@ export default function ClienteCard({ c }) {
       role="button"
       tabIndex={0}
       onClick={goTasks}
-      onKeyDown={(e) => (e.key==='Enter' || e.key===' ') && goTasks()}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goTasks()}
       aria-label={`Ver tareas de ${c.nombre}`}
       title="Click para ver tareas"
     >
@@ -26,13 +26,13 @@ export default function ClienteCard({ c }) {
 
         <div className="main">
           <header className="head">
-            <div className="name">
+            <div className="name" onClick={goClient}>
               <strong>{c.nombre}</strong>{' '}
-              {c.alias && <span className="muted">({c.alias})</span>}
+              {c.alias && <span className="muted" >({c.alias})</span>}
             </div>
             <div className="meta">
-              {c.tipo_nombre    && <span className="badge">{c.tipo_nombre}</span>}
-              {c.estado_nombre  && <span className={`badge ${c.estado_nombre?.toLowerCase()}`}>{c.estado_nombre}</span>}
+              {c.tipo_nombre && <span className="badge">{c.tipo_nombre}</span>}
+              {c.estado_nombre && <span className={`badge ${c.estado_nombre?.toLowerCase()}`}>{c.estado_nombre}</span>}
               <span className="badge">Pond. {c.ponderacion ?? '—'}</span>
             </div>
           </header>
@@ -43,7 +43,7 @@ export default function ClienteCard({ c }) {
             </div>
             <div className="line">
               Célula:{' '}
-              <Link to={`/celulas/${c.celula_id}`} onClick={(e)=>e.stopPropagation()}>
+              <Link to={`/celulas/${c.celula_id}`} onClick={(e) => e.stopPropagation()}>
                 {c.celula_nombre}
               </Link>
             </div>
@@ -61,9 +61,9 @@ export default function ClienteCard({ c }) {
           </div>
         </div>
 
-        <aside className="actions" onClick={(e)=>e.stopPropagation()}>
-          <button className="btn primary" onClick={goClient}>Ver cliente</button>
-          <button className="btn ghost" onClick={goTasks} title="Ir a tareas">Tareas →</button>
+        <aside className="actions" onClick={(e) => e.stopPropagation()}>
+          <button className="btn ghost" onClick={goClient}>Ver información</button>
+          <button className="btn primary" onClick={goTasks} title="Ir a tareas">Ver tareas →</button>
         </aside>
       </div>
     </article>
