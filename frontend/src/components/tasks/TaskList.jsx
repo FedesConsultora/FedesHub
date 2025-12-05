@@ -1,18 +1,20 @@
 // /frontend/src/components/tasks/TaskList.jsx
 import { useMemo } from "react";
 import { Badge } from "../ui/badge";
+import AvatarStack from "../common/AvatarStack";
+import { getPriorityMeta } from "./priority-utils";
 
 /**
  * TaskList — tabla reutilizable para tareas
  *
  * Props:
- * - rows:    array normalizado [{ id, titulo, cliente_nombre, estado_nombre, vencimiento, progreso_pct }]
+ * - rows:    array normalizado [{ id, titulo, cliente_nombre, estado_nombre, vencimiento, progreso_pct, prioridad, responsables, colaboradores }]
  * - loading: bool (muestra filas fantasma)
  * - maxRows: number | undefined (recorta visualmente; ideal dashboard=4)
  * - dense:   bool (altura compacta de filas)
  * - showHeader: bool (default true)
  * - onRowClick: fn(row) | opcional (fila clickeable)
- * - columns: { cliente, estado, vence, progreso } — toggles de columnas (todas true por defecto)
+ * - columns: { cliente, estado, vence, progreso, responsables } — toggles de columnas (todas true por defecto)
  */
 
 export default function TaskList({
@@ -23,8 +25,8 @@ export default function TaskList({
   showHeader = true,
   onRowClick,
   onOpenTask,
- 
-  columns: cols = { cliente: true, estado: true, vence: true, progreso: true },
+
+  columns: cols = { cliente: true, estado: true, vence: true, progreso: true, responsables: true },
 }) {
   const data = useMemo(() => {
     const r = Array.isArray(rows) ? rows : [];
@@ -39,8 +41,10 @@ export default function TaskList({
         {showHeader && (
           <thead className="bg-muted/50 sticky top-0 z-10">
             <tr>
+              <th className="text-left p-3" style={{ width: '32px' }}></th>
               <th className="text-left p-3">Tarea</th>
               {cols.cliente && <th className="text-left p-3">Cliente</th>}
+              {cols.responsables && <th className="text-left p-3">Asignados</th>}
               {cols.estado && <th className="text-left p-3">Estado</th>}
               {cols.vence && <th className="text-left p-3">Vence</th>}
               {cols.progreso && <th className="text-left p-3">Progreso</th>}
@@ -56,12 +60,20 @@ export default function TaskList({
                   key={`skeleton-${i}`}
                   className="border-t opacity-70 animate-pulse "
                 >
+                  <td className={`px-3 ${RowPad}`}>
+                    <div className="h-3 w-3 bg-muted rounded-full" />
+                  </td>
                   <td className={`px-3 cursor-pointer ${RowPad}`}>
                     <div className="h-3 w-48 bg-muted rounded " />
                   </td>
                   {cols.cliente && (
                     <td className={`px-3 cursor-pointer ${RowPad}`}>
                       <div className="h-3 w-32 bg-muted rounded" />
+                    </td>
+                  )}
+                  {cols.responsables && (
+                    <td className={`px-3 cursor-pointer ${RowPad}`}>
+                      <div className="h-6 w-16 bg-muted rounded" />
                     </td>
                   )}
                   {cols.estado && (
@@ -87,8 +99,9 @@ export default function TaskList({
             <tr className="border-t">
               <td
                 colSpan={
-                  1 +
+                  2 +
                   (cols.cliente ? 1 : 0) +
+                  (cols.responsables ? 1 : 0) +
                   (cols.estado ? 1 : 0) +
                   (cols.vence ? 1 : 0) +
                   (cols.progreso ? 1 : 0)
@@ -109,22 +122,46 @@ export default function TaskList({
                 : 0;
               const clickable = typeof onRowClick === "function";
 
+              // Prioridad
+              const prio = getPriorityMeta(Number(t.prioridad) || 0, due);
+              const prioColor = prio.level >= 2 ? '#f44336' : prio.level === 1 ? '#ff9800' : 'transparent';
+
+              // Combinar responsables y colaboradores
+              const allPeople = [...(t.responsables || []), ...(t.colaboradores || [])];
+
               return (
                 <tr
                   key={t.id}
                   className={`border-t ${clickable ? "hover:bg-muted/30 cursor-pointer" : ""}`}
-onClick={() => {
-  console.log("Row clicked", t.id); // para debug
-  if (typeof onRowClick === "function") onRowClick(t);
-  if (typeof onOpenTask === "function") onOpenTask(t.id);
-}}
+                  onClick={() => {
+                    if (typeof onRowClick === "function") onRowClick(t);
+                    if (typeof onOpenTask === "function") onOpenTask(t.id);
+                  }}
                 >
+                  {/* Indicador de prioridad */}
+                  <td className={`px-2 ${RowPad}`} style={{ width: '32px' }}>
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: prioColor,
+                        boxShadow: prioColor !== 'transparent' ? `0 0 6px ${prioColor}` : 'none'
+                      }}
+                      title={prio.label}
+                    />
+                  </td>
                   <td className={`px-3 ${RowPad} font-medium cursor-pointer `}>
                     {t.titulo || t.title}
                   </td>
                   {cols.cliente && (
                     <td className={`px-3 cursor-pointer  ${RowPad}`}>
                       {t.cliente_nombre || t.client?.name || "—"}
+                    </td>
+                  )}
+                  {cols.responsables && (
+                    <td className={`px-3 cursor-pointer ${RowPad}`}>
+                      <AvatarStack people={allPeople} size={24} />
                     </td>
                   )}
                   {cols.estado && (
@@ -159,3 +196,4 @@ onClick={() => {
     </div>
   );
 }
+

@@ -107,6 +107,21 @@ export default function TasksPage() {
         estado_nombre: t.estado_nombre,
         vencimiento: t.vencimiento,
         progreso_pct: t.progreso_pct ?? 0,
+        prioridad: t.prioridad_num ?? t.prioridad ?? 0,
+        // Mapear responsables: extraer datos del feder anidado
+        responsables: (t.responsables || []).map(r => ({
+          id: r.feder?.id || r.feder_id || r.id,
+          nombre: r.feder?.nombre || r.nombre,
+          apellido: r.feder?.apellido || r.apellido,
+          avatar_url: r.feder?.avatar_url || r.avatar_url
+        })),
+        // Mapear colaboradores: extraer datos del feder anidado
+        colaboradores: (t.colaboradores || []).map(c => ({
+          id: c.feder?.id || c.feder_id || c.id,
+          nombre: c.feder?.nombre || c.nombre,
+          apellido: c.feder?.apellido || c.apellido,
+          avatar_url: c.feder?.avatar_url || c.avatar_url
+        }))
       })),
     [rows]
   );

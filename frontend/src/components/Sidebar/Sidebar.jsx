@@ -2,24 +2,30 @@ import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useUploadContext } from '../../context/UploadProvider.jsx'
+import { useToast } from '../toast/ToastProvider.jsx'
+import { FaHourglassHalf } from 'react-icons/fa'
 import UnreadDmBubbles from './UnreadDmBubbles.jsx'
 import './Sidebar.scss'
 
 const APPS = [
   { code: 'home', name: 'Inicio', to: '/' },
-  { code: 'feders', name: 'Feders', to: '/feders' },
+  { code: 'feders', name: 'Feders', to: '/feders', inDev: true },
   { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
-  { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
-  { code: 'calendario', name: 'Calendario', to: '/calendario' },
+  { code: 'ausencia', name: 'Ausencias', to: '/ausencias', inDev: true },
+  { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
   { code: 'chat', name: 'Chat', to: '/chat' },
-  { code: 'clientes', name: 'Clientes', to: '/clientes' },
+  { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
 ]
 
 export default function Sidebar() {
-  const { hasPerm } = useAuthCtx()
+  const { hasPerm, roles } = useAuthCtx()
   const uploadCtx = useUploadContext()
+  const toast = useToast()
   const [chatHasUnread, setChatHasUnread] = useState(false)
+
+  // Verificar si es directivo (NivelB o admin)
+  const isDirectivo = roles?.includes('NivelB') || hasPerm('auth', 'assign')
 
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)
@@ -27,7 +33,14 @@ export default function Sidebar() {
     return () => window.removeEventListener('fh:chat:hasUnread', handler)
   }, [])
 
-  const allowed = APPS.filter(a => !a.need || hasPerm(a.need.modulo, a.need.accion))
+  // Filtrar apps según permisos
+  const allowed = APPS.filter(a => {
+    // Si requiere directivos y no lo es, ocultar
+    if (a.directivosOnly && !isDirectivo) return false
+    // Si tiene permiso específico
+    if (a.need && !hasPerm(a.need.modulo, a.need.accion)) return false
+    return true
+  })
 
   // --- mobile collapse ---
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? matchMedia('(max-width: 980px)').matches : false)
@@ -53,6 +66,11 @@ export default function Sidebar() {
     uploadCtx?.revealFloatingIndicator?.()
   }
 
+  const handleDevClick = (e, appName) => {
+    e.preventDefault()
+    toast.warn(`"${appName}" - Ventana en Desarrollo`)
+  }
+
   return (
     <aside className={'fhSidebar' + (isMobile ? ' mobile' : '')}>
       {isMobile && (
@@ -71,6 +89,22 @@ export default function Sidebar() {
         {allowed.map(app => {
           const isChat = app.code === 'chat'
           const extraCls = isChat && chatHasUnread ? ' with-badge' : ''
+
+          // Si está en desarrollo, usar botón en lugar de NavLink
+          if (app.inDev) {
+            return (
+              <button
+                key={app.code}
+                className="sbItem sbItem--dev"
+                onClick={(e) => handleDevClick(e, app.name)}
+                title="En desarrollo"
+              >
+                <span>{app.name}</span>
+                <FaHourglassHalf className="devIcon" />
+              </button>
+            )
+          }
+
           return (
             <NavLink
               key={app.code}
@@ -122,4 +156,3 @@ export default function Sidebar() {
     </aside>
   )
 }
-

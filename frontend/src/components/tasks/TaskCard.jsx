@@ -1,21 +1,25 @@
 // /frontend/src/components/tasks/TaskCard.jsx
 import { useNavigate } from 'react-router-dom'
 import AvatarStack from '../common/AvatarStack'
+import { getPriorityMeta } from './priority-utils'
 
-export default function TaskCard({ t, onPointerDown, onOpenTask}) {
-const open = () => {
-  onOpenTask(t.id);
-};
-
+export default function TaskCard({ t, onPointerDown, onOpenTask }) {
+  const open = () => {
+    onOpenTask(t.id);
+  };
 
   const dueTxt = t.due
     ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' })
-        .format(new Date(t.due))
+      .format(new Date(t.due))
     : '—'
+
+  // Calcular nivel de prioridad para el indicador de color
+  const prio = getPriorityMeta(Number(t.prioridad) || 0, t.due)
+  const prioClass = prio.level >= 2 ? 'prio-high' : prio.level === 1 ? 'prio-med' : ''
 
   return (
     <article
-      className="fh-k-task"
+      className={`fh-k-task ${prioClass}`}
       onPointerDown={onPointerDown}
       onClick={open}
       role="button"

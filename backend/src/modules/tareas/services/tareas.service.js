@@ -1234,14 +1234,18 @@ export const svcSetBoostManual = async (tarea_id, enabled, user) => {
     const tarea = await models.Tarea.findByPk(tarea_id, { transaction: t });
     if (!tarea) throw new Error('Tarea no encontrada');
 
-    // Validar que sea responsable
+    // Validar que sea responsable o NivelB
     const isResponsable = await models.TareaResponsable.findOne({
       where: { tarea_id, feder_id },
       transaction: t
     });
 
-    if (!isResponsable) {
-      throw new Error('Solo los responsables pueden dar prioridad a la tarea');
+    // Verificar si es NivelB
+    const userRoles = user?.roles || [];
+    const isNivelB = userRoles.some(r => r === 'NivelB' || r?.nombre === 'NivelB');
+
+    if (!isResponsable && !isNivelB) {
+      throw new Error('Solo los responsables o NivelB pueden dar prioridad a la tarea');
     }
 
     const boost_manual = enabled ? 300 : 0;
@@ -1267,8 +1271,12 @@ export const svcSetBoostManual = async (tarea_id, enabled, user) => {
       transaction: t
     });
 
-    return await models.Tarea.findByPk(tarea_id, { transaction: t });
+    // Devolver la tarea completa con todas las relaciones
+    return tarea_id;
   });
+
+  // Fuera de la transacción, obtener tarea completa
+  return await getTaskById(tarea_id, user);
 };
 
 export const svcArchiveTask = (id, on = true) => archiveTask(id, on);

@@ -14,7 +14,7 @@ const path = require('path');
 
 const PEOPLE = [
   // NivelC: Colaboradores
-  { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai' },
+  { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai', nivel: 'NivelB' },
   { nombre: 'Andre', apellido: 'Coronel Vargas', cargo: 'Analista Audiovisual', email: 'acoronelvargas@fedes.ai' },
   { nombre: 'Mateo', apellido: 'Germano', cargo: 'Analista Audiovisual', email: 'mgermano@fedes.ai' },
   { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Analista de Diseño', email: 'fmarchesotti@fedes.ai' },

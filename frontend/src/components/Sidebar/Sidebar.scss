@@ -151,3 +151,74 @@
     }
   }
 }
+
+/* ===== Items en desarrollo ===== */
+.sbItem--dev {
+  background: transparent;
+  cursor: pointer;
+  justify-content: space-between;
+  opacity: 0.6;
+
+  .devIcon {
+    font-size: 14px;
+    color: #ff9800;
+  }
+
+  &:hover {
+    opacity: 0.8;
+
+    .devIcon {
+      animation: pulse 1s ease infinite;
+    }
+  }
+}
+
+/* ===== Toast de desarrollo ===== */
+.sbDevToast {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid rgba(255, 152, 0, 0.4);
+  border-radius: 10px;
+  color: #ff9800;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: fadeInUp 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+
+  svg {
+    font-size: 16px;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}

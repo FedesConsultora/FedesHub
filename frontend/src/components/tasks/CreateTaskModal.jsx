@@ -7,7 +7,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import './CreateTask.scss'
 
 /* ================= util: click afuera ================= */
-function useClickOutside(ref, onOutside){
+function useClickOutside(ref, onOutside) {
   useEffect(() => {
     const on = (e) => { if (ref.current && !ref.current.contains(e.target)) onOutside?.() }
     document.addEventListener('mousedown', on)
@@ -88,32 +88,32 @@ function MultiSelect({
         }}
       >
         {leftIcon}
-      <div
-  className={'msDisplay ' + (selectedLabels.length ? 'selected-labels' : 'placeholder')}
-  style={{ flex: '1 1 auto', minWidth: 0 }}
->
-  {selectedLabels.length === 0 ? (
-    <span className="msPlaceholder">{placeholder}</span>
-  ) : (
-    <div className="selected-tags" onClick={(e) => e.stopPropagation()}>
-      {value.map(val => {
-        const v = String(val)
-        const label = labelsByVal.get(v)
-        if (!label) return null
-        return (
-          <div className="tag" key={v} role="button" tabIndex={0}
-               onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
-               onClick={(e) => { e.stopPropagation(); /* opcional: toggleVal(v) para remover al click */ }}>
-            {label}
-          </div>
-        )
-      })}
-    </div>
-  )}
-</div>
+        <div
+          className={'msDisplay ' + (selectedLabels.length ? 'selected-labels' : 'placeholder')}
+          style={{ flex: '1 1 auto', minWidth: 0 }}
+        >
+          {selectedLabels.length === 0 ? (
+            <span className="msPlaceholder">{placeholder}</span>
+          ) : (
+            <div className="selected-tags" onClick={(e) => e.stopPropagation()}>
+              {value.map(val => {
+                const v = String(val)
+                const label = labelsByVal.get(v)
+                if (!label) return null
+                return (
+                  <div className="tag" key={v} role="button" tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
+                    onClick={(e) => { e.stopPropagation(); /* opcional: toggleVal(v) para remover al click */ }}>
+                    {label}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
         <div className="addon" style={S.addon}>
-          <MdKeyboardArrowDown/>
+          <MdKeyboardArrowDown />
         </div>
       </div>
 
@@ -121,16 +121,16 @@ function MultiSelect({
         <div className="msPanel" id={listboxId} role="listbox" aria-multiselectable="true">
           <div className="msSearch">
             <div className="selected-tags">
-  {value.length === 0 && (
-    <span className="placeholder">{placeholder}</span>
-  )}
+              {value.length === 0 && (
+                <span className="placeholder">{placeholder}</span>
+              )}
 
-  {value.map((opt) => (
-    <div className="tag"  key={opt.value}>
-      {opt.label}
-    </div>
-  ))}
-</div>
+              {value.map((opt) => (
+                <div className="tag" key={opt.value}>
+                  {opt.label}
+                </div>
+              ))}
+            </div>
 
           </div>
           <ul>
@@ -163,7 +163,7 @@ const S = {
     padding: '14px 14px', borderRadius: 12,
     border: '1px solid rgba(255,255,255,.12)',
     background: '#0f141b', boxSizing: 'border-box', width: '100%',
-  
+
   },
   fieldArea: { alignItems: 'flex-start' },
   fieldCheckbox: {
@@ -175,12 +175,12 @@ const S = {
   control: { flex: '1 1 auto', minWidth: 0, width: '100%' },
   addon: { flex: '0 0 22px', width: 22, height: 22, color: 'white' },
 
-  datesRow: { display:'flex', gap:6, width:'100%' },
-  dateCell: { display:'flex', alignItems:'center', gap:8, flex:1 },
+  datesRow: { display: 'flex', gap: 6, width: '100%' },
+  dateCell: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
 
 
- 
-  fileName: { overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'normal' },
+
+  fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
 
 }
 
@@ -297,12 +297,12 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
   // archivos (UI)
   const fileInputRef = useRef(null)
-  const humanSize = (n=0) => (n>=1024*1024 ? `${(n/1024/1024).toFixed(1)} MB` : n>=1024 ? `${(n/1024).toFixed(1)} KB` : `${n} B`)
+  const humanSize = (n = 0) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} B`)
   const fileSummary = files.length === 0
     ? 'Sin archivos seleccionados'
     : files.length === 1
       ? files[0].name
-      : `${files[0].name}, +${files.length-1}`
+      : `${files[0].name}, +${files.length - 1}`
 
   // Opciones
   const federsOpts = useMemo(() => (cat.feders || []).map(f => {
@@ -313,8 +313,8 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
   // IDs de labels para accesibilidad y click-to-open
   const lblEtiquetasId = 'lbl-etiquetas'
-  const lblRespsId     = 'lbl-resps'
-  const lblColabsId    = 'lbl-colabs'
+  const lblRespsId = 'lbl-resps'
+  const lblColabsId = 'lbl-colabs'
 
   return (
     <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea">
@@ -322,35 +322,35 @@ export default function CreateTaskModal({ onClose, onCreated }) {
         <header className="tcHeader">
           <div className="brand">
             <div className="logo">Nueva tarea</div>
-            
+
           </div>
-          <button type="button" className="close" onClick={onClose} aria-label="Cerrar"><FiX/></button>
+          <button type="button" className="close" onClick={onClose} aria-label="Cerrar"><FiX /></button>
         </header>
 
         <div className="tcBody">
           <div className="tcGrid">
             {/* Columna izquierda */}
             <div className="col">
-            
 
 
-    <MultiSelect
-      id="ms-cliente"
-    
-      labelId={lblClienteId}
-      leftIcon={  <FiBriefcase className="ico" aria-hidden style={S.ico}/>}
-      options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
-      value={clienteId ? [String(clienteId)] : []}
-      onChange={(next) => {
-        const first = (next && next.length) ? String(next[0]) : ''
-        setClienteId(first)
-      }}
-      placeholder="Clientes"
-      disabled={loading}
-    />
- 
-    <div className="addon" style={S.addon} />
-               
+
+              <MultiSelect
+                id="ms-cliente"
+
+                labelId={lblClienteId}
+                leftIcon={<FiBriefcase className="ico" aria-hidden style={S.ico} />}
+                options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
+                value={clienteId ? [String(clienteId)] : []}
+                onChange={(next) => {
+                  const first = (next && next.length) ? String(next[0]) : ''
+                  setClienteId(first)
+                }}
+                placeholder="Clientes"
+                disabled={loading}
+              />
+
+              <div className="addon" style={S.addon} />
+
 
 
 
@@ -358,211 +358,219 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 <>
                   <label className="lbl" htmlFor="hito">Hito</label>
                   <div className="field" style={S.field}>
-                    <FiHash className="ico" aria-hidden style={S.ico}/>
-                    <select id="hito" value={hitoId} onChange={(e)=>setHitoId(e.target.value)}
-                            disabled={loading} style={S.control}>
+                    <FiHash className="ico" aria-hidden style={S.ico} />
+                    <select id="hito" value={hitoId} onChange={(e) => setHitoId(e.target.value)}
+                      disabled={loading} style={S.control}>
                       <option value="">— Ninguno —</option>
                       {hitosOpts.map(h => <option key={h.id} value={h.id}>{h.nombre}</option>)}
                     </select>
-                    <div className="addon" style={S.addon}/>
+                    <div className="addon" style={S.addon} />
                   </div>
                 </>
               )}
-                {/* Deadline + Responsables / */}
-             
+              {/* Deadline + Responsable (solo uno) */}
 
-            
+
+
               {(cat.feders || []).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',  maxWidth: '100%'
+                <div style={{
+                  display: 'flex', flexDirection: 'row', gap: '0.5rem', maxWidth: '100%'
                 }}>
-                <div className={'field ' + (fechaError ? 'is-error' : '')} style={{width: '50%'}}>
-                <div style={S.control}>
-                  <div style={S.datesRow}>
-                    
-                    <div style={S.dateCell}>
-                      <span style={{fontFamily:'inherit', color:'#FFFFFF8C'}}>Deadline</span>
-                      <input type="date" value={vencimiento} label='Deadline'
-                        onChange={(e)=>setVencimiento(e.target.value)} disabled={loading} style={{flex:0.9,minWidth:0}}/>
+                  <div className={'field ' + (fechaError ? 'is-error' : '')} style={{ width: '50%' }}>
+                    <div style={S.control}>
+                      <div style={S.datesRow}>
+
+                        <div style={S.dateCell}>
+                          <span style={{ fontFamily: 'inherit', color: '#FFFFFF8C' }}>Deadline</span>
+                          <input type="date" value={vencimiento} label='Deadline'
+                            onChange={(e) => setVencimiento(e.target.value)} disabled={loading} style={{ flex: 0.9, minWidth: 0 }} />
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  {fechaError && <div className="help error-inline">{fechaError}</div>}
+                  <div style={{ width: '50%' }}>
+                    <div className="field" style={S.field}>
+                      <FiUsers className="ico" aria-hidden style={S.ico} />
+                      <select
+                        id="responsable"
+                        value={responsables[0] || ''}
+                        onChange={(e) => setResponsables(e.target.value ? [e.target.value] : [])}
+                        disabled={loading}
+                        style={S.control}
+                      >
+                        <option value="">— Seleccionar responsable —</option>
+                        {federsOpts.map(f => (
+                          <option key={f.value} value={f.value}>{f.label}</option>
+                        ))}
+                      </select>
+                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                    </div>
+                  </div>
+
+
                 </div>
-              </div>
-              {fechaError && <div className="help error-inline">{fechaError}</div>}
-                  <div style={{ width: '50%'}}>
+
+              )}
+              {/* Colaboradores */}
+              {(cat.feders || []).length > 0 && (
+                <div style={{
+                  display: 'flex', flexDirection: 'row', maxWidth: '100%',
+                }}>
+
+                  <div style={{ width: '100%' }}>
                     <MultiSelect
-                      id="ms-resps"
-                      labelId={lblRespsId}
+                      id="ms-colabs"
+                      labelId={lblColabsId}
                       leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
                       options={federsOpts}
-                      value={responsables}
-                      onChange={setResponsables}
-                      placeholder="Responsables"
+                      value={colaboradores}
+                      onChange={setColaboradores}
+                      placeholder="Asignar a"
                       disabled={loading}
                     />
                   </div>
 
-                     
-                    </div>
-
-              )}
-                {/* Colaboradores */}
- {(cat.feders || []).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'row',   maxWidth: '100%',
-                }}>
-                  
-                      <div style={{ width: '100%'   }}>
-                        <MultiSelect
-                          id="ms-colabs"
-                          labelId={lblColabsId}
-                          leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
-                          options={federsOpts}
-                          value={colaboradores}
-                          onChange={setColaboradores}
-                          placeholder="Asignar a"
-                          disabled={loading}
-                        />
-                  </div>
-                  
-                    </div>
+                </div>
 
               )}
 
-              
-                  <label className="lbl" htmlFor="leader" style={{display:'none'}}>Líder</label>
-                  <div className="field" style={{display: 'none'}}>
-                    <FiUsers className="ico" aria-hidden style={S.ico}/>
-                    <select id="leader" value={leaderId} onChange={(e)=>setLeaderId(e.target.value)}
-                            disabled={loading || responsables.length === 0} style={S.control}>
-                      <option value="">— Ninguno —</option>
-                      {responsables.map(fid => {
-                        const f = (cat.feders || []).find(x => String(x.id) === String(fid))
-                        const name = f ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`) : `Feder #${fid}`
-                        return <option key={fid} value={String(fid)}>{name}</option>
-                      })}
-                    </select>
-                    <div className="addon" aria-hidden style={S.addon}/>
-                  </div>
 
-         
+              <label className="lbl" htmlFor="leader" style={{ display: 'none' }}>Líder</label>
+              <div className="field" style={{ display: 'none' }}>
+                <FiUsers className="ico" aria-hidden style={S.ico} />
+                <select id="leader" value={leaderId} onChange={(e) => setLeaderId(e.target.value)}
+                  disabled={loading || responsables.length === 0} style={S.control}>
+                  <option value="">— Ninguno —</option>
+                  {responsables.map(fid => {
+                    const f = (cat.feders || []).find(x => String(x.id) === String(fid))
+                    const name = f ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`) : `Feder #${fid}`
+                    return <option key={fid} value={String(fid)}>{name}</option>
+                  })}
+                </select>
+                <div className="addon" aria-hidden style={S.addon} />
+              </div>
+
+
               <div className={'field ' + (tituloError ? 'is-error' : '')} style={S.field}>
-                <FiFlag className="ico" aria-hidden style={S.ico}/>
+                <FiFlag className="ico" aria-hidden style={S.ico} />
                 <input
                   id="titulo" type="text" placeholder=" Título - Ej. Implementar integración con Google"
-                  value={titulo} onChange={(e)=>setTitulo(e.target.value)} maxLength={220}
+                  value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={220}
                   disabled={loading} style={S.control} aria-invalid={!!tituloError}
                 />
-                <div className="addon"  style={S.addon}/>
+                <div className="addon" style={S.addon} />
               </div>
 
-          
-              <div className="field area" style={{...S.field, ...S.fieldArea}}>
-                <FiTag className="ico" aria-hidden style={{...S.ico, alignSelf:'flex-start'}}/>
+
+              <div className="field area" style={{ ...S.field, ...S.fieldArea }}>
+                <FiTag className="ico" aria-hidden style={{ ...S.ico, alignSelf: 'flex-start' }} />
                 <textarea
-                  id="desc" rows={6} placeholder="Descripción de la tarea" 
-                  value={descripcion} onChange={(e)=>setDescripcion(e.target.value)}
-                  disabled={loading} style={S.control} 
+                  id="desc" rows={6} placeholder="Descripción de la tarea"
+                  value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                  disabled={loading} style={S.control}
                 />
               </div>
 
-            
+
             </div>
 
             {/* Columna derecha */}
-            
+
             <div className="col">
-               
+
               <div className={"field upload-files"} style={S.field}>
-             
+
                 <label htmlFor="files">
-                Carga de Archivos</label>
+                  Carga de Archivos</label>
                 <span>Arrastra un archivo para cargarlo</span>
                 <div className='upload-btn'
-    >
-                <input
-                  id="files" ref={fileInputRef} type="file" multiple
-                  onChange={(e)=>setFiles(Array.from(e.target.files || []))}
-                  disabled={loading}
-                  style={{position:'absolute', opacity:0, pointerEvents:'none', width:0, height:0}}
-                />
-                <div className="filePicker" style={S.control}>
-                  <button type="button" className="fileBtn" onClick={()=>fileInputRef.current?.click()} disabled={loading}>
-                    Elegir archivos
-                  </button>
-                 
+                >
+                  <input
+                    id="files" ref={fileInputRef} type="file" multiple
+                    onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                    disabled={loading}
+                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }}
+                  />
+                  <div className="filePicker" style={S.control}>
+                    <button type="button" className="fileBtn" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+                      Elegir archivos
+                    </button>
+
                   </div>
-                  </div>
+                </div>
                 <div className="addon" style={S.addon} />
-                 {files?.length > 0 && (
-  <div className="filesList" style={S.filesList}>
-    {files.map((f, i) => {
-      const isImage = f.type.startsWith('image/');
-      const previewUrl = isImage ? URL.createObjectURL(f) : null;
+                {files?.length > 0 && (
+                  <div className="filesList" style={S.filesList}>
+                    {files.map((f, i) => {
+                      const isImage = f.type.startsWith('image/');
+                      const previewUrl = isImage ? URL.createObjectURL(f) : null;
 
-      return (
-        <div key={i} className="fileRow" style={{position:'relative'}} >
-             <button
-            type="button"
-            onClick={() => {
-              const newFiles = [...files];
-              newFiles.splice(i, 1);
-              setFiles(newFiles);
-            }}
-            style={{
-              position: 'absolute',
-              top: 1,
-              right: 4,
-              width: 12,
-              height: 12,
-              padding: 0,
-              paddingBottom: '0.3rem',
-              borderRadius: "50%", 
-              background: '#9F1B1B',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-            
-              zIndex: 10,
-              overflow: 'visible',
-             
-            }}
-          >
-            x
-          </button>
-  {isImage && (
-    <img 
-      src={previewUrl} 
-      alt={f.name} 
-      style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} 
-    />
-  )}
-  <div style={{ display:'flex', flexDirection:'column', width: '100px', flexShrink:0, minWidth: 0, paddingBottom:' 1rem'}}>
-    <span
-      className="FileName"
-      style={{ ...S.fileName, color:'#fff', textOverflow:'ellipsis', whiteSpace:'nowrap' }}
-      title={f.name}
-    >
-      {f.name}
-    </span>
-    <span
-      className='fileSize'
-      style={{ color:'#a9b7c7', fontSize:'.88rem', textOverflow:'ellipsis', whiteSpace:'nowrap' }}
-    >
-      {humanSize(f.size)}
-    </span>
-  </div>
-</div>
+                      return (
+                        <div key={i} className="fileRow" style={{ position: 'relative' }} >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFiles = [...files];
+                              newFiles.splice(i, 1);
+                              setFiles(newFiles);
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: 1,
+                              right: 4,
+                              width: 12,
+                              height: 12,
+                              padding: 0,
+                              paddingBottom: '0.3rem',
+                              borderRadius: "50%",
+                              background: '#9F1B1B',
+                              color: '#fff',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
 
-      )
-    })}
-  </div>
-)}
+                              zIndex: 10,
+                              overflow: 'visible',
+
+                            }}
+                          >
+                            x
+                          </button>
+                          {isImage && (
+                            <img
+                              src={previewUrl}
+                              alt={f.name}
+                              style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                            />
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', width: '100px', flexShrink: 0, minWidth: 0, paddingBottom: ' 1rem' }}>
+                            <span
+                              className="FileName"
+                              style={{ ...S.fileName, color: '#fff', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                              title={f.name}
+                            >
+                              {f.name}
+                            </span>
+                            <span
+                              className='fileSize'
+                              style={{ color: '#a9b7c7', fontSize: '.88rem', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
+                              {humanSize(f.size)}
+                            </span>
+                          </div>
+                        </div>
+
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
-           
+
 
               {/* {(cat.impactos || []).length > 0 && (
                 <>
@@ -594,7 +602,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 </>
               )} */}
 
-          
+
               {/* Etiquetas */}
               {/* {(cat.etiquetas || []).length > 0 && (
                 <>
@@ -618,12 +626,12 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 </>
               )} */}
 
-           
+
 
               {/* Aprobación */}
-              <div className="field checkbox"  style={{display: 'none'}}>
+              <div className="field checkbox" style={{ display: 'none' }}>
                 <input id="aprob" type="checkbox" checked={requiereAprob}
-                       onChange={(e)=>setRequiereAprob(e.target.checked)} disabled={loading}/>
+                  onChange={(e) => setRequiereAprob(e.target.checked)} disabled={loading} />
                 <label htmlFor="aprob">Requiere aprobación</label>
               </div>
             </div>

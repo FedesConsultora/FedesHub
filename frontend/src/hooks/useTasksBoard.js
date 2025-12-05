@@ -3,18 +3,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tareasApi } from '../api/tareas'
 
 export const STAGES = [
-  { code:'inbox', name:'Bandeja de entrada' },
-  { code:'today', name:'Hoy' },
-  { code:'week',  name:'Esta semana' },
-  { code:'month', name:'Este mes' },
-  { code:'later', name:'Después' },
+  { code: 'inbox', name: 'Bandeja de entrada' },
+  { code: 'today', name: 'Hoy' },
+  { code: 'week', name: 'Esta semana' },
+  { code: 'month', name: 'Este mes' },
+  { code: 'later', name: 'Después' },
 ]
 
 const emptyColumns = () => Object.fromEntries(STAGES.map(s => [s.code, []]))
 
 const stageFromDue = (iso) => {
   if (!iso) return 'inbox'
-  const today = new Date(); today.setHours(0,0,0,0)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   const dd = Math.floor((new Date(iso) - today) / 86400000)
   if (dd <= 0) return 'today'
   if (dd <= 7) return 'week'
@@ -27,7 +27,7 @@ const stageFromDue = (iso) => {
  * p.ej.: { solo_mias:true, include_archivadas:false, q, cliente_id, estado_id, limit, orden_by, sort }
  */
 export default function useTasksBoard(
-  params = { solo_mias:true, include_archivadas:false, limit:200, orden_by:'prioridad', sort:'desc' }
+  params = { solo_mias: true, include_archivadas: false, limit: 200, orden_by: 'prioridad', sort: 'desc' }
 ) {
   const [loading, setLoading] = useState(true)
   const [columns, setColumns] = useState(emptyColumns())
@@ -45,12 +45,33 @@ export default function useTasksBoard(
       const cols = emptyColumns()
       r.forEach(t => {
         const stage = t.kanban_stage || stageFromDue(t.vencimiento)
+
+        // Mapear responsables: extraer datos del feder anidado
+        const responsables = (t.responsables || []).map(r => ({
+          id: r.feder?.id || r.feder_id,
+          nombre: r.feder?.nombre || r.nombre,
+          apellido: r.feder?.apellido || r.apellido,
+          avatar_url: r.feder?.avatar_url || r.avatar_url,
+          es_lider: r.es_lider
+        }))
+
+        // Mapear colaboradores: extraer datos del feder anidado
+        const colaboradores = (t.colaboradores || []).map(c => ({
+          id: c.feder?.id || c.feder_id,
+          nombre: c.feder?.nombre || c.nombre,
+          apellido: c.feder?.apellido || c.apellido,
+          avatar_url: c.feder?.avatar_url || c.avatar_url,
+          rol: c.rol
+        }))
+
         const item = {
           id: t.id,
           title: t.titulo,
           due: t.vencimiento,
+          prioridad: t.prioridad_num ?? t.prioridad ?? 0,
           client: { id: t.cliente_id, name: t.cliente_nombre, weight: t.cliente_ponderacion ?? 0 },
-          responsables: t.responsables ?? [],
+          responsables,
+          colaboradores,
           kanbanOrder: Number.isFinite(t.kanban_orden) ? t.kanban_orden : Number.MAX_SAFE_INTEGER
         }
         if (!cols[stage]) cols[stage] = []
@@ -113,7 +134,7 @@ export default function useTasksBoard(
     }
   }
 
-  const board = useMemo(() => ({ view:'kanban', columns }), [columns])
+  const board = useMemo(() => ({ view: 'kanban', columns }), [columns])
 
   return { loading, board, rows, moveTask, refetch: fetchAll, STAGES }
 }
