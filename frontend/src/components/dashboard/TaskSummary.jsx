@@ -1,5 +1,5 @@
 // /frontend/src/components/dashboard/TaskSummary.jsx
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import KanbanBoard from '../tasks/KanbanBoard'
 import TaskList from '../tasks/TaskList'
@@ -9,12 +9,12 @@ import './tasks.scss'
 /**
  * Props:
  * - onCreate: fn()
+ * - onOpenTask: fn(taskId)
  * - variant: 'kanban' | 'list' (default 'kanban')
  */
-export default function TaskSummary({ onCreate, variant = 'kanban' }) {
+export default function TaskSummary({ onCreate, onOpenTask, variant = 'kanban' }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (variant !== 'list') return
@@ -35,16 +35,12 @@ export default function TaskSummary({ onCreate, variant = 'kanban' }) {
     progreso_pct: t.progreso_pct ?? 0
   })), [rows])
 
-  const handleOpenTask = (taskId) => {
-    navigate(`/tareas?taskId=${taskId}`)
-  }
-
   return (
     <section className="dashSection">
       <header className="dashHead">
         <div className="left">
-          <h3>Mis tareas</h3>
-          <Link className="viewMore" to="/tareas">Ver más →</Link>
+          <Link className="view-tareas" to='/tareas'>Mis tareas</Link>
+
         </div>
 
         <button type="button" style={{ padding: '8px 12px', width: 'auto' }} className="submit" onClick={onCreate}>
@@ -55,10 +51,10 @@ export default function TaskSummary({ onCreate, variant = 'kanban' }) {
       <div className="mt8">
         {variant === 'kanban' ? (
           // Kanban compacto, máximo 4 visibles por columna
-          <KanbanBoard compact={true} maxRows={4} onOpenTask={handleOpenTask} />
+          <KanbanBoard hideInbox compact={true} maxRows={4} onOpenTask={onOpenTask} />
         ) : (
           // Lista compacta, recortada a 4 filas
-          <TaskList rows={topRows} loading={loading} maxRows={4} dense showHeader={false} />
+          <TaskList onOpenTask={onOpenTask} rows={topRows} loading={loading} maxRows={4} dense showHeader={false} />
         )}
       </div>
     </section>

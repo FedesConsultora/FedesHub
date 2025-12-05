@@ -1,26 +1,42 @@
 @use '../../styles/variables' as *;
 
-.dashboardWrap{
-  display:flex; flex-direction: column;
+.dashboardWrap {
+  display: flex;
+  flex-direction: column;
   /* evita que el body tome scroll X por accidente */
   overflow-x: hidden;
   /* importante para que los hijos puedan encoger en grid/flex */
   min-width: 0;
+
 }
 
-/* una sola columna SIEMPRE */
-.dashCols{
-  display:grid;
-  grid-template-columns: 1fr; /* <-- fijo */
-  gap:18px;
+.dashTop {
+  display: grid;
+  grid-template-columns: 70% 30%; // Izquierda 70%, derecha 30%
+  gap: 18px;
+  align-items: stretch; // la columna derecha se estira al alto de la izquierda
+  width: 100%;
+}
 
-  /* 👇 clave: permite que los hijos no fuercen el ancho del grid */
+/* Columna izquierda (Metrics + Kanban) */
+.dashLeftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   min-width: 0;
-  > * { min-width: 0; }
+}
+
+/* Columna derecha (Inbox) */
+.dashInboxCol {
+  display: flex;
+  flex-direction: column;
+  height: 100%; // ocupa todo el alto de dashLeftCol
+  overflow-y: auto; // scroll si hay muchas tareas
+
 }
 
 /* sección sin tarjeta contenedora */
-.dashSection{
+.dashSection {
   background: transparent;
   padding: 2px 0;
 
@@ -29,32 +45,58 @@
 }
 
 /* encabezado flotante */
-.dashHead{
-  display:flex; align-items:flex-end; justify-content:space-between;
-  gap:12px; padding: 2px 4px;
+.dashHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px;
   max-width: 100%;
 }
-.dashHead .left{ display:flex; align-items:baseline; gap:12px; }
-.dashHead h3{ margin:0; font-weight:800; font-size:1.05rem; letter-spacing:.2px; }
-.viewMore{ font-size:.9rem; color:$fh-muted; text-decoration:none; }
-.viewMore:hover{ text-decoration:underline; }
+
+.dashHead .left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.view-tareas {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: .2px;
+}
 
 /* botón crear */
-.createBtn{
-  background: #2aa8ff; color: #fff; border:0; border-radius:12px;
-  padding:8px 12px; font-weight:800; letter-spacing:.2px;
-  box-shadow: 0 6px 20px rgba(42,168,255,.25);
+.createBtn {
+  background: #2aa8ff;
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  box-shadow: 0 6px 20px rgba(42, 168, 255, .25);
   transition: transform .06s ease, box-shadow .18s ease, opacity .18s ease;
 }
-.createBtn:hover{ box-shadow: 0 10px 28px rgba(42,168,255,.35); transform: translateY(-1px); }
-.createBtn:active{ transform: translateY(0); opacity:.9; }
+
+.createBtn:hover {
+  box-shadow: 0 10px 28px rgba(42, 168, 255, .35);
+  transform: translateY(-1px);
+}
+
+.createBtn:active {
+  transform: translateY(0);
+  opacity: .9;
+}
 
 /* ===== Kanban dentro del dashboard =====
    Aseguramos que el contenedor del board sea el que scrollea en X,
    igual que haces en /tareas con las tablas. */
-.dashSection .fh-k-board{
+.dashSection .fh-k-board {
   max-width: 100%;
-  overflow-x: auto; /* scroll horizontal local */
+  overflow-x: auto;
+  /* scroll horizontal local */
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-inline: contain;
@@ -63,4 +105,6 @@
 }
 
 /* (opcional) un poquito de espacio para la barra de scroll superpuesta */
-.dashSection .fh-k-board { padding-bottom: 2px; }
+.dashSection .fh-k-board {
+  padding-bottom: 2px;
+}

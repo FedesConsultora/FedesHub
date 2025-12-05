@@ -5,10 +5,10 @@ import './kanban.scss'
 
 const DRAG_THRESHOLD = 6 // px de movimiento antes de iniciar drag
 
-export default function KanbanBoard({ compact=false, maxRows=4, params, board:extBoard, moveTask:extMove, onOpenTask: onOpenTask }) {
+export default function KanbanBoard({ hideInbox = false, compact = false, maxRows = 4, params, board: extBoard, moveTask: extMove, onOpenTask: onOpenTask }) {
   const internal = extBoard ? null : useTasksBoard(params)
-  const board    = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
-  const moveTask = extMove ?? internal?.moveTask ?? (() => {})
+  const board = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
+  const moveTask = extMove ?? internal?.moveTask ?? (() => { })
 
   const columns = board.columns
   const boardRef = useRef(null)
@@ -16,11 +16,11 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
 
   const visibleMapRef = useRef({})
   const drag = useRef({
-    active:false, id:null,
-    fromCol:null, fromIndexReal:-1, fromIndexVis:-1,
-    curCol:null, ghost:null, placeholder:null, originEl:null,
-    offsetX:0, offsetY:0, ptX:0, ptY:0, af:0,
-    maybe:null // {x,y, colCode, indexVisible, indexReal, id}
+    active: false, id: null,
+    fromCol: null, fromIndexReal: -1, fromIndexVis: -1,
+    curCol: null, ghost: null, placeholder: null, originEl: null,
+    offsetX: 0, offsetY: 0, ptX: 0, ptY: 0, af: 0,
+    maybe: null // {x,y, colCode, indexVisible, indexReal, id}
   })
 
   const computeVisible = () => {
@@ -53,9 +53,9 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
     const ph = drag.current.placeholder
     const items = Array.from(body.querySelectorAll('.fh-k-task, .fh-k-placeholder'))
     let idx = items.length
-    for (let i=0;i<items.length;i++){
+    for (let i = 0; i < items.length; i++) {
       const r = items[i].getBoundingClientRect()
-      const mid = r.top + r.height/2
+      const mid = r.top + r.height / 2
       if (pointerY < mid) { idx = i; break }
     }
 
@@ -125,11 +125,11 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
       drag.current.originEl && (drag.current.originEl.style.visibility = '')
       drag.current.placeholder && drag.current.placeholder.remove()
       drag.current.ghost && drag.current.ghost.remove()
-    } catch {}
+    } catch { }
   }
 
   const cancelFrame = () => {
-    try { if (drag.current.af) cancelAnimationFrame(drag.current.af) } catch {}
+    try { if (drag.current.af) cancelAnimationFrame(drag.current.af) } catch { }
     drag.current.af = 0
   }
 
@@ -228,13 +228,13 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
 
     drag.current = {
       ...drag.current,
-      active:true, id,
-      fromCol:colCode, fromIndexReal:indexReal, fromIndexVis:indexVisible,
-      curCol:colCode,
-      ghost, placeholder:ph, originEl:card,
+      active: true, id,
+      fromCol: colCode, fromIndexReal: indexReal, fromIndexVis: indexVisible,
+      curCol: colCode,
+      ghost, placeholder: ph, originEl: card,
       offsetX: ev.clientX - r.left, offsetY: ev.clientY - r.top,
       ptX: ev.clientX, ptY: ev.clientY, af: 0,
-      maybe:null
+      maybe: null
     }
 
     document.body.classList.add('fh-noselect')
@@ -245,21 +245,29 @@ export default function KanbanBoard({ compact=false, maxRows=4, params, board:ex
     if (ev.button != null && ev.button !== 0) return
     // NO iniciamos drag aún: sólo “armamos” la intención
     drag.current.maybe = { x: ev.clientX, y: ev.clientY, colCode, indexVisible, indexReal, id }
-    try { ev.currentTarget?.setPointerCapture?.(ev.pointerId) } catch {}
-    document.addEventListener('pointermove', pointerMove, { passive:true })
-    document.addEventListener('pointerup', endDrag, { passive:true })
+    try { ev.currentTarget?.setPointerCapture?.(ev.pointerId) } catch { }
+    document.addEventListener('pointermove', pointerMove, { passive: true })
+    document.addEventListener('pointerup', endDrag, { passive: true })
     document.addEventListener('keydown', onKeyDownEscape)
   }
 
-  useEffect(() => () => { try{ endDrag() }catch{} }, [])
+  useEffect(() => () => { try { endDrag() } catch { } }, [])
 
-  const cols = useMemo(() =>
-    STAGES.map(s => ({
-      ...s,
-      items: visible[s.code]?.items || [],
-      indices: visible[s.code]?.indices || []
-    })),
-  [visible])
+  const stagesToRender = useMemo(
+    () => (hideInbox ? STAGES.filter(s => s.code !== 'inbox') : STAGES),
+    [hideInbox]
+  )
+
+  const cols = useMemo(
+    () =>
+      stagesToRender.map(s => ({
+        ...s,
+        items: visible[s.code]?.items || [],
+        indices: visible[s.code]?.indices || []
+      })),
+    [visible, stagesToRender]
+  )
+
 
   return (
     <div className={`fh-k-board ${compact ? 'is-compact' : ''}`} ref={boardRef}>

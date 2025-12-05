@@ -1,0 +1,56 @@
+@use '../../styles/variables' as *;
+
+
+.inboxColumn {
+    width: 246px;
+    background: #0f141b;
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: 14px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 1rem;
+    min-height: 300px !important;
+}
+
+.inboxTitle {
+    margin: none;
+    font-weight: 600;
+    padding: 8px;
+}
+
+.inboxList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.inboxItem {
+    padding: 10px;
+    border-radius: 6px;
+    background: #0f141b;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.inboxItem:hover {
+    background: #ececec;
+}
+
+.title {
+    font-weight: 600;
+    padding: 8px;
+}
+
+.client {
+    font-size: 12px;
+    color: #666;
+}
+
+.empty {
+    color: #aaa;
+    font-size: 14px;
+}
