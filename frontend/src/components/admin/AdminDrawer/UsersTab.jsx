@@ -27,7 +27,6 @@ export default function UsersTab() {
         password: '',
         roles: [],
         is_activo: true,
-        // Feder creation
         createFeder: true,
         nombre: '',
         apellido: '',

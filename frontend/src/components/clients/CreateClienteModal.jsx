@@ -65,6 +65,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
   const buildPayload = () => {
     // En el backend resolvemos tipo/estado por default si no vienen.
     // Solo mandamos lo que tenga valor "real" (evitamos strings vacíos).
+    console.log('[buildPayload] color state value:', color)
+    console.log('[buildPayload] strOrUndef(color):', strOrUndef(color))
     const body = {
       nombre: nombre.trim(),
       celula_id: Number(celulaId),
@@ -88,7 +90,10 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     setApiError(null)
     try {
       setSubmitting(true)
-      const created = await clientesApi.create(buildPayload())
+      const payload = buildPayload()
+      console.log('[CreateClienteModal] Sending payload:', payload)
+      const created = await clientesApi.create(payload)
+      console.log('[CreateClienteModal] Created client:', created)
       toast.success('Cliente creado')
       onCreated?.(created)
       onClose?.()

@@ -297,7 +297,7 @@ export const getTaskById = async (id, currentUser) => {
       te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
-      c.id AS cliente_id, c.nombre AS cliente_nombre,
+      c.id AS cliente_id, c.nombre AS cliente_nombre, c.color AS cliente_color,
       h.id AS hito_id, h.nombre AS hito_nombre,
 
       /* ===== Responsables (con datos del Feder) ===== */
@@ -1165,7 +1165,7 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     customModels.TareaEtiqueta.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
     customModels.ComentarioTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
     customModels.TareaRelacionTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
-    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'celula_id'], order: [['nombre', 'ASC']] })
+    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'celula_id', 'color'], order: [['nombre', 'ASC']] })
   ]);
 
   const clienteIds = clientes.map(c => c.id);
