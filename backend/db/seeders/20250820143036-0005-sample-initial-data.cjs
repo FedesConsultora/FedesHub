@@ -210,6 +210,7 @@ module.exports = {
           nombre: 'Cliente Demo', alias: 'Demo', email: 'contacto@demo.com',
           telefono: '+54 11 1234-5678', sitio_web: 'https://demo.com',
           descripcion: 'Cliente semilla', ponderacion: cliTipoA.ponderacion,
+          color: '#4dd0e1',
           created_at: now, updated_at: now
         }], { transaction: t });
       }

@@ -20,6 +20,7 @@ import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
+import { useUploadContext } from '../../context/UploadProvider.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import ContentGallery from '../../components/tasks/ContentGallery.jsx'
 import ImageFullscreen from '../../components/common/ImageFullscreen.jsx'
@@ -98,22 +99,31 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [historyRefresh, setHistoryRefresh] = useState(0);
 
   const [isResponsible, setIsResponsible] = useState(false)
+  const [isCollaborator, setIsCollaborator] = useState(false)
 
   // Ref to prevent race conditions on saves
   const saveInProgressRef = useRef(false)
   const saveTimeoutRef = useRef(null)
 
-  const { user } = useAuthCtx() || {}
+  const { user, roles } = useAuthCtx() || {}
 
-  // Verificar si es C-Level
-  const isCLevel = user?.rol?.nombre === 'CLevel' || user?.rol?.nombre === 'Admin'
+  // Verificar si es NivelB (puede aprobar y cancelar)
+  // roles es un array de strings: ['NivelB', 'OtroRol']
+  const isNivelB = roles?.includes('NivelB') || false
 
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
+  const uploadContext = useUploadContext()
 
   const [isOver, setIsOver] = useState(false)
   const [rawUploading, setRawUploading] = useState(false)
   const [rawFullscreen, setRawFullscreen] = useState(null) // { url, name, isVideo }
   const [rawUploadError, setRawUploadError] = useState(null)
+
+  // Uploads activos para contenido crudo (esEmbebido = false)
+  const rawActiveUploads = (uploadContext?.uploads || []).filter(
+    u => u.taskId == id && u.esEmbebido === false && (u.status === 'uploading' || u.status === 'processing')
+  )
+  const hasRawActiveUploads = rawActiveUploads.length > 0
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -184,18 +194,24 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     })
   }, [task])
 
-  // Recalcular isResponsible basado en peopleForm (reactivo a cambios)
+  // Recalcular isResponsible e isCollaborator basado en peopleForm
   useEffect(() => {
     if (!user?.id) return
 
     const currentResponsables = peopleForm.responsables || []
+    const currentColaboradores = peopleForm.colaboradores || []
+
     const isResp = currentResponsables.some(r =>
       (r.id === user.id) || (r.feder_id === user.id)
     )
 
-    // También considerar C-Level como "responsable" para edición
-    setIsResponsible(isResp || isCLevel)
-  }, [peopleForm.responsables, user?.id, isCLevel])
+    const isColab = currentColaboradores.some(c =>
+      (c.id === user.id) || (c.feder_id === user.id)
+    )
+
+    setIsResponsible(isResp)
+    setIsCollaborator(isColab)
+  }, [peopleForm.responsables, peopleForm.colaboradores, user?.id])
 
 
   // contentEditable
@@ -436,10 +452,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
   const clienteColor = task?.cliente?.color || task?.cliente_color || null
-  console.log('.......................TASK', task)
-  console.log('.......................task.cliente_color:', task?.cliente_color)
-  console.log('.......................task.cliente?.color:', task?.cliente?.color)
-  console.log('.......................clienteColor:', clienteColor)
 
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
@@ -573,7 +585,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               <InlineDue
                 value={toInputDate(vencimientoISO)}
                 onChange={handleDueChange}
-                disabled={!isResponsible}
+                disabled={!isResponsible && !isNivelB}
               />
             </span>
             <TaskStatusCard
@@ -586,6 +598,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
               onPick={handleEstado}
               isResponsible={isResponsible}
+              isCollaborator={isCollaborator}
+              isNivelB={isNivelB}
             />
             <span className="inlineClient">
 
@@ -595,7 +609,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 valueColor={clienteColor}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-                disabled={!isResponsible}
+                disabled={!isResponsible && !isNivelB}
               />
             </span>
 
@@ -651,7 +665,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           </div>
 
           {/* Contenido Crudo - Material en bruto */}
-          <div className={`content-section raw-content ${rawUploading ? 'uploading' : ''}`}>
+          <div className={`content-section raw-content ${(rawUploading || hasRawActiveUploads) ? 'uploading' : ''}`}>
             <div className="section-header">
               <h3>Contenido Crudo</h3>
               <span className="hint">Material en bruto para editar</span>
@@ -665,12 +679,45 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               </div>
             )}
 
-            {/* Loading overlay */}
-            {rawUploading && (
+            {/* Loading overlay with progress */}
+            {(rawUploading || hasRawActiveUploads) && (
               <div className="upload-overlay">
-                <div className="spinner"></div>
-                <p>Subiendo archivo...</p>
-                <p className="hint">Los videos pueden tardar varios minutos</p>
+                {rawActiveUploads.length > 0 ? (
+                  <div className="upload-progress-list">
+                    {rawActiveUploads.map(u => (
+                      <div key={u.id} className="upload-progress-item">
+                        <div className="upload-info">
+                          <span className="file-name">{u.fileName}</span>
+                          <span className="progress-text">
+                            {u.status === 'processing' ? 'Procesando...' : `${u.progress}%`}
+                          </span>
+                        </div>
+                        <div className="progress-bar-container">
+                          <div
+                            className={`progress-bar ${u.status === 'processing' ? 'processing' : ''}`}
+                            style={{ width: `${u.progress}%` }}
+                          />
+                          {u.status === 'uploading' && (
+                            <button
+                              className="cancel-btn"
+                              onClick={() => uploadContext?.cancelUpload(u.id)}
+                              title="Cancelar subida"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="spinner"></div>
+                    <p>Subiendo archivo...</p>
+                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                  </>
+                )}
               </div>
             )}
 
@@ -799,6 +846,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           </div>
 
           <ContentGallery
+            taskId={taskId}
+            esEmbebido={true}
             images={adjuntos.filter(a => a.es_embebido)}
             onUpload={async (files) => {
               try {
@@ -875,10 +924,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           candidatesCol={catalog?.feders || []}
           onChange={handlePeopleChange} // ← esto asegura persistencia
 
-          disabled={!isResponsible}
+          disabled={!isResponsible && !isNivelB}
 
         />
-        {isResponsible && (
+        {(isResponsible || isNivelB) && (
           <PriorityBoostCheckbox
             taskId={Number(taskId)}
             enabled={task?.boost_manual > 0}

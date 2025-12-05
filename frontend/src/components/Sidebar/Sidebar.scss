@@ -1,55 +1,153 @@
 @use '../../styles/variables' as *;
 
-.fhSidebar{
-  background:$fh-card;
+.fhSidebar {
+  background: $fh-card;
   backdrop-filter: blur(3px);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-  padding:10px;
-  height:fit-content;
-  box-shadow:$shadow-soft;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 16px;
+  padding: 10px;
+  height: fit-content;
+  box-shadow: $shadow-soft;
+  position: relative;
 
-  &.mobile{ padding:8px }
+  &.mobile {
+    padding: 8px
+  }
 }
 
-.sbGroup{ display:flex; flex-direction:column; gap:4px; }
-.sbItem{
-  display:flex; align-items:center; gap:8px;
-  padding:.5rem .6rem;
-  border-radius:12px;
-  color:$fh-text; text-decoration:none; border:1px solid transparent;
+.sbGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-  .dot{ width:6px; height:6px; border-radius:50%; background:#2a3747; }
+.sbItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: .5rem .6rem;
+  border-radius: 12px;
+  color: $fh-text;
+  text-decoration: none;
+  border: 1px solid transparent;
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2a3747;
+  }
 }
-.sbItem:hover{ background:#0f141b; border-color:rgba(255,255,255,.08); }
-.sbItem.active{
-  background: rgba(77,208,225,.12);
-  border-color:$fh-accent;
-  .dot{ background:$fh-accent; }
+
+.sbItem:hover {
+  background: #0f141b;
+  border-color: rgba(255, 255, 255, .08);
 }
-.sbItem.with-badge { position: relative; }
-.sbItem .badge-dot{
-  position:absolute; right:12px; top:50%; transform:translateY(-50%);
-  width:8px; height:8px; border-radius:50%;
-  background:#ff5b5b; box-shadow:0 0 0 3px rgba(255,91,91,.25);
+
+.sbItem.active {
+  background: rgba(77, 208, 225, .12);
+  border-color: $fh-accent;
+
+  .dot {
+    background: $fh-accent;
+  }
+}
+
+.sbItem.with-badge {
+  position: relative;
+}
+
+.sbItem .badge-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff5b5b;
+  box-shadow: 0 0 0 3px rgba(255, 91, 91, .25);
+}
+
+/* ===== Mini indicador de uploads ===== */
+.sbUploadIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: 12px auto 4px;
+  background: rgba(77, 208, 225, 0.1);
+  border: 1px solid rgba(77, 208, 225, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(77, 208, 225, 0.2);
+    border-color: $fh-accent;
+    transform: scale(1.05);
+  }
+
+  .progressRing {
+    width: 36px;
+    height: 36px;
+    transform: rotate(-90deg);
+
+    .progress {
+      transition: stroke-dasharray 0.3s ease;
+    }
+  }
+
+  .uploadCount {
+    position: absolute;
+    font-size: 12px;
+    font-weight: 700;
+    color: $fh-accent;
+  }
 }
 
 /* ===== Toggle sólo mobile ===== */
-@media (max-width: 980px){
-  .sbToggle{
+@media (max-width: 980px) {
+  .sbToggle {
     width: 100%;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px; padding:.6rem .7rem;
-    border-radius:12px; border:1px solid rgba(255,255,255,.12);
-    background:#0f141b; color:$fh-text; font-weight:800; letter-spacing:.2px;
-    cursor:pointer;
-    .chev{ transition: transform .2s ease; }
-    .chev.up{ transform: rotate(180deg); }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: .6rem .7rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: #0f141b;
+    color: $fh-text;
+    font-weight: 800;
+    letter-spacing: .2px;
+    cursor: pointer;
+
+    .chev {
+      transition: transform .2s ease;
+    }
+
+    .chev.up {
+      transform: rotate(180deg);
+    }
   }
-  .sbGroup{
+
+  .sbGroup {
     overflow: hidden;
     transition: max-height .22s ease, opacity .18s ease, margin-top .18s ease;
-    &.closed{ max-height: 0; opacity: 0; margin-top: 0; }
-    &.open{ max-height: 800px; opacity: 1; margin-top: 8px; }
+
+    &.closed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+    }
+
+    &.open {
+      max-height: 800px;
+      opacity: 1;
+      margin-top: 8px;
+    }
   }
 }

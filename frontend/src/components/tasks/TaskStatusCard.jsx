@@ -23,7 +23,9 @@ export default function TaskStatusCard({
   etiquetas = [],
   estadosCatalog = [],
   onPick,
-  isResponsible = false
+  isResponsible = false,
+  isCollaborator = false,
+  isNivelB = false
 }) {
   const [busy, setBusy] = useState(null)
   const modal = useModal()
@@ -72,12 +74,47 @@ export default function TaskStatusCard({
     }
   }, [open])
 
+  // Determinar si puede cambiar a un estado específico
+  const canChangeTo = (code) => {
+    // NivelB puede cambiar CUALQUIER estado en CUALQUIER tarea (incluso si no pertenece)
+    if (isNivelB) return true
+
+    // Si no pertenece a la tarea (ni responsable ni colaborador), no puede cambiar nada
+    if (!isResponsible && !isCollaborator) return false
+
+    switch (code) {
+      case 'aprobada':
+      case 'cancelada':
+        // Solo NivelB puede aprobar y cancelar (ya cubierto arriba)
+        return false
+
+      case 'revision':
+        // Solo responsables pueden pasar a revisión
+        return isResponsible
+
+      case 'en_curso':
+      case 'pendiente':
+        // Colaboradores y responsables pueden pasar a en curso o pendiente
+        return isCollaborator || isResponsible
+
+      default:
+        return false
+    }
+  }
+
   const doPick = async (code) => {
     if (busy || code === active) return
 
-    // Validar permisos para aprobar o cancelar
-    if ((code === 'aprobada' || code === 'cancelada') && !isResponsible) {
-      toast?.error('Solo los responsables de la tarea pueden aprobar o cancelar');
+    if (!canChangeTo(code)) {
+      let message = 'No tenés permisos para este cambio'
+      if (code === 'aprobada' || code === 'cancelada') {
+        message = 'Solo usuarios NivelB pueden aprobar o cancelar tareas'
+      } else if (code === 'revision') {
+        message = 'Solo los responsables pueden pasar la tarea a revisión'
+      } else if (!isResponsible && !isCollaborator) {
+        message = 'Debés ser responsable o colaborador de la tarea'
+      }
+      toast?.error(message);
       setOpen(false);
       return;
     }
@@ -138,9 +175,7 @@ export default function TaskStatusCard({
           {Object.entries(MAP)
             .filter(([code]) => code !== active)
             .map(([code, info]) => {
-              // Mostrar si puede cambiar a este estado
-              const isRestricted = (code === 'aprobada' || code === 'cancelada');
-              const canChange = !isRestricted || isResponsible;
+              const canChange = canChangeTo(code);
 
               return (
                 <div
@@ -148,14 +183,14 @@ export default function TaskStatusCard({
                   className={`item ${active === code ? 'active' : ''} ${busy === code ? 'busy' : ''} ${!canChange ? 'disabled' : ''}`}
                   onClick={() => {
                     if (!canChange) {
-                      toast?.error('Solo los responsables pueden aprobar o cancelar tareas');
+                      // El mensaje de error ya se maneja en doPick
                       return;
                     }
                     setOpen(false);
                     doPick(code);
                   }}
                   style={{ backgroundColor: info.dot, opacity: !canChange ? 0.5 : 1 }}
-                  title={!canChange ? 'Solo responsables' : ''}
+                  title={!canChange ? 'No tenés permisos' : ''}
                 >
 
                   {info.name}

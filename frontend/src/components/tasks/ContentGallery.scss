@@ -94,6 +94,100 @@
                 color: rgba(255, 255, 255, 0.5);
             }
         }
+
+        // Upload progress list styles
+        .upload-progress-list {
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .upload-progress-item {
+            margin-bottom: 16px;
+
+            .upload-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+
+                .file-name {
+                    color: white;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 70%;
+                }
+
+                .progress-text {
+                    color: $fh-accent;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                }
+            }
+
+            .progress-bar-container {
+                position: relative;
+                height: 8px;
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 4px;
+                overflow: visible;
+
+                .progress-bar {
+                    height: 100%;
+                    background: linear-gradient(90deg, $fh-accent, lighten($fh-accent, 15%));
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+
+                    &.processing {
+                        background: linear-gradient(90deg, #ff9800, #ffc107);
+                        animation: processingPulse 1s ease-in-out infinite;
+                    }
+                }
+
+                .cancel-btn {
+                    position: absolute;
+                    right: -36px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background: rgba(255, 77, 79, 0.9);
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    opacity: 0;
+                    transition: opacity 0.2s ease, transform 0.15s ease;
+
+                    &:hover {
+                        background: #ff4d4f;
+                        transform: translateY(-50%) scale(1.1);
+                    }
+                }
+
+                &:hover .cancel-btn {
+                    opacity: 1;
+                }
+            }
+        }
+
+        @keyframes processingPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
     }
 
     // Header
@@ -300,6 +394,7 @@
 
             .remove-btn {
                 opacity: 1;
+                padding: 0 !important;
             }
         }
 
@@ -355,6 +450,7 @@
             opacity: 0.8;
             transition: opacity 0.2s ease, transform 0.15s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            padding: 0 !important;
 
             &:hover {
                 opacity: 1;

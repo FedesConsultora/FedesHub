@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { tareasApi } from '../../../api/tareas';
+import { useUploadContext } from '../../../context/UploadProvider';
 
 export function useTaskAttachments(taskId, onAfterChange = () => { }) {
     const [adjuntos, setAdjuntos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const uploadContext = useUploadContext();
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -39,12 +41,28 @@ export function useTaskAttachments(taskId, onAfterChange = () => { }) {
         await onAfterChange();
     }, [load, onAfterChange]);
 
+    // Upload usando el sistema global si está disponible
     const upload = useCallback(async (files = [], esEmbebido = true) => {
         if (!files || !files.length) return;
-        await tareasApi.uploadAdjuntos(taskId, files, esEmbebido);
-        await load();
-        await onAfterChange();
-    }, [taskId, load, onAfterChange]);
+
+        // Si tenemos el context global, usarlo para uploads en background
+        if (uploadContext?.queueUpload) {
+            await uploadContext.queueUpload({
+                taskId,
+                files,
+                esEmbebido,
+                onComplete: async () => {
+                    await load();
+                    await onAfterChange();
+                }
+            });
+        } else {
+            // Fallback al método original (por compatibilidad)
+            await tareasApi.uploadAdjuntos(taskId, files, esEmbebido);
+            await load();
+            await onAfterChange();
+        }
+    }, [taskId, load, onAfterChange, uploadContext]);
 
     return { adjuntos, loading, add, remove, upload, reload: load };
 }

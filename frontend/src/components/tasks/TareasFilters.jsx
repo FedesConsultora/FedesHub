@@ -3,12 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { FaRegCalendarAlt } from 'react-icons/fa'
 import './TareasFilters.scss'
 
-function Field({ id, label, children, className='' }) {
+function Field({ id, label, children, className = '' }) {
   return (<label htmlFor={id} className={`Field ${className}`}>
     <span className="Field__label">{label}</span>{children}
   </label>)
 }
-function Fieldset({ legend, children, className='' }) {
+function Fieldset({ legend, children, className = '' }) {
   return (<fieldset className={`Fieldset ${className}`}>
     <legend className="Fieldset__legend">{legend}</legend>{children}
   </fieldset>)
@@ -16,15 +16,15 @@ function Fieldset({ legend, children, className='' }) {
 const DateInput = ({ id, ...props }) => (
   <div className="InputDate">
     <FaRegCalendarAlt className="InputDate__icon" aria-hidden="true" />
-    <input id={id} type="date" {...props}/>
+    <input id={id} type="date" {...props} />
   </div>
 )
 
-export default function TareasFilters({ value, catalog, onChange }){
+export default function TareasFilters({ value, catalog, onChange }) {
   const v = value || {}
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null), popRef = useRef(null)
-  const todayISO = useMemo(() => new Date().toISOString().slice(0,10), [])
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
   const upd = (patch) => onChange?.({ ...v, ...patch })
   const clear = () => onChange?.({
@@ -57,7 +57,7 @@ export default function TareasFilters({ value, catalog, onChange }){
   }, [open])
 
   return (
-    <form className="TareasFilters" role="search" aria-label="Filtros de tareas" onSubmit={(e)=>e.preventDefault()} ref={rootRef}>
+    <form className="TareasFilters" role="search" aria-label="Filtros de tareas" onSubmit={(e) => e.preventDefault()} ref={rootRef}>
       <div className="searchBox">
         <label htmlFor="tareas-q" className="srOnly">Buscar por título / cliente / hito</label>
         <input
@@ -70,11 +70,11 @@ export default function TareasFilters({ value, catalog, onChange }){
           className="caretBtn"
           aria-expanded={open}
           aria-controls="tareas-popover"
-          onClick={()=>setOpen(o=>!o)}
+          onClick={() => setOpen(o => !o)}
           title={open ? 'Ocultar filtros' : 'Mostrar filtros'}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span className="srOnly">{open ? 'Ocultar filtros' : 'Mostrar filtros'}</span>
         </button>
@@ -83,7 +83,7 @@ export default function TareasFilters({ value, catalog, onChange }){
           <div id="tareas-popover" className="filterPopover" role="dialog" aria-modal="false" ref={popRef}>
             <div className="popHead">
               <strong>Filtros avanzados</strong>
-              <button type="button" className="btnX" onClick={()=>setOpen(false)} aria-label="Cerrar">×</button>
+              <button type="button" className="btnX" onClick={() => setOpen(false)} aria-label="Cerrar">×</button>
             </div>
 
             <div className="grid">
@@ -202,9 +202,31 @@ export default function TareasFilters({ value, catalog, onChange }){
               </Field>
             </div>
 
+            <div className="checkboxRow">
+              <label className="toggleCheck">
+                <input
+                  type="checkbox"
+                  checked={!!v.solo_mias}
+                  onChange={e => upd({ solo_mias: e.target.checked })}
+                />
+                <span className="checkmark"></span>
+                <span className="label">Sólo mis tareas</span>
+              </label>
+
+              <label className="toggleCheck">
+                <input
+                  type="checkbox"
+                  checked={!!v.include_archivadas}
+                  onChange={e => upd({ include_archivadas: e.target.checked })}
+                />
+                <span className="checkmark"></span>
+                <span className="label">Incluir archivadas</span>
+              </label>
+            </div>
+
             <div className="actions">
               <button type="button" className="btn clear" onClick={clear}>Limpiar</button>
-              <button type="button" className="btn apply" onClick={()=>setOpen(false)}>Aplicar</button>
+              <button type="button" className="btn apply" onClick={() => setOpen(false)}>Aplicar</button>
             </div>
           </div>
         )}

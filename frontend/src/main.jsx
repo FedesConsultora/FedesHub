@@ -2,14 +2,15 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { UploadProvider } from './context/UploadProvider.jsx'
 import { ToastProvider } from './components/toast/ToastProvider.jsx'
 import { ModalProvider } from './components/modal/ModalProvider.jsx'
+import UploadIndicator from './components/uploads/UploadIndicator.jsx'
 import AppRouter from './router/AppRouter.jsx'
 import './styles/global.scss'
 
 // React Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 // Realtime (FCM + sonidos)
 import RealtimeProvider from './realtime/RealtimeProvider.jsx'
@@ -31,16 +32,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <ModalProvider>
           <AuthProvider>
-            <RealtimeProvider>
-              <BrowserRouter>
-                <AppRouter />
-              </BrowserRouter>
-            </RealtimeProvider>
+            <UploadProvider>
+              <RealtimeProvider>
+                <BrowserRouter>
+                  <AppRouter />
+                  <UploadIndicator />
+                </BrowserRouter>
+              </RealtimeProvider>
+            </UploadProvider>
           </AuthProvider>
         </ModalProvider>
       </ToastProvider>
-
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>
 )

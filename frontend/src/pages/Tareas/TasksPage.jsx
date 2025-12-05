@@ -16,7 +16,7 @@ import "./TasksPage.scss";
 export default function TasksPage() {
   const [view, setView] = useState("kanban");
   const [showCreate, setShowCreate] = useState(false);
-const [openTaskId, setOpenTaskId] = useState(null);
+  const [openTaskId, setOpenTaskId] = useState(null);
 
   // catálogo (selects)
   const [catalog, setCatalog] = useState({
@@ -130,16 +130,6 @@ const [openTaskId, setOpenTaskId] = useState(null);
           className="right"
           style={{ display: "flex", gap: 10, alignItems: "center" }}
         >
-          <label className="onlyMine">
-            <input
-              type="checkbox"
-              checked={!!filters.solo_mias}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, solo_mias: e.target.checked }))
-              }
-            />
-            <span>Sólo mías</span>
-          </label>
 
           <div className="segmented" role="tablist" aria-label="Vista">
             <button
@@ -186,11 +176,11 @@ const [openTaskId, setOpenTaskId] = useState(null);
       {/* Resultados */}
       <section className="results" data-view={view}>
         {view === "kanban" ? (
-          <KanbanBoard board={board} moveTask={moveTask}   onOpenTask={setOpenTaskId}
-/>
+          <KanbanBoard board={board} moveTask={moveTask} onOpenTask={setOpenTaskId}
+          />
         ) : (
-            <TaskList
-              onOpenTask={setOpenTaskId}
+          <TaskList
+            onOpenTask={setOpenTaskId}
             rows={tableRows}
             loading={loading}
             onRowClick={(t) => setOpenTaskId(t.id)}
@@ -209,14 +199,14 @@ const [openTaskId, setOpenTaskId] = useState(null);
       )}
 
       {openTaskId && (
-  <ModalPanel  open={!!openTaskId}  onClose={() => setOpenTaskId(null)}>
-    <TaskDetail
-      taskId={openTaskId}
-      onUpdated={refetch}
-      onClose={() => setOpenTaskId(null)}
-    />
-  </ModalPanel>
-)}
+        <ModalPanel open={!!openTaskId} onClose={() => setOpenTaskId(null)}>
+          <TaskDetail
+            taskId={openTaskId}
+            onUpdated={refetch}
+            onClose={() => setOpenTaskId(null)}
+          />
+        </ModalPanel>
+      )}
 
     </div>
   );

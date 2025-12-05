@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { MdAdd, MdClose, MdPlayArrow } from 'react-icons/md';
+import { useModal } from '../modal/ModalProvider';
+import { useUploadContext } from '../../context/UploadProvider';
 import ImageFullscreen from '../common/ImageFullscreen';
 import './ContentGallery.scss';
 
@@ -66,8 +68,12 @@ export default function ContentGallery({
     title = 'Galería',
     accept = 'image/*,video/*',
     disabled = false,
-    showAddButton = true
+    showAddButton = true,
+    taskId = null, // Para filtrar uploads de esta tarea
+    esEmbebido = false // Para filtrar por tipo de galería
 }) {
+    const modal = useModal();
+    const uploadContext = useUploadContext();
     const [mainImage, setMainImage] = useState(null);
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isOver, setIsOver] = useState(false);
@@ -75,6 +81,14 @@ export default function ContentGallery({
     const [uploadError, setUploadError] = useState(null);
     const [loadingImages, setLoadingImages] = useState({}); // Track loading state per image
     const fileInputRef = useRef(null);
+
+    // Obtener uploads activos para esta tarea Y este tipo de galería
+    const activeUploads = (uploadContext?.uploads || []).filter(
+        u => u.taskId === taskId &&
+            u.esEmbebido === esEmbebido &&
+            (u.status === 'uploading' || u.status === 'processing')
+    );
+    const hasActiveUploads = activeUploads.length > 0;
 
     // When images change, update mainImage if needed
     if (!mainImage && images.length > 0) {
@@ -159,10 +173,22 @@ export default function ContentGallery({
         }
     };
 
-    const handleRemove = (e, imageId) => {
+    const handleRemove = async (e, image) => {
         e.stopPropagation();
-        if (onRemove) {
-            onRemove(imageId);
+        if (!onRemove) return;
+
+        const fileName = image.nombre || image.name || 'este archivo';
+        const fileType = isVideo(image) ? 'video' : 'imagen';
+
+        const confirmed = await modal.confirm({
+            title: 'Eliminar archivo',
+            message: `¿Estás seguro de que querés eliminar ${fileType === 'video' ? 'el video' : 'la imagen'} "${fileName}"?`,
+            okText: 'Eliminar',
+            cancelText: 'Cancelar'
+        });
+
+        if (confirmed) {
+            onRemove(image.id);
         }
     };
 
@@ -276,12 +302,45 @@ export default function ContentGallery({
                 </div>
             )}
 
-            {/* Loading overlay */}
-            {isUploading && (
+            {/* Loading overlay - shows active uploads with progress */}
+            {(isUploading || hasActiveUploads) && (
                 <div className="upload-overlay">
-                    <div className="spinner"></div>
-                    <p>Subiendo archivo...</p>
-                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                    {activeUploads.length > 0 ? (
+                        <div className="upload-progress-list">
+                            {activeUploads.map(upload => (
+                                <div key={upload.id} className="upload-progress-item">
+                                    <div className="upload-info">
+                                        <span className="file-name">{upload.fileName}</span>
+                                        <span className="progress-text">
+                                            {upload.status === 'processing'
+                                                ? 'Procesando...'
+                                                : `${upload.progress}%`}
+                                        </span>
+                                    </div>
+                                    <div className="progress-bar-container">
+                                        <div
+                                            className={`progress-bar ${upload.status === 'processing' ? 'processing' : ''}`}
+                                            style={{ width: `${upload.progress}%` }}
+                                        />
+                                        <button
+                                            className="cancel-btn"
+                                            onClick={() => uploadContext?.cancelUpload(upload.id)}
+                                            title="Cancelar subida"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            <p className="hint">Los videos pueden tardar varios minutos</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="spinner"></div>
+                            <p>Subiendo archivo...</p>
+                            <p className="hint">Los videos pueden tardar varios minutos</p>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -322,7 +381,7 @@ export default function ContentGallery({
                                 {!disabled && (
                                     <button
                                         className="remove-btn"
-                                        onClick={(e) => handleRemove(e, image.id)}
+                                        onClick={(e) => handleRemove(e, image)}
                                         title="Eliminar"
                                     >
                                         <MdClose size={16} />
@@ -338,7 +397,7 @@ export default function ContentGallery({
             {images.length === 1 && !disabled && (
                 <button
                     className="single-remove-btn"
-                    onClick={(e) => handleRemove(e, images[0].id)}
+                    onClick={(e) => handleRemove(e, images[0])}
                 >
                     <MdClose size={16} /> Eliminar {isVideo(images[0]) ? 'video' : 'imagen'}
                 </button>
