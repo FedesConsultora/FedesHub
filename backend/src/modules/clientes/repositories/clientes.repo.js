@@ -168,7 +168,7 @@ export const getClienteById = async (id) => {
     where: { cliente_id: id }, order: [['es_principal', 'DESC'], ['nombre', 'ASC']]
   });
 
-  // Gerentes de la célula: asignaciones activas (hasta null o >= hoy) y Feder activo
+  // Gerentes de la célula: asignaciones activas (hasta null o >= hoy)
   const mgrs = await sequelize.query(`
     SELECT a.id, a.feder_id, a.rol_tipo_id, a.es_principal,
            f.nombre, f.apellido, f.avatar_url,
@@ -179,7 +179,6 @@ export const getClienteById = async (id) => {
     WHERE a.celula_id = :celula_id
       AND a.desde <= CURRENT_DATE
       AND (a.hasta IS NULL OR a.hasta >= CURRENT_DATE)
-      AND (f.is_active IS NULL OR f.is_active = true)
     ORDER BY a.es_principal DESC, crt.nombre ASC, f.apellido ASC, f.nombre ASC
   `, { type: QueryTypes.SELECT, replacements: { celula_id: cliente.celula_id } });
 
