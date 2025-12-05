@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import AsistenciaDot from '../asistencia/AsistenciaDot.jsx'
 import { useState } from 'react'
+import { FiHeadphones } from 'react-icons/fi'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import './Header.scss'
+
+const SUPPORT_URL = 'https://miro.com/welcomeonboard/RXZKMUp0aFBBcDhiYU5pV0ZOMmtvcWh1Y3BOWWxJaHhqYm9FZkZWRXRObFZMVjIyK3hrRklHaVc5cW1lVnNhVlM5OGhyVDBqcC9vM013d01JbXJza3l6MisyQllpVmkzcVFZeW11N3lVYjhxQ1NRaks5d0NsZmJ2b2pwZGNzQUNNakdSWkpBejJWRjJhRnhhb1UwcS9BPT0hdjE=?share_link_id=915613671673'
 
 export default function Header() {
   const { user, hasPerm, logout } = useAuthCtx()
@@ -19,6 +22,10 @@ export default function Header() {
   // Check if user can access admin (same as sidebar used)
   const isAdmin = hasPerm('auth', 'assign')
 
+  const handleSupportClick = () => {
+    window.open(SUPPORT_URL, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <>
       <header className="fhHeader">
@@ -26,6 +33,13 @@ export default function Header() {
         <span className='sys-version'>BETA v1.0</span>
         <div className="spacer" />
         <div className="rightCluster">
+          <button
+            className="supportBtn"
+            onClick={handleSupportClick}
+            title="Soporte"
+          >
+            <FiHeadphones />
+          </button>
           <BellCluster onAnyOpen={() => setOpen(false)} />
           <AsistenciaDot />
           <button className="userChip" onClick={() => setOpen(v => !v)} aria-haspopup="menu" title={user?.email}>
@@ -51,3 +65,4 @@ export default function Header() {
     </>
   )
 }
+
