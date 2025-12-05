@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { FiPlus, FiEdit2, FiPower } from 'react-icons/fi'
 import * as C from '../../../api/cargos'
 import { useToast } from '../../toast/ToastProvider'
@@ -7,6 +7,7 @@ import { useModal } from '../../modal/ModalProvider'
 export default function CargosTab() {
     const toast = useToast()
     const modal = useModal()
+    const formRef = useRef(null)
 
     const [cargos, setCargos] = useState([])
     const [ambitos, setAmbitos] = useState([])
@@ -25,13 +26,19 @@ export default function CargosTab() {
     const load = async () => {
         setLoading(true)
         try {
+            const params = { limit: 100 }
+            if (search) params.q = search
+
             const [cargosRes, ambitosRes] = await Promise.all([
-                C.listCargos({ q: search, limit: 100 }),
+                C.listCargos(params),
                 C.listAmbitos()
             ])
-            setCargos(cargosRes.data || [])
+            // cargos API returns { rows: [...] } or array directly
+            const cargosData = cargosRes.data
+            setCargos(Array.isArray(cargosData) ? cargosData : (cargosData?.rows || []))
             setAmbitos(ambitosRes.data || [])
         } catch (e) {
+            console.error('Error loading cargos:', e)
             toast?.error('Error cargando cargos')
         } finally {
             setLoading(false)
@@ -74,6 +81,10 @@ export default function CargosTab() {
             ambito_id: String(cargo.ambito_id)
         })
         setShowForm(true)
+        // Scroll to form after render
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 50)
     }
 
     const handleUpdate = async () => {
@@ -132,7 +143,7 @@ export default function CargosTab() {
 
             {/* Form */}
             {showForm && (
-                <div className="userForm">
+                <div className="userForm" ref={formRef}>
                     <h3>{editing ? 'Editar Cargo' : 'Nuevo Cargo'}</h3>
 
                     <div className="formGrid">

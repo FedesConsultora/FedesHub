@@ -8,7 +8,7 @@ import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import './Header.scss'
 
 export default function Header() {
-  const { user, logout } = useAuthCtx()
+  const { user, hasPerm, logout } = useAuthCtx()
 
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
@@ -16,8 +16,8 @@ export default function Header() {
 
   const onLogout = async () => { await logout(); nav('/login') }
 
-  // Check if user has NivelA role (Admin)
-  const isAdmin = user?.roles?.some(r => r.nombre === 'NivelA')
+  // Check if user can access admin (same as sidebar used)
+  const isAdmin = hasPerm('auth', 'assign')
 
   return (
     <>

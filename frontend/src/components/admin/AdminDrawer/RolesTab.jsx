@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import * as A from '../../../api/auth'
 import { useToast } from '../../toast/ToastProvider'
 
@@ -76,8 +76,8 @@ export default function RolesTab() {
                     </thead>
                     <tbody>
                         {roles.map(role => (
-                            <>
-                                <tr key={role.id}>
+                            <React.Fragment key={role.id}>
+                                <tr>
                                     <td><strong>{role.nombre}</strong></td>
                                     <td style={{ color: 'var(--fh-muted)' }}>{role.descripcion || '—'}</td>
                                     <td>
@@ -94,7 +94,7 @@ export default function RolesTab() {
                                     </td>
                                 </tr>
                                 {expanded === role.id && (
-                                    <tr key={`${role.id}-perms`}>
+                                    <tr>
                                         <td colSpan={4} style={{ background: 'rgba(255,255,255,.02)', padding: '16px 20px' }}>
                                             {permissions[role.id] ? (
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
@@ -130,7 +130,7 @@ export default function RolesTab() {
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>

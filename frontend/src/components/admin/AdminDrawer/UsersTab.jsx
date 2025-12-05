@@ -1,24 +1,27 @@
-import { useEffect, useState } from 'react'
-import { FiPlus, FiEdit2, FiPower } from 'react-icons/fi'
+import { useEffect, useState, useRef } from 'react'
+import { FiPlus, FiEdit2, FiPower, FiEye, FiEyeOff } from 'react-icons/fi'
 import * as A from '../../../api/auth'
 import * as C from '../../../api/cargos'
-import * as F from '../../../api/feders'
+import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider'
 import { useModal } from '../../modal/ModalProvider'
 
 export default function UsersTab() {
     const toast = useToast()
     const modal = useModal()
+    const formRef = useRef(null)
 
     const [users, setUsers] = useState([])
     const [roles, setRoles] = useState([])
     const [cargos, setCargos] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
 
     // Form states
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState(null)
+    const [editingFeder, setEditingFeder] = useState(null)
     const [form, setForm] = useState({
         email: '',
         password: '',
@@ -41,8 +44,11 @@ export default function UsersTab() {
             ])
             setUsers(usersRes.data || [])
             setRoles(rolesRes.data || [])
-            setCargos(cargosRes.data || [])
+            // cargos API returns { rows: [...] } or array directly
+            const cargosData = cargosRes.data
+            setCargos(Array.isArray(cargosData) ? cargosData : (cargosData?.rows || []))
         } catch (e) {
+            console.error('Error loading admin data:', e)
             toast?.error('Error cargando datos')
         } finally {
             setLoading(false)
@@ -63,7 +69,9 @@ export default function UsersTab() {
             cargo_id: ''
         })
         setEditing(null)
+        setEditingFeder(null)
         setShowForm(false)
+        setShowPassword(false)
     }
 
     const toggleRole = (roleId) => {
@@ -88,6 +96,14 @@ export default function UsersTab() {
             toast?.warn('Contraseña mínimo 10 caracteres')
             return
         }
+        if (!form.nombre || !form.apellido) {
+            toast?.warn('Nombre y apellido son requeridos')
+            return
+        }
+        if (!form.roles || form.roles.length === 0) {
+            toast?.warn('Debes seleccionar al menos un rol')
+            return
+        }
 
         try {
             // 1. Create user
@@ -98,49 +114,79 @@ export default function UsersTab() {
                 is_activo: form.is_activo
             })
 
-            // 2. Create Feder if requested
-            if (form.createFeder && form.nombre && form.apellido) {
-                const estados = await F.listEstadosFeder()
-                const activoEstado = estados.data?.find(e => e.codigo === 'activo') || estados.data?.[0]
+            // 2. Create Feder (always)
+            const catalog = await federsApi.catalog()
+            const activoEstado = catalog.estados?.find(e => e.codigo === 'activo') || catalog.estados?.[0]
 
-                const feder = await F.createFeder({
-                    user_id: data.user.id,
-                    nombre: form.nombre.trim(),
-                    apellido: form.apellido.trim(),
-                    estado_id: activoEstado?.id,
-                    is_activo: true
+            const feder = await federsApi.create({
+                user_id: data.user.id,
+                nombre: form.nombre.trim(),
+                apellido: form.apellido.trim(),
+                estado_id: activoEstado?.id,
+                is_activo: true
+            })
+
+            // 3. Assign cargo if selected
+            if (form.cargo_id && feder?.id) {
+                await C.assignToFeder(feder.id, {
+                    cargo_id: parseInt(form.cargo_id),
+                    es_principal: true,
+                    desde: new Date().toISOString().split('T')[0]
                 })
-
-                // 3. Assign cargo if selected
-                if (form.cargo_id && feder.data?.id) {
-                    await C.assignToFeder(feder.data.id, {
-                        cargo_id: parseInt(form.cargo_id),
-                        es_principal: true,
-                        desde: new Date().toISOString().split('T')[0]
-                    })
-                }
-
-                toast?.success('Usuario y Feder creados correctamente')
-            } else {
-                toast?.success('Usuario creado')
             }
 
+            toast?.success('Usuario y Feder creados correctamente')
             resetForm()
             load()
         } catch (e) {
-            toast?.error(e?.fh?.message || 'Error al crear usuario')
+            console.error('Error creating user:', e)
+            console.error('Response data:', e?.response?.data)
+            const msg = e?.response?.data?.error || e?.response?.data?.message || e?.fh?.message || e?.message || 'Error al crear usuario'
+            toast?.error(msg)
         }
     }
 
-    const handleEdit = (user) => {
+    const handleEdit = async (user) => {
+        console.log('=== EDITING USER ===', user)
         setEditing(user)
-        setForm({
-            ...form,
-            email: user.email,
-            roles: (user.roles || []).map(r => r.id),
-            is_activo: user.is_activo
-        })
+        setEditingFeder(null)
+
+        // Load feder for this user
+        try {
+            const feder = await federsApi.getByUserId(user.id)
+            setEditingFeder(feder)
+
+            // Find cargo ID by matching the cargo_principal name
+            let cargoId = ''
+            if (feder?.cargo_principal) {
+                const matchingCargo = cargos.find(c => c.nombre === feder.cargo_principal)
+                cargoId = matchingCargo?.id || ''
+            }
+
+            setForm({
+                ...form,
+                email: user.email,
+                roles: (user.roles || []).map(r => r.id),
+                is_activo: user.is_activo,
+                cargo_id: cargoId ? String(cargoId) : ''
+            })
+        } catch (e) {
+            console.error('❌ Error loading feder:', e)
+            // User might not have a feder
+            setForm({
+                ...form,
+                email: user.email,
+                roles: (user.roles || []).map(r => r.id),
+                is_activo: user.is_activo,
+                cargo_id: ''
+            })
+        }
+
         setShowForm(true)
+        // Scroll to form after render
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 50)
     }
 
     const handleUpdate = async () => {
@@ -155,11 +201,26 @@ export default function UsersTab() {
                 await A.adminPatchUserActive(editing.id, form.is_activo)
             }
 
+            // Update cargo if feder exists and cargo changed
+            if (editingFeder?.id && form.cargo_id) {
+                const currentCargo = editingFeder?.cargos?.find(c => c.es_principal) || editingFeder?.cargos?.[0]
+                const currentCargoId = currentCargo?.cargo_id ? String(currentCargo.cargo_id) : ''
+
+                if (form.cargo_id !== currentCargoId) {
+                    await C.assignToFeder(editingFeder.id, {
+                        cargo_id: parseInt(form.cargo_id),
+                        es_principal: true,
+                        desde: new Date().toISOString().split('T')[0]
+                    })
+                }
+            }
+
             toast?.success('Usuario actualizado')
             resetForm()
             load()
         } catch (e) {
-            toast?.error(e?.fh?.message || 'Error al actualizar')
+            console.error('Error updating user:', e)
+            toast?.error(e?.response?.data?.error || e?.fh?.message || 'Error al actualizar')
         }
     }
 
@@ -202,8 +263,40 @@ export default function UsersTab() {
 
             {/* Create/Edit Form */}
             {showForm && (
-                <div className="userForm">
+                <div className="userForm" ref={formRef}>
                     <h3>{editing ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
+
+                    {/* Show user info when editing */}
+                    {editing && (
+                        <div style={{
+                            background: 'rgba(77, 208, 225, 0.1)',
+                            border: '1px solid rgba(77, 208, 225, 0.3)',
+                            borderRadius: 8,
+                            padding: '12px 16px',
+                            marginBottom: 16,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <div style={{
+                                width: 40, height: 40, borderRadius: '50%',
+                                background: 'rgba(77, 208, 225, 0.2)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontWeight: 600, color: '#4dd0e1'
+                            }}>
+                                {editing.email?.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 600, fontSize: 14 }}>{editing.email}</div>
+                                <div style={{ fontSize: 12, color: 'var(--fh-muted)' }}>
+                                    ID: {editing.id}
+                                    {(editing.created_at || editing.createdAt) &&
+                                        ` • Creado: ${new Date(editing.created_at || editing.createdAt).toLocaleDateString('es-AR')}`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="formGrid">
                         {!editing && (
@@ -219,12 +312,35 @@ export default function UsersTab() {
                                 </div>
                                 <div className="formRow">
                                     <label>Contraseña</label>
-                                    <input
-                                        type="password"
-                                        placeholder="Mínimo 10 caracteres"
-                                        value={form.password}
-                                        onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Mínimo 10 caracteres"
+                                            value={form.password}
+                                            onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                                            style={{ paddingRight: 40 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(v => !v)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: 10,
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                color: 'var(--fh-muted)',
+                                                cursor: 'pointer',
+                                                padding: 4,
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}
+                                            title={showPassword ? 'Ocultar' : 'Mostrar'}
+                                        >
+                                            {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </>
                         )}
@@ -239,6 +355,22 @@ export default function UsersTab() {
                                 <option value="false">Inactivo</option>
                             </select>
                         </div>
+
+                        {/* Cargo field for editing users with feder */}
+                        {editing && editingFeder && (
+                            <div className="formRow">
+                                <label>Cargo</label>
+                                <select
+                                    value={form.cargo_id}
+                                    onChange={(e) => setForm(f => ({ ...f, cargo_id: e.target.value }))}
+                                >
+                                    <option value="">Sin cargo</option>
+                                    {cargos.map(c => (
+                                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     {/* Roles */}
@@ -259,54 +391,45 @@ export default function UsersTab() {
                         </div>
                     </div>
 
-                    {/* Feder creation (only for new users) */}
+                    {/* Feder info (only for new users - always created) */}
                     {!editing && (
                         <>
                             <div className="rolesGroup">
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={form.createFeder}
-                                        onChange={(e) => setForm(f => ({ ...f, createFeder: e.target.checked }))}
-                                    />
-                                    <span style={{ fontSize: 13 }}>Crear Feder asociado</span>
-                                </label>
+                                <div className="rolesLabel">Datos del Feder</div>
                             </div>
 
-                            {form.createFeder && (
-                                <div className="formGrid" style={{ marginTop: 12 }}>
-                                    <div className="formRow">
-                                        <label>Nombre</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Nombre"
-                                            value={form.nombre}
-                                            onChange={(e) => setForm(f => ({ ...f, nombre: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="formRow">
-                                        <label>Apellido</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Apellido"
-                                            value={form.apellido}
-                                            onChange={(e) => setForm(f => ({ ...f, apellido: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="formRow">
-                                        <label>Cargo</label>
-                                        <select
-                                            value={form.cargo_id}
-                                            onChange={(e) => setForm(f => ({ ...f, cargo_id: e.target.value }))}
-                                        >
-                                            <option value="">Sin cargo</option>
-                                            {cargos.map(c => (
-                                                <option key={c.id} value={c.id}>{c.nombre}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                            <div className="formGrid" style={{ marginTop: 8 }}>
+                                <div className="formRow">
+                                    <label>Nombre *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre"
+                                        value={form.nombre}
+                                        onChange={(e) => setForm(f => ({ ...f, nombre: e.target.value }))}
+                                    />
                                 </div>
-                            )}
+                                <div className="formRow">
+                                    <label>Apellido *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Apellido"
+                                        value={form.apellido}
+                                        onChange={(e) => setForm(f => ({ ...f, apellido: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="formRow">
+                                    <label>Cargo</label>
+                                    <select
+                                        value={form.cargo_id}
+                                        onChange={(e) => setForm(f => ({ ...f, cargo_id: e.target.value }))}
+                                    >
+                                        <option value="">Sin cargo</option>
+                                        {cargos.map(c => (
+                                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </>
                     )}
 

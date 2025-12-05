@@ -14,7 +14,6 @@ export function AuthProvider({ children }) {
   const [user,  setUser]  = useState(null)
   const [roles, setRoles] = useState([])
   const [perms, setPerms] = useState([])
-  console.log('usuario: ', user);
   const [booted, setBooted] = useState(false)
   const [bootError, setBootError] = useState(null)
 

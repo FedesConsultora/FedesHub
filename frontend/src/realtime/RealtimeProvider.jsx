@@ -8,16 +8,16 @@ const RealtimeCtx = createContext(null)
 export const useRealtime = () => useContext(RealtimeCtx)
 
 const SOUND_MAP = {
-  chat:        '/sounds/notificacionChat.mp3',
-  tareas:      '/sounds/notificacionTareas.mp3',
-  calendario:  '/sounds/notificacionCalendario.mp3',
-  default:     '/sounds/notificacionChat.mp3'
+  chat: '/sounds/notificacionChat.mp3',
+  tareas: '/sounds/notificacionTareas.mp3',
+  calendario: '/sounds/notificacionCalendario.mp3',
+  default: '/sounds/notificacionChat.mp3'
 }
 
 function resolveBuzonFromData(data) {
   if (data?.chat_canal_id || data?.canal_id) return 'chat'
-  if (data?.tarea_id)      return 'tareas'
-  if (data?.evento_id)     return 'calendario'
+  if (data?.tarea_id) return 'tareas'
+  if (data?.evento_id) return 'calendario'
   return 'default'
 }
 
@@ -76,7 +76,7 @@ export default function RealtimeProvider({ children }) {
     if (!canal_id) return
     recentSelfSendsRef.current.set(Number(canal_id), Date.now())
   }
-  const isLikelySelfEcho = (canal_id, windowMs=3000) => {
+  const isLikelySelfEcho = (canal_id, windowMs = 3000) => {
     const ts = recentSelfSendsRef.current.get(Number(canal_id))
     return !!(ts && (Date.now() - ts) <= windowMs)
   }
@@ -94,7 +94,7 @@ export default function RealtimeProvider({ children }) {
   // Barrido extra: si hubo carrera y llegó la notif después, la bajamos igual
   const sweepUnreadChatForCanal = async (canal_id) => {
     try {
-      const inbox = await notifApi.inbox({ buzon:'chat', only_unread:true, sort:'newest', limit: 30 }).catch(()=>null)
+      const inbox = await notifApi.inbox({ buzon: 'chat', only_unread: true, sort: 'newest', limit: 30 }).catch(() => null)
       const rows = inbox?.rows || []
       const ids = rows
         .map(r => r?.notificacion)
@@ -107,7 +107,7 @@ export default function RealtimeProvider({ children }) {
         .map(n => n.id)
         .filter(Boolean)
       if (ids.length) await Promise.allSettled(ids.map(id => notifApi.read(id, true)))
-    } catch {}
+    } catch { }
   }
 
   const flushChatNotifsForCanal = async (canal_id) => {
@@ -115,12 +115,12 @@ export default function RealtimeProvider({ children }) {
     const set = notifByCanalRef.current.get(id)
     if (set && set.size) {
       const ids = Array.from(set)
-      try { await Promise.allSettled(ids.map(nid => notifApi.read(nid, true))) } catch {}
+      try { await Promise.allSettled(ids.map(nid => notifApi.read(nid, true))) } catch { }
       notifByCanalRef.current.delete(id)
     }
     await sweepUnreadChatForCanal(id) // catch-up
-    qc.invalidateQueries({ queryKey: ['notif','counts'] })
-    qc.invalidateQueries({ queryKey: ['notif','inbox'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     window.dispatchEvent(new Event('fh:notif:changed'))
   }
 
@@ -130,13 +130,13 @@ export default function RealtimeProvider({ children }) {
     const unlock = async () => {
       try {
         const a = new Audio(SOUND_MAP.default); a.volume = 0
-        await a.play().catch(() => {}); a.pause(); a.currentTime = 0
+        await a.play().catch(() => { }); a.pause(); a.currentTime = 0
         setAudioUnlocked(true)
-        ['click','keydown','pointerdown','touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
-      } catch {}
+        ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
+      } catch { }
     }
-    ['click','keydown','pointerdown','touchstart'].forEach(ev => document.addEventListener(ev, unlock))
-    return () => ['click','keydown','pointerdown','touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
+    ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock))
+    return () => ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
   }, [audioUnlocked])
 
   useEffect(() => {
@@ -159,7 +159,7 @@ export default function RealtimeProvider({ children }) {
     const src = SOUND_MAP[buzon] || SOUND_MAP.default
     const a = new Audio(src)
     a.volume = volume
-    a.play().catch(() => setTimeout(() => a.play().catch(()=>{}), 150))
+    a.play().catch(() => setTimeout(() => a.play().catch(() => { }), 150))
   }
 
   // ---- SSE → window event (inyectamos type si viene vacío)
@@ -170,13 +170,14 @@ export default function RealtimeProvider({ children }) {
     const forward = (ev) => {
       const evType = ev?.type || 'message'
       let payload = {}
-      try { payload = JSON.parse(ev?.data || '{}') } catch {}
+      try { payload = JSON.parse(ev?.data || '{}') } catch { }
       if (!payload.type) payload.type = evType
-      console.log('[SSE→fh:push]', evType, payload)
+      // Only log non-ping events to reduce noise
+      if (evType !== 'ping') console.log('[SSE→fh:push]', evType, payload)
       window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }))
     }
     const onOpen = () => { window.__FH_SSE_OK = true; console.log('[SSE] open') }
-    const onErr  = (e) => { console.warn('[SSE] error', e); try { es.close() } catch {}; es = null; window.__FH_SSE_OK = false }
+    const onErr = (e) => { console.warn('[SSE] error', e); try { es.close() } catch { }; es = null; window.__FH_SSE_OK = false }
 
     const TYPES = [
       'message', 'ping',
@@ -189,14 +190,14 @@ export default function RealtimeProvider({ children }) {
     es.onerror = onErr
 
     return () => {
-      try { es?.removeEventListener('open', onOpen); TYPES.forEach(t => es?.removeEventListener(t, forward)); es?.close() } catch {}
+      try { es?.removeEventListener('open', onOpen); TYPES.forEach(t => es?.removeEventListener(t, forward)); es?.close() } catch { }
       window.__FH_SSE_OK = false
     }
   }, [booted, user])
 
   // de-dup (clave -> ts)
   const dedupRef = useRef(new Map())
-  const seenOnce = (key, ttl=5000) => {
+  const seenOnce = (key, ttl = 5000) => {
     if (!key) return false
     const now = Date.now()
     for (const [k, t] of dedupRef.current.entries()) if (now - t > ttl) dedupRef.current.delete(k)
@@ -214,17 +215,18 @@ export default function RealtimeProvider({ children }) {
     const dedupKey = buildDedupKey(anyData)
     if (seenOnce(dedupKey)) return
 
-    console.log('notification data: ', data)
+    // Only log non-ping to reduce console noise
+    if (type !== 'ping') console.log('[Realtime] incoming:', type, data)
 
     // invalidaciones mínimas
     if (type.startsWith('chat.')) {
       const canal_id = data?.canal_id
       if (/chat\.message\.(created|edited|deleted)/.test(type) && canal_id) {
-        qc.invalidateQueries({ queryKey: ['chat','msgs', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
       }
       if (/chat\.channel\./.test(type) && canal_id) {
-        qc.invalidateQueries({ queryKey: ['chat','channels'] })
-        qc.invalidateQueries({ queryKey: ['chat','members', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        qc.invalidateQueries({ queryKey: ['chat', 'members', canal_id] })
       }
     }
 
@@ -241,7 +243,7 @@ export default function RealtimeProvider({ children }) {
           if (!prev[canal_id]) return prev
           const next = { ...prev }; delete next[canal_id]; return next
         })
-        flushChatNotifsForCanal(canal_id).catch(()=>{})
+        flushChatNotifsForCanal(canal_id).catch(() => { })
       }
     }
 
@@ -264,7 +266,7 @@ export default function RealtimeProvider({ children }) {
 
       // si el canal está abierto, marcamos la notif inmediatamente para evitar “pegadas”
       if (isCurrentOpen && notifId) {
-        notifApi.read(notifId, true).catch(()=>{})
+        notifApi.read(notifId, true).catch(() => { })
       }
 
       // si sé que soy yo, ignoro; si no hay autor, evito eco de mi envío reciente
@@ -284,8 +286,8 @@ export default function RealtimeProvider({ children }) {
     }
 
     // notificaciones genéricas
-    qc.invalidateQueries({ queryKey: ['notif','counts'] })
-    qc.invalidateQueries({ queryKey: ['notif','inbox'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
   }
 
   // listener global (FCM foreground + SW + SSE unificados)
@@ -311,7 +313,7 @@ export default function RealtimeProvider({ children }) {
 
   // ✅ Propagar “hay/no hay unread en chat” **post-commit** (evita warning en Sidebar)
   useEffect(() => {
-    const hasAny = Object.values(unreadByCanal || {}).some(v => (v|0) > 0)
+    const hasAny = Object.values(unreadByCanal || {}).some(v => (v | 0) > 0)
     requestAnimationFrame(() => {
       window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: hasAny } }))
     })
@@ -331,7 +333,7 @@ export default function RealtimeProvider({ children }) {
         const next = { ...prev }; delete next[canal_id]
         return next
       })
-      flushChatNotifsForCanal(canal_id).catch(()=>{})
+      flushChatNotifsForCanal(canal_id).catch(() => { })
     },
     setCurrentCanal,
     markSelfSend,

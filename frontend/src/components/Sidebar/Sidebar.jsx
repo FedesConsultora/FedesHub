@@ -5,15 +5,14 @@ import UnreadDmBubbles from './UnreadDmBubbles.jsx'
 import './Sidebar.scss'
 
 const APPS = [
-  { code:'home',    name:'Inicio',     to:'/' },
-  { code:'feders',  name:'Feders',     to:'/feders' },
-  { code:'asistencia', name:'Asistencia', to:'/asistencia' },
-  { code:'ausencia',   name:'Ausencias',  to:'/ausencias' },
-  { code:'calendario', name:'Calendario', to:'/calendario' },
-  { code:'tareas',  name:'Tareas',     to:'/tareas' },
-  { code:'chat',    name:'Chat',       to:'/chat' },
-  { code:'clientes',name:'Clientes',   to:'/clientes' },
-  { code:'auth',    name:'Admin',      to:'/admin/usuarios', need: { modulo:'auth', accion:'assign' } },
+  { code: 'home', name: 'Inicio', to: '/' },
+  { code: 'feders', name: 'Feders', to: '/feders' },
+  { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
+  { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
+  { code: 'calendario', name: 'Calendario', to: '/calendario' },
+  { code: 'tareas', name: 'Tareas', to: '/tareas' },
+  { code: 'chat', name: 'Chat', to: '/chat' },
+  { code: 'clientes', name: 'Clientes', to: '/clientes' },
 ]
 
 export default function Sidebar() {
@@ -64,7 +63,7 @@ export default function Sidebar() {
               key={app.code}
               to={app.to}
               end={app.to === '/'}
-              className={({isActive}) => 'sbItem' + (isActive ? ' active' : '') + extraCls}
+              className={({ isActive }) => 'sbItem' + (isActive ? ' active' : '') + extraCls}
             >
               {isChat && <i className="dot" />}
               <span>{app.name}</span>
