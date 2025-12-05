@@ -4,7 +4,7 @@ import { clientesApi } from '../../../api/clientes'
 export const PageSize = 25
 
 export function useClientesList() {
-  const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [], ponderaciones: [1,2,3,4,5] })
+  const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [], ponderaciones: [1, 2, 3, 4, 5] })
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -37,7 +37,7 @@ export function useClientesList() {
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const [cat, list] = await Promise.all([ clientesApi.catalog(), clientesApi.list(params) ])
+      const [cat, list] = await Promise.all([clientesApi.catalog(), clientesApi.list(params)])
       setCatalog(cat)
       setRows(list.rows)
       setTotal(list.total)
@@ -52,5 +52,5 @@ export function useClientesList() {
   const setPage = (p) => setFilters(f => ({ ...f, page: Math.max(0, p) }))
   const setFilter = (patch) => setFilters(f => ({ ...f, page: 0, ...patch }))
 
-  return { catalog, rows, total, loading, error, filters, setFilter, setPage }
+  return { catalog, rows, total, loading, error, filters, setFilter, setPage, refetch: load }
 }

@@ -16,8 +16,8 @@ export const listQuerySchema = z.object({
   estado_codigo: z.string().min(1).max(50).optional(),
   ponderacion_min: z.coerce.number().int().min(1).max(5).optional(),
   ponderacion_max: z.coerce.number().int().min(1).max(5).optional(),
-  order_by: z.enum(['nombre','created_at','ponderacion']).optional().default('nombre'),
-  order: z.enum(['asc','desc']).optional().default('asc'),
+  order_by: z.enum(['nombre', 'created_at', 'ponderacion']).optional().default('nombre'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
   with_metrics: z.preprocess(v => v === 'true', z.boolean().optional())
@@ -37,7 +37,8 @@ export const clienteCreateSchema = z.object({
   telefono: z.string().min(4).max(40).optional(),
   sitio_web: url,
   descripcion: z.string().max(10000).optional(),
-  ponderacion: z.coerce.number().int().min(1).max(5).optional().default(3)
+  ponderacion: z.coerce.number().int().min(1).max(5).optional().default(3),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color debe ser formato hex #RRGGBB').optional()
 });
 
 export const clienteUpdateSchema = clienteCreateSchema.partial().refine(

@@ -27,7 +27,7 @@ export default function ClientesListPage() {
           <div className="counter">{countTxt}</div>
         </div>
 
-        <div className="right" style={{ display:'flex', gap:10, alignItems:'center' }}>
+        <div className="right" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div className="segmented" role="tablist" aria-label="Vista">
             <button
               type="button"
@@ -55,8 +55,8 @@ export default function ClientesListPage() {
 
           <button
             className="submit"
-            style={{ padding:'8px 12px', width:'auto' }}
-            onClick={()=>setShowCreate(true)}
+            style={{ padding: '8px 12px', width: 'auto' }}
+            onClick={() => setShowCreate(true)}
           >
             + Nuevo cliente
           </button>
@@ -81,7 +81,7 @@ export default function ClientesListPage() {
 
       {showCreate && (
         <CreateClienteModal
-          onClose={()=>setShowCreate(false)}
+          onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); refetch() }}
         />
       )}

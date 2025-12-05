@@ -88,21 +88,30 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     e.preventDefault()
     if (!canSubmit || submitting) return
     setApiError(null)
+    setSubmitting(true)
+
+    let created = null
+    let success = false
+
     try {
-      setSubmitting(true)
       const payload = buildPayload()
       console.log('[CreateClienteModal] Sending payload:', payload)
-      const created = await clientesApi.create(payload)
+      created = await clientesApi.create(payload)
       console.log('[CreateClienteModal] Created client:', created)
-      toast.success('Cliente creado')
-      onCreated?.(created)
-      onClose?.()
+      success = true
     } catch (err) {
       const msg = err?.fh?.message || err?.response?.data?.message || 'No se pudo crear el cliente'
       setApiError(msg)
       toast.error(msg)
     } finally {
       setSubmitting(false)
+    }
+
+    // Si fue exitoso, notificar y cerrar (fuera del try/catch para no mostrar error si callbacks fallan)
+    if (success) {
+      toast.success('Cliente creado')
+      onCreated?.(created)
+      onClose?.()
     }
   }
 

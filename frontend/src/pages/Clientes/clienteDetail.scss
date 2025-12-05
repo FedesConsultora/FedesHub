@@ -1,65 +1,487 @@
 @use '../../styles/variables' as v;
 
-/* Estilos compartidos para detalle de cliente, contactos y mini lista de tareas */
 .ClienteDetailPage {
-  --border: #e5e7eb;
-  --muted:  #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1400px;
 
-  .loading, .error{ padding:12px; border-radius:v.$radius-2xl; }
-  .error{ color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f; }
-
-  .header {
-    background: v.$fh-card; border:1px solid rgba(255,255,255,.08);
-    border-radius: v.$radius-2xl; padding: 14px; box-shadow: v.$shadow-soft;
-    margin-bottom: 12px;
+  .loading,
+  .error {
+    padding: 20px;
+    border-radius: v.$radius-2xl;
+    background: v.$fh-card;
   }
-  .title { display: flex; gap: 8px; align-items: baseline; }
-  .alias { color: v.$fh-muted; }
 
-  .meta {
-    display: flex; gap: 8px; align-items: center; margin: 6px 0;
+  .error {
+    color: #ffb4b4;
+    border: 1px solid #5a2d2d;
+    background: #3a1f1f;
+  }
+
+  /* ===== Top Bar ===== */
+  .topBar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: v.$fh-card;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: v.$radius-2xl;
+    box-shadow: v.$shadow-soft;
+  }
+
+  .backBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: v.$fh-muted;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(77, 208, 225, 0.1);
+      border-color: rgba(77, 208, 225, 0.4);
+      color: #4dd0e1;
+    }
+  }
+
+  .pageTitle {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .topActions {
+    display: flex;
+    gap: 8px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .editBtn {
+      background: rgba(77, 208, 225, 0.1);
+      border: 1px solid rgba(77, 208, 225, 0.3);
+      color: #4dd0e1;
+
+      &:hover {
+        background: rgba(77, 208, 225, 0.2);
+      }
+    }
+
+    .cancelBtn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: v.$fh-muted;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .saveBtn {
+      background: linear-gradient(135deg, #4dd0e1, #26c6da);
+      border: none;
+      color: #0a1118;
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  /* ===== Grid Layout ===== */
+  .detailGrid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+  }
+
+  @media (max-width: 1100px) {
+    .detailGrid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ===== Main Column ===== */
+  .mainCol {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .infoCard {
+    background: v.$fh-card;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: v.$radius-2xl;
+    padding: 20px;
+    box-shadow: v.$shadow-soft;
+  }
+
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .clientAvatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .clientInfo {
+    flex: 1;
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .alias {
+      color: v.$fh-muted;
+      font-size: 14px;
+    }
+
+    .editFields {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      input {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #0f141b;
+        color: v.$fh-text;
+        font-size: 14px;
+
+        &.inputLg {
+          font-size: 18px;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+
+  .metaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+
     .badge {
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-      padding: 4px 10px; border-radius: 999px; font-size: 12px; color: v.$fh-muted; font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: v.$fh-muted;
+
+      &.link {
+        color: v.$fh-text;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
     }
-    .link {
-      padding:4px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      color:v.$fh-text; font-weight:700;
-      &:hover{ background: rgba(255,255,255,.06); }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #0f141b;
+      color: v.$fh-text;
+      font-size: 12px;
     }
   }
 
-  .contactLine { color: v.$fh-text; a{ color: v.$fh-primary; } }
+  .contactInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-  .stats {
-    display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 12px; margin: 16px 0;
-    .stat {
-      background: mix(v.$fh-card, v.$fh-bg, 60%); border: 1px solid rgba(255,255,255,.08);
-      border-radius: 12px; padding: 12px;
-      .kpi   { font-size: 22px; font-weight: 800; }
-      .label { color: v.$fh-muted; }
+  .contactItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: v.$fh-text;
+
+    .icon {
+      color: v.$fh-muted;
+      font-size: 16px;
+    }
+
+    a {
+      color: #4dd0e1;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .inputRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .icon {
+      color: v.$fh-muted;
+    }
+
+    input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #0f141b;
+      color: v.$fh-text;
+      font-size: 14px;
+    }
+
+    input[type="color"] {
+      width: 40px;
+      height: 32px;
+      padding: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    label {
+      color: v.$fh-muted;
+      font-size: 13px;
+    }
+  }
+
+  .descSection {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: v.$fh-muted;
+    }
+
+    p {
+      margin: 0;
+      color: v.$fh-text;
+      line-height: 1.6;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #0f141b;
+      color: v.$fh-text;
+      font-size: 14px;
+      resize: vertical;
+    }
+  }
+
+  /* ===== Stats ===== */
+  .statsRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .statCard {
+    background: v.$fh-card;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+
+    .statValue {
+      font-size: 28px;
+      font-weight: 800;
+      color: #4dd0e1;
+    }
+
+    .statLabel {
+      font-size: 13px;
+      color: v.$fh-muted;
+      margin-top: 4px;
+    }
+  }
+
+  /* ===== Side Column ===== */
+  .sideCol {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
   .panel {
-    background: v.$fh-card; border: 1px solid rgba(255,255,255,.08);
-    border-radius: v.$radius-2xl; padding: 12px; box-shadow: v.$shadow-soft;
-    h2{ margin:0 0 8px; font-size:18px; }
-    .muted{ color: v.$fh-muted; }
+    background: v.$fh-card;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: v.$radius-2xl;
+    padding: 16px;
+    box-shadow: v.$shadow-soft;
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      font-weight: 700;
+    }
   }
 
-  .small { font-size: 12px; }
-  .contactos, .tareas, .gerentes {
-    display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none;
-  }
-  .row { display: flex; gap: 6px; align-items: center; }
-  .tag {
-    background: #ecfeff; border: 1px solid #a5f3fc; color: #155e75;
-    padding: 2px 6px; border-radius: 999px; font-size: 11px;
+  /* ===== Team List ===== */
+  .teamList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .teamMember {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+
+    .memberAvatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a2732, #14202a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #dce7f3;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .memberInfo {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .memberName {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .memberRole {
+      font-size: 12px;
+      color: v.$fh-muted;
+    }
+
+    .principalTag {
+      padding: 3px 8px;
+      background: rgba(77, 208, 225, 0.15);
+      border: 1px solid rgba(77, 208, 225, 0.3);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #4dd0e1;
+      text-transform: uppercase;
+    }
+  }
+
+  /* ===== Legacy styles for contact list and tasks ===== */
+  .contactos,
+  .tareas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contactList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .contactRow {
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+
+    .contactName {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .contactCargo {
+      font-size: 12px;
+      color: v.$fh-muted;
+    }
+
+    .contactLink {
+      font-size: 12px;
+      color: #4dd0e1;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .muted {
+    color: v.$fh-muted;
+  }
 }

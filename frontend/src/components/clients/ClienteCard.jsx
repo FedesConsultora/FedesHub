@@ -27,8 +27,11 @@ export default function ClienteCard({ c }) {
           aria-hidden="true"
           style={{
             backgroundColor: c.color || '#3B82F6',
-            borderColor: c.color || '#3B82F6'
+            borderColor: c.color || '#3B82F6',
+            cursor: 'pointer'
           }}
+          onClick={goClient}
+          title="Ver detalle del cliente"
         >
           {initials || 'C'}
         </div>
