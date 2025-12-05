@@ -138,7 +138,7 @@ const [openTaskId, setOpenTaskId] = useState(null);
                 setFilters((f) => ({ ...f, solo_mias: e.target.checked }))
               }
             />
-            <span>Solo mías</span>
+            <span>Sólo mías</span>
           </label>
 
           <div className="segmented" role="tablist" aria-label="Vista">
@@ -207,7 +207,7 @@ const [openTaskId, setOpenTaskId] = useState(null);
           }}
         />
       )}
-     
+
       {openTaskId && (
   <ModalPanel  open={!!openTaskId}  onClose={() => setOpenTaskId(null)}>
     <TaskDetail
