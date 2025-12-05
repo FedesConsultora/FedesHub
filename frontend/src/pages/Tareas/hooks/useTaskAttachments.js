@@ -9,7 +9,7 @@ export function useTaskAttachments(taskId, onAfterChange = () => { }) {
         setLoading(true);
         try {
             const data = await tareasApi.getAdjuntos(taskId);
-            // Map drive_url to url for frontend compatibility
+            // Map drive_url to url for frontend compatibility, preserve all fields
             const mappedData = data.map(adj => ({
                 ...adj,
                 url: adj.drive_url || adj.url

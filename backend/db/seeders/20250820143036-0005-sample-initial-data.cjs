@@ -10,17 +10,17 @@
 const argon2 = require('argon2');
 
 module.exports = {
-  async up (queryInterface) {
+  async up(queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       const now = new Date();
 
       // Password por persona (argon2id)
       const DEFAULT_PASS_BY_EMAIL = {
-        'sistemas@fedes.ai'  : 'Sistemas123!',
-        'ralbanesi@fedes.ai' : 'Romina123!',
-        'epinotti@fedes.ai'  : 'Enzo123!',
-        'gcanibano@fedes.ai' : 'Gonzalo123!'
+        'sistemas@fedes.ai': 'Sistemas123!',
+        'ralbanesi@fedes.ai': 'Romina123!',
+        'epinotti@fedes.ai': 'Enzo123!',
+        'gcanibano@fedes.ai': 'Gonzalo123!'
       };
       const passHashByEmail = {};
       for (const [email, plain] of Object.entries(DEFAULT_PASS_BY_EMAIL)) {
@@ -136,16 +136,16 @@ module.exports = {
       );
       const fedSet = new Set(existingFeders.map(f => f.user_id));
       const fedRows = [
-        { user_id: uid['sistemas@fedes.ai'],  nombre: 'Sistemas', apellido: 'Fedes',    celula_id: celulaCoreId },
-        { user_id: uid['ralbanesi@fedes.ai'], nombre: 'Romina',   apellido: 'Albanesi', celula_id: celulaCoreId },
-        { user_id: uid['epinotti@fedes.ai'],  nombre: 'Enzo',     apellido: 'Pinotti',  celula_id: null }, // <— SIN célula
-        { user_id: uid['gcanibano@fedes.ai'], nombre: 'Gonzalo',  apellido: 'Canibano', celula_id: celulaCoreId },
+        { user_id: uid['sistemas@fedes.ai'], nombre: 'Sistemas', apellido: 'Fedes', celula_id: celulaCoreId },
+        { user_id: uid['ralbanesi@fedes.ai'], nombre: 'Romina', apellido: 'Albanesi', celula_id: celulaCoreId },
+        { user_id: uid['epinotti@fedes.ai'], nombre: 'Enzo', apellido: 'Pinotti', celula_id: null }, // <— SIN célula
+        { user_id: uid['gcanibano@fedes.ai'], nombre: 'Gonzalo', apellido: 'Canibano', celula_id: celulaCoreId },
       ].filter(r => r.user_id && !fedSet.has(r.user_id))
-       .map(r => ({
-         ...r,
-         estado_id: federActivo.id,
-         is_activo: true, created_at: now, updated_at: now
-       }));
+        .map(r => ({
+          ...r,
+          estado_id: federActivo.id,
+          is_activo: true, created_at: now, updated_at: now
+        }));
       if (fedRows.length) {
         await queryInterface.bulkInsert('Feder', fedRows, { transaction: t });
       }
@@ -164,10 +164,10 @@ module.exports = {
         `SELECT id FROM "VisibilidadTipo" WHERE codigo='privado' LIMIT 1`, { transaction: t }
       );
       const calToEnsure = [
-        { name: 'Calendario de Sistemas',  user: 'sistemas@fedes.ai',  color: '#1e88e5' },
-        { name: 'Calendario de Romina',    user: 'ralbanesi@fedes.ai', color: '#8e24aa' },
-        { name: 'Calendario de Enzo',      user: 'epinotti@fedes.ai',  color: '#43a047' },
-        { name: 'Calendario de Gonzalo',   user: 'gcanibano@fedes.ai', color: '#f4511e' },
+        { name: 'Calendario de Sistemas', user: 'sistemas@fedes.ai', color: '#1e88e5' },
+        { name: 'Calendario de Romina', user: 'ralbanesi@fedes.ai', color: '#8e24aa' },
+        { name: 'Calendario de Enzo', user: 'epinotti@fedes.ai', color: '#43a047' },
+        { name: 'Calendario de Gonzalo', user: 'gcanibano@fedes.ai', color: '#f4511e' },
       ];
       for (const c of calToEnsure) {
         const federId = federByUserId[uid[c.user]];
@@ -214,18 +214,18 @@ module.exports = {
         }], { transaction: t });
       }
 
-      // === 7) Roles base ===
+      // === 7) Roles base (actualizados a 3 niveles) ===
       const [roles] = await queryInterface.sequelize.query(
         `SELECT id, nombre FROM "Rol"`, { transaction: t }
       );
       const rid = Object.fromEntries(roles.map(r => [r.nombre, r.id]));
       const toAssign = [
-        ['sistemas@fedes.ai', 'Admin'],
-        ['ralbanesi@fedes.ai','RRHH'],
-        ['gcanibano@fedes.ai','CuentasAnalista'],
-        ['epinotti@fedes.ai', 'Feder'],
+        ['sistemas@fedes.ai', 'NivelA'],    // Admin
+        ['ralbanesi@fedes.ai', 'NivelB'],    // Líder
+        ['gcanibano@fedes.ai', 'NivelC'],    // Colaborador
+        ['epinotti@fedes.ai', 'NivelC'],    // Colaborador
       ].map(([email, rol]) => ({ user_id: uid[email], rol_id: rid[rol] }))
-       .filter(r => r.user_id && r.rol_id);
+        .filter(r => r.user_id && r.rol_id);
       if (toAssign.length) {
         const pairs = toAssign.map(r => `(${r.user_id},${r.rol_id})`).join(',');
         const [already] = await queryInterface.sequelize.query(
@@ -248,7 +248,7 @@ module.exports = {
     }
   },
 
-  async down (queryInterface) {
+  async down(queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       await queryInterface.bulkDelete('UserRol', null, { transaction: t });
@@ -257,7 +257,7 @@ module.exports = {
       await queryInterface.bulkDelete('Feder', null, { transaction: t });
       await queryInterface.bulkDelete('Celula', { slug: 'celula-1' }, { transaction: t });
       await queryInterface.bulkDelete('User', {
-        email: ['sistemas@fedes.ai','ralbanesi@fedes.ai','epinotti@fedes.ai','gcanibano@fedes.ai']
+        email: ['sistemas@fedes.ai', 'ralbanesi@fedes.ai', 'epinotti@fedes.ai', 'gcanibano@fedes.ai']
       }, { transaction: t });
 
       await t.commit();

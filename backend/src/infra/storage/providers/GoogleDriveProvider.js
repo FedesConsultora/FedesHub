@@ -225,4 +225,33 @@ export class GoogleDriveProvider {
     const folderId = await this.ensurePath(pathParts);
     return `https://drive.google.com/drive/folders/${folderId}`;
   }
+
+  // Get file stream for proxy serving
+  async getFileStream(fileId) {
+    try {
+      // Get file metadata first
+      const meta = await this.drive.files.get({
+        fileId,
+        fields: 'id, name, mimeType, size',
+        supportsAllDrives: true,
+      });
+
+      // Get file content as stream
+      const response = await this.drive.files.get({
+        fileId,
+        alt: 'media',
+        supportsAllDrives: true,
+      }, { responseType: 'stream' });
+
+      return {
+        stream: response.data,
+        mimeType: meta.data.mimeType,
+        name: meta.data.name,
+        size: meta.data.size,
+      };
+    } catch (e) {
+      console.error('[GoogleDriveProvider] getFileStream error:', e.message);
+      throw e;
+    }
+  }
 }

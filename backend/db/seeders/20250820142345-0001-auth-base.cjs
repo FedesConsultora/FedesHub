@@ -3,7 +3,7 @@
 'use strict';
 
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     const now = new Date();
 
     // ---- RolTipo
@@ -14,17 +14,17 @@ module.exports = {
 
     // ---- Módulos
     const modulos = [
-      ['auth','Autenticación y Accesos'],
-      ['cargos','Cargos y ámbitos'],
-      ['feders','Personas (Feders)'],
-      ['asistencia','Asistencia'],
-      ['ausencias','Ausencias'],
-      ['celulas','Células'],
-      ['clientes','Clientes'],
-      ['tareas','Tareas'],
-      ['calendario','Calendario'],
-      ['notificaciones','Notificaciones'],
-      ['chat','Chat']           // 👈👈👈 AGREGADO
+      ['auth', 'Autenticación y Accesos'],
+      ['cargos', 'Cargos y ámbitos'],
+      ['feders', 'Personas (Feders)'],
+      ['asistencia', 'Asistencia'],
+      ['ausencias', 'Ausencias'],
+      ['celulas', 'Células'],
+      ['clientes', 'Clientes'],
+      ['tareas', 'Tareas'],
+      ['calendario', 'Calendario'],
+      ['notificaciones', 'Notificaciones'],
+      ['chat', 'Chat']
     ].map(([codigo, nombre]) => ({
       codigo, nombre,
       descripcion: null, created_at: now, updated_at: now
@@ -33,37 +33,25 @@ module.exports = {
 
     // ---- Acciones
     const acciones = [
-      ['read','Ver/Consultar'],
-      ['create','Crear'],
-      ['update','Editar'],
-      ['delete','Eliminar'],
-      ['approve','Aprobar'],
-      ['assign','Asignar'],
-      ['report','Reportes/Indicadores']
+      ['read', 'Ver/Consultar'],
+      ['create', 'Crear'],
+      ['update', 'Editar'],
+      ['delete', 'Eliminar'],
+      ['approve', 'Aprobar'],
+      ['assign', 'Asignar'],
+      ['report', 'Reportes/Indicadores']
     ].map(([codigo, nombre]) => ({
       codigo, nombre, descripcion: null, created_at: now, updated_at: now
     }));
     await queryInterface.bulkInsert('Accion', acciones, {});
 
-    // ---- Roles (incluye AnalistaComunicacion)
+    // ---- Roles: 3 niveles jerárquicos
     const [rolTipoRows] = await queryInterface.sequelize.query(`SELECT id, codigo FROM "RolTipo"`);
     const rolTipoMap = Object.fromEntries(rolTipoRows.map(r => [r.codigo, r.id]));
     const roles = [
-      ['Admin','Administrador'],
-      ['CLevel','Dirección (C-Level)'],
-      ['RRHH','Capital Humano'],
-
-      ['AnalistaDiseno','Analista de Diseño'],
-      ['CuentasAnalista','Analista de Cuentas'],
-      ['AnalistaAudiovisual','Analista Audiovisual'],
-      ['AnalistaComunicacion','Analista de Comunicación'],
-
-      ['TriMarketing','Tridente - Marketing'],
-      ['TriPerformance','Tridente - Performance'],
-      ['TriTecnologia','Tridente - Tecnología'],
-
-      ['Feder','Miembro'],
-      ['Onboarding','Onboarding']
+      ['NivelA', 'Administrador - Acceso total al sistema'],
+      ['NivelB', 'Líder - Acceso intermedio con aprobaciones'],
+      ['NivelC', 'Colaborador - Acceso básico'],
     ].map(([nombre, desc]) => ({
       nombre,
       descripcion: desc,
@@ -79,7 +67,7 @@ module.exports = {
     ], {});
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete('AuthEmailDominio', null, {});
     await queryInterface.bulkDelete('Rol', null, {});
     await queryInterface.bulkDelete('Accion', null, {});

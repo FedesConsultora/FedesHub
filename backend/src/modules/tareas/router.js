@@ -16,7 +16,7 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial, patchBoostManual
+  getHistorial, patchBoostManual, getDriveImage
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -91,5 +91,8 @@ router.delete('/:id/relaciones/:relId', requireAuth, requirePermission('tareas',
 // Favoritos / Seguidores
 router.post('/:id/favorite', requireAuth, requirePermission('tareas', 'read'), postFavorito);
 router.post('/:id/follow', requireAuth, requirePermission('tareas', 'read'), postSeguidor);
+
+// Drive Image Proxy (for displaying private Drive images)
+router.get('/drive/image/:fileId', requireAuth, getDriveImage);
 
 export default router;

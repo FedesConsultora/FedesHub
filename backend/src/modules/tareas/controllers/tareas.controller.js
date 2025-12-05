@@ -537,3 +537,43 @@ export const patchBoostManual = async (req, res, next) => {
     res.json(result);
   } catch (e) { next(e); }
 };
+
+// ---- Drive Image Proxy (for displaying private Drive images)
+export const getDriveImage = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+    console.log('[getDriveImage] Requested fileId:', fileId);
+
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
+    }
+
+    // Import the storage provider (use 'tareas' domain which uses Drive)
+    const { getProvider } = await import('../../../infra/storage/index.js');
+    const provider = getProvider('tareas');
+
+    if (!provider.getFileStream) {
+      console.error('[getDriveImage] Provider does not support getFileStream');
+      return res.status(501).json({ error: 'Storage provider does not support file streaming' });
+    }
+
+    console.log('[getDriveImage] Fetching file from provider...');
+    const { stream, mimeType, name } = await provider.getFileStream(fileId);
+
+    console.log('[getDriveImage] File found:', { name, mimeType });
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${name || 'file'}"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache 24h
+
+    // Pipe the stream to response
+    stream.pipe(res);
+  } catch (e) {
+    console.error('[getDriveImage] Error:', e.message, e.stack);
+    if (e.code === 404 || e.message?.includes('not found') || e.message?.includes('File not found')) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    next(e);
+  }
+};

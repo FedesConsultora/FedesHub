@@ -26,15 +26,15 @@ async function mapByName(qi, table, nameCol = 'nombre', idCol = 'id') {
 }
 
 module.exports = {
-  async up (qi /*, Sequelize */) {
+  async up(qi /*, Sequelize */) {
     const now = new Date();
 
     // 1) Asegurar acciones faltantes
     const neededActions = [
       // tareas
-      'kanban','label','comment','attach','relate',
+      'kanban', 'label', 'comment', 'attach', 'relate',
       // asistencia
-      'checkin','checkout','adjust','close'
+      'checkin', 'checkout', 'adjust', 'close'
     ];
 
     const [haveActsRows] = await qi.sequelize.query(
@@ -57,27 +57,27 @@ module.exports = {
     // 2) Crear Permisos (Modulo×Accion) necesarios
     const neededPerms = [
       // tareas
-      ['tareas','kanban'],
-      ['tareas','label'],
-      ['tareas','comment'],
-      ['tareas','attach'],
-      ['tareas','relate'],
+      ['tareas', 'kanban'],
+      ['tareas', 'label'],
+      ['tareas', 'comment'],
+      ['tareas', 'attach'],
+      ['tareas', 'relate'],
       // asistencia
-      ['asistencia','checkin'],
-      ['asistencia','checkout'],
-      ['asistencia','adjust'],
-      ['asistencia','close'],
+      ['asistencia', 'checkin'],
+      ['asistencia', 'checkout'],
+      ['asistencia', 'adjust'],
+      ['asistencia', 'close'],
     ]
-    // sólo las que existan ambos extremos (por seguridad)
-    .filter(([m,a]) => modId[m] && actId[a])
-    .map(([m,a]) => ({
-      modulo_id: modId[m],
-      accion_id: actId[a],
-      nombre: `${m}.${a}`,
-      descripcion: null,
-      created_at: now,
-      updated_at: now
-    }));
+      // sólo las que existan ambos extremos (por seguridad)
+      .filter(([m, a]) => modId[m] && actId[a])
+      .map(([m, a]) => ({
+        modulo_id: modId[m],
+        accion_id: actId[a],
+        nombre: `${m}.${a}`,
+        descripcion: null,
+        created_at: now,
+        updated_at: now
+      }));
 
     if (neededPerms.length) {
       // filtrar existentes
@@ -116,7 +116,7 @@ module.exports = {
     }
 
     // 4.b) tareas extras -> roles que ya tengan tareas.create o tareas.update
-    const tareasExtras = ['label','comment','attach','relate']
+    const tareasExtras = ['label', 'comment', 'attach', 'relate']
       .map(a => permIdByKey[`tareas.${a}`])
       .filter(Boolean);
 
@@ -136,34 +136,38 @@ module.exports = {
       }
     }
 
-    // 4.c) asistencia: checkin/checkout -> Feder ; adjust/close -> RRHH
-    const pidAsisCheckIn  = permIdByKey['asistencia.checkin'];
+    // 4.c) asistencia: checkin/checkout -> NivelC (colaboradores) ; adjust/close -> NivelB (líderes)
+    const pidAsisCheckIn = permIdByKey['asistencia.checkin'];
     const pidAsisCheckOut = permIdByKey['asistencia.checkout'];
-    const pidAsisAdjust   = permIdByKey['asistencia.adjust'];
-    const pidAsisClose    = permIdByKey['asistencia.close'];
+    const pidAsisAdjust = permIdByKey['asistencia.adjust'];
+    const pidAsisClose = permIdByKey['asistencia.close'];
 
-    const ridFeder = roleIdByName['Feder'];
-    const ridRRHH  = roleIdByName['RRHH'];
-    const ridAdmin = roleIdByName['Admin'];
+    const ridNivelC = roleIdByName['NivelC'];
+    const ridNivelB = roleIdByName['NivelB'];
+    const ridNivelA = roleIdByName['NivelA'];
 
-    if (ridFeder) {
-      if (pidAsisCheckIn)  grants.push([ridFeder, pidAsisCheckIn]);
-      if (pidAsisCheckOut) grants.push([ridFeder, pidAsisCheckOut]);
+    // NivelC: check-in/out básico
+    if (ridNivelC) {
+      if (pidAsisCheckIn) grants.push([ridNivelC, pidAsisCheckIn]);
+      if (pidAsisCheckOut) grants.push([ridNivelC, pidAsisCheckOut]);
     }
-    if (ridRRHH) {
-      if (pidAsisAdjust) grants.push([ridRRHH, pidAsisAdjust]);
-      if (pidAsisClose)  grants.push([ridRRHH,  pidAsisClose]);
+    // NivelB: ajustes y cierre
+    if (ridNivelB) {
+      if (pidAsisAdjust) grants.push([ridNivelB, pidAsisAdjust]);
+      if (pidAsisClose) grants.push([ridNivelB, pidAsisClose]);
+      if (pidAsisCheckIn) grants.push([ridNivelB, pidAsisCheckIn]);
+      if (pidAsisCheckOut) grants.push([ridNivelB, pidAsisCheckOut]);
     }
 
-    // 4.d) Admin: todos los permisos NUEVOS (tareas + asistencia) por si el seed previo no los tomó
-    if (ridAdmin) {
+    // 4.d) NivelA (Admin): todos los permisos NUEVOS
+    if (ridNivelA) {
       const newPermKeys = [
-        'tareas.kanban','tareas.label','tareas.comment','tareas.attach','tareas.relate',
-        'asistencia.checkin','asistencia.checkout','asistencia.adjust','asistencia.close'
+        'tareas.kanban', 'tareas.label', 'tareas.comment', 'tareas.attach', 'tareas.relate',
+        'asistencia.checkin', 'asistencia.checkout', 'asistencia.adjust', 'asistencia.close'
       ];
       for (const k of newPermKeys) {
         const pid = permIdByKey[k];
-        if (pid) grants.push([ridAdmin, pid]);
+        if (pid) grants.push([ridNivelA, pid]);
       }
     }
 
@@ -177,7 +181,7 @@ module.exports = {
       );
       const haveSetRP = new Set(haveRP.map(r => `${r.rol_id}:${r.permiso_id}`));
       const missingRP = grants
-        .filter(([r,p]) => !haveSetRP.has(`${r}:${p}`))
+        .filter(([r, p]) => !haveSetRP.has(`${r}:${p}`))
         .map(([rol_id, permiso_id]) => ({ rol_id, permiso_id, created_at: now }));
       if (missingRP.length) {
         await qi.bulkInsert('RolPermiso', missingRP, { ignoreDuplicates: true });
@@ -185,7 +189,7 @@ module.exports = {
     }
   },
 
-  async down (/* qi */) {
+  async down(/* qi */) {
     // No hacemos down para no romper asignaciones existentes.
     // Si necesitás reversión, podés borrar manualmente de RolPermiso/Permiso/Accion según los códigos añadidos.
   }
