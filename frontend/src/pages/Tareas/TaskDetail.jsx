@@ -465,6 +465,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
   const clienteColor = task?.cliente?.color || task?.cliente_color || null
+  console.log('.......................TASK', task)
+  console.log('.......................task.cliente_color:', task?.cliente_color)
+  console.log('.......................task.cliente?.color:', task?.cliente?.color)
+  console.log('.......................clienteColor:', clienteColor)
 
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
