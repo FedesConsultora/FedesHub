@@ -85,8 +85,9 @@ const getUserContext = async (user) => {
   return { roles, feder_id: feder?.id ?? null, celula_id: feder?.celula_id ?? null };
 };
 
-const isAdmin = (roles) => roles.has('Admin');
-const isCLevel = (roles) => roles.has('CLevel');
+// Helper para verificar nivel de acceso (3 niveles jerárquicos)
+const isNivelA = (roles) => roles.has('NivelA'); // Acceso total
+const isNivelB = (roles) => roles.has('NivelB'); // Líder
 
 // ---- Scoping y SQL de listado ----
 const buildListSQL = (params = {}, currentUser) => {
@@ -389,7 +390,7 @@ export const getTaskById = async (id, currentUser) => {
         WHERE cm.tarea_id = t.id) AS comentarios,
 
       /* ===== Adjuntos a nivel tarea (no comentario) ===== */
-      (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'es_embebido',a.es_embebido,'created_at',a.created_at))
+      (SELECT json_agg(json_build_object('id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'drive_file_id',a.drive_file_id,'es_embebido',a.es_embebido,'created_at',a.created_at))
          FROM "TareaAdjunto" a
         WHERE a.tarea_id = t.id AND a.comentario_id IS NULL) AS adjuntos,
 

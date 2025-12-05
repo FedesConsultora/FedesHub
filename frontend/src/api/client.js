@@ -2,7 +2,7 @@
   import axios from 'axios'
   const CSRF_COOKIE = 'fh_csrf'
   const API_PATH = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '')
-  const DEBUG = true
+  const DEBUG = false
 
   export const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE || '/api',

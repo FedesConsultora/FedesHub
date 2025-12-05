@@ -6,68 +6,55 @@ const path = require('path');
 
 /**
  * 0016 - equipo + roles + cargos + chat (idempotente, sin duplicar)
- * - Crea/actualiza usuarios (Nombre123!), roles y cargos por persona (como antes).
+ * - SIMPLIFICADO: Usa 3 niveles de rol: NivelA (Admin), NivelB (Líder), NivelC (Colaborador)
+ * - Crea/actualiza usuarios (Nombre123!), asigna nivel según c_level
  * - Re-vincula por nombre/apellido y borra feders duplicados.
- * - Enzo (y no mapeados en CEL_ASSIGN) queda SIN célula (celula_id=NULL) y se cierran CRAs "miembro".
  * - AGREGA: canales de chat por defecto + membresías + mensaje de bienvenida (pinned).
- * - NUEVO: setea avatar_url si existe archivo en /public/avatars (jpg/png/webp/jpeg).
  */
 
 const PEOPLE = [
-  // Tridente Tecnología
-  { nombre: 'Enzo',      apellido: 'Pinotti',        cargo: 'Desarrollador Fullstack', email: 'epinotti@fedes.ai',       tri:'tecnologia' },
+  // NivelC: Colaboradores
+  { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai' },
+  { nombre: 'Andre', apellido: 'Coronel Vargas', cargo: 'Analista Audiovisual', email: 'acoronelvargas@fedes.ai' },
+  { nombre: 'Mateo', apellido: 'Germano', cargo: 'Analista Audiovisual', email: 'mgermano@fedes.ai' },
+  { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Analista de Diseño', email: 'fmarchesotti@fedes.ai' },
+  { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Analista de Cuentas', email: 'gcanibano@fedes.ai' },
+  { nombre: 'Paola', apellido: 'López', cargo: 'Analista de Cuentas', email: 'plopez@fedes.ai' },
+  { nombre: 'Juan', apellido: 'Perozo', cargo: 'Analista de Diseño', email: 'jperozo@fedes.ai' },
+  { nombre: 'Matias', apellido: 'Lazcano', cargo: 'Analista Audiovisual', email: 'mlazcano@fedes.ai' },
+  { nombre: 'Belen', apellido: 'Espilman', cargo: 'Desarrolladora Web', email: 'bespilman@fedes.ai' },
 
-  // No tridente: sólo célula/roles analistas
-  { nombre: 'Andre',     apellido: 'Coronel Vargas', cargo: 'Analista Audiovisual',     email: 'acoronelvargas@fedes.ai' },
-  { nombre: 'Mateo',     apellido: 'Germano',        cargo: 'Analista Audiovisual',     email: 'mgermano@fedes.ai'       },
-  { nombre: 'Florencia', apellido: 'Marchesotti',    cargo: 'Analista de Diseño',       email: 'fmarchesotti@fedes.ai'   },
-  { nombre: 'Gonzalo',   apellido: 'Canibano',       cargo: 'Analista de Cuentas',      email: 'gcanibano@fedes.ai'      },
-  { nombre: 'Paola',     apellido: 'López',          cargo: 'Analista de Cuentas',      email: 'plopez@fedes.ai'         },
-  { nombre: 'Juan',      apellido: 'Perozo',         cargo: 'Analista de Diseño',       email: 'jperozo@fedes.ai'        },
-
-  // C-level + Tridente
-  { nombre: 'Federico',  apellido: 'Chironi',        cargo: 'Co-Founder y CEO',         email: 'fedechironi@fedes.ai',   c_level:true, tri:'tecnologia'  },
-  { nombre: 'Federico',  apellido: 'Juan',           cargo: 'Co-Founder y CGO',         email: 'fedejuan@fedes.ai',      c_level:true, tri:'performance' },
-
-  // Tridente Marketing + rol de comunicación (USUARIO CANÓNICO)
-  { nombre: 'Romina',    apellido: 'Albanesi',       cargo: 'Responsable de Comunicación', email: 'ralbanesi@fedes.ai',  tri:'marketing' },
+  // NivelB: Líderes
+  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedes.ai', nivel: 'NivelB' },
+  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedes.ai', nivel: 'NivelB' },
+  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedes.ai', nivel: 'NivelB' },
+  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedes.ai', nivel: 'NivelB' },
 ];
 
-const ANALYST_ROLE_BY_CARGO = {
-  'Analista de Diseño'           : 'AnalistaDiseno',
-  'Analista Audiovisual'         : 'AnalistaAudiovisual',
-  'Analista de Cuentas'          : 'CuentasAnalista',
-  'Responsable de Comunicación'  : 'AnalistaComunicacion',
-};
-
-function triToRole(s) {
-  if (s === 'tecnologia') return 'TriTecnologia';
-  if (s === 'performance') return 'TriPerformance';
-  if (s === 'marketing')   return 'TriMarketing';
-  return null;
-}
+// Función para determinar nivel de rol: nivel explícito > NivelC por defecto
+const getNivel = (p) => p.nivel || 'NivelC';
 
 // Sólo estos 6 se asignan/aseguran explícitamente de célula
 const CEL_ASSIGN = {
-  'Mateo|Germano'          : 'celula-1',
-  'Paola|López'            : 'celula-1',
-  'Florencia|Marchesotti'  : 'celula-1',
-  'Andre|Coronel Vargas'   : 'celula-2',
-  'Gonzalo|Canibano'       : 'celula-2',
-  'Juan|Perozo'            : 'celula-2',
+  'Mateo|Germano': 'celula-1',
+  'Paola|López': 'celula-1',
+  'Florencia|Marchesotti': 'celula-1',
+  'Andre|Coronel Vargas': 'celula-2',
+  'Gonzalo|Canibano': 'celula-2',
+  'Juan|Perozo': 'celula-2',
 };
 
 // ===== Helpers comunes (password, fechas) =====
-const strip = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const strip = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const todayISO = () => {
   const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString().slice(0,10);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString().slice(0, 10);
 };
 const passFor = (nombre) => `${strip(nombre)}123!`;
 
 // ===== Helper Avatar =====
-const AVATAR_EXTS = ['.webp','.jpg','.jpeg','.png'];
-const AVATAR_DIR  = path.join(__dirname, '..', '..', 'public', 'avatars'); // backend/public/avatars
+const AVATAR_EXTS = ['.webp', '.jpg', '.jpeg', '.png'];
+const AVATAR_DIR = path.join(__dirname, '..', '..', 'public', 'avatars'); // backend/public/avatars
 const AVATAR_BASE = process.env.AVATAR_BASE_URL || '/avatars';              // opcional CDN/base
 
 const slugify = s =>
@@ -113,13 +100,13 @@ function resolveFederAvatar({ email, nombre, apellido }) {
 }
 
 module.exports = {
-  async up (qi) {
+  async up(qi) {
     const t = await qi.sequelize.transaction();
     try {
-      const now   = new Date();
+      const now = new Date();
       const today = todayISO();
 
-      const one = async (sql, repl={}) =>
+      const one = async (sql, repl = {}) =>
         (await qi.sequelize.query(sql, { transaction: t, replacements: repl }))[0][0] || null;
 
       // === Requisitos base ===
@@ -131,7 +118,7 @@ module.exports = {
         dom = await one(`SELECT id FROM "AuthEmailDominio" WHERE dominio='fedes.ai' LIMIT 1`);
       }
 
-      const estFed  = await one(`SELECT id FROM "FederEstadoTipo" WHERE codigo='activo' LIMIT 1`);
+      const estFed = await one(`SELECT id FROM "FederEstadoTipo" WHERE codigo='activo' LIMIT 1`);
       if (!estFed) throw new Error('Falta FederEstadoTipo.activo (0003)');
 
       // === Asegurar Células 1 y 2 ===
@@ -158,11 +145,9 @@ module.exports = {
       const crtMiembro = await one(`SELECT id FROM "CelulaRolTipo" WHERE codigo='miembro' LIMIT 1`);
       if (!crtMiembro) throw new Error('Falta CelulaRolTipo.miembro (0007)');
 
-      // Roles requeridos
+      // Roles disponibles (3 niveles)
       const [roleRows] = await qi.sequelize.query(
-        `SELECT id, nombre FROM "Rol" WHERE nombre IN
-         ('Feder','CLevel','TriTecnologia','TriPerformance','TriMarketing',
-          'AnalistaDiseno','CuentasAnalista','AnalistaAudiovisual','AnalistaComunicacion')`,
+        `SELECT id, nombre FROM "Rol" WHERE nombre IN ('NivelA', 'NivelB', 'NivelC')`,
         { transaction: t }
       );
       const rid = Object.fromEntries(roleRows.map(r => [r.nombre, r.id]));
@@ -309,7 +294,7 @@ module.exports = {
         fedIdByUser[user_id] = fid;
       }
 
-      // === Roles para cada persona ===
+      // === Roles para cada persona (simplificado a 3 niveles) ===
       const [urPairs] = await qi.sequelize.query(
         `SELECT user_id, rol_id FROM "UserRol" WHERE user_id IN (:ids)`,
         { transaction: t, replacements: { ids: Object.values(uid) } }
@@ -318,16 +303,11 @@ module.exports = {
       const toUR = [];
       for (const p of PEOPLE) {
         const u = uid[p.email]; if (!u) continue;
-        const roles = new Set(['Feder']);
-        if (p.c_level) roles.add('CLevel');
-        const triRole = triToRole(p.tri); if (triRole) roles.add(triRole);
-        const analyst = ANALYST_ROLE_BY_CARGO[p.cargo]; if (analyst) roles.add(analyst);
-
-        for (const rname of roles) {
-          const rid_ = rid[rname]; if (!rid_) continue;
-          const k = `${u}:${rid_}`;
-          if (!have.has(k)) { have.add(k); toUR.push({ user_id: u, rol_id: rid_, created_at: now }); }
-        }
+        const nivel = getNivel(p); // NivelA, NivelB o NivelC
+        const rid_ = rid[nivel];
+        if (!rid_) continue;
+        const k = `${u}:${rid_}`;
+        if (!have.has(k)) { have.add(k); toUR.push({ user_id: u, rol_id: rid_, created_at: now }); }
       }
       if (toUR.length) await qi.bulkInsert('UserRol', toUR, { transaction: t });
 
@@ -433,18 +413,18 @@ module.exports = {
       // === CHAT: canales y bienvenida ===================================================
       // ==================================================================================
       // Requisitos
-      const [[ctCanal]]   = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='canal'  LIMIT 1`, { transaction: t });
-      const [[ctCelula]]  = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='celula' LIMIT 1`, { transaction: t });
+      const [[ctCanal]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='canal'  LIMIT 1`, { transaction: t });
+      const [[ctCelula]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='celula' LIMIT 1`, { transaction: t });
       const [[ctCliente]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='cliente' LIMIT 1`, { transaction: t });
-      const [[rtOwner]]   = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='owner'  LIMIT 1`, { transaction: t });
-      const [[rtMember]]  = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='member' LIMIT 1`, { transaction: t });
+      const [[rtOwner]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='owner'  LIMIT 1`, { transaction: t });
+      const [[rtMember]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='member' LIMIT 1`, { transaction: t });
 
       if (!ctCanal?.id || !rtOwner?.id || !rtMember?.id) {
         throw new Error('Faltan catálogos de chat (0013-chat-catalogs).');
       }
       if (!sistemasUserId) throw new Error('Falta usuario sistemas@fedes.ai (0005).');
 
-      async function ensureChannel({ tipo_id, slug, nombre, topic=null, is_privado=false, only_mods_can_post=false, slowmode_seconds=0, celula_id=null, cliente_id=null }) {
+      async function ensureChannel({ tipo_id, slug, nombre, topic = null, is_privado = false, only_mods_can_post = false, slowmode_seconds = 0, celula_id = null, cliente_id = null }) {
         const [[exists]] = await qi.sequelize.query(
           `SELECT id FROM "ChatCanal" WHERE slug=:slug LIMIT 1`,
           { transaction: t, replacements: { slug } }
@@ -532,8 +512,8 @@ module.exports = {
 
       // ---- Canales base ----
       const canalesDef = [
-        { slug: 'general',  nombre: '#general',  tipo_id: ctCanal.id, topic: 'Bienvenidos al chat general de FedesHub', is_privado: false, only_mods_can_post: false },
-        { slug: 'anuncios', nombre: '#anuncios', tipo_id: ctCanal.id, topic: 'Anuncios internos (solo staff publica)',   is_privado: false, only_mods_can_post: true },
+        { slug: 'general', nombre: '#general', tipo_id: ctCanal.id, topic: 'Bienvenidos al chat general de FedesHub', is_privado: false, only_mods_can_post: false },
+        { slug: 'anuncios', nombre: '#anuncios', tipo_id: ctCanal.id, topic: 'Anuncios internos (solo staff publica)', is_privado: false, only_mods_can_post: true },
       ];
       const canalIds = {};
       for (const c of canalesDef) {
@@ -569,7 +549,7 @@ module.exports = {
 
       // Todos los usuarios del seeder a #general y #anuncios
       const audienceUserIds = Object.values(uid).filter(Boolean);
-      for (const slug of ['general','anuncios']) {
+      for (const slug of ['general', 'anuncios']) {
         const cid = canalIds[slug];
         if (!cid) continue;
         for (const u of audienceUserIds) {
@@ -615,7 +595,7 @@ module.exports = {
       }
 
       // ---- Mensajes de bienvenida (pinned) ----
-      await ensureWelcomeMessage(canalIds['general'],  '👋 ¡Bienvenidos a #general! Usen este canal para discusiones transversales.');
+      await ensureWelcomeMessage(canalIds['general'], '👋 ¡Bienvenidos a #general! Usen este canal para discusiones transversales.');
       await ensureWelcomeMessage(canalIds['anuncios'], '📣 Canal de anuncios internos. Sólo el staff puede publicar aquí.');
       if (canalIds['celula-1']) {
         await ensureWelcomeMessage(canalIds['celula-1'], '👥 Bienvenidos a #celula-1. Canal operativo de la célula.');
@@ -635,7 +615,7 @@ module.exports = {
     } catch (e) { await t.rollback(); throw e; }
   },
 
-  async down (qi) {
+  async down(qi) {
     // Limpia sólo roles asignados en este seeder (no borra usuarios ni feders)
     const emails = PEOPLE.map(p => p.email);
     const t = await qi.sequelize.transaction();

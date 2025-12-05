@@ -40,43 +40,46 @@ async function ensureByNombre(queryInterface, table, rows, t) {
 }
 
 module.exports = {
-  async up (queryInterface) {
+  async up(queryInterface) {
     const t = await queryInterface.sequelize.transaction();
     try {
       const now = new Date();
       const amb = await ensureAmbitos(queryInterface, t);
 
       const org = [
-        { nombre: 'Líder de Producto',        descripcion: 'Tridente: Producto',        ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Líder de Tecnología',      descripcion: 'Tridente: Tecnología',      ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Líder de Operaciones',     descripcion: 'Tridente: Operaciones',     ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Líder de Producto', descripcion: 'Tridente: Producto', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Líder de Tecnología', descripcion: 'Tridente: Tecnología', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Líder de Operaciones', descripcion: 'Tridente: Operaciones', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-        { nombre: 'Co-Founder y CEO',         descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Co-Founder y CGO',         descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Co-Founder y CEO', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Co-Founder y CGO', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'COO', descripcion: 'Chief Operating Officer', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-        { nombre: 'Analista de Cuentas',      descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Analista de Diseño',       descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Analista Audiovisual',     descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Analista de Marketing',    descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Responsable de Comunicación', descripcion: null, ambito_id: amb.organico,
-          is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Analista de Performance',  descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Cuentas', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Diseño', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista Audiovisual', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Marketing', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Sistemas', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Responsable de Comunicación', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Responsable Editorial y de Comunicación', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Analista de Performance', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-        { nombre: 'Desarrollador Fullstack',  descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Desarrollador Frontend',   descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Desarrollador Backend',    descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'QA / Testing',             descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'DevOps / SRE',             descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrollador Fullstack', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrollador Frontend', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrollador Backend', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Desarrolladora Web', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'QA / Testing', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'DevOps / SRE', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 
-        { nombre: 'RRHH',                     descripcion: 'Capital Humano',             ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Onboarding',               descripcion: 'Ingreso y activación',       ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now }
+        { nombre: 'RRHH', descripcion: 'Capital Humano', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Onboarding', descripcion: 'Ingreso y activación', ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now }
       ];
 
       const cli = [
-        { nombre: 'Sponsor (Cliente)',            descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Product Owner (Cliente)',      descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Referente Técnico (Cliente)',  descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Usuario Referente (Cliente)',  descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now }
+        { nombre: 'Sponsor (Cliente)', descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Product Owner (Cliente)', descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Referente Técnico (Cliente)', descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Usuario Referente (Cliente)', descripcion: null, ambito_id: amb.cliente, is_activo: true, created_at: now, updated_at: now }
       ];
 
       await ensureByNombre(queryInterface, 'Cargo', [...org, ...cli], t);
@@ -87,15 +90,15 @@ module.exports = {
     }
   },
 
-  async down (queryInterface) {
+  async down(queryInterface) {
     const nombres = [
-      'Líder de Producto','Líder de Tecnología','Líder de Operaciones',
-      'Co-Founder y CEO','Co-Founder y CGO',
-      'Analista de Cuentas','Analista de Diseño','Analista Audiovisual',
-      'Analista de Marketing','Analista de Performance',
-      'Desarrollador Fullstack','Desarrollador Frontend','Desarrollador Backend',
-      'QA / Testing','DevOps / SRE','RRHH','Onboarding',
-      'Sponsor (Cliente)','Product Owner (Cliente)','Referente Técnico (Cliente)','Usuario Referente (Cliente)'
+      'Líder de Producto', 'Líder de Tecnología', 'Líder de Operaciones',
+      'Co-Founder y CEO', 'Co-Founder y CGO',
+      'Analista de Cuentas', 'Analista de Diseño', 'Analista Audiovisual',
+      'Analista de Marketing', 'Analista de Performance',
+      'Desarrollador Fullstack', 'Desarrollador Frontend', 'Desarrollador Backend',
+      'QA / Testing', 'DevOps / SRE', 'RRHH', 'Onboarding',
+      'Sponsor (Cliente)', 'Product Owner (Cliente)', 'Referente Técnico (Cliente)', 'Usuario Referente (Cliente)'
     ];
     await queryInterface.bulkDelete('Cargo', { nombre: nombres }, {});
   }

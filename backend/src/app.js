@@ -24,8 +24,8 @@ const ORIGINS = (process.env.WEB_ORIGIN || '')
 app.use(cors({
   origin: ORIGINS.length ? ORIGINS : true,
   credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token','X-Request-Id'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Request-Id'],
   exposedHeaders: ['X-Request-Id']
 }));
 
@@ -39,8 +39,9 @@ app.use('/uploads', express.static(uploadsDir, {
 // seguridad básica
 app.use(helmet());
 
-// body parsers
-app.use(express.json({ limit: '1mb' }));
+// body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
+app.use(express.json({ limit: '50gb' }));
+app.use(express.urlencoded({ extended: true, limit: '50gb' }));
 app.use(cookieParser());
 
 // 🔎 nuestro logger por request (correlación + tiempos + body sanitizado)

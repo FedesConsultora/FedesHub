@@ -1,0 +1,391 @@
+@use '../../../styles/variables' as v;
+
+/* Overlay + panel - basado en FederProfileDrawer */
+.adminWrap {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s ease;
+    color: v.$fh-text;
+}
+
+.adminWrap.open {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.adminWrap.closing {
+    opacity: 0;
+}
+
+.adminBackdrop {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .8));
+}
+
+.adminPanel {
+    position: relative;
+    margin-left: auto;
+    height: 100%;
+    width: min(1100px, 100%);
+    background: v.$fh-card;
+    backdrop-filter: blur(18px);
+    border-left: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: v.$shadow-soft;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: v.$radius-2xl;
+    border-bottom-left-radius: v.$radius-2xl;
+}
+
+.adminTopBar {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .brand {
+        .logo {
+            font-weight: 900;
+            font-size: 22px;
+            letter-spacing: .3px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            svg {
+                color: v.$fh-accent;
+            }
+        }
+
+        .sub {
+            color: v.$fh-muted;
+            margin-top: 2px;
+            font-size: 12px;
+        }
+    }
+
+    .close {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font-size: 22px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(255, 255, 255, .06);
+        }
+    }
+}
+
+/* Tabs */
+.adminTabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+
+    .tab {
+        padding: 12px 16px;
+        background: transparent;
+        border: none;
+        color: v.$fh-muted;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all .15s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &:hover {
+            color: v.$fh-text;
+        }
+
+        &.active {
+            color: v.$fh-accent;
+            border-bottom-color: v.$fh-accent;
+        }
+    }
+}
+
+.adminBody {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 20px;
+}
+
+/* --- Tab Content Styles --- */
+.tabContent {
+    .toolbar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .searchInput {
+            flex: 1;
+            min-width: 200px;
+            max-width: 320px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: v.$radius-md;
+            color: v.$fh-text;
+            font-size: 13px;
+
+            &::placeholder {
+                color: v.$fh-muted;
+            }
+
+            &:focus {
+                outline: none;
+                border-color: v.$fh-accent;
+                background: rgba(255, 255, 255, .06);
+            }
+        }
+
+        .btnPrimary {
+            padding: 10px 18px;
+            background: v.$fh-accent;
+            border: none;
+            border-radius: v.$radius-md;
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            &:hover {
+                background: lighten(v.$fh-accent, 5%);
+            }
+        }
+    }
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            font-size: 13px;
+        }
+
+        th {
+            color: v.$fh-muted;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: .5px;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+
+            &.ok {
+                background: rgba(34, 197, 94, .15);
+                color: #22c55e;
+            }
+
+            &.off {
+                background: rgba(239, 68, 68, .15);
+                color: #ef4444;
+            }
+
+            &.role {
+                background: rgba(99, 102, 241, .15);
+                color: #6366f1;
+                margin-right: 4px;
+            }
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+
+            button {
+                padding: 6px 12px;
+                background: rgba(255, 255, 255, .06);
+                border: 1px solid rgba(255, 255, 255, .1);
+                border-radius: v.$radius-sm;
+                color: v.$fh-text;
+                font-size: 12px;
+                cursor: pointer;
+
+                &:hover {
+                    background: rgba(255, 255, 255, .1);
+                }
+
+                &.danger {
+                    color: #ef4444;
+
+                    &:hover {
+                        background: rgba(239, 68, 68, .15);
+                    }
+                }
+            }
+        }
+    }
+
+    .empty {
+        text-align: center;
+        padding: 40px;
+        color: v.$fh-muted;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: v.$fh-muted;
+    }
+}
+
+/* --- Form Styles --- */
+.userForm {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: v.$radius-lg;
+    padding: 20px;
+    margin-bottom: 20px;
+
+    h3 {
+        margin: 0 0 16px;
+        font-size: 15px;
+        font-weight: 600;
+        color: v.$fh-text;
+    }
+
+    .formGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+    }
+
+    .formRow {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: v.$fh-muted;
+        }
+
+        input,
+        select {
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: v.$radius-md;
+            color: v.$fh-text;
+            font-size: 13px;
+
+            &:focus {
+                outline: none;
+                border-color: v.$fh-accent;
+            }
+        }
+    }
+
+    .rolesGroup {
+        margin-top: 12px;
+
+        .rolesLabel {
+            font-size: 12px;
+            font-weight: 500;
+            color: v.$fh-muted;
+            margin-bottom: 8px;
+        }
+
+        .rolesChips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            .chip {
+                padding: 8px 16px;
+                background: rgba(255, 255, 255, .04);
+                border: 1px solid rgba(255, 255, 255, .1);
+                border-radius: 20px;
+                color: v.$fh-muted;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all .15s ease;
+
+                &:hover {
+                    background: rgba(255, 255, 255, .08);
+                    color: v.$fh-text;
+                }
+
+                &.active {
+                    background: v.$fh-accent;
+                    border-color: v.$fh-accent;
+                    color: #fff;
+                }
+            }
+        }
+    }
+
+    .formActions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        justify-content: flex-end;
+
+        button {
+            padding: 10px 20px;
+            border-radius: v.$radius-md;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+
+            &.cancel {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, .15);
+                color: v.$fh-text;
+
+                &:hover {
+                    background: rgba(255, 255, 255, .05);
+                }
+            }
+
+            &.submit {
+                background: v.$fh-accent;
+                border: none;
+                color: #fff;
+
+                &:hover {
+                    background: lighten(v.$fh-accent, 5%);
+                }
+            }
+        }
+    }
+}

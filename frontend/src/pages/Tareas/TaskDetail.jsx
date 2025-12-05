@@ -7,7 +7,6 @@ import TaskStatusCard from '../../components/tasks/TaskStatusCard'
 import AssignedPeople from '../../components/tasks/AssignedPeople'
 import LabelChip from '../../components/common/LabelChip'
 import TaskComments from '../../components/tasks/comments'
-import TaskAttachments from '../../components/tasks/TaskAttachments.jsx'
 import TaskChecklist from '../../components/tasks/TaskChecklist.jsx'
 import RichTextEditor from '../../components/common/RichTextEditor.jsx'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
@@ -15,14 +14,15 @@ import SubtasksPanel from '../../components/tasks/SubtasksPanel.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
-import { MdKeyboardArrowDown } from 'react-icons/md'
+import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
 import { FaRegSave, FaStar } from "react-icons/fa";
-import { MdAddComment } from "react-icons/md";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
+import ContentGallery from '../../components/tasks/ContentGallery.jsx'
+import ImageFullscreen from '../../components/common/ImageFullscreen.jsx'
 import './task-detail.scss'
 
 /* === helpers normalization === */
@@ -47,30 +47,33 @@ const fromInputDate = (val) => {
   return dt.toISOString()
 }
 
-// Helper para convertir URLs de Google Drive a formato de imagen directa
-const getDirectImageUrl = (url) => {
-  if (!url) return null;
-
-  // Si es una URL local (empieza con /uploads), devolverla tal cual
-  if (url.startsWith('/uploads') || url.startsWith('http://localhost') || url.startsWith('http://127.0.0.1')) {
-    console.log('🔍 Local URL detected:', url);
-    return url;
+// Helper para obtener URL del archivo (usa proxy si es Drive)
+const getFileUrl = (file) => {
+  if (!file) return null
+  // Si tiene drive_file_id, usar el proxy
+  if (file.drive_file_id) {
+    return `/api/tareas/drive/image/${file.drive_file_id}`
   }
-
-  // Si es una URL de Google Drive en formato /view
-  if (url.includes('drive.google.com/file/d/')) {
-    const match = url.match(/\/file\/d\/([^\/]+)/);
+  // Si tiene drive_url, intentar extraer fileId
+  if (file.drive_url && file.drive_url.includes('drive.google.com')) {
+    const match = file.drive_url.match(/\/file\/d\/([^\/]+)/)
     if (match && match[1]) {
-      const fileId = match[1];
-      // Formato para mostrar imagen directamente
-      const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-      console.log('🔍 Converting URL:', url, '→', directUrl);
-      return directUrl;
+      return `/api/tareas/drive/image/${match[1]}`
     }
   }
+  // Fallback a url o drive_url
+  return file.url || file.drive_url || null
+}
 
-  // Si ya es una URL directa o de otro tipo, devolverla tal cual
-  return url;
+// Límite de tamaño de archivo (50GB - se suben a Google Drive)
+const MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024
+
+// Formatear tamaño de archivo
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
 export default function TaskDetail({ taskId, onUpdated, onClose }) {
@@ -108,41 +111,9 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
 
   const [isOver, setIsOver] = useState(false)
-  const [mainImage, setMainImage] = useState(null);
-
-  // Cuando se agregan nuevas imágenes, si no hay mainImage, toma la primera
-
-
-  const onDrop = async (e) => {
-    e.preventDefault()
-    setIsOver(false)
-    const files = e.dataTransfer?.files
-    if (files?.length) {
-      try {
-        await upload(Array.from(files))
-        console.log('Archivos subidos desde la segunda dropzone')
-      } catch (err) {
-        console.error('Error al subir archivos', err)
-      }
-    }
-  }
-
-  const onDragOver = (e) => {
-    e.preventDefault()
-    setIsOver(true)
-  }
-
-  const onDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false)
-  }
-
-  useEffect(() => {
-    const embeddedImages = adjuntos.filter(a => a.es_embebido);
-    if (!mainImage && embeddedImages.length > 0) {
-      setMainImage(embeddedImages[0]);
-    }
-  }, [adjuntos, mainImage]);
-  console.log('----------------------------------------->', isResponsible)
+  const [rawUploading, setRawUploading] = useState(false)
+  const [rawFullscreen, setRawFullscreen] = useState(null) // { url, name, isVideo }
+  const [rawUploadError, setRawUploadError] = useState(null)
 
   const handlePeopleChange = async ({ responsables, colaboradores }) => {
     if (!task) return;
@@ -669,96 +640,189 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               />
             )}
           </div>
-          <TaskAttachments
-            taskId={Number(id)}
-            onAfterChange={async () => {
-              try {
-                setTask(await tareasApi.get(id))
-                setHistoryRefresh(prev => prev + 1)
-              } catch { }
-            }}
-          />
+
+          {/* Contenido Crudo - Material en bruto */}
+          <div className={`content-section raw-content ${rawUploading ? 'uploading' : ''}`}>
+            <div className="section-header">
+              <h3>Contenido Crudo</h3>
+              <span className="hint">Material en bruto para editar</span>
+            </div>
+
+            {/* Error message */}
+            {rawUploadError && (
+              <div className="upload-error">
+                <span>{rawUploadError}</span>
+                <button onClick={() => setRawUploadError(null)}>✕</button>
+              </div>
+            )}
+
+            {/* Loading overlay */}
+            {rawUploading && (
+              <div className="upload-overlay">
+                <div className="spinner"></div>
+                <p>Subiendo archivo...</p>
+                <p className="hint">Los videos pueden tardar varios minutos</p>
+              </div>
+            )}
+
+            <div
+              className={`raw-dropzone ${isOver ? 'is-over' : ''}`}
+              onDrop={async (e) => {
+                e.preventDefault();
+                setIsOver(false);
+                setRawUploadError(null);
+                if (rawUploading) return;
+
+                const filesArray = Array.from(e.dataTransfer?.files || []);
+                if (!filesArray.length) return;
+
+                // Validate file sizes
+                const tooBig = filesArray.filter(f => f.size > MAX_FILE_SIZE);
+                if (tooBig.length > 0) {
+                  setRawUploadError(`Archivos muy grandes (máx ${formatFileSize(MAX_FILE_SIZE)}): ${tooBig.map(f => f.name).join(', ')}`);
+                  return;
+                }
+
+                setRawUploading(true);
+                try {
+                  await upload(filesArray, false);
+                } catch (err) {
+                  setRawUploadError(err.message || 'Error al subir archivo');
+                } finally {
+                  setRawUploading(false);
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!rawUploading) setIsOver(true);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false);
+              }}
+            >
+              <input
+                type="file"
+                id="raw-content-input"
+                multiple
+                style={{ display: 'none' }}
+                disabled={rawUploading}
+                onChange={async (e) => {
+                  setRawUploadError(null);
+                  const filesArray = Array.from(e.target.files || []);
+                  if (!filesArray.length) return;
+
+                  // Validate file sizes
+                  const tooBig = filesArray.filter(f => f.size > MAX_FILE_SIZE);
+                  if (tooBig.length > 0) {
+                    setRawUploadError(`Archivos muy grandes (máx ${formatFileSize(MAX_FILE_SIZE)}): ${tooBig.map(f => f.name).join(', ')}`);
+                    e.target.value = '';
+                    return;
+                  }
+
+                  setRawUploading(true);
+                  try {
+                    await upload(filesArray, false);
+                  } catch (err) {
+                    setRawUploadError(err.message || 'Error al subir archivo');
+                  } finally {
+                    setRawUploading(false);
+                  }
+                  e.target.value = '';
+                }}
+              />
+              <p>Arrastra archivos o <label htmlFor="raw-content-input" className="file-select">selecciona</label></p>
+            </div>
+
+            {/* Lista de archivos crudos */}
+            {adjuntos.filter(a => !a.es_embebido).length > 0 && (
+              <div className="raw-files-list">
+                {adjuntos.filter(a => !a.es_embebido).map(file => {
+                  const isVideoFile = file.mime?.startsWith('video/') ||
+                    file.nombre?.toLowerCase().match(/\.(mp4|webm|mov|avi)$/);
+                  return (
+                    <div key={file.id} className="raw-file-item">
+                      <span className="file-name">{file.nombre || 'Archivo'}</span>
+                      <div className="file-actions">
+                        <button
+                          className="view-btn"
+                          onClick={() => setRawFullscreen({
+                            url: getFileUrl(file),
+                            name: file.nombre || 'Archivo',
+                            isVideo: !!isVideoFile
+                          })}
+                        >
+                          Ver
+                        </button>
+                        <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Fullscreen modal for raw content */}
+          {rawFullscreen && (
+            <ImageFullscreen
+              src={rawFullscreen.url}
+              alt={rawFullscreen.name}
+              isVideo={rawFullscreen.isVideo}
+              onClose={() => setRawFullscreen(null)}
+            />
+          )}
 
           <TaskHistory taskId={Number(id)} key={historyRefresh} />
 
 
         </div>
 
-        {/* RIGHT */}
-        <div className="right" style={{ alignItems: 'center', position: 'relative' }}>
-          <div className={`dropzone ${isOver ? 'is-over' : ''}`}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-          >
-            {console.log('🔍 mainImage state:', mainImage)}
-            {mainImage ? (
-              <img
-                src={getDirectImageUrl(mainImage.url)}
-
-                className="main-image"
-                style={{ border: '2px solid yellow', display: 'block' }}
-                onError={(e) => {
-                  console.error('❌ Error loading main image:', mainImage.url);
-                  console.error('❌ Converted URL:', getDirectImageUrl(mainImage.url));
-                  e.target.style.border = '3px solid red';
-                }}
-                onLoad={(e) => {
-                  console.log('✅ Main image loaded successfully');
-                  e.target.style.border = '2px solid green';
-                }}
-              />
-            ) : (
-              <p className='dropzone-text'>Arrastra tus archivos aquí</p>
-            )}
-
-            <div className="dropzone-desc">
-              <p>Contenido Listo</p>
-            </div>
-
-            <div className="previews-container">
-              {adjuntos.filter(a => a.es_embebido).length > 1 && (
-                <div className="thumbnails-slider">
-                  {adjuntos.filter(a => a.es_embebido).map((file) => (
-                    <div
-                      key={file.id}
-                      className={`thumbnail-item ${mainImage?.id === file.id ? "selected" : ""
-                        }`}
-                      onClick={() => setMainImage(file)}
-                    >
-                      <img src={getDirectImageUrl(file.url)} />
-                      <button className="remove-btn" onClick={(e) => {
-                        e.stopPropagation();
-                        remove(file.id);
-                      }}>
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* RIGHT - Contenido Listo */}
+        <div className="right" style={{ position: 'relative' }}>
+          {/* Action buttons - always visible */}
+          <div className="gallery-actions">
             <MdAddComment
-              size={30}
-              className="commentsToggleBtn"
-              onClick={() => setShowCommentsPopup(v => !v)} />
-
-
+              size={26}
+              className={`action-icon ${showCommentsPopup ? 'active' : ''}`}
+              onClick={() => setShowCommentsPopup(v => !v)}
+              title="Comentarios"
+            />
           </div>
-          {/* === Panel de comentarios === */}
+
+          <ContentGallery
+            images={adjuntos.filter(a => a.es_embebido)}
+            onUpload={async (files) => {
+              try {
+                await upload(files, true); // es_embebido = true
+              } catch (err) {
+                console.error('Error uploading:', err);
+              }
+            }}
+            onRemove={async (imageId) => {
+              try {
+                await remove(imageId);
+              } catch (err) {
+                console.error('Error removing:', err);
+              }
+            }}
+            title="Contenido Listo"
+            showAddButton={true}
+          />
+
+          {/* Comments panel */}
           {showCommentsPopup && (
             <div className="comments"
               style={{
                 position: 'absolute',
                 top: 42,
                 right: 0,
-                height: 'calc(100% - 48px)'
+                height: 'calc(100% - 48px)',
+                zIndex: 50
               }}
             >
               <TaskComments taskId={Number(taskId)} catalog={catalog} />
             </div>
           )}
-
         </div>
 
         {/* <TaskChecklist
