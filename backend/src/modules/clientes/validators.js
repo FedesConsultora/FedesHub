@@ -4,8 +4,27 @@
 import { z } from 'zod';
 
 const id = z.coerce.number().int().positive();
-const email = z.string().email().max(255).optional().or(z.literal('').transform(() => undefined));
-const url = z.string().url().max(255).optional().or(z.literal('').transform(() => undefined));
+
+// Email: acepta vacío o email válido
+const email = z.string().max(255).optional()
+  .transform(v => (!v || v.trim() === '') ? undefined : v.trim())
+  .refine(v => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), { message: 'Email inválido' });
+
+// URL: acepta vacío, URL completa o sin protocolo (se agrega https://)
+const urlFlexible = z.string().max(255).optional()
+  .transform(v => {
+    if (!v || v.trim() === '') return undefined;
+    const trimmed = v.trim();
+    // Si no tiene protocolo, agregar https://
+    if (trimmed && !trimmed.match(/^https?:\/\//i)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  });
+
+// Teléfono: mínimo 2 caracteres (más flexible)
+const telefono = z.string().max(40).optional()
+  .transform(v => (!v || v.trim() === '') ? undefined : v.trim());
 
 export const listQuerySchema = z.object({
   q: z.string().min(1).max(200).optional(),
@@ -32,11 +51,11 @@ export const clienteCreateSchema = z.object({
   estado_id: id.optional(),
   estado_codigo: z.string().min(1).max(50).optional(),
   nombre: z.string().min(2).max(160),
-  alias: z.string().min(1).max(120).optional(),
+  alias: z.string().max(120).optional().transform(v => (!v || v.trim() === '') ? undefined : v.trim()),
   email,
-  telefono: z.string().min(4).max(40).optional(),
-  sitio_web: url,
-  descripcion: z.string().max(10000).optional(),
+  telefono,
+  sitio_web: urlFlexible,
+  descripcion: z.string().max(10000).optional().transform(v => (!v || v.trim() === '') ? undefined : v.trim()),
   ponderacion: z.coerce.number().int().min(1).max(5).optional().default(3),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color debe ser formato hex #RRGGBB').optional()
 });
@@ -58,7 +77,7 @@ export const contactoCreateSchema = z.object({
   nombre: z.string().min(2).max(160),
   cargo: z.string().max(120).optional(),
   email,
-  telefono: z.string().min(4).max(40).optional(),
+  telefono,  // usa el validador flexible definido arriba
   es_principal: z.boolean().optional().default(false)
 });
 
