@@ -16,6 +16,7 @@ const escapeHtml = (s='') => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 const linkify = (html='') => html.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
 
 export default function Timeline({ rows = [], loading = false, canal_id = null, my_user_id = null, members = [] }) {
+
   const ordered = useMemo(() => {
     return [...rows].sort((a, b) => new Date(a.created_at || a.updated_at) - new Date(b.created_at || b.updated_at))
   }, [rows])
@@ -40,6 +41,15 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   const setRead = useSetRead()
   const lastSentRef = useRef({ canal_id: null, id: 0 })
   const timerRef = useRef(null)
+
+  useEffect(() => {
+  if (!rows?.length) return
+  const root = rootRef.current
+  if (!root) return
+
+  // Scroll inmediato al fondo al entrar al chat
+  root.scrollTop = root.scrollHeight
+}, [rows])
 
   useEffect(() => {
     const el = sentinelRef.current
