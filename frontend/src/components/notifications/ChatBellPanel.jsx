@@ -79,7 +79,7 @@ export default function ChatBellPanel({ closeAll }) {
           Canales {canalList.some(c => unreadLookup[c.id]) && <i className="dot"/>}
         </button>
         <button className={`tab ${tab==='dms'?'active':''}`} onClick={()=> setTab('dms')}>
-          DMs {dmList.some(u => !!(u.dm_canal_id && unreadLookup[u.dm_canal_id])) && <i className="dot"/>}
+          Chat {dmList.some(u => !!(u.dm_canal_id && unreadLookup[u.dm_canal_id])) && <i className="dot"/>}
         </button>
         <button className="seeAll" onClick={()=> { closeAll?.(); nav('/chat') }}>Ver chat</button>
       </div>

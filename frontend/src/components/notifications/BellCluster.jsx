@@ -159,6 +159,7 @@ function BellButton({ buzon, label, count, dot=false, active, onToggle, closeAll
 function NotifItem({ row }) {
   const qc = useQueryClient()
   const n = row.notificacion || {}
+  console.log('-------------------->', n)
   const title =
     n.titulo || n?.tarea?.titulo || n?.evento?.titulo ||
     (n?.chatCanal ? `Mención en ${n.chatCanal.nombre}` : n?.tipo?.nombre || 'Notificación')
@@ -169,6 +170,8 @@ function NotifItem({ row }) {
     qc.invalidateQueries({ queryKey: ['notif','inbox'] })
     window.dispatchEvent(new Event('fh:notif:changed'))
   }
+
+  
 
   return (
     <div className={`item ${row.read_at?'read':''}`}>
