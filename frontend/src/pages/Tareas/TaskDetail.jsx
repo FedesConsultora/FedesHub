@@ -652,7 +652,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 onBlur={flushDescriptionOnBlur}
                 taskId={Number(id)}
                 placeholder="Escribí la descripción…"
-                maxLength={600}
+                maxLength={2000}
                 minHeight="190px"
               />
             ) : (
