@@ -11,9 +11,8 @@ import './ClientesListPage.scss'
 
 export default function ClientesListPage() {
   const { catalog, rows, total, loading, error, filters, setFilter, setPage, refetch } = useClientesList()
-  const [view, setView] = useViewPref('clientes.view', 'cards') // 'cards' | 'list'
+  const [view, setView] = useViewPref('clientes.view', 'cards') 
   const [showCreate, setShowCreate] = useState(false)
- console.log('---------------------------------->',rows)
 
   const extractNumero = (nombre = '') => {
   const match = nombre.match(/^(\d+)/)
