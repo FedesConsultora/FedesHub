@@ -66,13 +66,40 @@ function InitialValuePlugin({ initialValue }) {
         if (!initialValue) return;
 
         editor.update(() => {
-            const root = $getRoot();
-            const parser = new DOMParser();
-            const dom = parser.parseFromString(initialValue, 'text/html');
-            const nodes = $generateNodesFromDOM(editor, dom);
-            root.clear();
-            if (nodes.length > 0) {
-                $insertNodes(nodes);
+            try {
+                const root = $getRoot();
+                const parser = new DOMParser();
+                const dom = parser.parseFromString(initialValue, 'text/html');
+                const nodes = $generateNodesFromDOM(editor, dom);
+
+                // Filtrar nodos válidos - solo ElementNode y DecoratorNode pueden ir en root
+                // TextNodes y otros deben estar envueltos en un párrafo
+                const validNodes = nodes.filter(node => {
+                    // Check if it's an element node (paragraph, list, heading, etc.) or decorator
+                    const nodeType = node.getType?.() || '';
+                    // These are element nodes that can be inserted to root
+                    const validRootNodes = ['paragraph', 'heading', 'list', 'quote', 'root', 'code'];
+                    return validRootNodes.includes(nodeType) ||
+                        node.isInline?.() === false ||
+                        node.constructor?.name?.includes('Element') ||
+                        node.constructor?.name?.includes('Decorator');
+                });
+
+                root.clear();
+
+                if (validNodes.length > 0) {
+                    // Use root.append instead of $insertNodes for safer insertion
+                    validNodes.forEach(node => {
+                        try {
+                            root.append(node);
+                        } catch (appendError) {
+                            console.warn('InitialValuePlugin: Could not append node', node.getType?.(), appendError);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('InitialValuePlugin: Error initializing content', error);
+                // Don't crash - just leave editor empty
             }
         });
     }, [editor, initialValue]);

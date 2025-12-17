@@ -1,8 +1,12 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useState } from 'react';
-import { $getRoot, $getSelection, $isRangeSelection, RootNode } from 'lexical';
-import { $isTextNode } from 'lexical';
+import { $getRoot } from 'lexical';
 
+/**
+ * Plugin para mostrar el conteo de caracteres.
+ * NO trunca el contenido para evitar errores con nodos inválidos.
+ * Solo muestra advertencias visuales cuando se acerca o supera el límite.
+ */
 export default function CharacterLimitPlugin({ maxLength }) {
     const [editor] = useLexicalComposerContext();
     const [charCount, setCharCount] = useState(0);
@@ -10,26 +14,13 @@ export default function CharacterLimitPlugin({ maxLength }) {
     useEffect(() => {
         return editor.registerUpdateListener(({ editorState }) => {
             editorState.read(() => {
-                const root = $getRoot();
-                const text = root.getTextContent();
-                const length = text.trim().length;
-                setCharCount(length);
-
-                // Prevenir más caracteres si se alcanza el límite
-                if (length > maxLength) {
-                    editor.update(() => {
-                        const selection = $getSelection();
-                        if ($isRangeSelection(selection)) {
-                            const root = $getRoot();
-                            const text = root.getTextContent();
-                            if (text.trim().length > maxLength) {
-                                // Truncar al límite
-                                const truncated = text.substring(0, maxLength);
-                                root.clear();
-                                root.append($getRoot().getFirstChild());
-                            }
-                        }
-                    });
+                try {
+                    const root = $getRoot();
+                    const text = root.getTextContent();
+                    const length = text.trim().length;
+                    setCharCount(length);
+                } catch (error) {
+                    console.warn('CharacterLimitPlugin: Error reading content', error);
                 }
             });
         });

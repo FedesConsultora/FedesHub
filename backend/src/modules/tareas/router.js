@@ -6,7 +6,7 @@ import { uploadFiles, multerErrorHandler } from '../../infra/uploads/multer.js';
 
 import {
   health, listCatalogos,
-  listTareas, getTarea, postTarea, patchTarea, archiveTarea,
+  listTareas, getTarea, postTarea, patchTarea, archiveTarea, deleteTarea,
   patchEstado, patchAprobacion, patchKanban,
   postResponsable, deleteResponsable, postColaborador, deleteColaborador,
   postEtiqueta, deleteEtiqueta,
@@ -35,6 +35,7 @@ router.get('/:id', requireAuth, requirePermission('tareas', 'read'), getTarea);
 router.post('/', requireAuth, requirePermission('tareas', 'create'), postTarea);
 router.patch('/:id', requireAuth, requirePermission('tareas', 'update'), patchTarea);
 router.patch('/:id/archive', requireAuth, requirePermission('tareas', 'delete'), archiveTarea);
+router.delete('/:id', requireAuth, requirePermission('tareas', 'delete'), deleteTarea);
 
 // Estado / aprobación / kanban
 router.patch('/:id/estado', requireAuth, requirePermission('tareas', 'update'), patchEstado);

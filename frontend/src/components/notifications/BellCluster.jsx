@@ -15,7 +15,7 @@ const ICONS = {
 
 function useCounts() {
   return useQuery({
-    queryKey: ['notif','counts'],
+    queryKey: ['notif', 'counts'],
     queryFn: notifApi.counts,
     refetchInterval: 30000
   })
@@ -25,13 +25,13 @@ function useInbox(buzon, params) {
   const p = { ...params }
   if (buzon) p.buzon = buzon
   return useQuery({
-    queryKey: ['notif','inbox', buzon || 'todo', p],
+    queryKey: ['notif', 'inbox', buzon || 'todo', p],
     queryFn: () => notifApi.inbox(p),
     enabled: !!buzon || buzon === undefined
   })
 }
 
-export default function BellCluster({ onAnyOpen }){
+export default function BellCluster({ onAnyOpen }) {
   const [openKey, setOpenKey] = useState(null)
   const { data: counts } = useCounts()
   const qc = useQueryClient()
@@ -40,11 +40,11 @@ export default function BellCluster({ onAnyOpen }){
   // estado LOCAL de chat (para alinear icono aunque el contador del backend esté desfasado)
   const { unreadByCanal, mentionByCanal } = useRealtime()
   const localChatUnreadCount = useMemo(() =>
-    Object.values(unreadByCanal || {}).reduce((a,b)=>a+(b||0),0)
-  , [unreadByCanal])
+    Object.values(unreadByCanal || {}).reduce((a, b) => a + (b || 0), 0)
+    , [unreadByCanal])
   const localChatHasMention = useMemo(() =>
-    Object.values(mentionByCanal || {}).some(v => (v|0) > 0)
-  , [mentionByCanal])
+    Object.values(mentionByCanal || {}).some(v => (v | 0) > 0)
+    , [mentionByCanal])
 
   useEffect(() => { if (openKey) onAnyOpen?.(openKey) }, [openKey, onAnyOpen])
 
@@ -56,8 +56,8 @@ export default function BellCluster({ onAnyOpen }){
 
   useEffect(() => {
     const onInvalidate = () => {
-      qc.invalidateQueries({ queryKey: ['notif','counts'] })
-      qc.invalidateQueries({ queryKey: ['notif','inbox'] })
+      qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+      qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     }
     window.addEventListener('fh:push', onInvalidate)
     window.addEventListener('fh:notif:changed', onInvalidate)
@@ -69,14 +69,14 @@ export default function BellCluster({ onAnyOpen }){
 
   const items = useMemo(() => ([
     {
-      key:'chat',
-      label:'Chat',
+      key: 'chat',
+      label: 'Chat',
       count: counts?.chat ?? 0,
       dot: (counts?.chat ?? 0) === 0 && localChatUnreadCount > 0,    // 👈 si el backend dice 0 pero local hay unread, mostramos dot
       mention: localChatHasMention
     },
-    { key:'tareas',     label:'Tareas',     count: counts?.tareas ?? 0 },
-    { key:'calendario', label:'Calendario', count: counts?.calendario ?? 0 },
+    { key: 'tareas', label: 'Tareas', count: counts?.tareas ?? 0 },
+    { key: 'calendario', label: 'Calendario', count: counts?.calendario ?? 0 },
   ]), [counts, localChatUnreadCount, localChatHasMention])
 
   return (
@@ -88,8 +88,8 @@ export default function BellCluster({ onAnyOpen }){
           label={it.label}
           count={it.count}
           dot={it.dot}
-          active={openKey===it.key}
-          onToggle={() => setOpenKey(k => k===it.key ? null : it.key)}
+          active={openKey === it.key}
+          onToggle={() => setOpenKey(k => k === it.key ? null : it.key)}
           closeAll={() => setOpenKey(null)}
         />
       ))}
@@ -97,11 +97,11 @@ export default function BellCluster({ onAnyOpen }){
   )
 }
 
-function BellButton({ buzon, label, count, dot=false, active, onToggle, closeAll }) {
+function BellButton({ buzon, label, count, dot = false, active, onToggle, closeAll }) {
   const useGenericInbox = buzon !== 'chat'
   const { data, isLoading, isError } = useGenericInbox
-    ? useInbox(buzon, { limit: 15, only_unread:true, sort:'newest' })
-    : { data:null, isLoading:false, isError:false }
+    ? useInbox(buzon, { limit: 15, only_unread: true, sort: 'newest' })
+    : { data: null, isLoading: false, isError: false }
 
   const list = data?.rows || []
   const navigate = useNavigate()
@@ -113,12 +113,12 @@ function BellButton({ buzon, label, count, dot=false, active, onToggle, closeAll
     seenOnce.current = true
     list.slice(0, 10).forEach(r => {
       const id = r?.notificacion?.id
-      if (id) notifApi.seen(id).catch(()=>{})
+      if (id) notifApi.seen(id).catch(() => { })
     })
   }, [active, list])
 
   return (
-    <div className={`bell ${active?'open':''}`}>
+    <div className={`bell ${active ? 'open' : ''}`}>
       <button className="iconBtn" onClick={onToggle} aria-label={label} title={label}>
         {ICONS[buzon]}
         {!!count && <span className="badge">{count}</span>}
@@ -129,18 +129,18 @@ function BellButton({ buzon, label, count, dot=false, active, onToggle, closeAll
         <div className="panel">
           <header className="panelHead">
             <span className="lbl">{ICONS[buzon]} {label}</span>
-            {buzon!=='chat' && (
+            {buzon !== 'chat' && (
               <button
                 className="seeAll"
                 onClick={() => { closeAll(); navigate(`/notificaciones/${buzon}`) }}
                 title="Ver todas"
               >
-                <FiExternalLink/> Ver todas
+                <FiExternalLink /> Ver todas
               </button>
             )}
           </header>
 
-          {buzon==='chat' ? (
+          {buzon === 'chat' ? (
             <ChatBellPanel closeAll={closeAll} />
           ) : (
             <div className="list">
@@ -158,6 +158,7 @@ function BellButton({ buzon, label, count, dot=false, active, onToggle, closeAll
 
 function NotifItem({ row }) {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const n = row.notificacion || {}
   const title =
     n.titulo || n?.tarea?.titulo || n?.evento?.titulo ||
@@ -165,21 +166,66 @@ function NotifItem({ row }) {
 
   const toggleRead = async () => {
     await notifApi.read(n.id, !row.read_at)
-    qc.invalidateQueries({ queryKey: ['notif','counts'] })
-    qc.invalidateQueries({ queryKey: ['notif','inbox'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     window.dispatchEvent(new Event('fh:notif:changed'))
   }
 
+  // Parsear el link_url para detectar si es una tarea
+  const handleOpenLink = async (e) => {
+    e.preventDefault()
+    const url = n.link_url || ''
+
+    // Marcar como leída la notificación
+    if (!row.read_at && n.id) {
+      try {
+        await notifApi.read(n.id, true)
+        qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+        qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
+        window.dispatchEvent(new Event('fh:notif:changed'))
+      } catch (err) {
+        console.warn('Error marcando notificación como leída:', err)
+      }
+    }
+
+    // Detectar link de tarea: /tareas/123 o similar
+    const tareaMatch = url.match(/\/tareas\/(\d+)/)
+    if (tareaMatch) {
+      const tareaId = tareaMatch[1]
+      // Navegar a /tareas con query param para abrir el modal
+      navigate(`/tareas?open=${tareaId}`)
+      return
+    }
+
+    // Detectar link de chat: /chat/c/123
+    const chatMatch = url.match(/\/chat\/c\/(\d+)/)
+    if (chatMatch) {
+      navigate(url)
+      return
+    }
+
+    // Para otros links, usar navegación normal o abrir en nueva pestaña si es externo
+    if (url.startsWith('http')) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else if (url.startsWith('/')) {
+      navigate(url)
+    }
+  }
+
   return (
-    <div className={`item ${row.read_at?'read':''}`}>
+    <div className={`item ${row.read_at ? 'read' : ''}`}>
       <div className="main">
         <div className="ttl">{title}</div>
         {n.mensaje && <div className="msg">{n.mensaje}</div>}
       </div>
       <div className="act">
-        {n.link_url && <a href={n.link_url} className="lnk" title="Abrir">Abrir</a>}
-        <button className="muted eyeNotif" onClick={toggleRead} title={row.read_at?'Marcar no leído':'Marcar leído'}>
-          {row.read_at ? <FiEyeOff/> : <FiEye/>}
+        {n.link_url && (
+          <button className="lnk" onClick={handleOpenLink} title="Abrir">
+            Abrir
+          </button>
+        )}
+        <button className="muted eyeNotif" onClick={toggleRead} title={row.read_at ? 'Marcar no leído' : 'Marcar leído'}>
+          {row.read_at ? <FiEyeOff /> : <FiEye />}
         </button>
       </div>
     </div>

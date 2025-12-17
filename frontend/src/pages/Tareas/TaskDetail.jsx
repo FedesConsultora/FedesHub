@@ -15,7 +15,7 @@ import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
-import { FaRegSave, FaStar } from "react-icons/fa";
+import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -107,9 +107,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const { user, roles } = useAuthCtx() || {}
 
-  // Verificar si es NivelB (puede aprobar y cancelar)
+  // Verificar si es NivelB o NivelA (directivos)
   // roles es un array de strings: ['NivelB', 'OtroRol']
   const isNivelB = roles?.includes('NivelB') || false
+  const isNivelA = roles?.includes('NivelA') || false
+  const isDirectivo = isNivelA || isNivelB
 
   const { adjuntos, loading, add, remove, upload } = useTaskAttachments(id)
   const uploadContext = useUploadContext()
@@ -440,6 +442,30 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     setHistoryRefresh(prev => prev + 1) // Trigger history refresh
   }
 
+  // Eliminar tarea (solo directivos)
+  const handleDelete = async () => {
+    const ok = await modal.confirm({
+      title: 'Eliminar tarea',
+      message: `¿Estás seguro de que querés eliminar "${task?.titulo}"? Esta acción no se puede deshacer.`,
+      okText: 'Eliminar',
+      cancelText: 'Cancelar'
+    })
+    if (!ok) return
+
+    try {
+      await tareasApi.delete(taskId)
+      toast?.success('Tarea eliminada')
+      onUpdated?.()
+      if (onClose) {
+        onClose()
+      } else {
+        navigate('/tareas')
+      }
+    } catch (err) {
+      toast?.error(err?.fh?.message || 'No se pudo eliminar la tarea')
+    }
+  }
+
   if (!task) return <div className="taskDetail"><div className="card">Cargando…</div></div>
 
   // normalización
@@ -585,7 +611,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               <InlineDue
                 value={toInputDate(vencimientoISO)}
                 onChange={handleDueChange}
-                disabled={!isResponsible && !isNivelB}
+                disabled={!isResponsible}
               />
             </span>
             <TaskStatusCard
@@ -625,6 +651,17 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             >
               <FaStar />
             </button>
+
+            {/* Botón eliminar - solo para directivos */}
+            {isDirectivo && (
+              <button
+                className="deleteBtn"
+                onClick={handleDelete}
+                title="Eliminar tarea"
+              >
+                <FaTrash />
+              </button>
+            )}
 
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
@@ -944,10 +981,43 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 }
 
 /* === componente inline para fecha === */
-function InlineDue({ value, onChange }) {
+function InlineDue({ value, onChange, disabled = false }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(value || '')
+  const modal = useModal()
+
   useEffect(() => { setLocal(value || '') }, [value])
+
+  const handleSave = async () => {
+    setEditing(false)
+
+    // Si no cambió, no hacer nada
+    if (local === value) return
+
+    // Si intenta borrar la fecha, pedir confirmación
+    if (!local && value) {
+      const ok = await modal.confirm({
+        title: 'Quitar fecha de vencimiento',
+        message: '¿Estás seguro de que querés quitar la fecha de vencimiento? La tarea quedará sin deadline.',
+        okText: 'Quitar fecha',
+        cancelText: 'Cancelar'
+      })
+      if (!ok) {
+        setLocal(value) // restaurar
+        return
+      }
+    }
+
+    onChange?.(local)
+  }
+
+  if (disabled) {
+    return (
+      <span className="dueChip disabled" title="Solo los responsables pueden cambiar la fecha">
+        {value ? new Date(value).toLocaleDateString() : 'Sin fecha'}
+      </span>
+    )
+  }
 
   if (!editing) {
     return (
@@ -956,16 +1026,22 @@ function InlineDue({ value, onChange }) {
       </button>
     )
   }
+
   return (
-    <input
-      className="dueInput"
-      type="date"
-      value={local}
-      onChange={e => setLocal(e.target.value)}
-      onBlur={() => { setEditing(false); onChange?.(local) }}
-      onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-      autoFocus
-    />
+    <div className="dueInputWrap">
+      <input
+        className="dueInput"
+        type="date"
+        value={local}
+        onChange={e => setLocal(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+          if (e.key === 'Escape') { setLocal(value || ''); setEditing(false) }
+        }}
+        autoFocus
+      />
+    </div>
   )
 }
 

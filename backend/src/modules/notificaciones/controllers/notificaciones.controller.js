@@ -8,7 +8,8 @@ import {
 import {
   svcCatalogos, svcVentanasCount, svcInbox, svcChatCanales,
   svcPreferences, svcSetPreferences, svcCreate,
-  svcMarkSeen, svcMarkRead, svcDismiss, svcArchive, svcPin
+  svcMarkSeen, svcMarkRead, svcDismiss, svcArchive, svcPin,
+  svcCleanupOrphans, svcMarkAllRead
 } from '../services/notificaciones.service.js';
 import { markEnvioOpenedByToken } from '../repositories/notificaciones.repo.js';
 
@@ -119,4 +120,35 @@ export const getTrackOpen = async (req, res, _next) => {
     // No exponemos si el token existe o no
     res.status(200).end();
   }
+};
+
+// ========== Admin: Limpieza ==========
+
+/**
+ * POST /admin/cleanup-orphans
+ * Body: { user_id?: number } - si no se pasa, limpia para todos
+ * Limpia notificaciones huérfanas (tareas/canales/eventos eliminados)
+ */
+export const postCleanupOrphans = async (req, res, next) => {
+  try {
+    const userId = req.body?.user_id || null;
+    const result = await svcCleanupOrphans(userId);
+    res.json({ ok: true, ...result });
+  } catch (e) { next(e); }
+};
+
+/**
+ * POST /admin/mark-all-read
+ * Body: { user_id: number, buzon?: 'chat'|'tareas'|'calendario' }
+ * Marca todas las notificaciones de un usuario como leídas
+ */
+export const postMarkAllRead = async (req, res, next) => {
+  try {
+    const { user_id, buzon } = req.body;
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id es requerido' });
+    }
+    const result = await svcMarkAllRead(user_id, buzon || null);
+    res.json({ ok: true, ...result });
+  } catch (e) { next(e); }
 };

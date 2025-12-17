@@ -1,21 +1,33 @@
 // /frontend/src/components/tasks/KanbanColumn.jsx
 import TaskCard from './TaskCard'
 
-export default function KanbanColumn({ code, title, items, indices, bodyRef, onStartDrag, onOpenTask }) {
+export default function KanbanColumn({
+  code,
+  title,
+  items,
+  indices,
+  bodyRef,
+  onStartDrag,
+  onOpenTask,
+  onDelete,
+  canDelete = false
+}) {
   return (
     <section className="fh-k-col" role="region" aria-label={title}>
       <header className="fh-k-head">
         <h4 className="fh-k-titleCol">{title}</h4>
-        
+
         <span className="fh-k-count">{items.length}</span>
       </header>
       <div className="fh-k-body" ref={bodyRef}>
         {items.map((t, iVis) => (
           <TaskCard
-            onOpenTask={onOpenTask}   
+            onOpenTask={onOpenTask}
             key={t.id}
             t={t}
-            onPointerDown={(e)=>onStartDrag(e, code, iVis, indices[iVis], t.id)}
+            onPointerDown={(e) => onStartDrag(e, code, iVis, indices[iVis], t.id)}
+            onDelete={onDelete}
+            canDelete={canDelete}
           />
         ))}
       </div>

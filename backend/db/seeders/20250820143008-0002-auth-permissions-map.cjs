@@ -46,7 +46,7 @@ module.exports = {
 
       NivelB: {
         // Acceso completo a estos módulos
-        tareas: [...CRU, 'approve', 'assign'],
+        tareas: [...CRU, 'delete', 'approve', 'assign'],
         ausencias: ALL_ACTS,
         clientes: CRU,
         calendario: CRU,

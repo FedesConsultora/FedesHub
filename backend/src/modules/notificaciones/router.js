@@ -9,7 +9,8 @@ import {
   getPrefs, putPrefs,
   postNotification,
   patchSeen, patchRead, patchDismiss, patchArchive, patchPin,
-  getTrackOpen
+  getTrackOpen,
+  postCleanupOrphans, postMarkAllRead
 } from './controllers/notificaciones.controller.js';
 import { smtp, push as pushHealth } from './controllers/health.controller.js';
 
@@ -31,29 +32,33 @@ router.get('/catalog', requireAuth, getCatalog);
 
 // Ventanas (Chats / Tareas / Notificaciones / Calendario)
 router.get('/windows/counts', requireAuth, getVentanasCount);
-router.get('/inbox',          requireAuth, getInbox);
-router.get('/chat/canales',   requireAuth, getChatCanales);
+router.get('/inbox', requireAuth, getInbox);
+router.get('/chat/canales', requireAuth, getChatCanales);
 
 // Preferencias de usuario
-router.get('/preferences',    requireAuth,   getPrefs);
-router.put('/preferences',    requireAuth, requirePermission('notificaciones','update'), putPrefs);
+router.get('/preferences', requireAuth, getPrefs);
+router.put('/preferences', requireAuth, requirePermission('notificaciones', 'update'), putPrefs);
 
 // Crear notificación manual / desde otro módulo
-router.post('/',              requireAuth, requirePermission('notificaciones','create'), postNotification);
+router.post('/', requireAuth, requirePermission('notificaciones', 'create'), postNotification);
 
 // Marcas por usuario-destino
-router.patch('/:id/seen',     requireAuth,  patchSeen);
-router.patch('/:id/read',     requireAuth,  patchRead);
-router.patch('/:id/dismiss',  requireAuth,  patchDismiss);
-router.patch('/:id/archive',  requireAuth,  patchArchive);
-router.patch('/:id/pin',      requireAuth,  patchPin);
+router.patch('/:id/seen', requireAuth, patchSeen);
+router.patch('/:id/read', requireAuth, patchRead);
+router.patch('/:id/dismiss', requireAuth, patchDismiss);
+router.patch('/:id/archive', requireAuth, patchArchive);
+router.patch('/:id/pin', requireAuth, patchPin);
 
 // Tracking pixel (público, no requiere auth)
 router.get('/email/open/:token.gif', getTrackOpen);
 
 // Push tokens (sólo requiere estar logueado)
-router.post('/push/tokens',   requireAuth, push.registerToken);
+router.post('/push/tokens', requireAuth, push.registerToken);
 router.delete('/push/tokens', requireAuth, push.unregisterToken);
 
+// ========= Admin: Limpieza de notificaciones =========
+// Solo usuarios con permisos de admin pueden ejecutar esto
+router.post('/admin/cleanup-orphans', requireAuth, requirePermission('notificaciones', 'admin'), postCleanupOrphans);
+router.post('/admin/mark-all-read', requireAuth, requirePermission('notificaciones', 'admin'), postMarkAllRead);
 
 export default router;

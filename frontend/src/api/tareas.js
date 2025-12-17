@@ -22,6 +22,7 @@ export const tareasApi = {
   create: (body) => api.post(base, body).then(r => r.data),
   update: (id, body) => api.patch(`${base}/${id}`, body).then(r => r.data),
   archive: (id, on = true) => api.patch(`${base}/${id}/archive`, { on }).then(r => r.data),
+  delete: (id) => api.delete(`${base}/${id}`).then(r => r.data),
 
 
   // Estado / aprobación / kanban

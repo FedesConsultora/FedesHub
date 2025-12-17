@@ -16,10 +16,10 @@ import { log } from '../../../infra/logging/logger.js';
 await initModels();
 
 // ====== Catálogos / Buzón / Preferencias ======
-export const svcCatalogos     = () => listCatalogos();
+export const svcCatalogos = () => listCatalogos();
 export const svcVentanasCount = async (user) => countByVentana(user.id);
-export const svcInbox         = async (q, user) => listInbox(q, user);
-export const svcChatCanales   = (user) => listChatCanalesForUser(user.id);
+export const svcInbox = async (q, user) => listInbox(q, user);
+export const svcChatCanales = (user) => listChatCanalesForUser(user.id);
 
 export const svcPreferences = (user) => getPreferences(user.id);
 
@@ -89,8 +89,137 @@ export const svcCreate = async (body, user) => {
 };
 
 // ====== Acciones de estado ======
-export const svcMarkSeen = (id, user)        => setSeen(id, user.id);
-export const svcMarkRead = (id, on, user)    => setRead(id, user.id, on);
-export const svcDismiss  = (id, on, user)    => setDismiss(id, user.id, on);
-export const svcArchive  = (id, on, user)    => setArchive(id, user.id, on);
-export const svcPin      = (id, orden, user) => setPin(id, user.id, orden);
+export const svcMarkSeen = (id, user) => setSeen(id, user.id);
+export const svcMarkRead = (id, on, user) => setRead(id, user.id, on);
+export const svcDismiss = (id, on, user) => setDismiss(id, user.id, on);
+export const svcArchive = (id, on, user) => setArchive(id, user.id, on);
+export const svcPin = (id, orden, user) => setPin(id, user.id, orden);
+
+// ====== Admin: Limpiar notificaciones huérfanas ======
+import { QueryTypes } from 'sequelize';
+
+/**
+ * Limpia notificaciones huérfanas para un usuario específico o todos.
+ * Huérfanas = notificaciones que apuntan a tareas/canales/eventos que ya no existen.
+ * @param {number|null} userId - Si se pasa, solo limpia para ese usuario. Si es null, limpia para todos.
+ * @returns {Object} - Conteo de lo que se limpió
+ */
+export const svcCleanupOrphans = async (userId = null) => {
+  const t = await sequelize.transaction();
+  try {
+    // 1. Marcar como leídas las notificaciones de tareas que ya no existen
+    const tareasOrphans = await sequelize.query(`
+      UPDATE "NotificacionDestino" nd
+      SET read_at = NOW()
+      FROM "Notificacion" n
+      WHERE nd.notificacion_id = n.id
+        AND n.tarea_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "Tarea" t WHERE t.id = n.tarea_id)
+        AND nd.read_at IS NULL
+        ${userId ? 'AND nd.user_id = :userId' : ''}
+    `, {
+      type: QueryTypes.UPDATE,
+      replacements: userId ? { userId } : {},
+      transaction: t
+    });
+
+    // 2. Marcar como leídas las notificaciones de canales de chat que ya no existen
+    const chatOrphans = await sequelize.query(`
+      UPDATE "NotificacionDestino" nd
+      SET read_at = NOW()
+      FROM "Notificacion" n
+      WHERE nd.notificacion_id = n.id
+        AND n.chat_canal_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "ChatCanal" c WHERE c.id = n.chat_canal_id)
+        AND nd.read_at IS NULL
+        ${userId ? 'AND nd.user_id = :userId' : ''}
+    `, {
+      type: QueryTypes.UPDATE,
+      replacements: userId ? { userId } : {},
+      transaction: t
+    });
+
+    // 3. Marcar como leídas las notificaciones de eventos que ya no existen
+    const eventosOrphans = await sequelize.query(`
+      UPDATE "NotificacionDestino" nd
+      SET read_at = NOW()
+      FROM "Notificacion" n
+      WHERE nd.notificacion_id = n.id
+        AND n.evento_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "Evento" e WHERE e.id = n.evento_id)
+        AND nd.read_at IS NULL
+        ${userId ? 'AND nd.user_id = :userId' : ''}
+    `, {
+      type: QueryTypes.UPDATE,
+      replacements: userId ? { userId } : {},
+      transaction: t
+    });
+
+    await t.commit();
+
+    const result = {
+      tareas_cleaned: tareasOrphans[1] || 0,
+      chat_cleaned: chatOrphans[1] || 0,
+      eventos_cleaned: eventosOrphans[1] || 0,
+      user_id: userId || 'all'
+    };
+
+    log.info('notif:cleanup:ok', result);
+    return result;
+
+  } catch (e) {
+    await t.rollback();
+    log.error('notif:cleanup:err', { err: e?.message, stack: e?.stack });
+    throw e;
+  }
+};
+
+/**
+ * Marca TODAS las notificaciones de un usuario como leídas.
+ * Útil para limpiar completamente un buzón.
+ * @param {number} userId
+ * @param {string|null} buzon - 'chat', 'tareas', 'calendario' o null para todos
+ */
+export const svcMarkAllRead = async (userId, buzon = null) => {
+  const t = await sequelize.transaction();
+  try {
+    let buzonCondition = '';
+    const replacements = { userId };
+
+    if (buzon) {
+      const buzonRow = await sequelize.query(
+        `SELECT id FROM "BuzonTipo" WHERE codigo = :buzon`,
+        { type: QueryTypes.SELECT, replacements: { buzon }, transaction: t }
+      );
+      if (buzonRow.length) {
+        replacements.buzonId = buzonRow[0].id;
+        buzonCondition = 'AND n.buzon_id = :buzonId';
+      }
+    }
+
+    const result = await sequelize.query(`
+      UPDATE "NotificacionDestino" nd
+      SET read_at = NOW()
+      FROM "Notificacion" n
+      WHERE nd.notificacion_id = n.id
+        AND nd.user_id = :userId
+        AND nd.read_at IS NULL
+        ${buzonCondition}
+    `, {
+      type: QueryTypes.UPDATE,
+      replacements,
+      transaction: t
+    });
+
+    await t.commit();
+
+    const count = result[1] || 0;
+    log.info('notif:markAllRead:ok', { user_id: userId, buzon, count });
+    return { marked_read: count, user_id: userId, buzon };
+
+  } catch (e) {
+    await t.rollback();
+    log.error('notif:markAllRead:err', { err: e?.message });
+    throw e;
+  }
+};

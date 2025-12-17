@@ -1222,8 +1222,80 @@ export const svcCreateTask = async (body, user) => {
   return getTaskById(row.id, user);
 };
 export const svcUpdateTask = async (id, body, user) => {
+  const feder_id = user?.feder_id;
+
+  // Si se intenta cambiar el vencimiento, validar permisos
+  if (body.vencimiento !== undefined) {
+    // Verificar si es responsable de la tarea
+    const isResponsable = await models.TareaResponsable.findOne({
+      where: { tarea_id: id, feder_id }
+    });
+
+    // Solo responsables pueden cambiar el deadline
+    if (!isResponsable) {
+      throw Object.assign(
+        new Error('Solo los responsables de la tarea pueden modificar la fecha de vencimiento'),
+        { status: 403 }
+      );
+    }
+  }
+
   await updateTask(id, body, user?.feder_id);
   return getTaskById(id, user);
+};
+
+// ========== ELIMINAR TAREA (solo directivos) ========== //
+const deleteTask = async (id, feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    const tarea = await models.Tarea.findByPk(id, { transaction: t });
+    if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+
+    // Eliminar relaciones
+    await models.TareaResponsable.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaColaborador.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaEtiquetaAsig.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaChecklistItem.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaComentario.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaAdjunto.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaRelacion.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaRelacion.destroy({ where: { relacionada_id: id }, transaction: t });
+    await models.TareaFavorito.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaSeguidor.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaKanbanPos.destroy({ where: { tarea_id: id }, transaction: t });
+    await models.TareaHistorial.destroy({ where: { tarea_id: id }, transaction: t });
+
+    // Eliminar subtareas (hijos)
+    await models.Tarea.destroy({ where: { tarea_padre_id: id }, transaction: t });
+
+    // Eliminar tarea principal
+    await models.Tarea.destroy({ where: { id }, transaction: t });
+
+    return { ok: true, deleted_id: id };
+  });
+};
+
+export const svcDeleteTask = async (id, user) => {
+  const feder_id = user?.feder_id;
+  if (!feder_id) throw Object.assign(new Error('Usuario no autenticado'), { status: 401 });
+
+  // Verificar permisos - solo NivelA o NivelB pueden eliminar
+  const userRoles = user?.roles || [];
+
+  console.log('[svcDeleteTask] User:', user?.email, 'Roles:', JSON.stringify(userRoles), 'Feder:', feder_id);
+
+  // Verificar si tiene NivelA o NivelB (los roles son strings)
+  const isDirectivo = userRoles.includes('NivelA') || userRoles.includes('NivelB');
+
+  console.log('[svcDeleteTask] isDirectivo:', isDirectivo);
+
+  if (!isDirectivo) {
+    throw Object.assign(
+      new Error(`Solo los directivos pueden eliminar tareas. Roles actuales: ${userRoles.join(', ') || 'ninguno'}`),
+      { status: 403 }
+    );
+  }
+
+  return deleteTask(id, feder_id);
 };
 // ========== BOOST MANUAL ========== //
 export const svcSetBoostManual = async (tarea_id, enabled, user) => {

@@ -5,7 +5,17 @@ import './kanban.scss'
 
 const DRAG_THRESHOLD = 6 // px de movimiento antes de iniciar drag
 
-export default function KanbanBoard({ hideInbox = false, compact = false, maxRows = 4, params, board: extBoard, moveTask: extMove, onOpenTask: onOpenTask }) {
+export default function KanbanBoard({
+  hideInbox = false,
+  compact = false,
+  maxRows = 4,
+  params,
+  board: extBoard,
+  moveTask: extMove,
+  onOpenTask,
+  onDelete,
+  canDelete = false
+}) {
   const internal = extBoard ? null : useTasksBoard(params)
   const board = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
   const moveTask = extMove ?? internal?.moveTask ?? (() => { })
@@ -280,7 +290,9 @@ export default function KanbanBoard({ hideInbox = false, compact = false, maxRow
           items={c.items}
           indices={c.indices}
           bodyRef={(el) => (bodyRefs.current[c.code].body = el)}
-          onStartDrag={startDrag}  // 👈 ahora respeta el threshold
+          onStartDrag={startDrag}
+          onDelete={onDelete}
+          canDelete={canDelete}
         />
       ))}
     </div>

@@ -2,7 +2,7 @@
 // (solo muestro el archivo completo con los toques para emitir el evento y refrescar queries)
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { notifApi } from '../../api/notificaciones'
 import './NotifListPage.scss'
 
@@ -25,7 +25,7 @@ export default function NotifListPage({ buzonOverride }) {
   }), [buzon, q, limit, offset])
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['notif','inbox','all', buzon || 'todo', { q, limit, offset }],
+    queryKey: ['notif', 'inbox', 'all', buzon || 'todo', { q, limit, offset }],
     queryFn: () => notifApi.inbox(queryParams),
     keepPreviousData: true,
     refetchOnWindowFocus: false
@@ -37,10 +37,10 @@ export default function NotifListPage({ buzonOverride }) {
 
   const title = useMemo(() =>
     !buzon ? 'Todas las notificaciones'
-           : buzon==='chat' ? 'Notificaciones de Chat'
-           : buzon==='tareas' ? 'Notificaciones de Tareas'
-           : 'Notificaciones de Calendario'
-  , [buzon])
+      : buzon === 'chat' ? 'Notificaciones de Chat'
+        : buzon === 'tareas' ? 'Notificaciones de Tareas'
+          : 'Notificaciones de Calendario'
+    , [buzon])
 
   return (
     <div className="fhNotifList">
@@ -57,7 +57,7 @@ export default function NotifListPage({ buzonOverride }) {
 
       {isLoading && <div className="fh-skel">Cargando…</div>}
       {isError && <div className="fh-err">Error cargando.</div>}
-      {!isLoading && !isError && rows.length===0 && <div className="fh-empty">Sin resultados.</div>}
+      {!isLoading && !isError && rows.length === 0 && <div className="fh-empty">Sin resultados.</div>}
 
       {!!rows.length && (
         <div className="tableWrap">
@@ -77,8 +77,8 @@ export default function NotifListPage({ buzonOverride }) {
                   r={r}
                   onChanged={() => {
                     // refrescamos conteos + inbox en todos lados
-                    qc.invalidateQueries({ queryKey: ['notif','counts'] })
-                    qc.invalidateQueries({ queryKey: ['notif','inbox'] })
+                    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+                    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
                     // y emitimos evento global para el header
                     window.dispatchEvent(new Event('fh:notif:changed'))
                   }}
@@ -91,9 +91,9 @@ export default function NotifListPage({ buzonOverride }) {
 
       {total > limit && (
         <div className="pager">
-          <button disabled={page===0} onClick={() => setPage(p => p-1)}>Anterior</button>
-          <span>{page*limit+1}–{Math.min((page+1)*limit,total)} / {total}</span>
-          <button disabled={(page+1)*limit>=total} onClick={() => setPage(p => p+1)}>Siguiente</button>
+          <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Anterior</button>
+          <span>{page * limit + 1}–{Math.min((page + 1) * limit, total)} / {total}</span>
+          <button disabled={(page + 1) * limit >= total} onClick={() => setPage(p => p + 1)}>Siguiente</button>
         </div>
       )}
     </div>
@@ -102,6 +102,7 @@ export default function NotifListPage({ buzonOverride }) {
 
 function TableRow({ r, onChanged }) {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const n = r.notificacion || {}
 
   const title =
@@ -110,7 +111,7 @@ function TableRow({ r, onChanged }) {
 
   const buz =
     n?.tipo?.buzon_id ? (n?.tipo?.codigo || n?.tipo?.nombre || '') :
-    (n?.chatCanal ? 'chat' : n?.tarea ? 'tareas' : n?.evento ? 'calendario' : '')
+      (n?.chatCanal ? 'chat' : n?.tarea ? 'tareas' : n?.evento ? 'calendario' : '')
 
   const createdAt = n?.created_at || n?.createdAt || r?.created_at || r?.createdAt
 
@@ -119,7 +120,7 @@ function TableRow({ r, onChanged }) {
     await notifApi.read(n.id, turnOn)
 
     // Optimistic update sobre todas las queries de inbox
-    qc.setQueriesData({ queryKey: ['notif','inbox'], exact: false }, (old) => {
+    qc.setQueriesData({ queryKey: ['notif', 'inbox'], exact: false }, (old) => {
       if (!old || !old.rows) return old
       const rows = old.rows.map(row =>
         row.id === r.id
@@ -136,7 +137,7 @@ function TableRow({ r, onChanged }) {
     const turnOn = !r.archived_at
     await notifApi.archive(n.id, turnOn)
 
-    qc.setQueriesData({ queryKey: ['notif','inbox'], exact: false }, (old) => {
+    qc.setQueriesData({ queryKey: ['notif', 'inbox'], exact: false }, (old) => {
       if (!old || !old.rows) return old
       const rows = old.rows.map(row =>
         row.id === r.id
@@ -149,6 +150,45 @@ function TableRow({ r, onChanged }) {
     onChanged?.()
   }
 
+  const handleOpen = async (e) => {
+    e.preventDefault()
+    const url = n.link_url || ''
+
+    // Marcar como leída
+    if (!r.read_at && n.id) {
+      try {
+        await notifApi.read(n.id, true)
+        qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+        qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
+        window.dispatchEvent(new Event('fh:notif:changed'))
+      } catch (err) {
+        console.warn('Error marcando notificación como leída:', err)
+      }
+    }
+
+    // Detectar link de tarea: /tareas/123 o similar
+    const tareaMatch = url.match(/\/tareas\/(\d+)/)
+    if (tareaMatch) {
+      const tareaId = tareaMatch[1]
+      navigate(`/tareas?open=${tareaId}`)
+      return
+    }
+
+    // Detectar link de chat: /chat/c/123
+    const chatMatch = url.match(/\/chat\/c\/(\d+)/)
+    if (chatMatch) {
+      navigate(url)
+      return
+    }
+
+    // Para otros links
+    if (url.startsWith('http')) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else if (url.startsWith('/')) {
+      navigate(url)
+    }
+  }
+
   return (
     <tr className={`row ${r.read_at ? 'read' : ''}`}>
       <td className="colMain">
@@ -159,7 +199,7 @@ function TableRow({ r, onChanged }) {
       <td className="colBuzon">{buz || '-'}</td>
       <td className="colFecha">{createdAt ? new Date(createdAt).toLocaleString() : '-'}</td>
       <td className="colAct">
-        {n.link_url && <a className="btn" href={n.link_url}>Abrir</a>}
+        {n.link_url && <button className="btn" onClick={handleOpen}>Abrir</button>}
         <button className="btn" onClick={toggleRead}>{r.read_at ? 'No leído' : 'Leído'}</button>
         <button className="btn" onClick={toggleArchive}>{r.archived_at ? 'Desarchivar' : 'Archivar'}</button>
       </td>

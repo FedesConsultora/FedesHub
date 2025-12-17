@@ -12,7 +12,7 @@ import {
 } from '../validators.js';
 
 import {
-  svcListCatalogos, svcListTasks, svcGetTask, svcCreateTask, svcUpdateTask, svcArchiveTask,
+  svcListCatalogos, svcListTasks, svcGetTask, svcCreateTask, svcUpdateTask, svcArchiveTask, svcDeleteTask,
   svcAddResponsable, svcRemoveResponsable, svcAddColaborador, svcRemoveColaborador,
   svcAssignEtiqueta, svcUnassignEtiqueta,
   svcListChecklist, svcCreateChecklistItem, svcUpdateChecklistItem, svcDeleteChecklistItem, svcReorderChecklist,
@@ -220,6 +220,15 @@ export const archiveTarea = async (req, res, next) => {
     const { id } = taskIdParamSchema.parse(req.params);
     const { on } = toggleBoolSchema.parse(req.body);
     res.json(await svcArchiveTask(id, on));
+  } catch (e) { next(e); }
+};
+
+// ---- Eliminar tarea (solo directivos)
+export const deleteTarea = async (req, res, next) => {
+  try {
+    const { id } = taskIdParamSchema.parse(req.params);
+    const result = await svcDeleteTask(id, req.user);
+    res.json(result);
   } catch (e) { next(e); }
 };
 

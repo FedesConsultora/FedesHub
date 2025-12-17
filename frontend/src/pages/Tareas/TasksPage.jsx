@@ -1,5 +1,5 @@
 // /frontend/src/pages/tareas/TasksPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import useTasksBoard from "../../hooks/useTasksBoard";
 import { tareasApi } from "../../api/tareas";
@@ -9,6 +9,9 @@ import TaskList from "../../components/tasks/TaskList";
 import CreateTaskModal from "../../components/tasks/CreateTaskModal";
 import ModalPanel from "./components/ModalPanel";
 import TaskDetail from "./TaskDetail";
+import { useAuthCtx } from "../../context/AuthContext";
+import { useToast } from "../../components/toast/ToastProvider";
+import { useModal } from "../../components/modal/ModalProvider";
 import './components/modal-panel.scss';
 
 import "./TasksPage.scss";
@@ -17,6 +20,13 @@ export default function TasksPage() {
   const [view, setView] = useState("kanban");
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+
+  const { roles } = useAuthCtx() || {};
+  const toast = useToast();
+  const modal = useModal();
+
+  // Verificar si es directivo
+  const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB');
 
   // catálogo (selects)
   const [catalog, setCatalog] = useState({
@@ -45,8 +55,7 @@ export default function TasksPage() {
     sort: "desc",
   });
 
-  // URL <-> filtros
-  const [searchParams, setSearchParams] = useSearchParams();
+  // URL -> filtros (solo al montar)
   useEffect(() => {
     const patch = {};
     const keys = [
@@ -71,6 +80,22 @@ export default function TasksPage() {
     if (Object.keys(patch).length) setFilters((f) => ({ ...f, ...patch }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Manejar el param 'open' para abrir una tarea directamente
+  // Este effect reacciona a cambios en searchParams para funcionar aunque ya estés en /tareas
+  useEffect(() => {
+    const openParam = searchParams.get("open");
+    if (openParam) {
+      const taskId = parseInt(openParam, 10);
+      if (taskId && !isNaN(taskId)) {
+        setOpenTaskId(taskId);
+        // Limpiar el param 'open' de la URL para evitar que se reabra al volver
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("open");
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const sp = new URLSearchParams();
@@ -132,6 +157,28 @@ export default function TasksPage() {
     return `${showing} resultados`;
   }, [rows]);
 
+  // Handler para eliminar tarea desde kanban/lista (solo directivos)
+  const handleDeleteTask = useCallback(async (task) => {
+    if (!isDirectivo) return;
+
+    const ok = await modal.confirm({
+      title: 'Eliminar tarea',
+      message: `¿Estás seguro de que querés eliminar "${task.title || task.titulo}"? Esta acción no se puede deshacer.`,
+      okText: 'Eliminar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!ok) return;
+
+    try {
+      await tareasApi.delete(task.id);
+      toast?.success('Tarea eliminada');
+      refetch();
+    } catch (err) {
+      toast?.error(err?.fh?.message || 'No se pudo eliminar la tarea');
+    }
+  }, [isDirectivo, modal, toast, refetch]);
+
   return (
     <div className="TareasListPage">
       {/* Toolbar (igual a Clientes) */}
@@ -191,7 +238,12 @@ export default function TasksPage() {
       {/* Resultados */}
       <section className="results" data-view={view}>
         {view === "kanban" ? (
-          <KanbanBoard board={board} moveTask={moveTask} onOpenTask={setOpenTaskId}
+          <KanbanBoard
+            board={board}
+            moveTask={moveTask}
+            onOpenTask={setOpenTaskId}
+            onDelete={handleDeleteTask}
+            canDelete={isDirectivo}
           />
         ) : (
           <TaskList
