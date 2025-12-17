@@ -93,7 +93,10 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
   }
 
   async function onSubmit(e) {
+
     e?.preventDefault?.()
+    if (send.isPending) return;
+    if (disabled) return
     const bodyTextRaw = text.trim()
     if ((bodyTextRaw.length===0 && files.length===0) || disabled) return
 
@@ -121,7 +124,15 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
   }
 
   function onChange(v){ setText(v); typing.ping() }
-  const onKeyDown = () => { typing.ping() }
+const onKeyDown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    if (send.isPending) {
+      e.preventDefault()
+      return
+    }
+  }
+  typing.ping()
+}
   const onBlur    = () => { typing.stop() }
   const addEmoji = (em) => setText(t => (t + em))
   const onPickFiles = (e) => { const arr = Array.from(e.target.files || []); setFiles(prev => prev.concat(arr)); e.target.value='' }
