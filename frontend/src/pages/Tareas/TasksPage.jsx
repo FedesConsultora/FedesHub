@@ -16,10 +16,13 @@ import './components/modal-panel.scss';
 
 import "./TasksPage.scss";
 
+
 export default function TasksPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState("kanban");
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+
 
   const { roles } = useAuthCtx() || {};
   const toast = useToast();

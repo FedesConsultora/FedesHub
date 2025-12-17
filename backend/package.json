@@ -6,6 +6,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "migrate": "sequelize db:migrate",
+    "migrate:status": "sequelize db:migrate:status",
     "seed": "sequelize db:seed:all",
     "db:reset": "sequelize db:migrate:undo:all && sequelize db:migrate && sequelize db:seed:all"
   },
