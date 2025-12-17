@@ -48,7 +48,7 @@ export default function MessageAttachments({ items = [] }) {
           {files.map((a, idx) => {
             const url = resolveMediaUrl(a.file_url)
             return (
-              <a key={`file-${a.id || idx}`} className="fileRow" href={url} target="_blank" rel="noreferrer" title={a.file_name || url}>
+              <a key={`file-${a.id || idx}`} className="fileRow" href={url} download={a.file_name || 'archivo'} rel="noreferrer" title={a.file_name || url}>
                 <span className="ico"><AttachmentIcon mime={a.mime_type || ''} name={a.file_name || ''} /></span>
                 <span className="name">{a.file_name || url}</span>
                 {a.size_bytes ? <span className="muted">{formatSize(a.size_bytes)}</span> : null}
