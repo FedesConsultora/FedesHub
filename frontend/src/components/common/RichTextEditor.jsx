@@ -123,43 +123,47 @@ function OnChangeHTMLPlugin({ onChange }) {
 
 // Plugin para manejar blur
 function OnBlurPlugin({ onBlur }) {
-    const [editor] = useLexicalComposerContext();
+    const [editor] = useLexicalComposerContext()
+    const timeoutRef = useRef(null)
 
     useEffect(() => {
         return editor.registerRootListener((rootElement, prevRootElement) => {
-            // Remove from previous root using stored handler
             if (prevRootElement && prevRootElement._focusOutHandler) {
-                prevRootElement.removeEventListener('focusout', prevRootElement._focusOutHandler);
-                delete prevRootElement._focusOutHandler;
+                prevRootElement.removeEventListener('focusout', prevRootElement._focusOutHandler)
+                delete prevRootElement._focusOutHandler
             }
 
-            // Add to new root
             if (rootElement) {
                 const handleFocusOut = (e) => {
-                    // Check if focus is leaving the editor entirely
-                    const editorContainer = rootElement.closest('.editor-container');
+                    const editorContainer = rootElement.closest('.editor-container')
                     if (!editorContainer?.contains(e.relatedTarget)) {
-                        console.log('[OnBlurPlugin] Editor lost focus, triggering save');
-                        onBlur?.();
+                        clearTimeout(timeoutRef.current)
+
+                        // ⬅️ DIFERIR guardado
+                        timeoutRef.current = setTimeout(() => {
+                            editor.getEditorState().read(() => {
+                                onBlur?.()
+                            })
+                        }, 0)
                     }
-                };
+                }
 
-                rootElement.addEventListener('focusout', handleFocusOut);
-                // Store handler for cleanup
-                rootElement._focusOutHandler = handleFocusOut;
+                rootElement.addEventListener('focusout', handleFocusOut)
+                rootElement._focusOutHandler = handleFocusOut
             }
-        });
-    }, [editor, onBlur]);
+        })
+    }, [editor, onBlur])
 
-    return null;
+    return null
 }
+
 
 export default function RichTextEditor({
     value = '',
     onChange,
     onBlur,
     taskId,
-    placeholder = 'Escribí aquí...',
+    placeholder = 'Escribe aquí...',
     maxLength = 600,
     minHeight = '190px'
 }) {

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { tareasApi } from '../../api/tareas'
 import TaskStatusCard from '../../components/tasks/TaskStatusCard'
-
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import AssignedPeople from '../../components/tasks/AssignedPeople'
 import LabelChip from '../../components/common/LabelChip'
 import TaskComments from '../../components/tasks/comments'
@@ -689,7 +689,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 onBlur={flushDescriptionOnBlur}
                 taskId={Number(id)}
                 placeholder="Escribí la descripción…"
-                maxLength={600}
+                ErrorBoundary={LexicalErrorBoundary}
+                maxLength={3600}
                 minHeight="190px"
               />
             ) : (

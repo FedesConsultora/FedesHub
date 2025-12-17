@@ -160,6 +160,7 @@ function NotifItem({ row }) {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const n = row.notificacion || {}
+  console.log('-------------------->', n)
   const title =
     n.titulo || n?.tarea?.titulo || n?.evento?.titulo ||
     (n?.chatCanal ? `Mención en ${n.chatCanal.nombre}` : n?.tipo?.nombre || 'Notificación')

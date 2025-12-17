@@ -84,7 +84,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   const tabs = [
     { key: 'channels', label: 'Canales', badge: anyUnread(canalIds) },
     { key: 'groups', label: 'Grupos', badge: anyUnread(groupIds) },
-    { key: 'dms', label: 'DMs', badge: anyUnread(dmIds) }
+    { key: 'dms', label: 'Chat', badge: anyUnread(dmIds) }
   ]
 
   const listChannels = useMemo(() => {

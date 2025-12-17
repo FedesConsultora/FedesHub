@@ -38,11 +38,11 @@ export default function TitleTooltip() {
                     onMouseEnter={() => setShow(true)}
                     onMouseLeave={() => setShow(false)}
                 >
-                    
+
                     <div className="tooltipHeader">Formato de título</div>
                     <div className="tooltipForm">
-                        <p>[Área/Tipo de tarea] — [Acción concreta]</p>
-                        
+                        <p>[Área/Tipo de tarea] — [Acción sustantivada]</p>
+
                     </div>
                     <div className="tooltipExamples">
                         <div className="example">
@@ -53,7 +53,7 @@ export default function TitleTooltip() {
                         </div>
 
                     </div>
-                    
+
                 </div>,
                 document.body
             )}

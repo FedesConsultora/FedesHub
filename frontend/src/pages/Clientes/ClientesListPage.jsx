@@ -11,9 +11,23 @@ import './ClientesListPage.scss'
 
 export default function ClientesListPage() {
   const { catalog, rows, total, loading, error, filters, setFilter, setPage, refetch } = useClientesList()
-  const [view, setView] = useViewPref('clientes.view', 'cards') // 'cards' | 'list'
+  const [view, setView] = useViewPref('clientes.view', 'cards') 
   const [showCreate, setShowCreate] = useState(false)
 
+  const extractNumero = (nombre = '') => {
+  const match = nombre.match(/^(\d+)/)
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY
+  }
+  
+  const orderedRows = useMemo(() => {
+  if (!rows) return []
+
+  return [...rows].sort((a, b) => {
+    const na = extractNumero(a.nombre)
+    const nb = extractNumero(b.nombre)
+    return na - nb
+  })
+}, [rows])
   const countTxt = useMemo(() => {
     const showing = rows?.length ?? 0
     return total ? `${showing} de ${total} resultados` : `${showing} resultados`
@@ -71,8 +85,8 @@ export default function ClientesListPage() {
 
       <section className="results" data-view={view}>
         {view === 'cards'
-          ? <ClientesCards rows={rows} loading={loading} />
-          : <ClientesTable rows={rows} loading={loading} />
+          ? <ClientesCards rows={orderedRows} loading={loading} />
+          : <ClientesTable rows={orderedRows} loading={loading} />
         }
       </section>
 
