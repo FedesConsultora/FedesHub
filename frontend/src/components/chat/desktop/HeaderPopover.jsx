@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash } from 'react-icons/fi'
+import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash, FiTrash2, FiUserPlus } from 'react-icons/fi'
+import { IoRemoveCircleOutline } from "react-icons/io5";
+
 import AttachmentIcon from '../shared/AttachmentIcon'
 import { displayName, firstInitial } from '../../../utils/people'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
@@ -7,12 +9,15 @@ import {
   useUploadChannelAvatar,
   useUpdateChannel,
   usePatchMemberRole,
+  useRemoveMember,
+  useAddMember,
 } from '../../../hooks/useChat'
+import { adminListUsers } from '../../../api/auth'
 import './HeaderPopover.scss'
 import { resolveMediaUrl } from '../../../utils/media'
 
-const PRES_COL = { online:'#31c48d', away:'#f6ad55', dnd:'#ef4444', offline:'#6b7280' }
-const ROL_ES   = { owner:'propietario', admin:'administrador', mod:'moderador', member:'miembro', guest:'invitado' }
+const PRES_COL = { online: '#31c48d', away: '#f6ad55', dnd: '#ef4444', offline: '#6b7280' }
+const ROL_ES = { owner: 'propietario', admin: 'administrador', mod: 'moderador', member: 'miembro', guest: 'invitado' }
 
 /** ---------- utils imagen (frontend) ---------- */
 async function readAsImage(file) {
@@ -21,7 +26,7 @@ async function readAsImage(file) {
     try {
       const bmp = await createImageBitmap(file)
       return { width: bmp.width, height: bmp.height, draw: (ctx, w, h) => ctx.drawImage(bmp, 0, 0, w, h) }
-    } catch {}
+    } catch { }
   }
   // Fallback clásico con <img>
   const url = URL.createObjectURL(file)
@@ -72,7 +77,7 @@ async function downscaleToJpeg(file, { maxSide = 512, quality = 0.82, background
   const finalBlob = best instanceof Blob ? best : new Blob([best], { type: file.type || 'application/octet-stream' })
 
   // Aseguramos extensión .jpg
-  const base = (file.name || 'avatar').replace(/\.[^.]+$/,'')
+  const base = (file.name || 'avatar').replace(/\.[^.]+$/, '')
   return new File([finalBlob], `${base}.jpg`, { type: 'image/jpeg' })
 }
 
@@ -95,23 +100,38 @@ export default function HeaderPopover({
 
   // edición inline
   const [edit, setEdit] = useState(false)
-  const [form, setForm] = useState({ nombre:'', slug:'', topic:'', is_privado:false, only_mods_can_post:false })
+  const [form, setForm] = useState({ nombre: '', slug: '', topic: '', is_privado: false, only_mods_can_post: false })
 
   // avatar (compreso)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState('')
   const previewUrlRef = useRef('')
 
+  // modal de eliminar canal
+  const [showDeleteChannelModal, setShowDeleteChannelModal] = useState(false)
+
+  // modal de eliminar miembro
+  const [showDeleteMemberModal, setShowDeleteMemberModal] = useState(false)
+  const [memberToDelete, setMemberToDelete] = useState(null)
+
+  // modal de agregar miembro
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
+  const [availableUsers, setAvailableUsers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
   // hooks (mutateAsync para poder await)
   const { mutateAsync: uploadAvatar, isLoading: uploading } = useUploadChannelAvatar()
   const { mutateAsync: updateChannel, isLoading: saving } = useUpdateChannel()
   const { mutateAsync: patchRole, isLoading: roleSaving } = usePatchMemberRole()
+  const { mutateAsync: removeMember, isLoading: removingMember } = useRemoveMember()
+  const { mutateAsync: addMember, isLoading: addingMember } = useAddMember()
 
   const isDM = canal?.tipo?.codigo === 'dm'
   const myMember = members.find(m => Number(m.user_id) === myId) || null
   const myRol = myMember?.rol?.codigo || 'member'
-  const canEditSettings = !isDM && ['owner','admin','mod'].includes(myRol)
-  const canEditRoles    = !isDM && ['owner','admin'].includes(myRol)
+  const canEditSettings = !isDM && ['owner', 'admin', 'mod'].includes(myRol)
+  const canEditRoles = !isDM && ['owner', 'admin'].includes(myRol)
 
   const otherUser = useMemo(
     () => (isDM ? (members || []).find(m => Number(m.user_id) !== myId) || null : null),
@@ -169,13 +189,13 @@ export default function HeaderPopover({
   const title = useMemo(() => {
     if (!canal) return ''
     if (isDM) return displayName(otherUser) || otherUser?.email || `DM #${canal?.id}`
-    return (canal?.nombre || canal?.slug || `Canal #${canal?.id}`)?.replace(/^#/,'')
+    return (canal?.nombre || canal?.slug || `Canal #${canal?.id}`)?.replace(/^#/, '')
   }, [canal, isDM, otherUser])
 
   const avatarUrl =
     avatarPreview ||
     resolveMediaUrl(canal?.imagen_url) ||
-    `https://ui-avatars.com/api/?background=eff9ff&color=0d1117&name=${encodeURIComponent(title||'U')}`
+    `https://ui-avatars.com/api/?background=eff9ff&color=0d1117&name=${encodeURIComponent(title || 'U')}`
 
   // ESC para cerrar
   useEffect(() => {
@@ -187,14 +207,14 @@ export default function HeaderPopover({
   // cargar adjuntos
   useEffect(() => {
     let alive = true
-    async function fetchKind(kind){
+    async function fetchKind(kind) {
       if (!canal?.id) return []
       try {
         const { chatApi } = await import('../../../api/chat') // lazy
         return (await chatApi.channels.attachments(canal.id, { kind, limit: 100 })) || []
       } catch { return [] }
     }
-    async function load(){
+    async function load() {
       if (!canal?.id) return
       setLoading(true)
       const [f, i] = await Promise.all([fetchKind('files'), fetchKind('images')])
@@ -224,9 +244,9 @@ export default function HeaderPopover({
 
   // roles
   const optionsFor = (targetCode) => {
-    if (myRol === 'owner') return ['admin','mod','member','guest']
+    if (myRol === 'owner') return ['admin', 'mod', 'member', 'guest']
     if (targetCode === 'owner') return []
-    return ['mod','member','guest']
+    return ['mod', 'member', 'guest']
   }
   const canTouchUser = (m) => {
     if (!canEditRoles) return false
@@ -235,7 +255,63 @@ export default function HeaderPopover({
     return true
   }
   const onChangeRole = async (m, next) => {
-    try { await patchRole({ canal_id: canal.id, user_id: m.user_id, rol_codigo: next }) } catch {}
+    try { await patchRole({ canal_id: canal.id, user_id: m.user_id, rol_codigo: next }) } catch { }
+  }
+
+  // abrir modal eliminar miembro
+  const onRemoveMember = (m) => {
+    if (!canTouchUser(m)) return
+    setMemberToDelete(m)
+    setShowDeleteMemberModal(true)
+  }
+
+  // confirmar eliminar miembro
+  const confirmRemoveMember = async () => {
+    if (!memberToDelete) return
+    try {
+      await removeMember({ canal_id: canal.id, user_id: memberToDelete.user_id })
+      setShowDeleteMemberModal(false)
+      setMemberToDelete(null)
+    } catch (e) {
+      console.error('remove member', e)
+      alert('Error al eliminar el miembro')
+    }
+  }
+
+  // eliminar canal (modal)
+  const onDeleteChannel = () => {
+    setShowDeleteChannelModal(true)
+  }
+
+  // agregar miembro (modal)
+  const onOpenAddMember = async () => {
+    setShowAddMemberModal(true)
+    setLoadingUsers(true)
+    try {
+      const response = await adminListUsers('')
+      const users = response?.data || []
+      // Filtrar usuarios que ya son miembros
+      const memberIds = new Set(members.map(m => Number(m.user_id)))
+      const filtered = users.filter(u => !memberIds.has(Number(u.id)))
+      setAvailableUsers(filtered)
+    } catch (e) {
+      console.error('load users', e)
+      setAvailableUsers([])
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const onAddMemberToChannel = async (userId) => {
+    if (!canal?.id || !userId) return
+    try {
+      await addMember({ canal_id: canal.id, user_id: userId, rol_codigo: 'member' })
+      setShowAddMemberModal(false)
+      setSearchQuery('')
+    } catch (e) {
+      console.error('add member', e)
+      alert('Error al agregar el miembro')
+    }
   }
 
   const handleScrim = () => onClose?.()
@@ -246,6 +322,45 @@ export default function HeaderPopover({
       <div className="hdrPop_panel" ref={popRef}>
         {/* Header */}
         <div className="hdrPop_header">
+
+
+          <div className="meta">
+            <div className="actions">
+              {!isDM && canEditSettings && !edit && (
+                <>
+                  <button className="chip ghost" onClick={() => setEdit(true)}><FiEdit2 /> Editar</button>
+                  <button className="chip danger" onClick={onDeleteChannel}><FiTrash2 /> Eliminar {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}</button>
+                </>
+              )}
+
+
+              {edit && (
+                <>
+                  <button className="chip ghost" onClick={() => setEdit(false)}><FiX /> Cancelar</button>
+                  <button className="chip primary" onClick={onSave} disabled={saving || uploading}>
+                    <FiSave />{(saving || uploading) ? ' Guardando…' : ' Guardar'}
+                  </button>
+                </>
+              )}
+              {isDM && (
+                <button className="chip primary" onClick={onCreatedGroupFromDm}><FiPlus /> Crear grupo</button>
+              )}
+              <button className="chip ghost" onClick={onClose} aria-label="Cerrar"><FiX /></button>
+            </div>
+            <div className="title">{title}</div>
+            {!!canal?.topic && !edit && (
+              <div className="row small"><FiTag />{canal.topic}</div>
+            )}
+            {!isDM && !edit && (
+              <div className="row small">
+                <FiLock />{canal?.only_mods_can_post ? 'Sólo owner/admin/mod' : 'Todos pueden postear'}
+              </div>
+            )}
+            {canal?.tipo?.codigo === 'grupo' && !edit && (
+              <div className="row small"><FiLock />{canal?.is_privado ? 'Grupo privado' : 'Grupo público'}</div>
+            )}
+          </div>
+
           <div className="avaWrap">
             <img src={avatarUrl} alt="" />
             {!isDM && canEditSettings && (
@@ -255,66 +370,34 @@ export default function HeaderPopover({
                   ref={fileRef}
                   type="file"
                   accept="image/*"
-                  onChange={(e)=>onPickAvatar(e.target.files?.[0] || null)}
+                  onChange={(e) => onPickAvatar(e.target.files?.[0] || null)}
                 />
               </label>
             )}
             {(uploading) && <span className="uploading">Guardando…</span>}
           </div>
-
-          <div className="meta">
-            <div className="title">{title}</div>
-            {!!canal?.topic && !edit && (
-              <div className="row small"><FiTag/>{canal.topic}</div>
-            )}
-            {!isDM && !edit && (
-              <div className="row small">
-                <FiLock/>{canal?.only_mods_can_post ? 'Sólo owner/admin/mod' : 'Todos pueden postear'}
-              </div>
-            )}
-            {canal?.tipo?.codigo === 'grupo' && !edit && (
-              <div className="row small"><FiLock/>{canal?.is_privado ? 'Grupo privado' : 'Grupo público'}</div>
-            )}
-          </div>
-
-          <div className="actions">
-            {!isDM && canEditSettings && !edit && (
-              <button className="chip ghost" onClick={()=>setEdit(true)}><FiEdit2/> Editar</button>
-            )}
-            {edit && (
-              <>
-                <button className="chip ghost" onClick={()=>setEdit(false)}><FiX/> Cancelar</button>
-                <button className="chip primary" onClick={onSave} disabled={saving || uploading}>
-                  <FiSave/>{(saving || uploading) ? ' Guardando…' : ' Guardar'}
-                </button>
-              </>
-            )}
-            {isDM && (
-              <button className="chip primary" onClick={onCreatedGroupFromDm}><FiPlus/> Crear grupo</button>
-            )}
-            <button className="chip ghost" onClick={onClose} aria-label="Cerrar"><FiX/></button>
-          </div>
         </div>
+
 
         {/* Edición inline */}
         {!isDM && edit && (
           <div className="editForm">
             <label className="fLbl" htmlFor="f_nombre">Nombre</label>
-            <div className="fField"><FiHash className="ico"/><input id="f_nombre" value={form.nombre} onChange={e=>setForm({...form, nombre:e.target.value})} placeholder="Nombre visible" /></div>
+            <div className="fField"><FiHash className="ico" /><input id="f_nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre visible" /></div>
 
             {canal?.tipo?.codigo === 'canal' && (
               <>
                 <label className="fLbl" htmlFor="f_slug">Slug</label>
-                <div className="fField"><FiTag className="ico"/><input id="f_slug" value={form.slug} onChange={e=>setForm({...form, slug:e.target.value})} placeholder="general / soporte" /></div>
+                <div className="fField"><FiTag className="ico" /><input id="f_slug" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="general / soporte" /></div>
               </>
             )}
 
             <label className="fLbl" htmlFor="f_topic">Tema</label>
-            <div className="fField"><FiTag className="ico"/><input id="f_topic" value={form.topic} onChange={e=>setForm({...form, topic:e.target.value})} placeholder="Descripción breve…" /></div>
+            <div className="fField"><FiTag className="ico" /><input id="f_topic" value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })} placeholder="Descripción breve…" /></div>
 
             <div className="fChecks">
-              <label className="check"><input type="checkbox" checked={form.is_privado} onChange={e=>setForm({...form, is_privado:e.target.checked})} /> <FiLock /> Privado</label>
-              <label className="check"><input type="checkbox" checked={form.only_mods_can_post} onChange={e=>setForm({...form, only_mods_can_post:e.target.checked})} /> Sólo moderadores pueden postear</label>
+              <label className="check"><input type="checkbox" checked={form.is_privado} onChange={e => setForm({ ...form, is_privado: e.target.checked })} /> <FiLock /> Privado</label>
+              <label className="check"><input type="checkbox" checked={form.only_mods_can_post} onChange={e => setForm({ ...form, only_mods_can_post: e.target.checked })} /> Sólo moderadores pueden postear</label>
             </div>
           </div>
         )}
@@ -335,7 +418,7 @@ export default function HeaderPopover({
             <div className="row">
               <div className="lab">Estado</div>
               <div className="val">
-                <span className="dot" style={{background:PRES_COL[otherUser.presence_status]||'#6b7280'}} />
+                <span className="dot" style={{ background: PRES_COL[otherUser.presence_status] || '#6b7280' }} />
                 {otherUser.presence_status || 'offline'}
               </div>
             </div>
@@ -344,13 +427,18 @@ export default function HeaderPopover({
 
         {/* Tabs */}
         <div className="hdrPop_tabs">
-          <button className={tab==='members'?'active':''} onClick={()=>setTab('members')}>Integrantes</button>
-          <button className={tab==='files'  ?'active':''} onClick={()=>setTab('files')}>Archivos</button>
-          <button className={tab==='images' ?'active':''} onClick={()=>setTab('images')}>Imágenes</button>
+          <button className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>Integrantes</button>
+          <button className={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>Archivos</button>
+          <button className={tab === 'images' ? 'active' : ''} onClick={() => setTab('images')}>Imágenes</button>
+          {!isDM && canEditSettings && tab === 'members' && (
+            <button className="chip primary addMemberBtn" onClick={onOpenAddMember} aria-label="Agregar integrantes" data-tooltip="Agregar integrantes">
+              <FiUserPlus size={21} style={{ position: 'relative', top: '2px' }} />
+            </button>
+          )}
         </div>
 
         {/* Members (con cambio de rol) */}
-        {tab==='members' && (
+        {tab === 'members' && (
           <div className="list">
             {members.map(m => {
               const canTouch = canTouchUser(m)
@@ -368,12 +456,12 @@ export default function HeaderPopover({
                           <select
                             value={m?.rol?.codigo || 'member'}
                             disabled={roleSaving}
-                            onChange={(e)=>onChangeRole(m, e.target.value)}
+                            onChange={(e) => onChangeRole(m, e.target.value)}
                             aria-label={`Rol para ${displayName(m) || m.user_id}`}
                           >
                             {opts.map(r => (
                               <option key={r} value={r}>
-                                {r==='admin' ? 'Admin' : r==='mod' ? 'Mod' : r==='member' ? 'Miembro' : 'Invitado'}
+                                {r === 'admin' ? 'Admin' : r === 'mod' ? 'Mod' : r === 'member' ? 'Miembro' : 'Invitado'}
                               </option>
                             ))}
                           </select>
@@ -389,6 +477,18 @@ export default function HeaderPopover({
                       )}
                     </div>
                   </div>
+                  {canTouch && (
+                    <button
+                      className="btnDeleteMember"
+                      onClick={() => onRemoveMember(m)}
+                      disabled={removingMember}
+                      data-tooltip="Eliminar integrante"
+                      aria-label={`Eliminar a ${displayName(m) || m.user_id}`}
+                    >
+                      <IoRemoveCircleOutline
+                      />
+                    </button>
+                  )}
                 </div>
               )
             })}
@@ -396,25 +496,25 @@ export default function HeaderPopover({
         )}
 
         {/* Files */}
-        {tab==='files' && (
+        {tab === 'files' && (
           <div className="fileList">
             {loading && <div className="placeholder">Cargando…</div>}
-            {!loading && files.length===0 && <div className="placeholder">No hay archivos</div>}
+            {!loading && files.length === 0 && <div className="placeholder">No hay archivos</div>}
             {!loading && files.map(a => (
               <a key={`f-${a.id}`} className="fileRow" href={a.file_url} target="_blank" rel="noreferrer">
-                <div className="ico"><AttachmentIcon mime={a.mime_type||''} name={a.file_name||''} /></div>
+                <div className="ico"><AttachmentIcon mime={a.mime_type || ''} name={a.file_name || ''} /></div>
                 <div className="name" title={a.file_name || a.file_url}>{a.file_name || a.file_url}</div>
-                <div className="muted">{(a.mime_type||'').toLowerCase()}</div>
+                <div className="muted">{(a.mime_type || '').toLowerCase()}</div>
               </a>
             ))}
           </div>
         )}
 
         {/* Images */}
-        {tab==='images' && (
+        {tab === 'images' && (
           <div className="imgGrid">
             {loading && <div className="placeholder">Cargando…</div>}
-            {!loading && images.length===0 && <div className="placeholder">No hay imágenes</div>}
+            {!loading && images.length === 0 && <div className="placeholder">No hay imágenes</div>}
             {!loading && images.map(a => (
               <a key={`i-${a.id}`} className="imgCell" href={a.file_url} target="_blank" rel="noreferrer">
                 <img src={a.file_url} alt={a.file_name || 'img'} />
@@ -423,6 +523,122 @@ export default function HeaderPopover({
           </div>
         )}
       </div>
+
+      {/* Modal de confirmación para eliminar canal */}
+      {showDeleteChannelModal && (
+        <>
+          <div className="deleteModal_scrim" onClick={() => setShowDeleteChannelModal(false)} />
+          <div className="deleteModal_panel">
+            <div className="deleteModal_header">
+              <FiTrash2 className="deleteModal_icon" />
+              <h3>Eliminar {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}</h3>
+            </div>
+            <div className="deleteModal_body">
+              <p>
+                ¿Estás seguro de eliminar <strong>"{title}"</strong> de forma permanente?
+              </p>
+              <p className="deleteModal_note">
+                <strong>Nota:</strong> Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="deleteModal_actions">
+              <button className="chip danger" onClick={onDeleteChannel}>
+                Eliminar
+              </button>
+              <button className="chip ghost" onClick={() => setShowDeleteChannelModal(false)}>
+                Cancelar
+              </button>
+
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal de agregar miembro */}
+      {showAddMemberModal && (
+        <>
+          <div className="deleteModal_scrim" onClick={() => setShowAddMemberModal(false)} />
+          <div className="deleteModal_panel addMember_panel">
+            <div className="deleteModal_header">
+              <FiUserPlus className="deleteModal_icon" style={{ color: '#fff' }} />
+              <h3>Agregar integrantes</h3>
+            </div>
+            <div className="deleteModal_body">
+              <div className="searchRow">
+                <input
+                  type="text"
+                  placeholder="Buscar usuario..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="usersList">
+                {loadingUsers && <div className="placeholder">Cargando usuarios...</div>}
+                {!loadingUsers && availableUsers.length === 0 && (
+                  <div className="placeholder">No se encontraron usuarios disponibles.</div>
+                )}
+                {!loadingUsers && availableUsers
+                  .filter(u => {
+                    if (!searchQuery) return true
+                    const q = searchQuery.toLowerCase()
+                    return (u.nombre || '').toLowerCase().includes(q) ||
+                      (u.email || '').toLowerCase().includes(q)
+                  })
+                  .slice(0, 50) // Limitar resultados
+                  .map(u => (
+                    <button
+                      key={u.id}
+                      className="userRow"
+                      onClick={() => onAddMemberToChannel(u.id)}
+                      disabled={addingMember}
+                    >
+                      <div className="ava">{firstInitial(u)}</div>
+                      <div className="meta">
+                        <div className="name">{displayName(u)}</div>
+                        <div className="email">{u.email}</div>
+                      </div>
+                      <FiPlus className="addIcon" />
+                    </button>
+                  ))}
+              </div>
+            </div>
+            <div className="deleteModal_actions">
+              <button className="chip ghost" onClick={() => setShowAddMemberModal(false)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal de eliminar miembro */}
+      {showDeleteMemberModal && memberToDelete && (
+        <>
+          <div className="deleteModal_scrim" onClick={() => setShowDeleteMemberModal(false)} />
+          <div className="deleteModal_panel">
+            <div className="deleteModal_header">
+              <FiTrash2 className="deleteModal_icon" />
+              <h3>Eliminar integrante</h3>
+            </div>
+            <div className="deleteModal_body">
+              <p>
+                ¿Estás seguro de eliminar a <strong>{displayName(memberToDelete)}</strong> del {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}?
+              </p>
+            </div>
+            <div className="deleteModal_actions">
+              <button className="chip danger" onClick={confirmRemoveMember} disabled={removingMember}>
+                {removingMember ? 'Eliminando...' : 'Eliminar'}
+              </button>
+              <button className="chip ghost" onClick={() => setShowDeleteMemberModal(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+
     </>
   )
 }
