@@ -1295,6 +1295,7 @@ export const svcDeleteTask = async (id, user) => {
   // Verificar permisos - solo NivelA o NivelB pueden eliminar
   const userRoles = user?.roles || [];
 
+  console.log('[svcDeleteTask] intentando eliminar tarea con id:', id);
   console.log('[svcDeleteTask] User:', user?.email, 'Roles:', JSON.stringify(userRoles), 'Feder:', feder_id);
 
   // Verificar si tiene NivelA o NivelB (los roles son strings)
@@ -1303,12 +1304,14 @@ export const svcDeleteTask = async (id, user) => {
   console.log('[svcDeleteTask] isDirectivo:', isDirectivo);
 
   if (!isDirectivo) {
+    console.log('[svcDeleteTask] RECHAZADO: No tiene permiso de directivo');
     throw Object.assign(
       new Error(`Solo los directivos pueden eliminar tareas. Roles actuales: ${userRoles.join(', ') || 'ninguno'}`),
       { status: 403 }
     );
   }
 
+  console.log('[svcDeleteTask] PROCEDIENDO A ELIMINAR');
   return deleteTask(id, feder_id);
 };
 // ========== BOOST MANUAL ========== //
