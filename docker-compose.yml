@@ -29,10 +29,6 @@ services:
     build: ./frontend
     container_name: fedes-hub_frontend
     restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
     networks:
       - fedes-net
 
