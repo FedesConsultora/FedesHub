@@ -12,13 +12,19 @@ git pull origin main
 
 # Rebuild and restart containers
 echo ""
-echo "🔨 Rebuilding containers..."
-docker compose build --no-cache
+echo "🔨 Rebuilding and restarting containers..."
+# Usamos --build con up -d para recrear solo lo necesario sin tirar la red
+docker compose up -d --build
 
+# Reload del proxy global para refrescar IPs de los contenedores
 echo ""
-echo "🔄 Restarting services..."
-docker compose down
-docker compose up -d
+echo "🔄 Refreshing global proxy (fedes-proxy)..."
+if docker ps --format '{{.Names}}' | grep -q "^fedes-proxy$"; then
+    docker exec fedes-proxy nginx -s reload
+    echo "✅ Proxy reloaded."
+else
+    echo "⚠️  fedes-proxy not found, skipping reload."
+fi
 
 # Check status
 echo ""
