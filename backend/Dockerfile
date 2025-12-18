@@ -1,18 +1,18 @@
 # backend/Dockerfile
 FROM node:20-alpine
 
-# deps necesarios para compilar pg y bcrypt
+# deps necesarios para compilar pg y bcrypt si aplica (aunque ya los tienes)
 RUN apk add --no-cache python3 make g++ bash
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install
-RUN npm install -g nodemon
+# En producción usamos npm install
+RUN npm install --omit=dev
 
 COPY . .
 
 EXPOSE 4000
 
-# arrancar con nodemon para hot reload
-CMD ["npm", "run", "dev"]
+# En producción usamos node directamente, no nodemon
+CMD ["npm", "start"]

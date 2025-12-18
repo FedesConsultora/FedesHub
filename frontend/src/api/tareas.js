@@ -20,7 +20,13 @@ export const tareasApi = {
   list: (params = {}) => api.get(base, { params }).then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
   get: (id) => api.get(`${base}/${id}`).then(r => r.data),
   create: (body) => api.post(base, body).then(r => r.data),
-  update: (id, body) => api.patch(`${base}/${id}`, body).then(r => r.data),
+  update: (id, body) => {
+    // Limpiar keys con valor undefined para evitar validaciones incorrectas en el backend
+    const cleanBody = Object.fromEntries(
+      Object.entries(body).filter(([_, v]) => v !== undefined)
+    );
+    return api.patch(`${base}/${id}`, cleanBody).then(r => r.data);
+  },
   archive: (id, on = true) => api.patch(`${base}/${id}/archive`, { on }).then(r => r.data),
   delete: (id) => api.delete(`${base}/${id}`).then(r => r.data),
 

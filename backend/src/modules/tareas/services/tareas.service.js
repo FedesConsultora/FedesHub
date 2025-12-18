@@ -1225,7 +1225,10 @@ export const svcUpdateTask = async (id, body, user) => {
   const feder_id = user?.feder_id;
 
   // Si se intenta cambiar el vencimiento, validar permisos
-  if (body.vencimiento !== undefined) {
+  // Solo validar si 'vencimiento' está explícitamente presente en el body
+  const hasVencimiento = Object.prototype.hasOwnProperty.call(body, 'vencimiento');
+
+  if (hasVencimiento && body.vencimiento !== undefined) {
     // Verificar si es responsable de la tarea
     const isResponsable = await models.TareaResponsable.findOne({
       where: { tarea_id: id, feder_id }

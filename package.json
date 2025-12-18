@@ -6,10 +6,14 @@
     "backend"
   ],
   "scripts": {
-    "dev:backend": "npm --workspace backend run dev",
-    "db:up": "docker compose up -d db adminer",
+    "dev": "docker compose -f docker-compose.dev.yml up --build",
+    "dev:down": "docker compose -f docker-compose.dev.yml down --remove-orphans",
+    "dev:clean": "docker compose -f docker-compose.dev.yml down -v --remove-orphans",
+    "dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
     "stack:up": "docker compose up -d",
-    "stack:down": "docker compose down -v"
+    "prod:build": "docker compose build --no-cache",
+    "prod:up": "docker compose up -d",
+    "prod:logs": "docker compose logs -f"
   },
   "dependencies": {
     "googleapis": "^159.0.0"

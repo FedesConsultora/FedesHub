@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -9,7 +7,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+      test: [ "CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME" ]
       interval: 5s
       retries: 10
     networks:
@@ -31,11 +29,16 @@ services:
     build: ./frontend
     container_name: fedes-hub_frontend
     restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
     networks:
       - fedes-net
 
 volumes:
   postgres_data:
+
 
 networks:
   fedes-net:

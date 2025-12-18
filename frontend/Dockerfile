@@ -1,17 +1,29 @@
-FROM node:20-bullseye-slim
+# Build stage
+FROM node:20-bullseye-slim AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates git curl bash \
-  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-WORKDIR /usr/src/app
-
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-
-
+# Copy source code
 COPY . .
 
-EXPOSE 5173
-CMD ["bash","-lc","npm run dev -- --host 0.0.0.0"]
+# Build# En producción usamos npm install para mayor compatibilidad
+RUN npm install --omit=dev
+
+# Production stage
+FROM nginx:alpine
+
+# Copy built assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
