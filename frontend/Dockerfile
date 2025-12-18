@@ -10,8 +10,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build# En producción usamos npm install para mayor compatibilidad
-RUN npm install --omit=dev
+# Build for production
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
