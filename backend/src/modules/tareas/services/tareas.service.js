@@ -1224,11 +1224,19 @@ export const svcCreateTask = async (body, user) => {
 export const svcUpdateTask = async (id, body, user) => {
   const feder_id = user?.feder_id;
 
+  // DEBUG: Loguear qué se está recibiendo
+  console.log('[svcUpdateTask] id:', id);
+  console.log('[svcUpdateTask] body keys:', Object.keys(body));
+  console.log('[svcUpdateTask] body:', JSON.stringify(body));
+  console.log('[svcUpdateTask] feder_id:', feder_id);
+
   // Si se intenta cambiar el vencimiento, validar permisos
   // Solo validar si 'vencimiento' está explícitamente presente en el body
   const hasVencimiento = Object.prototype.hasOwnProperty.call(body, 'vencimiento');
+  console.log('[svcUpdateTask] hasVencimiento:', hasVencimiento);
 
   if (hasVencimiento && body.vencimiento !== undefined) {
+    console.log('[svcUpdateTask] Validando permisos de vencimiento...');
     // Verificar si es responsable de la tarea
     const isResponsable = await models.TareaResponsable.findOne({
       where: { tarea_id: id, feder_id }
@@ -1236,13 +1244,16 @@ export const svcUpdateTask = async (id, body, user) => {
 
     // Solo responsables pueden cambiar el deadline
     if (!isResponsable) {
+      console.log('[svcUpdateTask] RECHAZADO: No es responsable');
       throw Object.assign(
         new Error('Solo los responsables de la tarea pueden modificar la fecha de vencimiento'),
         { status: 403 }
       );
     }
+    console.log('[svcUpdateTask] OK: Es responsable');
   }
 
+  console.log('[svcUpdateTask] Procediendo con updateTask...');
   await updateTask(id, body, user?.feder_id);
   return getTaskById(id, user);
 };

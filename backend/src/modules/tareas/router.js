@@ -33,7 +33,7 @@ router.get('/compose', requireAuth, requirePermission('tareas', 'read'), getComp
 router.get('/', requireAuth, requirePermission('tareas', 'read'), listTareas);
 router.get('/:id', requireAuth, requirePermission('tareas', 'read'), getTarea);
 router.post('/', requireAuth, requirePermission('tareas', 'create'), postTarea);
-router.patch('/:id', requireAuth, patchTarea);
+router.patch('/:id', requireAuth, requirePermission('tareas', 'update'), patchTarea);
 router.patch('/:id/archive', requireAuth, requirePermission('tareas', 'delete'), archiveTarea);
 router.delete('/:id', requireAuth, requirePermission('tareas', 'delete'), deleteTarea);
 

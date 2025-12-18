@@ -1,4 +1,11 @@
 {
-  "watch": ["src"],
-  "ext": "js,cjs,json"
+  "watch": [
+    "src"
+  ],
+  "ext": "js,cjs,json",
+  "ignore": [
+    "node_modules"
+  ],
+  "legacyWatch": true,
+  "delay": 500
 }

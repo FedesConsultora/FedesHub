@@ -97,11 +97,30 @@ export const updateTaskSchema = z.object({
   requiere_aprobacion: z.boolean().optional(),
   impacto_id: intId.optional(),
   urgencia_id: intId.optional(),
-  fecha_inicio: dateOpt,
-  vencimiento: dateOpt,
+  // Usar z.unknown() para fechas y procesarlas manualmente después
+  fecha_inicio: z.unknown().optional(),
+  vencimiento: z.unknown().optional(),
   progreso_pct: z.coerce.number().min(0).max(100).optional(),
   orden_kanban: z.coerce.number().int().optional(),
   is_archivada: z.boolean().optional()
+}).transform((data) => {
+  const result = { ...data };
+
+  // Solo procesar fecha_inicio si viene explícitamente en el request
+  if ('fecha_inicio' in data && data.fecha_inicio !== undefined) {
+    result.fecha_inicio = data.fecha_inicio ? new Date(data.fecha_inicio) : null;
+  } else {
+    delete result.fecha_inicio;
+  }
+
+  // Solo procesar vencimiento si viene explícitamente en el request
+  if ('vencimiento' in data && data.vencimiento !== undefined) {
+    result.vencimiento = data.vencimiento ? new Date(data.vencimiento) : null;
+  } else {
+    delete result.vencimiento;
+  }
+
+  return result;
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
 
 export const setEstadoSchema = z.object({ estado_id: intId });
