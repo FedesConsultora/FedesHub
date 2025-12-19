@@ -12,6 +12,7 @@ import TaskDetail from "./TaskDetail";
 import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
+import useAttendanceStatus from "../../hooks/useAttendanceStatus";
 import './components/modal-panel.scss';
 
 import "./TasksPage.scss";
@@ -19,9 +20,14 @@ import "./TasksPage.scss";
 
 export default function TasksPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState("kanban");
+  const [view, setView] = useState(() => localStorage.getItem('tasks_view') || "kanban");
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+
+  const handleSetView = (v) => {
+    setView(v);
+    localStorage.setItem('tasks_view', v);
+  };
 
 
   const { roles } = useAuthCtx() || {};
@@ -125,6 +131,27 @@ export default function TasksPage() {
   // data
   const { board, rows, loading, moveTask, refetch } = useTasksBoard(filters);
 
+  // Recolectar todos los feder_ids únicos de la vista actual para el estado de asistencia
+  const allFederIds = useMemo(() => {
+    const ids = new Set();
+    const processPeople = (people) => {
+      if (!Array.isArray(people)) return;
+      people.forEach(p => {
+        const fid = p.feder?.id || p.feder_id || p.id;
+        if (fid) ids.add(Number(fid));
+      });
+    };
+
+    rows.forEach(t => {
+      processPeople(t.responsables);
+      processPeople(t.colaboradores);
+    });
+
+    return Array.from(ids);
+  }, [rows]);
+
+  const { statuses: attendanceStatuses } = useAttendanceStatus(allFederIds);
+
   // normaliza filas para TaskList
   const tableRows = useMemo(
     () =>
@@ -133,6 +160,8 @@ export default function TasksPage() {
         titulo: t.titulo,
         cliente_nombre: t.cliente_nombre,
         estado_nombre: t.estado_nombre,
+        estado_id: t.estado_id,
+        estado_codigo: t.estado_codigo,
         vencimiento: t.vencimiento,
         progreso_pct: t.progreso_pct ?? 0,
         prioridad: t.prioridad_num ?? t.prioridad ?? 0,
@@ -202,7 +231,7 @@ export default function TasksPage() {
               role="tab"
               aria-selected={view === "kanban"}
               className={view === "kanban" ? "active" : ""}
-              onClick={() => setView("kanban")}
+              onClick={() => handleSetView("kanban")}
               title="Ver en Kanban"
             >
               Kanban
@@ -212,7 +241,7 @@ export default function TasksPage() {
               role="tab"
               aria-selected={view === "list"}
               className={view === "list" ? "active" : ""}
-              onClick={() => setView("list")}
+              onClick={() => handleSetView("list")}
               title="Ver como lista"
             >
               Lista
@@ -247,6 +276,7 @@ export default function TasksPage() {
             onOpenTask={setOpenTaskId}
             onDelete={handleDeleteTask}
             canDelete={isDirectivo}
+            attendanceStatuses={attendanceStatuses}
           />
         ) : (
           <TaskList
@@ -254,6 +284,7 @@ export default function TasksPage() {
             rows={tableRows}
             loading={loading}
             onRowClick={(t) => setOpenTaskId(t.id)}
+            attendanceStatuses={attendanceStatuses}
           />
         )}
       </section>

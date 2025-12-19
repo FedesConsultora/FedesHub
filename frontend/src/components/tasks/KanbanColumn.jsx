@@ -10,7 +10,8 @@ export default function KanbanColumn({
   onStartDrag,
   onOpenTask,
   onDelete,
-  canDelete = false
+  canDelete = false,
+  attendanceStatuses = null
 }) {
   return (
     <section className="fh-k-col" role="region" aria-label={title}>
@@ -28,6 +29,7 @@ export default function KanbanColumn({
             onPointerDown={(e) => onStartDrag(e, code, iVis, indices[iVis], t.id)}
             onDelete={onDelete}
             canDelete={canDelete}
+            attendanceStatuses={attendanceStatuses}
           />
         ))}
       </div>

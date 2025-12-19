@@ -1,0 +1,29 @@
+// Attendance badge - transparent background, icon only
+.attendance-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: var(--badge-size, 14px);
+    height: var(--badge-size, 14px);
+    display: grid;
+    place-items: center;
+    font-size: var(--badge-size, 14px);
+    z-index: 10;
+    pointer-events: none;
+
+    // Fondo protector para que resalte sobre el avatar
+    background: #0f1720;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    padding: 1px;
+
+    // Active (checked in) - green icon
+    &.is-active {
+        color: #10b981; // emerald-500
+    }
+
+    // Offline (not checked in) - red icon  
+    &.is-offline {
+        color: #ef4444; // red-500
+    }
+}

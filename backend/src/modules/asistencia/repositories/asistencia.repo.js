@@ -39,29 +39,29 @@ export const getFallbackModalidadId = async () => {
 // ================== Catálogos ==================
 export const listOrigenes = () =>
   models.AsistenciaOrigenTipo.findAll({
-    attributes: ['id','codigo','nombre','descripcion'], order: [['codigo','ASC']]
+    attributes: ['id', 'codigo', 'nombre', 'descripcion'], order: [['codigo', 'ASC']]
   });
 
 export const listCierreMotivos = () =>
   models.AsistenciaCierreMotivoTipo.findAll({
-    attributes: ['id','codigo','nombre','descripcion'], order: [['codigo','ASC']]
+    attributes: ['id', 'codigo', 'nombre', 'descripcion'], order: [['codigo', 'ASC']]
   });
 
 export const getOrigenBy = async ({ id, codigo }) => {
   if (id) return models.AsistenciaOrigenTipo.findByPk(id);
-  if (codigo) return models.AsistenciaOrigenTipo.findOne({ where: { codigo }});
+  if (codigo) return models.AsistenciaOrigenTipo.findOne({ where: { codigo } });
   return null;
 };
 
 export const getCierreMotivoBy = async ({ id, codigo }) => {
   if (id) return models.AsistenciaCierreMotivoTipo.findByPk(id);
-  if (codigo) return models.AsistenciaCierreMotivoTipo.findOne({ where: { codigo }});
+  if (codigo) return models.AsistenciaCierreMotivoTipo.findOne({ where: { codigo } });
   return null;
 };
 
 // ================== Helpers ==================
 export const ensureFederExists = async (feder_id) => {
-  const f = await models.Feder.findByPk(feder_id, { attributes: ['id','is_activo'] });
+  const f = await models.Feder.findByPk(feder_id, { attributes: ['id', 'is_activo'] });
   if (!f) throw Object.assign(new Error('Feder no encontrado'), { status: 404 });
   if (!f.is_activo) throw Object.assign(new Error('Feder inactivo'), { status: 400 });
   return f;
@@ -69,7 +69,7 @@ export const ensureFederExists = async (feder_id) => {
 
 export const getFederByUser = async (user_id) => {
   if (!user_id) return null;
-  return models.Feder.findOne({ where: { user_id, is_activo: true }, attributes: ['id','user_id','is_activo'] });
+  return models.Feder.findOne({ where: { user_id, is_activo: true }, attributes: ['id', 'user_id', 'is_activo'] });
 };
 
 // ================== Consultas ==================
@@ -328,5 +328,29 @@ export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
   return sequelize.query(sql, {
     type: QueryTypes.SELECT,
     replacements: { fecha, feder_id: feder_id ?? null, celula_id: celula_id ?? null }
+  });
+};
+
+// ================== Bulk Status (for attendance badges) ==================
+export const getBulkOpenStatus = async (federIds = []) => {
+  if (!federIds.length) return [];
+  // Sanitizar IDs como integers para evitar SQL injection
+  const safeIds = federIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+  if (!safeIds.length) return [];
+
+  const sql = `
+    SELECT DISTINCT ON (ar.feder_id)
+      ar.feder_id,
+      ar.id as registro_id,
+      ar.check_in_at,
+      mt.codigo as modalidad_codigo
+    FROM "AsistenciaRegistro" ar
+    LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
+    WHERE ar.feder_id IN (${safeIds.join(',')})
+      AND ar.check_out_at IS NULL
+    ORDER BY ar.feder_id, ar.check_in_at DESC
+  `;
+  return await sequelize.query(sql, {
+    type: QueryTypes.SELECT
   });
 };

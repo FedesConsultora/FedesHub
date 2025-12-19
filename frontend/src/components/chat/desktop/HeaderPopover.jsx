@@ -15,6 +15,8 @@ import {
 import { adminListUsers } from '../../../api/auth'
 import './HeaderPopover.scss'
 import { resolveMediaUrl } from '../../../utils/media'
+import AttendanceBadge from '../../common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 
 const PRES_COL = { online: '#31c48d', away: '#f6ad55', dnd: '#ef4444', offline: '#6b7280' }
 const ROL_ES = { owner: 'propietario', admin: 'administrador', mod: 'moderador', member: 'miembro', guest: 'invitado' }
@@ -137,6 +139,50 @@ export default function HeaderPopover({
     () => (isDM ? (members || []).find(m => Number(m.user_id) !== myId) || null : null),
     [isDM, members, myId]
   )
+
+  // Collect all feder_ids for attendance status
+  const allFederIds = useMemo(() => {
+    const ids = new Set()
+
+    // Helper to convert to number and handle multiple feder_id paths
+    const toNum = (val) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : num;
+    };
+
+    const getFid = (obj) => {
+      if (!obj) return 0;
+      return toNum(
+        obj.feder_id ?? obj.id_feder ??
+        obj.feder?.id ??
+        obj.user?.feder?.id ??
+        obj.autor?.feder_id ?? obj.autor?.id_feder ??
+        obj.autor?.feder?.id
+      );
+    };
+
+    // Collect feder_ids from current members
+    for (const m of (members || [])) {
+      const fid = getFid(m);
+      if (fid) ids.add(fid);
+    }
+
+    // Collect feder_ids from available users (for adding members)
+    for (const u of (availableUsers || [])) {
+      const fid = getFid(u);
+      if (fid) ids.add(fid);
+    }
+
+    // Collect feder_id from the other user in a DM
+    if (otherUser) {
+      const fid = getFid(otherUser);
+      if (fid) ids.add(fid);
+    }
+
+    return Array.from(ids).filter(Boolean); // Filter out any 0s from toNum
+  }, [members, availableUsers, otherUser]);
+
+  const { statuses } = useAttendanceStatus(allFederIds)
 
   // preview avatar
   useEffect(() => {
@@ -418,7 +464,7 @@ export default function HeaderPopover({
             <div className="row">
               <div className="lab">Estado</div>
               <div className="val">
-                <span className="dot" style={{ background: PRES_COL[otherUser.presence_status] || '#6b7280' }} />
+                <AttendanceBadge modalidad={getModalidad(statuses, otherUser.id_feder || otherUser.feder_id || otherUser.feder?.id || otherUser.user?.feder?.id)} size={14} />
                 {otherUser.presence_status || 'offline'}
               </div>
             </div>
@@ -445,7 +491,10 @@ export default function HeaderPopover({
               const opts = optionsFor(m?.rol?.codigo || 'member')
               return (
                 <div key={m.user_id} className="row">
-                  <div className="ava">{firstInitial(m)}</div>
+                  <div className="ava" style={{ position: 'relative' }}>
+                    {firstInitial(m)}
+                    <AttendanceBadge modalidad={getModalidad(statuses, m.id_feder || m.feder_id || m.feder?.id || m.user?.feder?.id)} size={12} />
+                  </div>
                   <div className="meta">
                     <div className="name">{displayName(m) || 'usuario'}</div>
                     <div className="sub">
@@ -467,14 +516,7 @@ export default function HeaderPopover({
                           </select>
                         </div>
                       )}
-                      {m?.presence_status && (
-                        <>
-                          <span className="sep"> • </span>
-                          <span className="presence" style={{ color: PRES_COL[m.presence_status] || '#6b7280' }}>
-                            {m.presence_status}
-                          </span>
-                        </>
-                      )}
+                      {/* Presence removed as requested, using AttendanceBadge instead */}
                     </div>
                   </div>
                   {canTouch && (
@@ -593,7 +635,10 @@ export default function HeaderPopover({
                       onClick={() => onAddMemberToChannel(u.id)}
                       disabled={addingMember}
                     >
-                      <div className="ava">{firstInitial(u)}</div>
+                      <div className="ava" style={{ position: 'relative' }}>
+                        {firstInitial(u)}
+                        <AttendanceBadge modalidad={getModalidad(statuses, u.id_feder || u.feder_id || u.feder?.id || u.user?.feder?.id)} size={12} />
+                      </div>
                       <div className="meta">
                         <div className="name">{displayName(u)}</div>
                         <div className="email">{u.email}</div>

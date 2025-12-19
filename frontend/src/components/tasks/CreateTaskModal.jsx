@@ -3,6 +3,8 @@ import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
 import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle } from 'react-icons/fi'
 import { MdKeyboardArrowDown } from "react-icons/md";
+import AttendanceBadge from '../common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
 
 import './CreateTask.scss'
 
@@ -26,6 +28,7 @@ function MultiSelect({
   onChange,
   placeholder = 'Seleccionar…',
   disabled = false,
+  renderLabel = null
 }) {
   const rid = useId()
   const controlId = id || `ms-${rid}`
@@ -51,19 +54,13 @@ function MultiSelect({
     onChange?.(next)
   }
 
-  const labelsByVal = useMemo(() => {
+  const optionsByVal = useMemo(() => {
     const m = new Map()
-    options.forEach(o => m.set(String(o.value), o.label))
+    options.forEach(o => m.set(String(o.value), o))
     return m
   }, [options])
 
-  const selectedLabels = value.map(v => labelsByVal.get(String(v))).filter(Boolean)
-  const summary =
-    selectedLabels.length === 0
-      ? placeholder
-      : selectedLabels.length <= 2
-        ? selectedLabels.join(', ')
-        : `${selectedLabels.slice(0, 2).join(', ')} +${selectedLabels.length - 2}`
+  const selectedLabels = value.map(v => optionsByVal.get(String(v))?.label).filter(Boolean)
 
   const filtered = q.trim()
     ? options.filter(o => o.label.toLowerCase().includes(q.trim().toLowerCase()))
@@ -71,7 +68,7 @@ function MultiSelect({
 
   return (
     <div className="msWrap" ref={wrapRef} style={{ width: '100%' }}>
-      {/* Trigger: click/Enter/Espacio -> toggle. Si estaba abierto, se cierra. */}
+      {/* Trigger */}
       <div
         id={controlId}
         className="field"
@@ -98,13 +95,14 @@ function MultiSelect({
             <div className="selected-tags" onClick={(e) => e.stopPropagation()}>
               {value.map(val => {
                 const v = String(val)
-                const label = labelsByVal.get(v)
-                if (!label) return null
+                const opt = optionsByVal.get(v)
+                if (!opt) return null
                 return (
                   <div className="tag" key={v} role="button" tabIndex={0}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
                     onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
-                    onClick={(e) => { e.stopPropagation(); /* opcional: toggleVal(v) para remover al click */ }}>
-                    {label}
+                  >
+                    {renderLabel ? renderLabel(opt) : opt.label}
                   </div>
                 )
               })}
@@ -119,29 +117,20 @@ function MultiSelect({
 
       {open && !disabled && (
         <div className="msPanel" id={listboxId} role="listbox" aria-multiselectable="true">
-          <div className="msSearch">
-            <div className="selected-tags">
-              {value.length === 0 && (
-                <span className="placeholder">{placeholder}</span>
-              )}
-
-              {value.map((opt) => (
-                <div className="tag" key={opt.value}>
-                  {opt.label}
-                </div>
-              ))}
-            </div>
-
-          </div>
           <ul>
             {filtered.map(opt => {
               const val = String(opt.value)
               const checked = value.includes(val)
               return (
                 <li key={val}>
-                  <label className="msRow">
+                  <label className="msRow" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input type="checkbox" checked={checked} onChange={() => toggleVal(val)} />
-                    <span className="ellipsis">{opt.label}</span>
+                    <span className="ellipsis" style={{ flex: 1 }}>{opt.label}</span>
+                    {renderLabel && (
+                      <div style={{ position: 'relative', width: '14px', height: '14px' }}>
+                        {renderLabel(opt)}
+                      </div>
+                    )}
                   </label>
                 </li>
               )
@@ -178,8 +167,6 @@ const S = {
   datesRow: { display: 'flex', gap: 6, width: '100%' },
   dateCell: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
 
-
-
   fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
 
 }
@@ -208,6 +195,10 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [apiError, setApiError] = useState(null)
+
+  // Attendance status hook
+  const allFederIds = useMemo(() => (cat.feders || []).map(f => f.id), [cat.feders])
+  const { statuses } = useAttendanceStatus(allFederIds)
 
   const hitosOpts = useMemo(() => {
     if (!clienteId) return []
@@ -307,9 +298,18 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   // Opciones
   const federsOpts = useMemo(() => (cat.feders || []).map(f => {
     const label = `${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`
-    return { value: String(f.id), label }
+    return { value: String(f.id), label, feder_id: f.id }
   }), [cat.feders])
   const etiquetasOpts = useMemo(() => (cat.etiquetas || []).map(et => ({ value: String(et.id), label: et.nombre })), [cat.etiquetas])
+
+  const renderFederLabel = (opt) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
+      <span>{opt.label}</span>
+      <div style={{ position: 'relative', width: '14px', height: '14px' }}>
+        <AttendanceBadge modalidad={getModalidad(statuses, opt.feder_id)} size={14} />
+      </div>
+    </div>
+  )
 
   // IDs de labels para accesibilidad y click-to-open
   const lblEtiquetasId = 'lbl-etiquetas'
@@ -428,6 +428,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                       onChange={setColaboradores}
                       placeholder="Asignar a"
                       disabled={loading}
+                      renderLabel={renderFederLabel}
                     />
                   </div>
 
@@ -651,3 +652,4 @@ export default function CreateTaskModal({ onClose, onCreated }) {
     </div>
   )
 }
+

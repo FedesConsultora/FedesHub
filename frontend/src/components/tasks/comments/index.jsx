@@ -1,27 +1,29 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import Avatar from '../../Avatar.jsx'
+import AttendanceBadge from '../../common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import { useTaskComments } from '../../../pages/Tareas/hooks/useTaskComments'
 import CommentItem from './CommentItem'
 import Composer from './Composer'
 import './comments.scss'
 
 // ---- Utils ----
-const fmtDateTime = (iso, locale='es-AR') =>
-  new Intl.DateTimeFormat(locale, { dateStyle:'short', timeStyle:'short' }).format(new Date(iso))
+const fmtDateTime = (iso, locale = 'es-AR') =>
+  new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso))
 
 const timeAgo = (iso) => {
-  const d = new Date(iso); const diff = (Date.now() - d.getTime())/1000
+  const d = new Date(iso); const diff = (Date.now() - d.getTime()) / 1000
   if (diff < 60) return 'hace un momento'
-  if (diff < 3600) return `hace ${Math.floor(diff/60)} min`
-  if (diff < 86400) return `hace ${Math.floor(diff/3600)} h`
-  return `hace ${Math.floor(diff/86400)} d`
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
+  return `hace ${Math.floor(diff / 86400)} d`
 }
 
-const groupByDay = (arr=[]) => {
+const groupByDay = (arr = []) => {
   const out = []; let cur = null
   for (const c of arr) {
     const key = new Date(c.created_at).toDateString()
-    if (!cur || cur.key !== key) { cur = { key, items:[c] }; out.push(cur) }
+    if (!cur || cur.key !== key) { cur = { key, items: [c] }; out.push(cur) }
     else cur.items.push(c)
   }
   return out
@@ -37,7 +39,7 @@ export default function TaskComments({ taskId, catalog }) {
   const listRef = useRef(null)
 
   const canPost = !!catalog?.comentario_tipos?.length
-  const feders  = catalog?.feders || []
+  const feders = catalog?.feders || []
 
   // === IDs del usuario actual (robusto a distintos shapes) ===
   const meUserId = toNum(
@@ -64,24 +66,24 @@ export default function TaskComments({ taskId, catalog }) {
   const myFederId = useMemo(() => {
     if (meFederId != null) return meFederId
     if (meUserId == null) return null
-    const me = (feders||[]).find(f => toNum(f.user_id) === meUserId)
+    const me = (feders || []).find(f => toNum(f.user_id) === meUserId)
     return toNum(me?.id ?? null)
   }, [meFederId, meUserId, feders])
 
-  const escapeHtml = (s='') =>
-    s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  const escapeHtml = (s = '') =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
   // Render: se escribe @id pero se muestra @Nombre Apellido
-  const renderContenido = (texto='', menciones=[]) => {
+  const renderContenido = (texto = '', menciones = []) => {
     // 1) escape + saltos de línea
-    let html = escapeHtml(texto).replace(/\n/g,'<br/>')
+    let html = escapeHtml(texto).replace(/\n/g, '<br/>')
 
     // 2) reemplazo de menciones conocidas por id → nombre
     //    (primero por lista de menciones, luego fallback global @(\d+))
     const replaceIdWithName = (_, idStr) => {
       const f = fedById.get(Number(idStr))
       if (!f) return _
-      const full = `${f.nombre||''} ${f.apellido||''}`.trim()
+      const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       return `<span class="mentions">@${full}</span>`
     }
 
@@ -90,7 +92,7 @@ export default function TaskComments({ taskId, catalog }) {
       const fid = toNum(fidRaw)
       if (!fid) continue
       const f = fedById.get(fid); if (!f) continue
-      const full = `${f.nombre||''} ${f.apellido||''}`.trim()
+      const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       html = html.replace(new RegExp(`@${fid}\\b`, 'g'), `<span class="mentions">@${full}</span>`)
     }
     // fallback: cualquier @(\d+)
@@ -102,12 +104,12 @@ export default function TaskComments({ taskId, catalog }) {
     return { __html: html }
   }
 
-  const renderReplyExcerpt = (texto='') => {
-    let html = escapeHtml(texto.replace(/\s+/g,' '))
+  const renderReplyExcerpt = (texto = '') => {
+    let html = escapeHtml(texto.replace(/\s+/g, ' '))
     html = html.replace(/@(\d+)\b/g, (_, id) => {
       const f = fedById.get(toNum(id))
       if (!f) return `@${id}`
-      const full = `${f.nombre||''} ${f.apellido||''}`.trim()
+      const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       return `<span class="mentions">@${full}</span>`
     })
     html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
@@ -116,10 +118,21 @@ export default function TaskComments({ taskId, catalog }) {
 
   // orden por fecha (viejos arriba)
   const sorted = useMemo(
-    () => (comentarios||[]).slice().sort((a,b)=> new Date(a.created_at) - new Date(b.created_at)),
+    () => (comentarios || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
     [comentarios]
   )
   const groups = useMemo(() => groupByDay(sorted), [sorted])
+
+  // Get feder IDs for attendance status
+  const commentFederIds = useMemo(() => {
+    const ids = new Set()
+    for (const c of sorted) {
+      const fid = toNum(c.feder_id ?? c.autor_feder_id)
+      if (fid) ids.add(fid)
+    }
+    return [...ids]
+  }, [sorted])
+  const { statuses } = useAttendanceStatus(commentFederIds)
 
   // autoscroll al final
   useEffect(() => {
@@ -138,7 +151,7 @@ export default function TaskComments({ taskId, catalog }) {
   }
 
   const dayLabel = (iso) =>
-    new Intl.DateTimeFormat('es-AR', { weekday:'long', year:'numeric', month:'short', day:'numeric' })
+    new Intl.DateTimeFormat('es-AR', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })
       .format(new Date(iso))
 
   return (
@@ -161,20 +174,23 @@ export default function TaskComments({ taskId, catalog }) {
               const author = [c.autor_nombre, c.autor_apellido].filter(Boolean).join(' ') || 'Feder'
 
               // Tolerante al shape del backend
-              const cFederId  = toNum(c.feder_id ?? c.autor_feder_id ?? null)
+              const cFederId = toNum(c.feder_id ?? c.autor_feder_id ?? null)
               const cAutorUid = toNum(c.autor_user_id ?? null)
 
               // FALLBACK cliente si no viene is_mine
               const fallbackIsMine =
-                (cAutorUid != null && meUserId  != null && cAutorUid === meUserId) ||
-                (cFederId  != null && myFederId != null && cFederId  === myFederId)
+                (cAutorUid != null && meUserId != null && cAutorUid === meUserId) ||
+                (cFederId != null && myFederId != null && cFederId === myFederId)
 
               // ROBUSTO: prioriza c.is_mine del backend
               const isMine = (typeof c.is_mine === 'boolean') ? c.is_mine : fallbackIsMine
 
               return (
                 <div className={`item ${isMine ? 'mine' : ''}`} key={c.id}>
-                  <Avatar className="ph-avatar" name={author} size={30} />
+                  <div className="avatarWrapper">
+                    <Avatar className="ph-avatar" name={author} size={30} />
+                    <AttendanceBadge modalidad={getModalidad(statuses, cFederId)} size={12} />
+                  </div>
                   <CommentItem
                     c={c}
                     author={author}

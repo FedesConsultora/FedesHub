@@ -4,6 +4,14 @@ import { Badge } from "../ui/badge";
 import AvatarStack from "../common/AvatarStack";
 import { getPriorityMeta } from "./priority-utils";
 
+const STATUS_COLORS = {
+  pendiente: '#7A1B9F',
+  en_curso: '#9F1B50',
+  revision: '#1B6D9F',
+  aprobada: '#1B9F4E',
+  cancelada: '#9F1B1B',
+}
+
 /**
  * TaskList — tabla reutilizable para tareas
  *
@@ -15,6 +23,7 @@ import { getPriorityMeta } from "./priority-utils";
  * - showHeader: bool (default true)
  * - onRowClick: fn(row) | opcional (fila clickeable)
  * - columns: { cliente, estado, vence, progreso, responsables } — toggles de columnas (todas true por defecto)
+ * - attendanceStatuses: opcional, objeto con estados de asistencia
  */
 
 export default function TaskList({
@@ -25,6 +34,7 @@ export default function TaskList({
   showHeader = true,
   onRowClick,
   onOpenTask,
+  attendanceStatuses = null,
 
   columns: cols = { cliente: true, estado: true, vence: true, progreso: true, responsables: true },
 }) {
@@ -128,6 +138,7 @@ export default function TaskList({
 
               // Combinar responsables y colaboradores
               const allPeople = [...(t.responsables || []), ...(t.colaboradores || [])];
+              const statusColor = STATUS_COLORS[t.estado_codigo] || '#94a3b8';
 
               return (
                 <tr
@@ -161,12 +172,21 @@ export default function TaskList({
                   )}
                   {cols.responsables && (
                     <td className={`px-3 cursor-pointer ${RowPad}`}>
-                      <AvatarStack people={allPeople} size={24} />
+                      <AvatarStack people={allPeople} size={24} attendanceStatuses={attendanceStatuses} />
                     </td>
                   )}
                   {cols.estado && (
                     <td className={`px-3 cursor-pointer  ${RowPad}`}>
-                      <Badge variant="secondary">
+                      <Badge
+                        variant="secondary"
+                        style={{
+                          backgroundColor: `${statusColor}20`,
+                          color: statusColor,
+                          borderColor: `${statusColor}40`,
+                          borderWidth: '1px',
+                          borderStyle: 'solid'
+                        }}
+                      >
                         {t.estado_nombre || t.stage || "—"}
                       </Badge>
                     </td>
@@ -196,4 +216,3 @@ export default function TaskList({
     </div>
   );
 }
-

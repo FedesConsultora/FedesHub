@@ -3,14 +3,14 @@ import {
   listQuerySchema, idParamSchema, openQuerySchema,
   checkInBodySchema, checkOutBodySchema, forceCloseBodySchema, adjustBodySchema,
   timelineQuerySchema
-,
+  ,
 } from '../validators.js';
 
 import {
   svcCatalogOrigenes, svcCatalogCierreMotivos,
   svcList, svcGet, svcGetOpen, svcCheckIn, svcCheckOut, svcAdjust, svcForceCloseOpen,
   svcToggle, svcGetMyFeder, svcResumenPeriodo,
-  svcTimelineDia
+  svcTimelineDia, svcBulkStatus
 } from '../services/asistencia.service.js';
 
 export const health = (_req, res) => res.json({ module: 'asistencia', ok: true });
@@ -120,5 +120,16 @@ export const meTimelineDia = async (req, res, next) => {
     const q = timelineQuerySchema.parse(req.query);
     const me = await svcGetMyFeder(req.user.id);
     res.json(await svcTimelineDia({ ...q, feder_id: me.id }));
+  } catch (e) { next(e); }
+};
+
+// Bulk status for attendance badges
+export const bulkStatus = async (req, res, next) => {
+  try {
+    const ids = (req.query.feder_ids || '')
+      .split(',')
+      .map(Number)
+      .filter(id => Number.isInteger(id) && id > 0);
+    res.json(await svcBulkStatus(ids));
   } catch (e) { next(e); }
 };

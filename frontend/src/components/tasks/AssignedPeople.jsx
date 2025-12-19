@@ -1,12 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Avatar from '../Avatar.jsx';
+import AttendanceBadge from '../common/AttendanceBadge.jsx';
+import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js';
 import { MdClose } from 'react-icons/md';
 import { CiCirclePlus } from "react-icons/ci";
 import { MdEdit } from "react-icons/md";
 
 import './assigned-people.scss';
 
-const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handleAdd, handleRemove, disabled }) => (
+const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handleAdd, handleRemove, disabled, statuses }) => (
   <div className="peopleGroup">
     <div className="pgHead">
       <span>{title}</span>
@@ -108,6 +110,7 @@ const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handle
             <div className="person" key={p.id || p.feder_id || i}>
               <div className="avatarWrapper">
                 <Avatar src={p.avatar_url} name={fullName} size={36} />
+                <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id || p.id)} size={14} />
 
                 {/* Tooltip con el nombre */}
                 <div className="avatarTooltip">
@@ -134,6 +137,18 @@ export default function AssignedPeople({
   disabled = false
 }) {
   const [openAdd, setOpenAdd] = useState(null);
+
+  // Get all feder IDs for attendance status
+  const allFederIds = useMemo(() => {
+    const ids = [];
+    for (const p of [...responsables, ...colaboradores]) {
+      const id = p.feder_id || p.id;
+      if (id) ids.push(id);
+    }
+    return ids;
+  }, [responsables, colaboradores]);
+
+  const { statuses } = useAttendanceStatus(allFederIds);
 
   // Click outside para cerrar dropdown - Solución definitiva
   useEffect(() => {
@@ -202,6 +217,7 @@ export default function AssignedPeople({
         handleAdd={handleAdd}
         handleRemove={handleRemove}
         disabled={disabled}
+        statuses={statuses}
       />
 
       <Group
@@ -214,6 +230,7 @@ export default function AssignedPeople({
         handleAdd={handleAdd}
         handleRemove={handleRemove}
         disabled={disabled}
+        statuses={statuses}
       />
     </div>
   );

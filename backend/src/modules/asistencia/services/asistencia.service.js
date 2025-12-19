@@ -4,7 +4,7 @@ import {
   listRegistros, countRegistros, getRegistroById, getOpenByFeder,
   createCheckIn, updateCheckOut, adjustRegistro, forceCloseOpenForFeder,
   toggleForFeder, resumenPorPeriodo, ensureFederExists, getFederByUser,
-  getModalidadBy
+  getModalidadBy, getBulkOpenStatus
 } from '../repositories/asistencia.repo.js';
 
 const resolveModalidadId = async ({ modalidad_id, modalidad_codigo }) => {
@@ -136,11 +136,11 @@ export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min =
       });
     }
     const start = new Date(r.check_in_at);
-    const end   = r.check_out_at ? new Date(r.check_out_at) : null;
+    const end = r.check_out_at ? new Date(r.check_out_at) : null;
 
     // recortar al día
     const dayStart = new Date(`${fecha}T00:00:00.000Z`);
-    const dayEnd   = new Date(`${fecha}T24:00:00.000Z`);
+    const dayEnd = new Date(`${fecha}T24:00:00.000Z`);
     const s = new Date(Math.max(dayStart.getTime(), start.getTime()));
     const e = new Date(Math.min(dayEnd.getTime(), (end ?? new Date()).getTime()));
     if (e > s) {
@@ -158,7 +158,7 @@ export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min =
   // Resumen por persona (progreso a la jornada objetivo)
   const out = [];
   for (const v of byFeder.values()) {
-    const worked = v.bloques.reduce((acc,b) => acc + b.minutes, 0);
+    const worked = v.bloques.reduce((acc, b) => acc + b.minutes, 0);
     out.push({
       ...v,
       resumen: {
@@ -178,4 +178,18 @@ export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min =
   });
 
   return { fecha, jornada_min, items: out };
+};
+
+// Bulk status for attendance badges
+export const svcBulkStatus = async (federIds = []) => {
+  const rows = await getBulkOpenStatus(federIds);
+  // Transform to map: { feder_id: { modalidad_codigo, check_in_at } }
+  const result = {};
+  for (const r of rows) {
+    result[r.feder_id] = {
+      modalidad_codigo: r.modalidad_codigo,
+      check_in_at: r.check_in_at
+    };
+  }
+  return result;
 };

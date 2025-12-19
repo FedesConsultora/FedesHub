@@ -16,7 +16,9 @@ import {
   // reportes
   resumenPeriodo,
   timelineDia,
-  meTimelineDia
+  meTimelineDia,
+  // bulk status
+  bulkStatus
 } from './controllers/asistencia.controller.js';
 
 const router = Router();
@@ -25,39 +27,42 @@ const router = Router();
 router.get('/health', health);
 
 // Catálogos
-router.get('/catalog/origenes',        requireAuth, requirePermission('asistencia','read'),    getOrigenes);
-router.get('/catalog/cierre-motivos',  requireAuth, requirePermission('asistencia','read'),    getCierreMotivos);
+router.get('/catalog/origenes', requireAuth, requirePermission('asistencia', 'read'), getOrigenes);
+router.get('/catalog/cierre-motivos', requireAuth, requirePermission('asistencia', 'read'), getCierreMotivos);
 
 // Histórico global (requiere permiso de reportes)
-router.get('/registros',               requireAuth, requirePermission('asistencia','report'),  list);
+router.get('/registros', requireAuth, requirePermission('asistencia', 'report'), list);
 // Histórico propio
-router.get('/me/registros',            requireAuth, requirePermission('asistencia','read'),    meList);
+router.get('/me/registros', requireAuth, requirePermission('asistencia', 'read'), meList);
 
 // Detalle
-router.get('/registros/:id',           requireAuth, requirePermission('asistencia','read'),    detail);
+router.get('/registros/:id', requireAuth, requirePermission('asistencia', 'read'), detail);
 
 // Abierto por feder
-router.get('/open',                    requireAuth, requirePermission('asistencia','read'),    getOpen);
+router.get('/open', requireAuth, requirePermission('asistencia', 'read'), getOpen);
 
-router.get('/timeline-dia',    requireAuth, requirePermission('asistencia','report'), timelineDia);
-router.get('/me/timeline-dia', requireAuth, requirePermission('asistencia','read'),   meTimelineDia);
+router.get('/timeline-dia', requireAuth, requirePermission('asistencia', 'report'), timelineDia);
+router.get('/me/timeline-dia', requireAuth, requirePermission('asistencia', 'read'), meTimelineDia);
 
 // Acciones estándar
-router.post('/check-in',               requireAuth, requirePermission('asistencia','checkin'), postCheckIn);
-router.patch('/registros/:id/check-out', requireAuth, requirePermission('asistencia','checkout'), patchCheckOut);
-router.patch('/registros/:id',         requireAuth, requirePermission('asistencia','adjust'),  patchAdjust);
-router.post('/feder/:federId/force-close', requireAuth, requirePermission('asistencia','close'), postForceClose);
+router.post('/check-in', requireAuth, requirePermission('asistencia', 'checkin'), postCheckIn);
+router.patch('/registros/:id/check-out', requireAuth, requirePermission('asistencia', 'checkout'), patchCheckOut);
+router.patch('/registros/:id', requireAuth, requirePermission('asistencia', 'adjust'), patchAdjust);
+router.post('/feder/:federId/force-close', requireAuth, requirePermission('asistencia', 'close'), postForceClose);
 
 // Toggle (check-in/out con un botón)
-router.post('/toggle',                 requireAuth, requirePermission('asistencia','checkin'), postToggle);
+router.post('/toggle', requireAuth, requirePermission('asistencia', 'checkin'), postToggle);
 
 // Flujos “me”
-router.get('/me/open',                 requireAuth, requirePermission('asistencia','read'),    meOpen);
-router.post('/me/toggle',              requireAuth, requirePermission('asistencia','checkin'), meToggle);
-router.post('/me/check-in',            requireAuth, requirePermission('asistencia','checkin'), meCheckIn);
-router.post('/me/check-out',           requireAuth, requirePermission('asistencia','checkout'), meCheckOut);
+router.get('/me/open', requireAuth, requirePermission('asistencia', 'read'), meOpen);
+router.post('/me/toggle', requireAuth, requirePermission('asistencia', 'checkin'), meToggle);
+router.post('/me/check-in', requireAuth, requirePermission('asistencia', 'checkin'), meCheckIn);
+router.post('/me/check-out', requireAuth, requirePermission('asistencia', 'checkout'), meCheckOut);
 
 // Reportes (requiere report)
-router.get('/resumen/periodo',         requireAuth, requirePermission('asistencia','report'),  resumenPeriodo);
+router.get('/resumen/periodo', requireAuth, requirePermission('asistencia', 'report'), resumenPeriodo);
+
+// Bulk status for attendance badges (requires read permission)
+router.get('/status/bulk', requireAuth, requirePermission('asistencia', 'read'), bulkStatus);
 
 export default router;

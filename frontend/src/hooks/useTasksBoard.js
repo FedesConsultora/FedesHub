@@ -70,6 +70,7 @@ export default function useTasksBoard(
           due: t.vencimiento,
           prioridad: t.prioridad_num ?? t.prioridad ?? 0,
           client: { id: t.cliente_id, name: t.cliente_nombre, weight: t.cliente_ponderacion ?? 0 },
+          status: { code: t.estado_codigo, name: t.estado_nombre },
           responsables,
           colaboradores,
           kanbanOrder: Number.isFinite(t.kanban_orden) ? t.kanban_orden : Number.MAX_SAFE_INTEGER

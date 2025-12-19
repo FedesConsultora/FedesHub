@@ -166,6 +166,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       }
 
       setHistoryRefresh(prev => prev + 1);
+      onUpdated?.();
       toast?.success("Participantes Actualizados");
     } catch (e) {
       // Si falla, revertir a los valores originales de task
@@ -273,6 +274,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       console.log('[TaskDetail] Guardado exitoso:', next)
       setTask(next)
       setHistoryRefresh(prev => prev + 1)
+      onUpdated?.()
       setForm({ titulo: next?.titulo || '', descripcion: next?.descripcion || '' })
       toast?.success(source === 'auto' ? 'Cambios guardados' : 'Guardado')
     } catch (e) {
@@ -440,6 +442,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     const next = await tareasApi.setEstado(taskId, estado_id)
     setTask(next)
     setHistoryRefresh(prev => prev + 1) // Trigger history refresh
+    onUpdated?.()
   }
 
   // Eliminar tarea (solo directivos)
@@ -493,6 +496,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       const next = await tareasApi.update(taskId, { vencimiento: iso })
       setTask(next)
       setHistoryRefresh(prev => prev + 1)
+      onUpdated?.()
       toast?.success('Vencimiento actualizado')
     } catch (e1) {
       try {
@@ -526,6 +530,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       const next = await tareasApi.update(taskId, { cliente_id: cid })
       setTask(next)
       setHistoryRefresh(prev => prev + 1)
+      onUpdated?.()
       toast?.success('Cliente actualizado')
     } catch (e) {
       const msg = e?.response?.data?.message || e?.message || 'No se pudo actualizar el cliente'
@@ -538,6 +543,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       const next = await tareasApi.setBoost(taskId, enabled);
       setTask(next);
       setHistoryRefresh(prev => prev + 1);
+      onUpdated?.();
       toast?.success(enabled ? 'Prioridad aumentada' : 'Prioridad normal');
     } catch (e) {
       toast?.error(e?.message || 'No se pudo cambiar la prioridad');

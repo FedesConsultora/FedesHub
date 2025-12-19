@@ -3,12 +3,12 @@ import { api } from './client'
 const base = '/asistencia'
 
 const me = {
-  open:    () => api.get(`${base}/me/open`).then(r => r.data),
-  list:    (params={}) => api.get(`${base}/me/registros`, { params })
-                  .then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
+  open: () => api.get(`${base}/me/open`).then(r => r.data),
+  list: (params = {}) => api.get(`${base}/me/registros`, { params })
+    .then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
   checkIn: (body) => api.post(`${base}/me/check-in`, body).then(r => r.data),
-  checkOut:(body) => api.post(`${base}/me/check-out`, body).then(r => r.data),
-  toggle:  (body) => api.post(`${base}/me/toggle`, body).then(r => r.data),
+  checkOut: (body) => api.post(`${base}/me/check-out`, body).then(r => r.data),
+  toggle: (body) => api.post(`${base}/me/toggle`, body).then(r => r.data),
 
   // ⬇️ Antes recibía un string; ahora acepta params (objeto)
   timelineDia: (params) =>
@@ -18,22 +18,27 @@ const me = {
 const apiRoot = {
   list: (params = {}) =>
     api.get(`${base}/registros`, { params })
-       .then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
-  get:  (id) => api.get(`${base}/registros/${id}`).then(r => r.data),
+      .then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
+  get: (id) => api.get(`${base}/registros/${id}`).then(r => r.data),
 
-  catalogOrigenes:      () => api.get(`${base}/catalog/origenes`).then(r => r.data),
+  catalogOrigenes: () => api.get(`${base}/catalog/origenes`).then(r => r.data),
   catalogCierreMotivos: () => api.get(`${base}/catalog/cierre-motivos`).then(r => r.data),
 
   timelineDia: (params) =>
     api.get(`${base}/timeline-dia`, { params }).then(r => r.data),
 
+  // Bulk status for attendance badges
+  bulkStatus: (federIds = []) =>
+    api.get(`${base}/status/bulk`, { params: { feder_ids: federIds.join(',') } })
+      .then(r => r.data),
+
   me,
 
   // Back-compat
-  meOpen:     me.open,
-  meList:     me.list,
-  meCheckIn:  me.checkIn,
+  meOpen: me.open,
+  meList: me.list,
+  meCheckIn: me.checkIn,
   meCheckOut: me.checkOut,
-  meToggle:   me.toggle,
+  meToggle: me.toggle,
 }
 export const asistenciaApi = apiRoot

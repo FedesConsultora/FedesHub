@@ -1,9 +1,17 @@
+import { useMemo } from 'react'
 import './DMList.scss'
 import { displayName, firstInitial } from '../../../utils/people'
+import AttendanceBadge from '../../common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 
-const PRES_COL = { online:'#31c48d', away:'#f6ad55', dnd:'#ef4444', offline:'#6b7280' }
+export default function DMList({ items = [], selectedId = null, unreadLookup = {}, mentionLookup = {}, onOpenDm }) {
+  // Collect feder_ids for attendance status
+  const federIds = useMemo(() =>
+    items.map(u => u.feder_id || u.id_feder).filter(Boolean),
+    [items]
+  )
+  const { statuses } = useAttendanceStatus(federIds)
 
-export default function DMList({ items=[], selectedId=null, unreadLookup={}, mentionLookup={}, onOpenDm }) {
   return (
     <div className="chat-dms">
       <div className="list">
@@ -16,14 +24,14 @@ export default function DMList({ items=[], selectedId=null, unreadLookup={}, men
           return (
             <button
               key={u.user_id}
-              className={`row ${sel?'sel':''}`}
+              className={`row ${sel ? 'sel' : ''}`}
               onClick={() => onOpenDm?.(u)}
               title={u.email}
             >
               <span className={'avatar' + (hasMention ? ' mention' : '')}>
                 {firstInitial(u)}
-                <i className="presence" style={{ background: PRES_COL[u.presence_status] || '#6b7280' }} />
                 {unread && <i className="dot" />}
+                <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
               </span>
               <div className="meta">
                 <div className="name">

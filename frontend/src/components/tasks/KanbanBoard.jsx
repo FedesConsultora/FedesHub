@@ -14,7 +14,8 @@ export default function KanbanBoard({
   moveTask: extMove,
   onOpenTask,
   onDelete,
-  canDelete = false
+  canDelete = false,
+  attendanceStatuses = null
 }) {
   const internal = extBoard ? null : useTasksBoard(params)
   const board = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
@@ -293,6 +294,7 @@ export default function KanbanBoard({
           onStartDrag={startDrag}
           onDelete={onDelete}
           canDelete={canDelete}
+          attendanceStatuses={attendanceStatuses}
         />
       ))}
     </div>
