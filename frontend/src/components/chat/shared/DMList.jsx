@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import Avatar from '../../Avatar.jsx'
 import './DMList.scss'
-import { displayName } from '../../../utils/people'
+import { displayName, pickAvatar } from '../../../utils/people'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 
@@ -30,7 +30,7 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
               title={u.email}
             >
               <span className={'avatarWrap' + (hasMention ? ' mention' : '')}>
-                <Avatar src={u.avatar_url} name={name} size={36} />
+                <Avatar src={pickAvatar(u)} name={name} size={36} />
                 {unread && <i className="dot" />}
                 <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
               </span>

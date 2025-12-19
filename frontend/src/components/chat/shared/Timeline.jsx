@@ -209,7 +209,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
       <div className="meta">
         <div className="avatarSide" style={{ position: 'relative' }}>
           <Avatar
-            src={pickAvatar(m)}
+            src={pickAvatar(member) || pickAvatar(m)}
             name={author}
             size={28}
           />
