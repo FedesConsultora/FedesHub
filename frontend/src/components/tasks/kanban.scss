@@ -120,33 +120,15 @@
 
   // Indicador de prioridad (borde izquierdo)
   &.prio-high {
-    border-left: 3px solid #f44336;
+    border-left: 7px solid #f44336;
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #f44336;
-      box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
-    }
+   
   }
 
   &.prio-med {
-    border-left: 3px solid #ff9800;
+    border-left: 7px solid #ff9800;
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #ff9800;
-      box-shadow: 0 0 6px rgba(255, 152, 0, 0.4);
-    }
+  
   }
 
   .fh-k-row {

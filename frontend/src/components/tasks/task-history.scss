@@ -16,11 +16,11 @@ $muted: v.$fh-muted;
   padding: 0;
   color: $text;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
-  
+
   font-family: v.$font-sans;
   margin-top: .5rem;
 
- 
+
 
   /* header */
   .historyHeader {
@@ -74,7 +74,8 @@ $muted: v.$fh-muted;
     display: flex;
     flex-direction: column;
     max-height: 200px;
-   
+    overflow: auto;
+
 
     /* Custom scrollbar */
     &::-webkit-scrollbar {
@@ -96,18 +97,18 @@ $muted: v.$fh-muted;
     }
   }
 
- .historyEntry {
-  position: relative; 
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.2rem;
-  border-bottom: 1px solid $border;
-  font-size: 0.85rem;
-  cursor: pointer;
+  .historyEntry {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    border-bottom: 1px solid $border;
+    font-size: 0.85rem;
+    cursor: pointer;
 
 
- 
+
 
     &:last-child {
       border-bottom: none;
@@ -117,7 +118,7 @@ $muted: v.$fh-muted;
       background: rgba(255, 255, 255, .02);
     }
 
-    
+
 
 
 
@@ -128,51 +129,15 @@ $muted: v.$fh-muted;
     }
 
     .description {
-      position:relative;
+      position: relative;
       flex: 1;
       color: rgba($text, 0.85);
       text-overflow: ellipsis;
       white-space: wrap;
-     
+      font-size: .7rem;
 
-  &[data-tooltip] {
-  &::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #071013;
-    color: #fff;
-    font-size: 13px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    z-index: 9000;
-    
-  }
 
-  &::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #071013;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
 
-  &:hover::after,
-  &:hover::before {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-4px);
-  }
- }
     }
 
     .timestamp {
