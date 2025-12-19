@@ -9,10 +9,28 @@ import {
 import {
   svcList, svcDetail, svcCreate, svcUpdate, svcDelete, svcAssignCelula,
   svcListContactos, svcCreateContacto, svcUpdateContacto, svcDeleteContacto,
-  svcResumenEstado, svcResumenPonderacion, svcResumenCelula, svcCatalog
+  svcResumenEstado, svcResumenPonderacion, svcResumenCelula, svcCatalog,
+  svcExportExcel, svcImportExcel
 } from '../services/clientes.service.js';
 
 export const health = (_req, res) => res.json({ module: 'clientes', ok: true });
+
+export const exportExcel = async (_req, res, next) => {
+  try {
+    const buffer = await svcExportExcel();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=clientes.xlsx');
+    res.send(buffer);
+  } catch (e) { next(e); }
+};
+
+export const importExcel = async (req, res, next) => {
+  try {
+    if (!req.file) throw Object.assign(new Error('Falta archivo'), { status: 400 });
+    const resData = await svcImportExcel(req.file.buffer);
+    res.json(resData);
+  } catch (e) { next(e); }
+};
 
 export const catalog = async (_req, res, next) => {
   try { res.json(await svcCatalog()); } catch (e) { next(e); }

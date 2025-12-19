@@ -9,7 +9,7 @@ export const chatApi = {
     list: (params = {}) => api.get(`${base}/channels`, { params }).then(r => r.data),
     create: (body) => api.post(`${base}/channels`, body).then(r => r.data),
     update: (id, body) => api.put(`${base}/channels/${id}`, body).then(r => r.data),
-    // delete: (id)        => api.delete(`${base}/channels/${id}`).then(r=>r.data), // Comentado hasta que el endpoint esté disponible
+    delete: (id) => api.delete(`${base}/channels/${id}`).then(r => r.data),
     archive: (id, on) => api.patch(`${base}/channels/${id}/archive`, { on }).then(r => r.data),
     settings: (id, body) => api.patch(`${base}/channels/${id}/settings`, body).then(r => r.data),
 

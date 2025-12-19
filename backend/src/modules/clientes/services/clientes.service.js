@@ -7,12 +7,13 @@ import {
   listContactos, createContacto, updateContacto, deleteContacto,
   resumenPorEstado, resumenPorPonderacion, resumenPorCelula, listClienteTipos, listClienteEstados, listCelulasLite
 } from '../repositories/clientes.repo.js';
+import * as XLSX from 'xlsx';
 
 export const svcCatalog = async () => {
   const [tipos, estados, celulas] = await Promise.all([
     listClienteTipos(), listClienteEstados(), listCelulasLite()
   ]);
-  return { tipos, estados, celulas, ponderaciones: [1,2,3,4,5] };
+  return { tipos, estados, celulas, ponderaciones: [1, 2, 3, 4, 5] };
 };
 
 const resolveTipoId = async ({ tipo_id, tipo_codigo }) => {
@@ -80,3 +81,83 @@ export const svcDeleteContacto = (cliente_id, id) => deleteContacto(cliente_id, 
 export const svcResumenEstado = () => resumenPorEstado();
 export const svcResumenPonderacion = () => resumenPorPonderacion();
 export const svcResumenCelula = () => resumenPorCelula();
+
+// EXPORT / IMPORT EXCEL
+export const svcExportExcel = async () => {
+  const { rows } = await svcList({ limit: 5000, estado_id: 'all' });
+
+  const data = rows.map(r => ({
+    ID: r.id,
+    Nombre: r.nombre,
+    Alias: r.alias || '',
+    Email: r.email || '',
+    Teléfono: r.telefono || '',
+    'Sitio Web': r.sitio_web || '',
+    Descripción: r.descripcion || '',
+    'Célula': r.celula_nombre,
+    Tipo: r.tipo_nombre,
+    Estado: r.estado_nombre,
+    Ponderación: r.ponderacion
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+};
+
+export const svcImportExcel = async (buffer) => {
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(ws);
+
+  const catalog = await svcCatalog();
+  const res = { created: 0, updated: 0, errors: [] };
+
+  for (const row of data) {
+    try {
+      const payload = {
+        nombre: row.Nombre || row.nombre,
+        alias: row.Alias || row.alias,
+        email: row.Email || row.email,
+        telefono: row.Teléfono || row.telefono || row['Telefono'],
+        sitio_web: row['Sitio Web'] || row.sitio_web,
+        descripcion: row.Descripción || row.descripcion || row['Descripcion'],
+        ponderacion: Number(row.Ponderación || row.ponderacion || 3)
+      };
+
+      // Resolver ids por nombre/código
+      const celulaName = row.Célula || row.celula;
+      if (celulaName) {
+        const c = catalog.celulas.find(c => c.nombre.toLowerCase() === celulaName.toLowerCase());
+        if (c) payload.celula_id = c.id;
+      }
+
+      const tipoName = row.Tipo || row.tipo;
+      if (tipoName) {
+        const t = catalog.tipos.find(t => t.nombre.toLowerCase() === tipoName.toLowerCase());
+        if (t) payload.tipo_id = t.id;
+      }
+
+      const estadoName = row.Estado || row.estado;
+      if (estadoName) {
+        const e = catalog.estados.find(e => e.nombre.toLowerCase() === estadoName.toLowerCase());
+        if (e) payload.estado_id = e.id;
+      }
+
+      const id = row.ID || row.id;
+      if (id) {
+        await svcUpdate(id, payload);
+        res.updated++;
+      } else {
+        await svcCreate(payload);
+        res.created++;
+      }
+    } catch (e) {
+      res.errors.push({ row, error: e.message });
+    }
+  }
+
+  return res;
+};

@@ -300,16 +300,11 @@
     background: rgba(0, 0, 0, .18);
     border: 1px solid rgba(255, 255, 255, .35);
 
-    .ava {
+    .avaWrapper {
       width: 28px;
       height: 28px;
-      border-radius: 50%;
-      background: #192130;
-      color: #fff;
       display: grid;
       place-items: center;
-      font-weight: 800;
-      border: 1px solid rgba(255, 255, 255, .35);
     }
 
     .meta {
@@ -657,16 +652,11 @@
       text-align: left;
       transition: all .2s;
 
-      .ava {
+      .avaWrapper {
         width: 32px;
         height: 32px;
-        border-radius: 50%;
-        background: #192130;
-        color: #fff;
         display: grid;
         place-items: center;
-        font-weight: 800;
-        border: 1px solid rgba(255, 255, 255, .2);
       }
 
       .meta {

@@ -6,36 +6,43 @@ import { requireAuth } from '../auth/middlewares/requireAuth.js';
 import { requirePermission } from '../auth/middlewares/requirePermission.js';
 
 import {
-  health, catalog ,list, detail, create, update, del, assignCelula,
+  health, catalog, list, detail, create, update, del, assignCelula,
   listContactosCtrl, createContactoCtrl, updateContactoCtrl, deleteContactoCtrl,
-  resumenEstado, resumenPonderacion, resumenCelula
+  resumenEstado, resumenPonderacion, resumenCelula,
+  exportExcel, importExcel
 } from './controllers/clientes.controller.js';
+import multer from 'multer';
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 router.get('/health', health);
 
-// Resúmenes para tablero/kanban/lista
-router.get('/resumen/estado',        requireAuth, requirePermission('clientes','read'),   resumenEstado);
-router.get('/resumen/ponderacion',   requireAuth, requirePermission('clientes','read'),   resumenPonderacion);
-router.get('/resumen/celula',        requireAuth, requirePermission('clientes','read'),   resumenCelula);
+// EXPORT / IMPORT (Solo Admin)
+router.get('/export', requireAuth, requirePermission('clientes', 'read'), exportExcel);
+router.post('/import', requireAuth, requirePermission('clientes', 'create'), upload.single('file'), importExcel);
 
-router.get('/catalog', requireAuth, requirePermission('clientes','read'), catalog);
+// Resúmenes para tablero/kanban/lista
+router.get('/resumen/estado', requireAuth, requirePermission('clientes', 'read'), resumenEstado);
+router.get('/resumen/ponderacion', requireAuth, requirePermission('clientes', 'read'), resumenPonderacion);
+router.get('/resumen/celula', requireAuth, requirePermission('clientes', 'read'), resumenCelula);
+
+router.get('/catalog', requireAuth, requirePermission('clientes', 'read'), catalog);
 // CRUD Clientes
-router.get('/',            requireAuth, requirePermission('clientes','read'),   list);
-router.get('/:id',        requireAuth, requirePermission('clientes','read'),   detail);
-router.post('/',           requireAuth, requirePermission('clientes','create'), create);
-router.patch('/:id',      requireAuth, requirePermission('clientes','update'), update);
-router.delete('/:id',     requireAuth, requirePermission('clientes','delete'), del);
+router.get('/', requireAuth, requirePermission('clientes', 'read'), list);
+router.get('/:id', requireAuth, requirePermission('clientes', 'read'), detail);
+router.post('/', requireAuth, requirePermission('clientes', 'create'), create);
+router.patch('/:id', requireAuth, requirePermission('clientes', 'update'), update);
+router.delete('/:id', requireAuth, requirePermission('clientes', 'delete'), del);
 
 // Asignación de célula responsable
-router.patch('/:id/assign-celula', requireAuth, requirePermission('clientes','update'), assignCelula);
+router.patch('/:id/assign-celula', requireAuth, requirePermission('clientes', 'update'), assignCelula);
 
 // Contactos (subrecurso)
-router.get('/:id/contactos',                      requireAuth, requirePermission('clientes','read'),   listContactosCtrl);
-router.post('/:id/contactos',                     requireAuth, requirePermission('clientes','update'), createContactoCtrl);
-router.patch('/:id/contactos/:contactoId',        requireAuth, requirePermission('clientes','update'), updateContactoCtrl);
-router.delete('/:id/contactos/:contactoId',       requireAuth, requirePermission('clientes','update'), deleteContactoCtrl);
+router.get('/:id/contactos', requireAuth, requirePermission('clientes', 'read'), listContactosCtrl);
+router.post('/:id/contactos', requireAuth, requirePermission('clientes', 'update'), createContactoCtrl);
+router.patch('/:id/contactos/:contactoId', requireAuth, requirePermission('clientes', 'update'), updateContactoCtrl);
+router.delete('/:id/contactos/:contactoId', requireAuth, requirePermission('clientes', 'update'), deleteContactoCtrl);
 
 
 
@@ -58,8 +65,8 @@ export const listQuerySchema = z.object({
   estado_codigo: z.string().min(1).max(50).optional(),
   ponderacion_min: z.coerce.number().int().min(1).max(5).optional(),
   ponderacion_max: z.coerce.number().int().min(1).max(5).optional(),
-  order_by: z.enum(['nombre','created_at','ponderacion']).optional().default('nombre'),
-  order: z.enum(['asc','desc']).optional().default('asc'),
+  order_by: z.enum(['nombre', 'created_at', 'ponderacion']).optional().default('nombre'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
   with_metrics: z.preprocess(v => v === 'true', z.boolean().optional())

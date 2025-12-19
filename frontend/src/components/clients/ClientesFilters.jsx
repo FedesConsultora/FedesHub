@@ -36,16 +36,16 @@ export default function ClientesFilters({ value, catalog, onChange }) {
   const v = value || {}
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
-  const popRef  = useRef(null)
+  const popRef = useRef(null)
 
   const upd = (patch) => onChange?.({ ...v, ...patch })
-  const todayISO = useMemo(() => new Date().toISOString().slice(0,10), [])
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const clear = () => {
     onChange?.({
-      q:'', celula_id:'', tipo_id:'', estado_id:'',
-      ponderacion_min:'', ponderacion_max:'',
-      created_from:'', created_to:'',
-      order_by:'nombre', order:'asc', page:0
+      q: '', celula_id: '', tipo_id: '', estado_id: '',
+      ponderacion_min: '', ponderacion_max: '',
+      created_from: '', created_to: '',
+      order_by: 'nombre', order: 'asc', page: 0
     })
   }
 
@@ -67,7 +67,7 @@ export default function ClientesFilters({ value, catalog, onChange }) {
   }, [open])
 
   return (
-    <form className="ClientesFilters" role="search" aria-label="Filtros de clientes" onSubmit={(e)=>e.preventDefault()} ref={rootRef}>
+    <form className="ClientesFilters" role="search" aria-label="Filtros de clientes" onSubmit={(e) => e.preventDefault()} ref={rootRef}>
       {/* BUSCADOR + caret */}
       <div className="searchBox">
         <label htmlFor="clientes-q" className="srOnly">Buscar por nombre, alias o email</label>
@@ -80,11 +80,11 @@ export default function ClientesFilters({ value, catalog, onChange }) {
           type="button"
           className="caretBtn"
           aria-expanded={open} aria-controls="clientes-popover"
-          onClick={()=>setOpen(o=>!o)}
+          onClick={() => setOpen(o => !o)}
           title={open ? 'Ocultar filtros' : 'Mostrar filtros'}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span className="srOnly">{open ? 'Ocultar filtros' : 'Mostrar filtros'}</span>
         </button>
@@ -94,7 +94,7 @@ export default function ClientesFilters({ value, catalog, onChange }) {
           <div id="clientes-popover" className="filterPopover" role="dialog" aria-modal="false" ref={popRef}>
             <div className="popHead">
               <strong>Filtros avanzados</strong>
-              <button type="button" className="btnX" onClick={()=>setOpen(false)} aria-label="Cerrar">×</button>
+              <button type="button" className="btnX" onClick={() => setOpen(false)} aria-label="Cerrar">×</button>
             </div>
 
             <div className="grid">
@@ -114,7 +114,8 @@ export default function ClientesFilters({ value, catalog, onChange }) {
 
               <Field id="clientes-estado" label="Estado">
                 <select id="clientes-estado" name="estado_id" value={v.estado_id ?? ''} onChange={e => upd({ estado_id: e.target.value })}>
-                  <option value="">Todos los estados</option>
+                  <option value="">Activos</option>
+                  <option value="all">Filtro: Todos</option>
                   {catalog.estados?.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
               </Field>
@@ -179,7 +180,7 @@ export default function ClientesFilters({ value, catalog, onChange }) {
 
             <div className="actions">
               <button type="button" className="btn clear" onClick={clear}>Limpiar</button>
-              <button type="button" className="btn apply" onClick={()=>setOpen(false)}>Aplicar</button>
+              <button type="button" className="btn apply" onClick={() => setOpen(false)}>Aplicar</button>
             </div>
           </div>
         )}

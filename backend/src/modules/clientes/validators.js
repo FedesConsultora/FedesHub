@@ -31,7 +31,7 @@ export const listQuerySchema = z.object({
   celula_id: id.optional(),
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(1).max(50).optional(),
-  estado_id: id.optional(),
+  estado_id: z.union([id, z.literal('all')]).optional(),
   estado_codigo: z.string().min(1).max(50).optional(),
   ponderacion_min: z.coerce.number().int().min(1).max(5).optional(),
   ponderacion_max: z.coerce.number().int().min(1).max(5).optional(),

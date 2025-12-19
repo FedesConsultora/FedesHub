@@ -15,14 +15,14 @@ const path = require('path');
 const PEOPLE = [
   // NivelC: Colaboradores
   { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai', nivel: 'NivelB' },
-  { nombre: 'Andre', apellido: 'Coronel Vargas', cargo: 'Analista Audiovisual', email: 'acoronelvargas@fedes.ai' },
   { nombre: 'Mateo', apellido: 'Germano', cargo: 'Analista Audiovisual', email: 'mgermano@fedes.ai' },
   { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Analista de Diseño', email: 'fmarchesotti@fedes.ai' },
   { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Analista de Cuentas', email: 'gcanibano@fedes.ai' },
-  { nombre: 'Paola', apellido: 'López', cargo: 'Analista de Cuentas', email: 'plopez@fedes.ai' },
+  { nombre: 'Victoria', apellido: 'Pellegrino', cargo: 'Analista de Cuentas', email: 'vpellegrino@fedes.ai' },
   { nombre: 'Juan', apellido: 'Perozo', cargo: 'Analista de Diseño', email: 'jperozo@fedes.ai' },
   { nombre: 'Matias', apellido: 'Lazcano', cargo: 'Analista Audiovisual', email: 'mlazcano@fedes.ai' },
   { nombre: 'Belen', apellido: 'Espilman', cargo: 'Desarrolladora Web', email: 'bespilman@fedes.ai' },
+  { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedes.ai' },
 
   // NivelB: Líderes
   { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedes.ai', nivel: 'NivelB' },
@@ -34,12 +34,12 @@ const PEOPLE = [
 // Función para determinar nivel de rol: nivel explícito > NivelC por defecto
 const getNivel = (p) => p.nivel || 'NivelC';
 
-// Sólo estos 6 se asignan/aseguran explícitamente de célula
+// Sólo estos se asignan/aseguran explícitamente de célula
 const CEL_ASSIGN = {
   'Mateo|Germano': 'celula-1',
-  'Paola|López': 'celula-1',
+  'Victoria|Pellegrino': 'celula-1',
   'Florencia|Marchesotti': 'celula-1',
-  'Andre|Coronel Vargas': 'celula-2',
+  'Matias|Lazcano': 'celula-2',
   'Gonzalo|Canibano': 'celula-2',
   'Juan|Perozo': 'celula-2',
 };

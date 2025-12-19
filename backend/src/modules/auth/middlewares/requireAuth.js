@@ -7,7 +7,7 @@ import { initModels } from '../../../models/registry.js';
 
 const models = await initModels();
 
-const isUnsafeMethod = (m) => ['POST','PUT','PATCH','DELETE'].includes(m);
+const isUnsafeMethod = (m) => ['POST', 'PUT', 'PATCH', 'DELETE'].includes(m);
 
 export const requireAuth = async (req, res, next) => {
   try {
@@ -50,9 +50,9 @@ export const requireAuth = async (req, res, next) => {
     try {
       feder = await models.Feder.findOne({
         where: { user_id: auth.userId },
-        attributes: ['id','celula_id']
+        attributes: ['id', 'celula_id', 'avatar_url', 'nombre', 'apellido']
       });
-    } catch {}
+    } catch { }
 
     // Exponer en req.auth (API “nueva”)
     req.auth = auth;
@@ -65,6 +65,9 @@ export const requireAuth = async (req, res, next) => {
       permisos: auth.perms,
       feder_id: feder?.id ?? null,
       celula_id: feder?.celula_id ?? null,
+      avatar_url: feder?.avatar_url ?? null,
+      nombre: feder?.nombre ?? null,
+      apellido: feder?.apellido ?? null,
     };
     req.user = { ...(req.user || {}), ...baseUser };
     res.locals.user = baseUser;

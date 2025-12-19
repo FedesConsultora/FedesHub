@@ -5,8 +5,9 @@ import ReactionBar from './ReactionBar'
 import MessageAttachments from './MessageAttachments'
 import ReplyPreview from './ReplyPreview'
 import ReadReceiptBadge from './ReadReceiptBadge'
+import Avatar from '../../Avatar.jsx'
 import { ChatActionCtx } from '../shared/context'
-import { fullName, displayName } from '../../../utils/people'
+import { fullName, displayName, pickAvatar } from '../../../utils/people'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import './Timeline.scss'
@@ -207,10 +208,10 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
 
       <div className="meta">
         <div className="avatarSide" style={{ position: 'relative' }}>
-          <img
-            className="avatar"
-            alt=""
-            src={`https://ui-avatars.com/api/?background=eff9ff&color=0d1117&name=${encodeURIComponent(author || 'U')}`}
+          <Avatar
+            src={pickAvatar(m)}
+            name={author}
+            size={28}
           />
           <AttendanceBadge modalidad={getModalidad(statuses, authorFederId)} size={12} />
         </div>

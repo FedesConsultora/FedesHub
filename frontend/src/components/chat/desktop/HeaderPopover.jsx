@@ -4,6 +4,7 @@ import { IoRemoveCircleOutline } from "react-icons/io5";
 
 import AttachmentIcon from '../shared/AttachmentIcon'
 import { displayName, firstInitial } from '../../../utils/people'
+import Avatar from '../../Avatar.jsx'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import {
   useUploadChannelAvatar,
@@ -408,7 +409,7 @@ export default function HeaderPopover({
           </div>
 
           <div className="avaWrap">
-            <img src={avatarUrl} alt="" />
+            <Avatar src={avatarUrl} name={title} size={80} />
             {!isDM && canEditSettings && (
               <label className="editBtn" title="Cambiar imagen">
                 <FiCamera />
@@ -491,8 +492,8 @@ export default function HeaderPopover({
               const opts = optionsFor(m?.rol?.codigo || 'member')
               return (
                 <div key={m.user_id} className="row">
-                  <div className="ava" style={{ position: 'relative' }}>
-                    {firstInitial(m)}
+                  <div className="avaWrapper" style={{ position: 'relative' }}>
+                    <Avatar src={m.avatar_url} name={displayName(m)} size={32} />
                     <AttendanceBadge modalidad={getModalidad(statuses, m.id_feder || m.feder_id || m.feder?.id || m.user?.feder?.id)} size={12} />
                   </div>
                   <div className="meta">
@@ -635,8 +636,8 @@ export default function HeaderPopover({
                       onClick={() => onAddMemberToChannel(u.id)}
                       disabled={addingMember}
                     >
-                      <div className="ava" style={{ position: 'relative' }}>
-                        {firstInitial(u)}
+                      <div className="avaWrapper" style={{ position: 'relative' }}>
+                        <Avatar src={u.avatar_url} name={displayName(u)} size={32} />
                         <AttendanceBadge modalidad={getModalidad(statuses, u.id_feder || u.feder_id || u.feder?.id || u.user?.feder?.id)} size={12} />
                       </div>
                       <div className="meta">

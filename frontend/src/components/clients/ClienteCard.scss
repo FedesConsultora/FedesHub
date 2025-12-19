@@ -1,82 +1,177 @@
 @use '../../styles/variables' as v;
 
-.ClienteCard{
-  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-  border: 1px solid rgba(255,255,255,.10);
+.ClienteCard {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .015));
+  border: 1px solid rgba(255, 255, 255, .10);
   border-radius: v.$radius-2xl;
-  padding:12px;
+  padding: 12px;
   box-shadow: v.$shadow-soft;
-  cursor:pointer;
+  cursor: pointer;
   transition: border-color .18s ease, box-shadow .18s ease, transform .06s ease, background .18s ease;
 
-  &:hover{
-    border-color: rgba(255,255,255,.18);
-    box-shadow: 0 8px 22px rgba(0,0,0,.28);
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  &:hover {
+    border-color: rgba(255, 255, 255, .18);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .28);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02));
   }
-  &:active{ transform: translateY(1px); }
+
+  &:active {
+    transform: translateY(1px);
+  }
 
   color: v.$fh-text;
 
-  .muted{ color: v.$fh-muted; }
-  a{ color: v.$fh-accent; }
+  .muted {
+    color: v.$fh-muted;
+  }
 
-  .cardGrid{
-    display:grid;
+  a {
+    color: v.$fh-accent;
+  }
+
+  .cardGrid {
+    display: grid;
     grid-template-columns: auto 1fr auto;
-    gap:12px;
-    align-items:stretch;
+    gap: 12px;
+    align-items: stretch;
   }
 
-  .avatar{
-    width:48px; height:48px; border-radius:12px;
-    display:grid; place-items:center;
-    font-weight:900;
-    background: #0e1620; color: #a9c6d9;
-    border:1px solid rgba(255,255,255,.10);
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    background: #0e1620;
+    color: #a9c6d9;
+    border: 1px solid rgba(255, 255, 255, .10);
   }
 
-  .main{ display:grid; gap:8px; }
+  .main {
+    display: grid;
+    gap: 8px;
+  }
 
-  .head{
-    display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
-    .name{ font-weight:800; letter-spacing:.2px; }
-    .meta{ display:flex; flex-wrap:wrap; gap:6px; }
-    .badge{
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      padding:3px 10px; border-radius:999px; font-size:.78rem; color:v.$fh-muted; font-weight:700;
-      &.activo{ color:#a7f3d0; border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.10) }
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+
+    .name {
+      font-weight: 800;
+      letter-spacing: .2px;
     }
-  }
 
-  .row.info{ display:grid; gap:4px; }
-  .row.kpis{
-    display:flex; gap:10px; margin-top:4px;
-    .kpi{
-      flex:0 0 140px;
-      background: #0b121a; border:1px solid rgba(255,255,255,.08);
-      border-radius:12px; padding:8px 10px;
-      .val{ font-weight:800; font-size:1.1rem; }
-      .lbl{ color:v.$fh-muted; font-size:.82rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
-  }
 
-  .actions{
-    display:flex; flex-direction:column; gap:8px; justify-content:center; align-items:flex-end;
-    .btn{
-      font-weight:800; letter-spacing:.2px; border-radius:999px; padding:8px 12px; cursor:pointer;
-      border:1px solid rgba(255,255,255,.14); background: transparent; color: v.$fh-text;
-      &.primary{
-        background: v.$fh-primary; border-color: transparent; color:#fff;
-        box-shadow: 0 10px 22px rgba(68,113,141,.35);
+    .badge {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .78rem;
+      color: v.$fh-muted;
+      font-weight: 700;
+
+      &.activo {
+        color: #a7f3d0;
+        border-color: rgba(16, 185, 129, .35);
+        background: rgba(16, 185, 129, .10)
       }
-      &.ghost:hover{ background: rgba(255,255,255,.06); }
     }
   }
 
-  @media (max-width: 720px){
-    .cardGrid{ grid-template-columns: auto 1fr; }
-    .actions{ grid-column: 1 / -1; flex-direction:row; justify-content:flex-start; }
+  .row.info {
+    display: grid;
+    gap: 4px;
+  }
+
+  .row.kpis {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+
+    .kpi {
+      flex: 0 0 110px;
+      background: #0b121a;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: 8px 10px;
+
+      .val {
+        font-weight: 800;
+        font-size: 1.1rem;
+      }
+
+      .lbl {
+        color: v.$fh-muted;
+        font-size: .82rem;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    align-items: flex-end;
+    min-width: 140px;
+
+    .btn {
+      font-weight: 800;
+      letter-spacing: .2px;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: transparent;
+      color: v.$fh-text;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+
+      &.infoBtn {
+        width: 100%;
+        text-align: center;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+      }
+
+      &.tasksBtn {
+        width: 100%;
+        background: linear-gradient(135deg, #4dd0e1, #26c6da);
+        border: none;
+        color: #0a1118;
+        box-shadow: 0 4px 12px rgba(77, 208, 225, 0.3);
+
+        &:hover {
+          filter: brightness(1.1);
+          box-shadow: 0 6px 16px rgba(77, 208, 225, 0.45);
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  @media (max-width: 720px) {
+    .cardGrid {
+      grid-template-columns: auto 1fr;
+    }
+
+    .actions {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      justify-content: flex-start;
+    }
   }
 }

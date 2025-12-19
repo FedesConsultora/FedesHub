@@ -1,24 +1,26 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { getContrastColor, getCleanInitials } from '../../utils/ui'
 import './ClienteCard.scss'
 
 export default function ClienteCard({ c }) {
   const nav = useNavigate()
-  const goTasks = () => nav(`/tareas?cliente_id=${c.id}`)
-  const goClient = (e) => { e.stopPropagation(); nav(`/clientes/${c.id}`) }
+  const goTasks = (e) => { e.stopPropagation(); nav(`/tareas?cliente_id=${c.id}`) }
+  const goClient = () => nav(`/clientes/${c.id}`)
 
-  // Iniciales simples (fallback)
-  const initials = (c.nombre || '').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
+  const initials = getCleanInitials(c.nombre)
+  const bgColor = c.color || '#3B82F6'
+  const textColor = getContrastColor(bgColor)
 
   return (
     <article
       className="ClienteCard"
       role="button"
       tabIndex={0}
-      onClick={goTasks}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goTasks()}
-      aria-label={`Ver tareas de ${c.nombre}`}
-      title="Click para ver tareas"
+      onClick={goClient}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goClient()}
+      aria-label={`Ver detalle de ${c.nombre}`}
+      title="Click para ver información"
     >
       {/* layout: avatar | main | actions */}
       <div className="cardGrid">
@@ -26,21 +28,19 @@ export default function ClienteCard({ c }) {
           className="avatar"
           aria-hidden="true"
           style={{
-            backgroundColor: c.color || '#3B82F6',
-            borderColor: c.color || '#3B82F6',
-            cursor: 'pointer'
+            backgroundColor: bgColor,
+            borderColor: bgColor,
+            color: textColor
           }}
-          onClick={goClient}
-          title="Ver detalle del cliente"
         >
-          {initials || 'C'}
+          {initials}
         </div>
 
         <div className="main">
           <header className="head">
-            <div className="name" onClick={goClient}>
+            <div className="name">
               <strong>{c.nombre}</strong>{' '}
-              {c.alias && <span className="muted" >({c.alias})</span>}
+              {c.alias && <span className="muted">({c.alias})</span>}
             </div>
             <div className="meta">
               {c.tipo_nombre && <span className="badge">{c.tipo_nombre}</span>}
@@ -74,8 +74,8 @@ export default function ClienteCard({ c }) {
         </div>
 
         <aside className="actions" onClick={(e) => e.stopPropagation()}>
-          <button className="btn ghost" onClick={goClient}>Ver información</button>
-          <button className="btn primary" onClick={goTasks} title="Ir a tareas">Ver tareas →</button>
+          <button className="btn ghost infoBtn" onClick={goClient}>Ver información</button>
+          <button className="btn primary tasksBtn" onClick={goTasks} title="Ir a tareas">Ver tareas →</button>
         </aside>
       </div>
     </article>

@@ -10,7 +10,7 @@ import {
 } from '../validators.js';
 
 import {
-  svcCatalogos, svcListCanales, svcUpsertCanal, svcArchiveCanal, svcUpdateCanalSettings,
+  svcCatalogos, svcListCanales, svcUpsertCanal, svcArchiveCanal, svcUpdateCanalSettings, svcDeleteCanal,
   svcListMiembros, svcAddOrUpdateMiembro, svcRemoveMiembro, svcJoin, svcLeave,
   svcListMessages, svcPostMessage, svcEditMessage, svcDeleteMessage,
   svcReact, svcPin, svcSave, svcFollowThread, svcSetRead,
@@ -76,6 +76,13 @@ export const patchCanalSettings = async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const body = updateCanalSettingsSchema.parse(req.body);
     res.json(await svcUpdateCanalSettings(id, body));
+  } catch (e) { next(e); }
+};
+
+export const deleteCanal = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json(await svcDeleteCanal(id, req.user));
   } catch (e) { next(e); }
 };
 
@@ -281,14 +288,14 @@ export const postMeeting = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-export async function   listAttachments(req, res, next) {
+export async function listAttachments(req, res, next) {
   try {
     const canal_id = Number(req.params.id)
     const user = req.user || {}
     const t = req.t // si tu middleware de tx la inyecta
 
     if (!canal_id) return res.status(400).json({ error: 'canal_id inválido' })
-    if (!user?.id)  return res.status(401).json({ error: 'No autenticado' })
+    if (!user?.id) return res.status(401).json({ error: 'No autenticado' })
 
     // Debe ser miembro del canal
     const me = await m.ChatCanalMiembro.findOne({

@@ -137,7 +137,8 @@ const buildListSQL = (params = {}, currentUser) => {
                     'id', f.id,
                     'user_id', f.user_id,
                     'nombre', f.nombre,
-                    'apellido', f.apellido
+                    'apellido', f.apellido,
+                    'avatar_url', f.avatar_url
                   )
                 )
               ), '[]'::json)
@@ -154,7 +155,8 @@ const buildListSQL = (params = {}, currentUser) => {
                     'id', f.id,
                     'user_id', f.user_id,
                     'nombre', f.nombre,
-                    'apellido', f.apellido
+                    'apellido', f.apellido,
+                    'avatar_url', f.avatar_url
                   )
                 )
               ), '[]'::json)
@@ -309,7 +311,8 @@ export const getTaskById = async (id, currentUser) => {
                     'id', f.id,
                     'user_id', f.user_id,
                     'nombre', f.nombre,
-                    'apellido', f.apellido
+                    'apellido', f.apellido,
+                    'avatar_url', f.avatar_url
                   )
                 )
               ), '[]'::json)
@@ -327,7 +330,8 @@ export const getTaskById = async (id, currentUser) => {
                     'id', f.id,
                     'user_id', f.user_id,
                     'nombre', f.nombre,
-                    'apellido', f.apellido
+                    'apellido', f.apellido,
+                    'avatar_url', f.avatar_url
                   )
                 )
               ), '[]'::json)
@@ -358,6 +362,7 @@ export const getTaskById = async (id, currentUser) => {
                   'autor_user_id', f.user_id,
                   'autor_nombre',  f.nombre,
                   'autor_apellido',f.apellido,
+                  'autor_avatar_url', f.avatar_url,
                   'tipo_id',   cm.tipo_id,
                   'contenido', cm.contenido,
                   'created_at',cm.created_at,
@@ -808,6 +813,7 @@ const listComentarios = async (tarea_id, currentUser) =>
       f.user_id  AS autor_user_id,
       f.nombre   AS autor_nombre,
       f.apellido AS autor_apellido,
+      f.avatar_url AS autor_avatar_url,
       ct.codigo  AS tipo_codigo,
 
       -- flag para el cliente (mío si coincide feder_id o user_id)

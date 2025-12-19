@@ -1,10 +1,12 @@
 // backend/src/modules/auth/controllers/auth.controller.js
-import { loginSchema, createUserSchema, changePasswordSchema,
+import {
+  loginSchema, createUserSchema, changePasswordSchema,
   listUsersQuerySchema, assignUserRolesSchema, setUserActiveSchema, listPermsQuerySchema, roleIdParamSchema,
-  createRoleBodySchema, updateRoleBodySchema, setRolePermsBodySchema, forgotPasswordSchema, resetPasswordSchema } from '../validators.js';
+  createRoleBodySchema, updateRoleBodySchema, setRolePermsBodySchema, forgotPasswordSchema, resetPasswordSchema
+} from '../validators.js';
 import {
   loginWithPassword, refreshSession, logoutAll, createUserWithRoles, changePassword,
-  adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive,  adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
+  adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive, adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
   adminGetRole, adminCreateRole, adminUpdateRole, adminDeleteRole,
   adminSetRolePermissions, adminAddRolePermissions, adminRemoveRolePermissions,
   forgotPassword, resetPasswordByToken
@@ -38,8 +40,8 @@ export const logout = async (req, res, next) => {
 };
 
 export const me = async (req, res) => {
-  const { userId, email, roles, perms } = req.auth;
-  res.json({ user: { id: userId, email }, roles, permisos: perms });
+  const { roles, perms } = req.auth;
+  res.json({ user: req.user, roles, permisos: perms });
 };
 
 export const adminCreateUser = async (req, res, next) => {

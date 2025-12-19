@@ -24,7 +24,7 @@ export async function listMessages(canal_id, params, user, t) {
 
   // --- Filtros de timeline
   if (params.before_id) where.id = { [Op.lt]: params.before_id };
-  if (params.after_id)  where.id = { ...(where.id || {}), [Op.gt]: params.after_id };
+  if (params.after_id) where.id = { ...(where.id || {}), [Op.gt]: params.after_id };
 
   let orderDir = 'DESC';
 
@@ -52,13 +52,13 @@ export async function listMessages(canal_id, params, user, t) {
   const rows = await m.ChatMensaje.findAll({
     where,
     include: [
-      { model: m.User, as: 'autor', attributes: ['id','email'] },
-      { model: m.Feder, as: 'feder', attributes: ['id','nombre'] },
+      { model: m.User, as: 'autor', attributes: ['id', 'email'] },
+      { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'] },
       { model: m.ChatAdjunto, as: 'adjuntos' },
       { model: m.ChatReaccion, as: 'reacciones' },
       { model: m.ChatLinkPreview, as: 'linkPreviews' },
       // ✅ preview del parent para UI (texto y autor)
-      { model: m.ChatMensaje, as: 'parent', attributes: ['id','body_text'], include: [{ model: m.User, as:'autor', attributes: ['id','email'] }] }
+      { model: m.ChatMensaje, as: 'parent', attributes: ['id', 'body_text'], include: [{ model: m.User, as: 'autor', attributes: ['id', 'email'] }] }
     ],
     order: [['id', orderDir]],
     limit: params.limit,
@@ -80,7 +80,7 @@ export async function createMessage(canal, payload, user, t) {
 
   if (canal.only_mods_can_post) {
     const rol = await _rolCodigoById(me.rol_id, t);
-    if (!['owner','admin','mod'].includes(rol)) {
+    if (!['owner', 'admin', 'mod'].includes(rol)) {
       throw Object.assign(new Error('Sólo moderadores pueden postear en este canal'), { status: 403 });
     }
   }
@@ -88,11 +88,11 @@ export async function createMessage(canal, payload, user, t) {
   if ((canal.slowmode_seconds ?? 0) > 0) {
     const last = await m.ChatMensaje.findOne({
       where: { canal_id: canal.id, user_id: user.id },
-      order: [['id','DESC']],
+      order: [['id', 'DESC']],
       transaction: t
     });
     if (last) {
-      const secs = Math.floor((Date.now() - new Date(last.created_at).getTime())/1000);
+      const secs = Math.floor((Date.now() - new Date(last.created_at).getTime()) / 1000);
       if (secs < canal.slowmode_seconds) {
         throw Object.assign(new Error(`Slowmode activo: esperá ${canal.slowmode_seconds - secs}s`), { status: 429 });
       }
@@ -136,8 +136,8 @@ export async function createMessage(canal, payload, user, t) {
 
   return m.ChatMensaje.findByPk(row.id, {
     include: [
-      { model: m.User, as: 'autor', attributes: ['id','email'] },
-      { model: m.Feder, as: 'feder', attributes: ['id','nombre'] },
+      { model: m.User, as: 'autor', attributes: ['id', 'email'] },
+      { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'] },
       { model: m.ChatAdjunto, as: 'adjuntos' }
     ],
     transaction: t
@@ -151,7 +151,7 @@ export async function editMessage(id, payload, user, t) {
   // Sólo autor o mod+
   const me = await _canalMember(row.canal_id, user.id, t);
   const myRole = me ? await _rolCodigoById(me.rol_id, t) : null;
-  const canMod = ['owner','admin','mod'].includes(myRole);
+  const canMod = ['owner', 'admin', 'mod'].includes(myRole);
   if (row.user_id !== user.id && !canMod) {
     throw Object.assign(new Error('No podés editar este mensaje'), { status: 403 });
   }
@@ -179,7 +179,7 @@ export async function deleteMessage(id, user, t) {
 
   const me = await _canalMember(row.canal_id, user.id, t);
   const myRole = me ? await _rolCodigoById(me.rol_id, t) : null;
-  const canMod = ['owner','admin','mod'].includes(myRole);
+  const canMod = ['owner', 'admin', 'mod'].includes(myRole);
   if (row.user_id !== user.id && !canMod) {
     throw Object.assign(new Error('No podés borrar este mensaje'), { status: 403 });
   }

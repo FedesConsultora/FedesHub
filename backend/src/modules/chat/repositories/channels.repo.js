@@ -15,8 +15,8 @@ async function idByCodigo(model, codigo, t) {
 //  - presence status
 //  - dm_canal_id (si ya existe el canal DM entre ambos)
 //  - last_msg_id   (para saber si hay algo/unread en UI, opcional)
-export async function listDmCandidates(currentUserId, t){
-  const dmTipoId = await idByCodigo(m.ChatCanalTipo,'dm',t);
+export async function listDmCandidates(currentUserId, t) {
+  const dmTipoId = await idByCodigo(m.ChatCanalTipo, 'dm', t);
 
   // Nota: calculamos canal DM entre ambos, último mensaje (id y fecha) y mi último leído
   const rows = await sequelize.query(`
@@ -26,6 +26,7 @@ export async function listDmCandidates(currentUserId, t){
       f.id AS feder_id,
       COALESCE(f.nombre,'')   AS nombre,
       COALESCE(f.apellido,'') AS apellido,
+      f.avatar_url AS avatar_url,
       COALESCE(p.status,'offline') AS presence_status,
 
       -- canal DM (si existe)
@@ -108,8 +109,8 @@ export async function listDmCandidates(currentUserId, t){
 
 export async function catalogos() {
   const [canalTipos, rolTipos] = await Promise.all([
-    m.ChatCanalTipo.findAll({ order: [['codigo','ASC']] }),
-    m.ChatRolTipo.findAll({ order: [['codigo','ASC']] })
+    m.ChatCanalTipo.findAll({ order: [['codigo', 'ASC']] }),
+    m.ChatRolTipo.findAll({ order: [['codigo', 'ASC']] })
   ]);
   return { canalTipos, rolTipos };
 }
@@ -147,14 +148,14 @@ export async function listCanales(params, user, t) {
           as: 'miembros',
           required: true,
           where: { user_id: user.id },
-          include: [{ model: m.ChatRolTipo, as: 'rol', attributes: ['codigo','nombre'] }]
+          include: [{ model: m.ChatRolTipo, as: 'rol', attributes: ['codigo', 'nombre'] }]
         },
-        { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] }
+        { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo', 'nombre'] }
       ],
       // IMPORTANTE: usar literal completo para NULLS LAST
       order: [
         sequelize.literal(`"last_msg_id" DESC NULLS LAST`),
-        ['updated_at','DESC']
+        ['updated_at', 'DESC']
       ],
       transaction: t
     })
@@ -184,11 +185,11 @@ export async function listCanales(params, user, t) {
             model: m.ChatCanalMiembro, as: 'miembros',
             required: true, where: { user_id: user.id }, attributes: []
           },
-          { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] }
+          { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo', 'nombre'] }
         ],
         order: [
           sequelize.literal(`"last_msg_id" DESC NULLS LAST`),
-          ['updated_at','DESC']
+          ['updated_at', 'DESC']
         ],
         transaction: t
       })
@@ -204,10 +205,10 @@ export async function listCanales(params, user, t) {
   return m.ChatCanal.findAll({
     where,
     attributes: baseAttrs,
-    include: [{ model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] }],
+    include: [{ model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo', 'nombre'] }],
     order: [
       sequelize.literal(`"last_msg_id" DESC NULLS LAST`),
-      ['updated_at','DESC']
+      ['updated_at', 'DESC']
     ],
     transaction: t
   })
@@ -246,7 +247,7 @@ export async function createOrUpdateCanal(payload, user, t) {
     for (const uid of (payload.invited_user_ids || [])) {
       const [mm, wasCreated] = await m.ChatCanalMiembro.findOrCreate({
         where: { canal_id: canal.id, user_id: uid },
-        defaults: { rol_id: await idByCodigo(m.ChatRolTipo,'member', t), is_mute:false, notif_level:'all', joined_at:new Date() },
+        defaults: { rol_id: await idByCodigo(m.ChatRolTipo, 'member', t), is_mute: false, notif_level: 'all', joined_at: new Date() },
         transaction: t
       });
       if (wasCreated) addedUserIds.push(uid);
@@ -259,28 +260,28 @@ export async function createOrUpdateCanal(payload, user, t) {
       if (!invitee) throw Object.assign(new Error('Falta invitado para DM'), { status: 400 });
       const dmTipo = await idByCodigo(m.ChatCanalTipo, 'dm', t);
       const prev = await m.ChatCanal.findOne({
-        where: { tipo_id: dmTipo, is_archivado:false },
+        where: { tipo_id: dmTipo, is_archivado: false },
         include: [{
-          model: m.ChatCanalMiembro, as:'miembros', required:true, attributes:[],
+          model: m.ChatCanalMiembro, as: 'miembros', required: true, attributes: [],
           where: { user_id: { [Op.in]: [user.id, invitee] } }
         }],
-        attributes:['id'],
-        group:['ChatCanal.id'],
+        attributes: ['id'],
+        group: ['ChatCanal.id'],
         having: literal('COUNT(DISTINCT "miembros"."user_id") = 2'),
-        transaction:t, subQuery:false
+        transaction: t, subQuery: false
       });
-      if (prev) canal = await m.ChatCanal.findByPk(prev.id, { transaction:t });
+      if (prev) canal = await m.ChatCanal.findByPk(prev.id, { transaction: t });
     }
 
     if (!canal) { canal = await m.ChatCanal.create(base, { transaction: t }); created = true; }
 
     // membresías iniciales
-    const rolOwner  = await idByCodigo(m.ChatRolTipo,'owner',  t);
-    const rolMember = await idByCodigo(m.ChatRolTipo,'member', t);
+    const rolOwner = await idByCodigo(m.ChatRolTipo, 'owner', t);
+    const rolMember = await idByCodigo(m.ChatRolTipo, 'member', t);
 
     await m.ChatCanalMiembro.findOrCreate({
       where: { canal_id: canal.id, user_id: user.id },
-      defaults: { rol_id: rolOwner, is_mute:false, notif_level:'all', joined_at:new Date() },
+      defaults: { rol_id: rolOwner, is_mute: false, notif_level: 'all', joined_at: new Date() },
       transaction: t
     });
 
@@ -288,7 +289,7 @@ export async function createOrUpdateCanal(payload, user, t) {
       if (uid === user.id) continue;
       const [mm, wasCreated] = await m.ChatCanalMiembro.findOrCreate({
         where: { canal_id: canal.id, user_id: uid },
-        defaults: { rol_id: rolMember, is_mute:false, notif_level:'all', joined_at:new Date() },
+        defaults: { rol_id: rolMember, is_mute: false, notif_level: 'all', joined_at: new Date() },
         transaction: t
       });
       if (wasCreated) addedUserIds.push(uid);
@@ -322,20 +323,20 @@ export async function listMiembros(canal_id, t) {
   return m.ChatCanalMiembro.findAll({
     where: { canal_id },
     include: [
-      { model: m.ChatRolTipo, as: 'rol', attributes: ['codigo','nombre'] },
+      { model: m.ChatRolTipo, as: 'rol', attributes: ['codigo', 'nombre'] },
 
       // Siempre traigo el user y SU feder (por user_id) → garantiza nombre y apellido
       {
-        model: m.User, as: 'user', attributes: ['id','email'],
+        model: m.User, as: 'user', attributes: ['id', 'email'],
         include: [
-          { model: m.Feder, as: 'feder', attributes: ['id','nombre','apellido','avatar_url'], required: false }
+          { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'], required: false }
         ]
       },
 
       // Si alguna vez se usa feder_id en la membresía, también lo expongo:
-      { model: m.Feder, as: 'feder', attributes: ['id','nombre','apellido','avatar_url'], required: false }
+      { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'], required: false }
     ],
-    order: [['id','ASC']],
+    order: [['id', 'ASC']],
     transaction: t
   });
 }
@@ -348,7 +349,7 @@ export async function addOrUpdateMiembro(canal_id, payload, t) {
   const [row, created] = await m.ChatCanalMiembro.findOrCreate({
     where: { canal_id, user_id: payload.user_id },
     defaults: {
-      rol_id: rol_id ?? await idByCodigo(m.ChatRolTipo,'member', t),
+      rol_id: rol_id ?? await idByCodigo(m.ChatRolTipo, 'member', t),
       is_mute: payload.is_mute ?? false,
       notif_level: payload.notif_level ?? 'all',
       joined_at: new Date()
@@ -374,7 +375,7 @@ export async function removeMiembro(canal_id, user_id, t) {
 }
 
 export async function joinCanal(canal_id, user_id, t) {
-  const rolMember = await idByCodigo(m.ChatRolTipo,'member', t);
+  const rolMember = await idByCodigo(m.ChatRolTipo, 'member', t);
   const [row] = await m.ChatCanalMiembro.findOrCreate({
     where: { canal_id, user_id },
     defaults: { rol_id: rolMember, is_mute: false, notif_level: 'all', joined_at: new Date() },
@@ -396,4 +397,11 @@ export async function getCanalWithMiembro(canal_id, user_id, t) {
     transaction: t
   });
   return canal;
+}
+
+export async function deleteCanal(canal_id, t) {
+  const row = await m.ChatCanal.findByPk(canal_id, { transaction: t });
+  if (!row) throw Object.assign(new Error('Canal no encontrado'), { status: 404 });
+  await row.destroy({ transaction: t });
+  return { deleted: true };
 }

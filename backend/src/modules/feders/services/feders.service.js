@@ -1,4 +1,6 @@
-// backend/src/modules/feders/services/feders.service.js
+import fs from 'fs/promises';
+import path from 'path';
+import { Op } from 'sequelize';
 import {
   listEstados, listModalidadesTrabajo, listDiasSemana,
   listFeders, countFeders, getFederById, createFeder, updateFeder, setFederActive, deleteFeder,
@@ -9,7 +11,11 @@ import {
   listBancos, createBanco, updateBanco, deleteBanco,
   listEmergencias, createEmergencia, updateEmergencia, deleteEmergencia, getFederByUserId as repoGetFederByUserId
 } from '../repositories/feders.repo.js';
-import { saveUploadedFiles } from '../../../infra/storage/index.js'
+import { initModels } from '../../../models/registry.js';
+
+const models = await initModels();
+
+const stringifyIfObj = (v) => (typeof v === 'object' && v !== null) ? JSON.stringify(v) : v;
 export const svcListEstados = () => listEstados();
 export const svcListModalidadesTrabajo = () => listModalidadesTrabajo();
 export const svcListDiasSemana = () => listDiasSemana();
@@ -55,7 +61,7 @@ export const svcRemoveFederModalidad = (federId, diaId) => removeFederModalidad(
 export const svcOverview = (opts = {}) => repoOverview(opts);
 
 // ---- Firma de perfil
-export const svcGetFirmaPerfil   = (federId) => getFirmaPerfil(federId);
+export const svcGetFirmaPerfil = (federId) => getFirmaPerfil(federId);
 export const svcUpsertFirmaPerfil = (federId, body) => {
   const payload = { ...body };
   if (payload.dni_numero_enc !== undefined) payload.dni_numero_enc = stringifyIfObj(payload.dni_numero_enc);
@@ -63,11 +69,11 @@ export const svcUpsertFirmaPerfil = (federId, body) => {
 };
 
 // ---- Bancos
-export const svcListBancos  = (federId) => listBancos(federId);
+export const svcListBancos = (federId) => listBancos(federId);
 
 export const svcCreateBanco = async (federId, body) => {
   const payload = { ...body };
-  if (payload.cbu_enc   !== undefined) payload.cbu_enc   = stringifyIfObj(payload.cbu_enc);
+  if (payload.cbu_enc !== undefined) payload.cbu_enc = stringifyIfObj(payload.cbu_enc);
   if (payload.alias_enc !== undefined) payload.alias_enc = stringifyIfObj(payload.alias_enc);
 
   return models.sequelize.transaction(async (t) => {
@@ -84,7 +90,7 @@ export const svcCreateBanco = async (federId, body) => {
 
 export const svcUpdateBanco = async (federId, bankId, body) => {
   const payload = { ...body };
-  if (payload.cbu_enc   !== undefined) payload.cbu_enc   = stringifyIfObj(payload.cbu_enc);
+  if (payload.cbu_enc !== undefined) payload.cbu_enc = stringifyIfObj(payload.cbu_enc);
   if (payload.alias_enc !== undefined) payload.alias_enc = stringifyIfObj(payload.alias_enc);
 
   const row = await models.FederBanco.findOne({ where: { id: bankId, feder_id: federId } });
@@ -106,29 +112,48 @@ export const svcUpdateBanco = async (federId, bankId, body) => {
 export const svcDeleteBanco = (federId, bankId) => deleteBanco(federId, bankId);
 
 // ---- Contactos de emergencia
-export const svcListEmergencias  = (federId) => listEmergencias(federId);
+export const svcListEmergencias = (federId) => listEmergencias(federId);
 export const svcCreateEmergencia = (federId, body) => createEmergencia(federId, body);
 export const svcUpdateEmergencia = (federId, contactoId, body) => updateEmergencia(federId, contactoId, body);
 export const svcDeleteEmergencia = (federId, contactoId) => deleteEmergencia(federId, contactoId);
 
-function slugify(s=''){
-  return s.normalize('NFD').replace(/\p{Diacritic}+/gu,'')
-    .toLowerCase().trim().replace(/[^a-z0-9]+/g,'-')
-    .replace(/^-+|-+$/g,'').slice(0,80) || 'feder'
+function slugify(s = '') {
+  return s.normalize('NFD').replace(/\p{Diacritic}+/gu, '')
+    .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '').slice(0, 80) || 'feder'
 }
 
 export const svcUploadAvatar = async (federId, file) => {
   const f = await getFederById(federId)
-  if (!f) throw Object.assign(new Error('Feder no encontrado'), { status:404 })
+  if (!f) throw Object.assign(new Error('Feder no encontrado'), { status: 404 })
 
-  const base = `${f.apellido||''} ${f.nombre||''}`.trim()
-  const federSlug = `${slugify(base)}-${federId}`
+  // 1) Determinar nombres
+  const base = `${f.apellido || ''} ${f.nombre || ''}`.trim() || 'feder'
+  const slug = slugify(base)
+  const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
+  const filename = `${slug}_${federId}${ext}`
 
-  // guardamos en local: Personas/{slug}/avatar/{randomName}
-  const [saved] = await saveUploadedFiles([file], ['Personas', federSlug, 'avatar'], 'default')
+  // 2) Ruta absoluta en el servidor
+  const publicDir = path.resolve('public/avatars')
+  const fullPath = path.join(publicDir, filename)
 
-  // actualizamos URL (pública) en la tabla
-  await models.Feder.update({ avatar_url: saved.webViewLink }, { where: { id: federId } })
-  // devolvemos el feder refrescado
+  // 3) Eliminar avatar anterior si existe y es distinto (para no dejar huérfanos)
+  if (f.avatar_url && f.avatar_url.startsWith('/avatars/')) {
+    const oldRelative = f.avatar_url.replace(/^\//, '') // quita / inicial
+    const oldPath = path.join(path.resolve('public'), oldRelative)
+    if (oldPath !== fullPath) {
+      try { await fs.unlink(oldPath) } catch (e) { /* ignore */ }
+    }
+  }
+
+  // 4) Asegurar directorio y guardar buffer de Multer
+  await fs.mkdir(publicDir, { recursive: true })
+  await fs.writeFile(fullPath, file.buffer)
+
+  // 5) Actualizar DB con la ruta relativa pública
+  const avatarUrl = `/avatars/${filename}`
+  await models.Feder.update({ avatar_url: avatarUrl }, { where: { id: federId } })
+
+  // 6) Devolvemos el feder refrescado
   return getFederById(federId)
 }

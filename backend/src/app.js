@@ -36,6 +36,9 @@ app.use('/uploads', express.static(uploadsDir, {
   immutable: true
 }))
 
+// También servimos la carpeta public (donde están los avatars)
+app.use(express.static(path.resolve('public')))
+
 // seguridad básica
 app.use(helmet());
 

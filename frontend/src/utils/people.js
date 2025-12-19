@@ -36,6 +36,27 @@ function pickFeder(o) {
   return null
 }
 
+export function pickAvatar(o) {
+  if (!o || typeof o !== 'object') return null
+
+  // 1) Estructura anidada (miembros)
+  if (o?.user?.feder?.avatar_url) return o.user.feder.avatar_url
+
+  // 2) Feder al tope
+  if (o?.feder?.avatar_url) return o.feder.avatar_url
+
+  // 3) Autor anidado
+  if (o?.autor?.feder?.avatar_url) return o.autor.feder.avatar_url
+
+  // 4) Directo
+  if (o?.avatar_url) return o.avatar_url
+
+  // 5) Imagen url (canales)
+  if (o?.imagen_url) return o.imagen_url
+
+  return null
+}
+
 export function fullName(o) {
   const f = pickFeder(o)
   const nom = f?.nombre?.trim() || ''

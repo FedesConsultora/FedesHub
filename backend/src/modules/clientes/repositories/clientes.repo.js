@@ -86,7 +86,12 @@ export const listClientes = async (q) => {
   const where = [];
   if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
-  if (estado_id) { where.push('c.estado_id = :estado_id'); repl.estado_id = estado_id; }
+  if (estado_id === 'all') {
+    // No agregamos filtro, muestra todo
+  } else if (estado_id) {
+    where.push('c.estado_id = :estado_id');
+    repl.estado_id = estado_id;
+  }
   if (ponderacion_min) { where.push('c.ponderacion >= :pmin'); repl.pmin = ponderacion_min; }
   if (ponderacion_max) { where.push('c.ponderacion <= :pmax'); repl.pmax = ponderacion_max; }
   if (search) {
@@ -96,7 +101,15 @@ export const listClientes = async (q) => {
 
   // Resolver por códigos si vienen
   if (tipo_codigo) { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
-  if (estado_codigo) { where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
+  if (estado_codigo) {
+    where.push('es.codigo = :estado_codigo');
+    repl.estado_codigo = estado_codigo;
+  } else if (estado_id === 'all') {
+    // Ya lo manejamos arriba
+  } else if (!estado_id) {
+    // Default: mostrar solo Activos (excluye pausados y baja)
+    where.push("es.codigo = 'activo'");
+  }
 
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
 
@@ -133,12 +146,24 @@ export const countClientes = async (q) => {
   const where = [];
   if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
-  if (estado_id) { where.push('c.estado_id = :estado_id'); repl.estado_id = estado_id; }
+  if (estado_id === 'all') {
+    // No filter
+  } else if (estado_id) {
+    where.push('c.estado_id = :estado_id');
+    repl.estado_id = estado_id;
+  }
   if (ponderacion_min) { where.push('c.ponderacion >= :pmin'); repl.pmin = ponderacion_min; }
   if (ponderacion_max) { where.push('c.ponderacion <= :pmax'); repl.pmax = ponderacion_max; }
   if (search) { where.push(`(LOWER(c.nombre) LIKE :search OR LOWER(COALESCE(c.alias,'')) LIKE :search OR LOWER(COALESCE(c.email,'')) LIKE :search)`); repl.search = `%${search.toLowerCase()}%`; }
   if (tipo_codigo) { where.push('ct.codigo = :tipo_codigo'); repl.tipo_codigo = tipo_codigo; }
-  if (estado_codigo) { where.push('es.codigo = :estado_codigo'); repl.estado_codigo = estado_codigo; }
+  if (estado_codigo) {
+    where.push('es.codigo = :estado_codigo');
+    repl.estado_codigo = estado_codigo;
+  } else if (estado_id === 'all') {
+    // No filter
+  } else if (!estado_id) {
+    where.push("es.codigo = 'activo'");
+  }
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
   const rows = await sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
   return rows[0]?.cnt ?? 0;
@@ -168,14 +193,17 @@ export const getClienteById = async (id) => {
     where: { cliente_id: id }, order: [['es_principal', 'DESC'], ['nombre', 'ASC']]
   });
 
-  // Gerentes de la célula: asignaciones activas (hasta null o >= hoy)
+  // Gerentes de la célula: asignaciones activas (hasta null o >= hoy) + su asistencia actual
   const mgrs = await sequelize.query(`
     SELECT a.id, a.feder_id, a.rol_tipo_id, a.es_principal,
            f.nombre, f.apellido, f.avatar_url,
-           crt.codigo AS rol_codigo, crt.nombre AS rol_nombre
+           crt.codigo AS rol_codigo, crt.nombre AS rol_nombre,
+           mtt.codigo AS modalidad_codigo
     FROM "CelulaRolAsignacion" a
     JOIN "Feder" f ON f.id = a.feder_id
     JOIN "CelulaRolTipo" crt ON crt.id = a.rol_tipo_id
+    LEFT JOIN "AsistenciaRegistro" ar ON ar.feder_id = f.id AND ar.check_out_at IS NULL
+    LEFT JOIN "ModalidadTrabajoTipo" mtt ON mtt.id = ar.modalidad_id
     WHERE a.celula_id = :celula_id
       AND a.desde <= CURRENT_DATE
       AND (a.hasta IS NULL OR a.hasta >= CURRENT_DATE)
@@ -219,7 +247,11 @@ export const hardDeleteCliente = async (id) => {
   // Evitar FK: contactos y tareas
   await models.ClienteContacto.destroy({ where: { cliente_id: id } });
   const tareas = await models.Tarea.count({ where: { cliente_id: id } });
-  if (tareas > 0) throw Object.assign(new Error('No se puede eliminar: el cliente tiene tareas asociadas'), { status: 409 });
+  if (tareas > 0) {
+    const err = new Error('No se puede eliminar permanentemente: el cliente tiene tareas asociadas. Te recomendamos usar la baja lógica (cambiar estado a Baja).');
+    err.status = 409;
+    throw err;
+  }
   await models.Cliente.destroy({ where: { id } });
   return { ok: true };
 };

@@ -85,3 +85,7 @@ export async function publishMeetingScheduled(canal_id, evento, meet) {
   const userIds = await getChannelMemberUserIds(canal_id);
   return publishMany(userIds, { type: 'chat.channel.meeting', canal_id, evento, meet });
 }
+
+export async function publishChannelDeleted(canal_id, memberUserIds) {
+  return publishMany(memberUserIds, { type: 'chat.channel.deleted', canal_id });
+}

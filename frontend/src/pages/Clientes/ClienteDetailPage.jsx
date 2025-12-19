@@ -1,26 +1,84 @@
-import React, { useState } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import { useClienteDetail } from './hooks/useClienteDetail'
+import React, { useEffect, useState, useCallback } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { clientesApi } from '../../api/clientes'
-import useClientesCatalog from './hooks/useClientesCatalog'
-import ClienteContactList from '../../components/clients/ClienteContactList'
-import ClienteTasksMini from '../../components/clients/ClienteTasksMini'
 import { useToast } from '../../components/toast/ToastProvider'
-import { FiArrowLeft, FiEdit2, FiSave, FiX, FiMail, FiPhone, FiGlobe, FiUsers } from 'react-icons/fi'
+import { useModal } from '../../components/modal/ModalProvider'
+import { useAuthCtx } from '../../context/AuthContext'
+import {
+    FiArrowLeft, FiEdit2, FiSave, FiX, FiMail, FiPhone,
+    FiGlobe, FiUsers, FiTrash2, FiStar, FiChevronRight,
+    FiMessageSquare, FiClock, FiCalendar
+} from 'react-icons/fi'
+import { getContrastColor, getCleanInitials } from '../../utils/ui'
+import { resolveMediaUrl } from '../../utils/media'
+import Avatar from '../../components/Avatar'
+import ClienteStatusCard from '../../components/clients/ClienteStatusCard'
+import AttendanceBadge from '../../components/common/AttendanceBadge'
 import './clienteDetail.scss'
 
 export default function ClienteDetailPage() {
     const { id } = useParams()
     const navigate = useNavigate()
     const toast = useToast()
-    const { cliente, contactos, loading, error, refetch } = useClienteDetail(Number(id))
-    const { data: catalog } = useClientesCatalog()
+    const modal = useModal()
+    const { roles } = useAuthCtx() || {}
 
+    const [cliente, setCliente] = useState(null)
+    const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [] })
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [form, setForm] = useState({})
 
-    const startEdit = () => {
+    const [form, setForm] = useState({
+        nombre: '',
+        alias: '',
+        email: '',
+        telefono: '',
+        sitio_web: '',
+        descripcion: '',
+        celula_id: '',
+        tipo_id: '',
+        ponderacion: 3,
+        color: '#3B82F6'
+    })
+
+    const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB')
+
+    const reload = useCallback(async () => {
+        try {
+            setLoading(true)
+            const [data, cat] = await Promise.all([
+                clientesApi.get(id),
+                clientesApi.catalog()
+            ])
+            setCliente(data)
+            setCatalog(cat)
+            setForm({
+                nombre: data.nombre || '',
+                alias: data.alias || '',
+                email: data.email || '',
+                telefono: data.telefono || '',
+                sitio_web: data.sitio_web || '',
+                descripcion: data.descripcion || '',
+                celula_id: data.celula_id || '',
+                tipo_id: data.tipo_id || '',
+                ponderacion: data.ponderacion || 3,
+                color: data.color || '#3B82F6'
+            })
+            document.title = `${data.nombre} | FedesHub`
+        } catch (err) {
+            setError(err.message || 'Error al cargar el cliente')
+        } finally {
+            setLoading(false)
+        }
+    }, [id])
+
+    useEffect(() => { reload() }, [reload])
+
+    const startEdit = () => setEditing(true)
+    const cancelEdit = () => {
+        setEditing(false)
         setForm({
             nombre: cliente.nombre || '',
             alias: cliente.alias || '',
@@ -30,255 +88,320 @@ export default function ClienteDetailPage() {
             descripcion: cliente.descripcion || '',
             celula_id: cliente.celula_id || '',
             tipo_id: cliente.tipo_id || '',
-            estado_id: cliente.estado_id || '',
             ponderacion: cliente.ponderacion || 3,
             color: cliente.color || '#3B82F6'
         })
-        setEditing(true)
     }
 
-    const cancelEdit = () => {
-        setEditing(false)
-        setForm({})
-    }
-
-    const saveEdit = async () => {
+    const handleSave = async () => {
         try {
             setSaving(true)
-            await clientesApi.update(cliente.id, form)
-            toast.success('Cliente actualizado')
+            const updated = await clientesApi.update(cliente.id, form)
+            setCliente(updated)
             setEditing(false)
-            refetch()
+            toast.success('Cliente actualizado correctamente')
         } catch (err) {
-            toast.error(err?.response?.data?.message || 'Error al guardar')
+            toast.error(err.fh?.message || 'Error al guardar cambios')
         } finally {
             setSaving(false)
         }
     }
 
-    const upd = (field, value) => setForm(f => ({ ...f, [field]: value }))
+    const handleStatusChange = async (estadoId) => {
+        try {
+            const updated = await clientesApi.update(cliente.id, { estado_id: estadoId })
+            setCliente(updated)
+        } catch (err) {
+            toast.error(err.fh?.message || 'Error al cambiar estado')
+            throw err
+        }
+    }
 
-    if (loading) return (
-        <div className="ClienteDetailPage"><div className="loading">Cargando…</div></div>
-    )
-    if (error) return (
-        <div className="ClienteDetailPage"><div className="error">{error}</div></div>
-    )
+    const handleDelete = async () => {
+        const ok = await modal.confirm({
+            title: 'Eliminar cliente',
+            message: '¿Estás seguro de que querés eliminar permanentemente este cliente? Esta acción no se puede deshacer.',
+            okText: 'Eliminar permanentemente',
+            cancelText: 'Cancelar',
+            danger: true
+        })
+
+        if (!ok) return
+
+        try {
+            setSaving(true)
+            await clientesApi.remove(cliente.id, { force: true })
+            toast.success('Cliente eliminado permanentemente')
+            navigate('/clientes')
+        } catch (err) {
+            toast.error(err.fh?.message || 'Error al eliminar cliente')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    if (loading) return <div className="ClienteDetailPage"><div className="loading">Cargando cliente...</div></div>
+    if (error) return <div className="ClienteDetailPage"><div className="error">{error}</div></div>
     if (!cliente) return null
 
-    const initials = (cliente.nombre || '').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    const initials = getCleanInitials(editing ? form.nombre : cliente.nombre)
+    const avatarBg = editing ? form.color : (cliente.color || '#3B82F6')
+    const avatarColor = getContrastColor(avatarBg)
 
     return (
         <div className="ClienteDetailPage">
-            {/* Barra superior */}
-            <header className="topBar">
-                <button className="backBtn" onClick={() => navigate('/clientes')} title="Volver">
-                    <FiArrowLeft />
-                </button>
-                <h1 className="pageTitle">Detalle del Cliente</h1>
-                <div className="topActions">
-                    {!editing ? (
-                        <button className="editBtn" onClick={startEdit}>
-                            <FiEdit2 /> Editar
-                        </button>
-                    ) : (
-                        <>
-                            <button className="cancelBtn" onClick={cancelEdit} disabled={saving}>
-                                <FiX /> Cancelar
-                            </button>
-                            <button className="saveBtn" onClick={saveEdit} disabled={saving}>
-                                <FiSave /> {saving ? 'Guardando...' : 'Guardar'}
-                            </button>
-                        </>
-                    )}
+            <nav className="detailNavbar">
+                <div className="left">
+                    <button className="backBtn" onClick={() => navigate('/clientes')} title="Volver al listado">
+                        <FiArrowLeft />
+                    </button>
+                    <div className="breadcrumb">
+                        <Link to="/clientes">Clientes</Link>
+                        <FiChevronRight className="sep" />
+                        <span>Detalle de Cliente</span>
+                    </div>
                 </div>
-            </header>
 
-            {/* Contenido principal */}
+                <div className="right">
+                    <ClienteStatusCard
+                        estadoCodigo={cliente.estado_codigo}
+                        estadosCatalog={catalog.estados}
+                        onPick={handleStatusChange}
+                        disabled={editing || saving}
+                    />
+
+                    <div className="actions">
+                        {!editing ? (
+                            <>
+                                {isDirectivo && cliente.total_tareas === 0 && (
+                                    <button className="deleteBtn" onClick={handleDelete} title="Eliminar definitivamente">
+                                        <FiTrash2 />
+                                    </button>
+                                )}
+                                <button className="editBtn" onClick={startEdit}>
+                                    <FiEdit2 /> Editar Perfil
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button className="cancelBtn" onClick={cancelEdit} disabled={saving}>
+                                    <FiX /> Cancelar
+                                </button>
+                                <button className="saveBtn" onClick={handleSave} disabled={saving}>
+                                    <FiSave /> {saving ? 'Guardando...' : 'Guardar Cambios'}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </nav>
+
             <div className="detailGrid">
-                {/* Columna izquierda - Info principal */}
-                <div className="mainCol">
-                    <section className="infoCard">
-                        <div className="cardHeader">
+                <main className="mainCol">
+                    <section className="profileCard">
+                        <div className="avatarWrapper">
                             <div
-                                className="clientAvatar"
-                                style={{ backgroundColor: editing ? form.color : (cliente.color || '#3B82F6') }}
+                                className="avatar"
+                                style={{ backgroundColor: avatarBg, color: avatarColor }}
                             >
-                                {initials || 'C'}
+                                {initials}
                             </div>
-                            <div className="clientInfo">
+                            {editing && (
+                                <div className="colorPicker">
+                                    <input
+                                        type="color"
+                                        value={form.color}
+                                        onChange={e => setForm({ ...form, color: e.target.value })}
+                                        title="Color de identidad"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="profileInfo">
+                            {editing ? (
+                                <div className="editFields">
+                                    <input
+                                        className="titleInput"
+                                        value={form.nombre}
+                                        onChange={e => setForm({ ...form, nombre: e.target.value })}
+                                        placeholder="Nombre del Cliente"
+                                    />
+                                    <input
+                                        className="aliasInput"
+                                        value={form.alias}
+                                        onChange={e => setForm({ ...form, alias: e.target.value })}
+                                        placeholder="Alias / Nombre Fantasía"
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h1>{cliente.nombre}</h1>
+                                    {cliente.alias && <p className="alias">{cliente.alias}</p>}
+                                </>
+                            )}
+
+                            <div className="badgesRow">
                                 {!editing ? (
                                     <>
-                                        <h2>{cliente.nombre}</h2>
-                                        {cliente.alias && <span className="alias">({cliente.alias})</span>}
+                                        <span className="badge type">{cliente.tipo_nombre}</span>
+                                        <span className="badge celula">{cliente.celula_nombre}</span>
+                                        <span className="badge ponderacion">
+                                            <FiStar className="icon" /> Pond. {cliente.ponderacion}
+                                        </span>
                                     </>
                                 ) : (
-                                    <div className="editFields">
-                                        <input
-                                            type="text"
-                                            value={form.nombre}
-                                            onChange={e => upd('nombre', e.target.value)}
-                                            placeholder="Nombre del cliente"
-                                            className="inputLg"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={form.alias}
-                                            onChange={e => upd('alias', e.target.value)}
-                                            placeholder="Alias (opcional)"
-                                        />
+                                    <div className="editSelectors">
+                                        <select value={form.tipo_id} onChange={e => setForm({ ...form, tipo_id: e.target.value })}>
+                                            <option value="">Tipo de Cliente</option>
+                                            {catalog.tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                                        </select>
+                                        <select value={form.celula_id} onChange={e => setForm({ ...form, celula_id: e.target.value })}>
+                                            <option value="">Célula Asignada</option>
+                                            {catalog.celulas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                        </select>
+                                        <select value={form.ponderacion} onChange={e => setForm({ ...form, ponderacion: Number(e.target.value) })}>
+                                            {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad: {v}</option>)}
+                                        </select>
                                     </div>
                                 )}
                             </div>
                         </div>
+                    </section>
 
-                        {/* Badges/Meta */}
-                        <div className="metaRow">
-                            {!editing ? (
-                                <>
-                                    <span className="badge">{cliente.tipo_nombre}</span>
-                                    <span className="badge">{cliente.estado_nombre}</span>
-                                    <span className="badge">Pond. {cliente.ponderacion}</span>
-                                    <Link to={`/celulas/${cliente.celula_id}`} className="badge link">
-                                        <FiUsers size={12} /> {cliente.celula_nombre}
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    <select value={form.tipo_id} onChange={e => upd('tipo_id', Number(e.target.value))}>
-                                        {(catalog?.tipos || []).map(t => (
-                                            <option key={t.id} value={t.id}>{t.nombre}</option>
-                                        ))}
-                                    </select>
-                                    <select value={form.estado_id} onChange={e => upd('estado_id', Number(e.target.value))}>
-                                        {(catalog?.estados || []).map(e => (
-                                            <option key={e.id} value={e.id}>{e.nombre}</option>
-                                        ))}
-                                    </select>
-                                    <select value={form.ponderacion} onChange={e => upd('ponderacion', Number(e.target.value))}>
-                                        {[1, 2, 3, 4, 5].map(p => (
-                                            <option key={p} value={p}>Pond. {p}</option>
-                                        ))}
-                                    </select>
-                                    <select value={form.celula_id} onChange={e => upd('celula_id', Number(e.target.value))}>
-                                        {(catalog?.celulas || []).map(c => (
-                                            <option key={c.id} value={c.id}>{c.nombre}</option>
-                                        ))}
-                                    </select>
-                                </>
-                            )}
+                    <section className="detailsPanel">
+                        <div className="panelHeader">
+                            <h3><FiUsers /> Información de Contacto</h3>
                         </div>
-
-                        {/* Contacto */}
-                        <div className="contactInfo">
-                            {!editing ? (
-                                <>
-                                    <div className="contactItem">
-                                        <FiMail className="icon" />
-                                        <span>{cliente.email || '—'}</span>
-                                    </div>
-                                    <div className="contactItem">
-                                        <FiPhone className="icon" />
-                                        <span>{cliente.telefono || '—'}</span>
-                                    </div>
-                                    {cliente.sitio_web && (
-                                        <div className="contactItem">
-                                            <FiGlobe className="icon" />
-                                            <a href={cliente.sitio_web} target="_blank" rel="noreferrer">{cliente.sitio_web}</a>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    <div className="inputRow">
-                                        <FiMail className="icon" />
-                                        <input type="email" value={form.email} onChange={e => upd('email', e.target.value)} placeholder="Email" />
-                                    </div>
-                                    <div className="inputRow">
-                                        <FiPhone className="icon" />
-                                        <input type="tel" value={form.telefono} onChange={e => upd('telefono', e.target.value)} placeholder="Teléfono" />
-                                    </div>
-                                    <div className="inputRow">
-                                        <FiGlobe className="icon" />
-                                        <input type="url" value={form.sitio_web} onChange={e => upd('sitio_web', e.target.value)} placeholder="Sitio web" />
-                                    </div>
-                                    <div className="inputRow">
-                                        <label>Color:</label>
-                                        <input type="color" value={form.color} onChange={e => upd('color', e.target.value)} />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Descripción */}
-                        {(cliente.descripcion || editing) && (
-                            <div className="descSection">
-                                <h3>Descripción</h3>
-                                {!editing ? (
-                                    <p>{cliente.descripcion || 'Sin descripción'}</p>
+                        <div className="panelBody contactGrid">
+                            <div className="contactField">
+                                <label><FiMail /> Email Principal</label>
+                                {editing ? (
+                                    <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ejemplo@correo.com" />
                                 ) : (
-                                    <textarea
-                                        value={form.descripcion}
-                                        onChange={e => upd('descripcion', e.target.value)}
-                                        placeholder="Descripción del cliente..."
-                                        rows={4}
-                                    />
+                                    <p>{cliente.email || <span className="empty">Sin correo</span>}</p>
                                 )}
                             </div>
-                        )}
-                    </section>
-
-                    {/* Stats */}
-                    <section className="statsRow">
-                        <div className="statCard">
-                            <div className="statValue">{cliente.tareas_abiertas ?? 0}</div>
-                            <div className="statLabel">Tareas abiertas</div>
+                            <div className="contactField">
+                                <label><FiPhone /> Teléfono</label>
+                                {editing ? (
+                                    <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} placeholder="+54..." />
+                                ) : (
+                                    <p>{cliente.telefono || <span className="empty">Sin teléfono</span>}</p>
+                                )}
+                            </div>
+                            <div className="contactField full">
+                                <label><FiGlobe /> Sitio Web</label>
+                                {editing ? (
+                                    <input value={form.sitio_web} onChange={e => setForm({ ...form, sitio_web: e.target.value })} placeholder="https://..." />
+                                ) : (
+                                    <p>
+                                        {cliente.sitio_web ? (
+                                            <a href={cliente.sitio_web} target="_blank" rel="noopener noreferrer">{cliente.sitio_web}</a>
+                                        ) : <span className="empty">Sin sitio web</span>}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                        <div className="statCard">
-                            <div className="statValue">{cliente.total_tareas ?? 0}</div>
-                            <div className="statLabel">Tareas totales</div>
+                    </section>
+
+                    <section className="detailsPanel">
+                        <div className="panelHeader">
+                            <h3><FiMessageSquare /> Descripción / Notas Internas</h3>
+                        </div>
+                        <div className="panelBody">
+                            {editing ? (
+                                <textarea
+                                    rows={6}
+                                    value={form.descripcion}
+                                    onChange={e => setForm({ ...form, descripcion: e.target.value })}
+                                    placeholder="Escribe detalles relevantes sobre el cliente..."
+                                />
+                            ) : (
+                                <p className="descText">{cliente.descripcion || <span className="empty">No hay descripción disponible.</span>}</p>
+                            )}
                         </div>
                     </section>
-                </div>
 
-                {/* Columna derecha - Paneles */}
-                <div className="sideCol">
-                    {/* Equipo de la célula */}
-                    {cliente.gerentes?.length > 0 && (
-                        <section className="panel">
-                            <h3>Equipo asignado</h3>
-                            <ul className="teamList">
-                                {cliente.gerentes.map(g => (
-                                    <li key={g.id} className="teamMember">
-                                        <div
-                                            className="memberAvatar"
-                                            style={{ backgroundImage: g.avatar_url ? `url(${g.avatar_url})` : undefined }}
-                                        >
-                                            {!g.avatar_url && (g.nombre?.[0] || '').toUpperCase()}
-                                        </div>
-                                        <div className="memberInfo">
-                                            <div className="memberName">{g.nombre} {g.apellido}</div>
-                                            <div className="memberRole">{g.rol_nombre}</div>
-                                        </div>
-                                        {g.es_principal && <span className="principalTag">Principal</span>}
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    )}
+                    <section className="kpiGrid">
+                        <div className="kpiCard">
+                            <FiClock className="icon" />
+                            <div className="data">
+                                <strong>{cliente.tareas_abiertas || 0}</strong>
+                                <span>Tareas Abiertas</span>
+                            </div>
+                        </div>
+                        <div className="kpiCard">
+                            <FiCalendar className="icon" />
+                            <div className="data">
+                                <strong>{cliente.total_tareas || 0}</strong>
+                                <span>Tareas Totales</span>
+                            </div>
+                        </div>
+                        <Link to={`/tareas?cliente_id=${cliente.id}`} className="kpiCard link">
+                            <FiMessageSquare className="icon" />
+                            <div className="data">
+                                <strong>Ver tareas →</strong>
+                                <span>Historial completo</span>
+                            </div>
+                        </Link>
+                    </section>
+                </main>
 
-                    {/* Contactos */}
-                    <section className="panel">
-                        <h3>Contactos</h3>
-                        <ClienteContactList contactos={contactos} />
+                <aside className="sideCol">
+                    <section className="sidePanel">
+                        <div className="sidePanelHeader">
+                            <h4><FiUsers /> Célula Asignada</h4>
+                        </div>
+                        <div className="teamList">
+                            {cliente.gerentes?.map(mgr => (
+                                <div className="memberRow" key={mgr.id}>
+                                    <div className="avatarSide">
+                                        <Avatar
+                                            src={resolveMediaUrl(mgr.avatar_url)}
+                                            name={`${mgr.nombre} ${mgr.apellido || ''}`}
+                                            size={40}
+                                            rounded="md"
+                                        />
+                                        <div className="statusIndicator">
+                                            <AttendanceBadge modalidad={mgr.asistencia_tipo} size={16} />
+                                        </div>
+                                    </div>
+                                    <div className="memberInfo">
+                                        <div className="memberName">{mgr.nombre} {mgr.apellido}</div>
+                                        <div className="memberRole">{mgr.rol_nombre || 'Integrante'}</div>
+                                    </div>
+                                </div>
+                            ))}
+                            {(!cliente.gerentes || cliente.gerentes.length === 0) && (
+                                <p className="empty">No hay equipo asignado a esta célula.</p>
+                            )}
+                        </div>
                     </section>
 
-                    {/* Tareas */}
-                    <section className="panel">
-                        <h3>Tareas recientes</h3>
-                        <ClienteTasksMini clienteId={cliente.id} />
+                    <section className="sidePanel">
+                        <div className="sidePanelHeader">
+                            <h4>Contactos Directos ({cliente.contactos?.length || 0})</h4>
+                        </div>
+                        <div className="contactsList">
+                            {cliente.contactos?.map(ct => (
+                                <div key={ct.id} className="contactRow">
+                                    <div className="contactMain">
+                                        <strong>{ct.nombre}</strong>
+                                        <span>{ct.cargo || 'Contacto'}</span>
+                                    </div>
+                                    <div className="contactActions">
+                                        {ct.email && <a href={`mailto:${ct.email}`} title={ct.email}><FiMail /></a>}
+                                        {ct.telefono && <a href={`tel:${ct.telefono}`} title={ct.telefono}><FiPhone /></a>}
+                                    </div>
+                                </div>
+                            ))}
+                            {(!cliente.contactos || cliente.contactos.length === 0) && (
+                                <p className="empty">No hay contactos secundarios.</p>
+                            )}
+                        </div>
                     </section>
-                </div>
+                </aside>
             </div>
         </div>
     )

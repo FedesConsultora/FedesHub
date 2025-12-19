@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import Avatar from '../Avatar.jsx';
+import { pickAvatar } from '../../utils/people.js';
 import AttendanceBadge from '../common/AttendanceBadge.jsx';
 import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js';
 import { MdClose } from 'react-icons/md';
@@ -109,7 +110,7 @@ const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handle
           return (
             <div className="person" key={p.id || p.feder_id || i}>
               <div className="avatarWrapper">
-                <Avatar src={p.avatar_url} name={fullName} size={36} />
+                <Avatar src={pickAvatar(p)} name={fullName} size={36} />
                 <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id || p.id)} size={14} />
 
                 {/* Tooltip con el nombre */}

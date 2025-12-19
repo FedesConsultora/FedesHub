@@ -1,14 +1,20 @@
-import { FaCamera, FaRotateRight } from 'react-icons/fa6'
+import { FaRotateRight } from 'react-icons/fa6'
+import AvatarUpload from './AvatarUpload'
+import { resolveMediaUrl } from '../../../utils/media'
 import './HeaderBasic.scss'
 
 export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefresh }) {
-  const initials = ((feder?.nombre?.[0] || '') + (feder?.apellido?.[0] || '') || 'FP').toUpperCase()
+  const federName = `${feder?.nombre || ''} ${feder?.apellido || ''}`.trim()
 
   return (
     <div className="pfHeader" aria-label="Encabezado de perfil">
       <div className="pfAvatar">
-        <div className="circle" aria-label={`Iniciales ${initials}`}>{initials}</div>
-        <button className="ghost" title="Cambiar foto de perfil" aria-label="Cambiar foto"><FaCamera/></button>
+        <AvatarUpload
+          federId={feder?.id}
+          src={resolveMediaUrl(feder?.avatar_url)}
+          alt={federName}
+          onUpdated={onRefresh}
+        />
       </div>
 
       <div className="pfMeta">
@@ -24,7 +30,7 @@ export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefre
           <span>Activo</span>
         </label>
         <button className="btn" onClick={onRefresh} title="Actualizar">
-          <FaRotateRight style={{marginRight:6}}/>Actualizar
+          <FaRotateRight style={{ marginRight: 6 }} />Actualizar
         </button>
       </div>
     </div>

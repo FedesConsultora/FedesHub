@@ -188,7 +188,7 @@ export default function TaskComments({ taskId, catalog }) {
               return (
                 <div className={`item ${isMine ? 'mine' : ''}`} key={c.id}>
                   <div className="avatarWrapper">
-                    <Avatar className="ph-avatar" name={author} size={30} />
+                    <Avatar className="ph-avatar" name={author} src={c.autor_avatar_url} size={30} />
                     <AttendanceBadge modalidad={getModalidad(statuses, cFederId)} size={12} />
                   </div>
                   <CommentItem

@@ -140,9 +140,22 @@ export const deleteFederModalidad = async (req, res, next) => {
 export const uploadAvatar = async (req, res, next) => {
   try {
     const { federId } = federIdRouteSchema.parse(req.params)
+
+    // Verificación de seguridad: si no es admin (o tiene permiso explícito),
+    // solo puede subir si es su propio federId.
+    const perms = req.auth?.perms || []
+    const isSelf = req.user?.feder_id === Number(federId)
+    const isAdmin = perms.includes('feders.update') || perms.includes('*.*')
+
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({ error: 'Permiso insuficiente para cambiar este avatar' })
+    }
+
     if (!req.file) return res.status(400).json({ error: 'Falta archivo "file"' })
-    // opcional: validar tipo/size rápido
+
+    // Validar tipo/size con Zod
     uploadAvatarSchema.parse({ mimetype: req.file.mimetype, size: req.file.size })
+
     const updated = await svcUploadAvatar(federId, req.file)
     res.status(201).json(updated) // devolvemos el Feder actualizado
   } catch (e) { next(e) }
@@ -150,7 +163,7 @@ export const uploadAvatar = async (req, res, next) => {
 const overviewQuery = z.object({
   // priorizar ámbitos que consideramos “C-level” (coma-separado)
   prio_ambitos: z.string().optional(),              // ej: "c_level,direccion"
-  celulas_estado: z.enum(['activa','pausada','cerrada']).optional().default('activa'),
+  celulas_estado: z.enum(['activa', 'pausada', 'cerrada']).optional().default('activa'),
   limit_celulas: z.coerce.number().int().min(1).max(500).optional().default(200)
 });
 

@@ -68,6 +68,7 @@ module.exports = {
         { nombre: 'Desarrollador Frontend', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Desarrollador Backend', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Desarrolladora Web', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Asesora Comercial', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'QA / Testing', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'DevOps / SRE', descripcion: null, ambito_id: amb.organico, is_activo: true, created_at: now, updated_at: now },
 

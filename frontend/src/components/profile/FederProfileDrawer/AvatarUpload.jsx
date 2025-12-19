@@ -5,7 +5,7 @@ import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
 import './AvatarUpload.scss'
 
-export default function AvatarUpload({ federId, src, alt, onUpdated }){
+export default function AvatarUpload({ federId, src, alt, onUpdated }) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const toast = useToast()
@@ -23,8 +23,8 @@ export default function AvatarUpload({ federId, src, alt, onUpdated }){
       const updatedFeder = await federsApi.uploadAvatar(federId, file)
       toast.success('Avatar actualizado')
       try {
-        window.dispatchEvent(new CustomEvent('fh:push', { detail: { type:'feders.avatar.updated', feder_id: federId, feder: updatedFeder } }))
-      } catch {}
+        window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'feders.avatar.updated', feder_id: federId, feder: updatedFeder } }))
+      } catch { }
       onUpdated?.()
     } catch (e) {
       const msg = e?.error || e?.message || 'Error subiendo avatar'
@@ -35,9 +35,15 @@ export default function AvatarUpload({ federId, src, alt, onUpdated }){
     }
   }
 
+  const label = ((alt || 'FP').split(' ').map(n => n[0]).join('')).toUpperCase().slice(0, 2)
+
   return (
     <div className="avaWrap">
-      <img className="ava" src={src} alt={alt || 'Avatar'} />
+      {src ? (
+        <img className="ava" src={src} alt={alt || 'Avatar'} />
+      ) : (
+        <div className="avaFallback">{label}</div>
+      )}
       <button type="button" className="uploadBtn" onClick={pick} title="Cambiar avatar" disabled={uploading}>
         <FaCamera />
         <input ref={inputRef} type="file" accept="image/*" onChange={onFile} aria-label="Subir avatar" />

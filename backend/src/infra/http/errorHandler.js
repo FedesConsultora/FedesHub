@@ -12,6 +12,7 @@ export function errorHandler(err, req, res, _next) {
   const status = guessStatus(err);
   const payload = {
     ok: false,
+    message: err?.message || 'Ocurrió un error inesperado',
     error: err?.message || 'error',
     type: err?.name || 'Error',
   };
