@@ -13,8 +13,15 @@ const path = require('path');
  */
 
 const PEOPLE = [
-  // NivelC: Colaboradores
+  // NivelA: Directivos / C-Level
+  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedes.ai', nivel: 'NivelA' },
+  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedes.ai', nivel: 'NivelA' },
+  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedes.ai', nivel: 'NivelA' },
+  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedes.ai', nivel: 'NivelB' },
   { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai', nivel: 'NivelB' },
+
+  // NivelC: Colaboradores
+  { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedes.ai', nivel: 'NivelC' },
   { nombre: 'Mateo', apellido: 'Germano', cargo: 'Analista Audiovisual', email: 'mgermano@fedes.ai' },
   { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Analista de Diseño', email: 'fmarchesotti@fedes.ai' },
   { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Analista de Cuentas', email: 'gcanibano@fedes.ai' },
@@ -22,13 +29,6 @@ const PEOPLE = [
   { nombre: 'Juan', apellido: 'Perozo', cargo: 'Analista de Diseño', email: 'jperozo@fedes.ai' },
   { nombre: 'Matias', apellido: 'Lazcano', cargo: 'Analista Audiovisual', email: 'mlazcano@fedes.ai' },
   { nombre: 'Belen', apellido: 'Espilman', cargo: 'Desarrolladora Web', email: 'bespilman@fedes.ai' },
-  { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedes.ai' },
-
-  // NivelB: Líderes
-  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedes.ai', nivel: 'NivelB' },
-  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedes.ai', nivel: 'NivelB' },
-  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedes.ai', nivel: 'NivelB' },
-  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedes.ai', nivel: 'NivelB' },
 ];
 
 // Función para determinar nivel de rol: nivel explícito > NivelC por defecto
@@ -144,6 +144,24 @@ module.exports = {
       // RolTipo miembro (para CRA)
       const crtMiembro = await one(`SELECT id FROM "CelulaRolTipo" WHERE codigo='miembro' LIMIT 1`);
       if (!crtMiembro) throw new Error('Falta CelulaRolTipo.miembro (0007)');
+
+      // === Clientes Especiales ===
+      const [[cliTipoA]] = await qi.sequelize.query(`SELECT id FROM "ClienteTipo" WHERE codigo='A' LIMIT 1`, { transaction: t });
+      const [[cliEstAct]] = await qi.sequelize.query(`SELECT id FROM "ClienteEstado" WHERE codigo='activo' LIMIT 1`, { transaction: t });
+
+      const ensureCliente = async (nombre, alias) => {
+        const row = await one(`SELECT id FROM "Cliente" WHERE nombre=:nombre LIMIT 1`, { nombre });
+        if (row) return row.id;
+        await qi.bulkInsert('Cliente', [{
+          nombre, alias, celula_id: cel1Id, tipo_id: cliTipoA.id, estado_id: cliEstAct.id,
+          descripcion: 'Fedes Cloud - Infraestructura y Sistemas',
+          color: '#1e88e5',
+          created_at: now, updated_at: now
+        }], { transaction: t });
+        const created = await one(`SELECT id FROM "Cliente" WHERE nombre=:nombre LIMIT 1`, { nombre });
+        return created?.id;
+      };
+      const cloudClientId = await ensureCliente('066 - Fedes Cloud', 'Fedes Cloud');
 
       // Roles disponibles (3 niveles)
       const [roleRows] = await qi.sequelize.query(

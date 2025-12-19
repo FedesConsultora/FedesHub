@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const updateFederSelfSchema = z.object({
-  nombre:   z.string().min(2).max(120).optional(),
+  nombre: z.string().min(2).max(120).optional(),
   apellido: z.string().min(2).max(120).optional(),
   telefono: z.string().max(30).nullish().optional(),
   // avatar_url NO lo actualizamos desde aquí por UX (se sube por /avatar)
@@ -11,7 +11,7 @@ export const updateFederSelfSchema = z.object({
 export const listFedersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
-  q: z.string().trim().min(1).max(120).optional(),
+  q: z.string().trim().max(120).optional(),
   celula_id: z.coerce.number().int().positive().optional(),
   estado_id: z.coerce.number().int().positive().optional(),
   is_activo: z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean().optional())
