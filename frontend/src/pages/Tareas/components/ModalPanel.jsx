@@ -21,11 +21,20 @@ export default function ModalPanel({ open, onClose, children }) {
     mouseDownTarget.current = null
   }
 
+  const handleContextMenu = (e) => {
+    // Solo si el click derecho fue en el overlay (fuera del panel)
+    if (e.target === e.currentTarget) {
+      e.preventDefault(); // evita el menú contextual
+      onClose();
+    }
+  };
+
   return (
     <div
       className="modalOverlay"
       onMouseDown={handleMouseDown}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
     >
       <div className="modalPanel" onClick={(e) => e.stopPropagation()}>
         {children}

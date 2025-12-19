@@ -97,12 +97,11 @@ export default function TaskHistory({ taskId }) {
                     <div className="historyList">
                         {history.map((entry) => (
                             <div key={entry.id} className="historyEntry" >
-                                
+
                                 <span className="name">
                                     {entry.feder_nombre} {entry.feder_apellido}:
                                 </span>
-                                <span className="description" data-tooltip=                                    {entry.descripcion || `${ACCION_LABELS[entry.accion] || entry.accion} ${TIPO_CAMBIO_LABELS[entry.tipo_cambio] || entry.tipo_cambio}`}
->
+                                <span className="description" >
                                     {entry.descripcion || `${ACCION_LABELS[entry.accion] || entry.accion} ${TIPO_CAMBIO_LABELS[entry.tipo_cambio] || entry.tipo_cambio}`}
                                 </span>
                                 <span className="timestamp">{formatDate(entry.created_at)}</span>
