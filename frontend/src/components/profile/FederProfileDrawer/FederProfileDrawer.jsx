@@ -14,7 +14,7 @@ import ModalidadDiaSection from './ModalidadDiaSection.jsx'
 import ProfileTabs from './ProfileTabs.jsx'
 import './FederProfileDrawer.scss'
 
-export default function FederProfileDrawer({ open=false, federId, onClose, catalog }) {
+export default function FederProfileDrawer({ open = false, federId, onClose, catalog }) {
   const [mounted, setMounted] = useState(false)
   const [closing, setClosing] = useState(false)
   const { data: feder, loading, refetch, toggleActive } = useFederDetail(federId)
@@ -26,7 +26,7 @@ export default function FederProfileDrawer({ open=false, federId, onClose, catal
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', onKey)
-    requestAnimationFrame(()=> setMounted(true))
+    requestAnimationFrame(() => setMounted(true))
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; setMounted(false) }
   }, [open])
 
@@ -61,13 +61,13 @@ export default function FederProfileDrawer({ open=false, federId, onClose, catal
     <div className={'pfWrap' + (mounted ? ' open' : '') + (closing ? ' closing' : '')} role="dialog" aria-modal="true" aria-label="Perfil del feder">
       <div className="pfBackdrop" onClick={handleClose} />
 
-      <aside className="pfPanel" onClick={(e)=>e.stopPropagation()}>
+      <aside className="pfPanel" onClick={(e) => e.stopPropagation()}>
         <header className="pfTopBar">
           <div className="brand">
             <div className="logo">Perfil</div>
             <div className="sub">Ficha completa y configuración</div>
           </div>
-          <button className="close" onClick={handleClose} aria-label="Cerrar"><FaXmark/></button>
+          <button className="close" onClick={handleClose} aria-label="Cerrar"><FaXmark /></button>
         </header>
 
         <div className="pfBody">
@@ -86,30 +86,36 @@ export default function FederProfileDrawer({ open=false, federId, onClose, catal
                 defaultId="basic"
                 onChange={onTabChange}
                 tabs={[
-                  { id:'basic',  label:'Información básica', icon:FiUser,
-                    content:(
+                  {
+                    id: 'basic', label: 'Información básica', icon: FiUser,
+                    content: (
                       <BasicInfoSection
                         feder={feder}
                         celulaName={feder.celula_nombre || null}
-                        // en perfil propio no se puede cambiar el puesto:
-                        canEditCargo={false}
+                        canEditCargo={canEditCargo}
+                        isSelf={isSelf}
                       />
                     )
                   },
-                  { id:'id',     label:'Identidad y legales', icon:FiFileText,
-                    content:<IdentidadSection feder={feder} />
+                  {
+                    id: 'id', label: 'Identidad y legales', icon: FiFileText,
+                    content: <IdentidadSection feder={feder} />
                   },
-                  { id:'mode',   label:'Modalidad por día', icon:FiCalendar,
-                    content:<ModalidadDiaSection federId={feder.id} catalog={catLocal||{}} />
+                  {
+                    id: 'mode', label: 'Modalidad por día', icon: FiCalendar,
+                    content: <ModalidadDiaSection federId={feder.id} catalog={catLocal || {}} />
                   },
-                  { id:'firma',  label:'Firma', icon:FiEdit3,
-                    content:<FirmaPerfilSection federId={feder.id} federNombre={feder.nombre} federApellido={feder.apellido} />
+                  {
+                    id: 'firma', label: 'Firma', icon: FiEdit3,
+                    content: <FirmaPerfilSection federId={feder.id} federNombre={feder.nombre} federApellido={feder.apellido} />
                   },
-                  { id:'bancos', label:'Bancos', icon:FiCreditCard,
-                    content:<BancosSection federId={feder.id} />
+                  {
+                    id: 'bancos', label: 'Bancos', icon: FiCreditCard,
+                    content: <BancosSection federId={feder.id} />
                   },
-                  { id:'emerg',  label:'Emergencias', icon:FiLifeBuoy,
-                    content:<EmergenciasSection federId={feder.id} />
+                  {
+                    id: 'emerg', label: 'Emergencias', icon: FiLifeBuoy,
+                    content: <EmergenciasSection federId={feder.id} />
                   },
                 ]}
               />

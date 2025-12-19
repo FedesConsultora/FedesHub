@@ -1,0 +1,371 @@
+.CelulaDetailPage {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #e2e8f0;
+
+    .loading,
+    .error {
+        padding: 40px;
+        text-align: center;
+        color: #a0aec0;
+    }
+
+    .detailNavbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+
+        .left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .backBtn {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 8px;
+                border-radius: 8px;
+                color: #fff;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+            }
+
+            .breadcrumb {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.9rem;
+
+                a {
+                    color: #a0aec0;
+                    text-decoration: none;
+
+                    &:hover {
+                        color: #fff;
+                    }
+                }
+
+                .sep {
+                    color: #4a5568;
+                    font-size: 0.8rem;
+                }
+            }
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+
+            button {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: 0.2s;
+            }
+
+            .editBtn {
+                background: #3B82F6;
+                color: #fff;
+
+                &:hover {
+                    background: #2563eb;
+                }
+            }
+
+            .saveBtn {
+                background: #10b981;
+                color: #fff;
+
+                &:hover {
+                    background: #059669;
+                }
+            }
+
+            .cancelBtn {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.15);
+                }
+            }
+        }
+    }
+
+    .detailGrid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 32px;
+
+        @media (max-width: 980px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .profileCard {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: #1a202c;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 24px;
+
+        .avatarWrapper {
+            .avLabel {
+                position: relative;
+                display: inline-block;
+                cursor: pointer;
+                border-radius: 12px;
+                overflow: hidden;
+
+                .avOverlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                    font-size: 1.2rem;
+                    opacity: 0;
+                    transition: 0.2s;
+                }
+
+                &:hover .avOverlay {
+                    opacity: 1;
+                }
+
+                &.uploading {
+                    cursor: wait;
+
+                    .avOverlay {
+                        opacity: 1;
+                        background: rgba(0, 0, 0, 0.7);
+                    }
+                }
+
+                .avSpinner {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.8rem;
+                }
+            }
+        }
+
+        .profileInfo {
+            h1 {
+                margin: 0;
+                font-size: 2.2rem;
+                font-weight: 800;
+                color: #fff;
+            }
+
+            .titleInput {
+                background: rgba(0, 0, 0, 0.2);
+                border: 1px solid #3B82F6;
+                color: #fff;
+                font-size: 2rem;
+                font-weight: 800;
+                padding: 8px 12px;
+                border-radius: 8px;
+                width: 100%;
+            }
+
+            .badgesRow {
+                display: flex;
+                gap: 12px;
+                margin-top: 12px;
+
+                .badge {
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .state.activa {
+                    background: rgba(16, 185, 129, 0.1);
+                    color: #10b981;
+                    border: 1px solid rgba(16, 185, 129, 0.2);
+                }
+
+                .members {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3B82F6;
+                    border: 1px solid rgba(59, 130, 246, 0.2);
+                }
+            }
+        }
+    }
+
+    .detailsPanel {
+        background: #1a202c;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 24px;
+        overflow: hidden;
+
+        .panelHeader {
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            h3 {
+                margin: 0;
+                font-size: 1rem;
+                color: #a0aec0;
+            }
+
+            .addBtn {
+                background: rgba(59, 130, 246, 0.1);
+                color: #3B82F6;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.2);
+                }
+            }
+        }
+
+        .panelBody {
+            padding: 24px;
+
+            p.descText {
+                margin: 0;
+                line-height: 1.6;
+                color: #cbd5e0;
+            }
+
+            textarea {
+                width: 100%;
+                background: rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #fff;
+                padding: 12px;
+                border-radius: 8px;
+
+                &:focus {
+                    border-color: #3B82F6;
+                    outline: none;
+                }
+            }
+        }
+    }
+
+    .membersList {
+        .memberRow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .memberActions {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+
+                .since {
+                    font-size: 0.8rem;
+                    color: #4a5568;
+                }
+
+                .closeBtn {
+                    background: none;
+                    border: none;
+                    color: #e53e3e;
+                    cursor: pointer;
+                    font-size: 1.1rem;
+                    opacity: 0.5;
+                    transition: 0.2s;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+    }
+
+    .sidePanel {
+        background: #1a202c;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        margin-bottom: 24px;
+
+        .sidePanelHeader {
+            margin-bottom: 16px;
+
+            h4 {
+                margin: 0;
+                color: #a0aec0;
+                font-size: 0.9rem;
+            }
+        }
+
+        .simpleList {
+            .itemRow {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 8px 0;
+
+                span {
+                    font-size: 0.9rem;
+                    color: #cbd5e0;
+                }
+
+                .cliAv {
+                    border-radius: 4px;
+                }
+            }
+        }
+    }
+
+    .empty {
+        color: #4a5568;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+}

@@ -1,10 +1,14 @@
+import { useNavigate } from 'react-router-dom'
 import PersonTag from '../../components/PersonTag.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import './CelulasGrid.scss'
 
 function CelulaCard({ c }) {
+  const navigate = useNavigate()
+  const handleClick = () => navigate(`/feders/celulas/${c.id}`)
+
   return (
-    <section className="celCard">
+    <section className="celCard" onClick={handleClick} style={{ cursor: 'pointer' }}>
       <header className="title">
         <Avatar src={c.avatar_url} name={c.nombre} size={28} rounded="md" />
         <h4>{c.nombre}</h4>
@@ -16,7 +20,7 @@ function CelulaCard({ c }) {
         {c.miembros.map(m => (
           <PersonTag
             key={m.feder_id}
-            p={{ nombre:m.nombre, apellido:m.apellido, avatar_url:m.avatar_url }}
+            p={{ nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url }}
             subtitle={m.cargo_nombre || (m.es_principal ? 'Miembro (principal)' : 'Miembro')}
           />
         ))}

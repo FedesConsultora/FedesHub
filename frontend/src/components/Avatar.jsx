@@ -7,8 +7,11 @@ function hashCode(str = '') {
   return Math.abs(h)
 }
 function initialsFrom(name = '') {
-  const parts = String(name).trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '—'
+  // Limpiar "001 - ", "01. ", etc. al principio
+  const cleanName = String(name).replace(/^[\d\s\-_.]+/, '').trim();
+  const parts = cleanName.split(/\s+/).filter(Boolean)
+  if (!parts.length) return String(name).trim().charAt(0).toUpperCase() || '—'
+
   const a = parts[0]?.[0] || ''
   const b = (parts.length > 1 ? parts[parts.length - 1][0] : '')
   return (a + b).toUpperCase()

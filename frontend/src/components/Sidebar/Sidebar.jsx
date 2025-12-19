@@ -9,7 +9,7 @@ import './Sidebar.scss'
 
 const APPS = [
   { code: 'home', name: 'Inicio', to: '/' },
-  { code: 'feders', name: 'Feders', to: '/feders', inDev: true },
+  { code: 'feders', name: 'Feders', to: '/feders' },
   { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
   { code: 'ausencia', name: 'Ausencias', to: '/ausencias', inDev: true },
   { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },

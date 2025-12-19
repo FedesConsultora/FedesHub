@@ -1,7 +1,7 @@
-export default function TimelineWeek() {
+export default function TimelineMonth() {
     return (
         <div className="fh-empty">
-            Vista mensual (en desarrollo)
+            Vista mensual
         </div>
     )
 }

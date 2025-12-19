@@ -5,7 +5,7 @@ import TriGlobalPanel from '../../sections/feders/TriGlobalPanel.jsx'
 import CelulasGrid from '../../sections/feders/CelulasGrid.jsx'
 import './FedersOverviewPage.scss'
 
-export default function FedersOverviewPage(){
+export default function FedersOverviewPage() {
   document.title = 'FedesHub — Feders'
   const { data, loading, error, params, setParams } = useFedersOverview()
 
@@ -16,9 +16,9 @@ export default function FedersOverviewPage(){
       {loading && <div className="loading">Cargando…</div>}
       {!loading && !error && (
         <>
-          <CLevelGrid items={data.c_level}/>
-          <TriGlobalPanel tri={data.tri}/>
-          {data.celulas.length > 0 && <CelulasGrid items={data.celulas}/>}
+          <CLevelGrid items={data.c_level} />
+          <TriGlobalPanel areas={data.areas} />
+          {data.celulas.length > 0 && <CelulasGrid items={data.celulas} />}
         </>
       )}
     </section>

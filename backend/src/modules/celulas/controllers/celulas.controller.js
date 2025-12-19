@@ -3,14 +3,15 @@
 // celulas.controller.js — Handlers Express
 import {
   listQuery, createBody, updateBody, changeStateBody,
-  asignarRolBody, cerrarAsignacionBody, idParam, asignacionIdParam
+  asignarRolBody, cerrarAsignacionBody, idParam, asignacionIdParam,
+  uploadAvatarSchema
 } from '../validators.js';
 
 import {
   catEstados, catRoles,
   svcCreate, svcUpdate, svcChangeState,
   svcDetail, svcList, svcListAsignaciones, svcAssignRol, svcCloseAsignacion,
-  svcListClientes, svcCoverage
+  svcListClientes, svcCoverage, svcUploadAvatar
 } from '../services/celulas.service.js';
 
 export const health = (_req, res) => res.json({ module: 'celulas', ok: true });
@@ -37,8 +38,10 @@ export const patch = async (req, res, next) => {
 };
 
 export const postState = async (req, res, next) => {
-  try { const { id } = idParam.parse(req.params); const { estado_codigo } = changeStateBody.parse(req.body);
-        res.json(await svcChangeState(id, estado_codigo)); } catch (e) { next(e); }
+  try {
+    const { id } = idParam.parse(req.params); const { estado_codigo } = changeStateBody.parse(req.body);
+    res.json(await svcChangeState(id, estado_codigo));
+  } catch (e) { next(e); }
 };
 
 // Asignaciones de roles (tridente/miembros)
@@ -62,4 +65,13 @@ export const listClientes = async (req, res, next) => {
 // Cobertura del tridente
 export const coverage = async (req, res, next) => {
   try { const { id } = idParam.parse(req.params); res.json(await svcCoverage(id)); } catch (e) { next(e); }
+};
+
+export const uploadAvatar = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    if (!req.file) return res.status(400).json({ error: 'Falta archivo "file"' });
+    uploadAvatarSchema.parse({ mimetype: req.file.mimetype, size: req.file.size });
+    res.json(await svcUploadAvatar(id, req.file));
+  } catch (e) { next(e); }
 };
