@@ -23,6 +23,9 @@ import ResetPassword from '../pages/passwordRecovery/ResetPassword.jsx'
 import AdminTabs from '../pages/Admin/AdminTabs.jsx'
 import FedersTabs from '../pages/Feders/FedersTabs.jsx'
 import FedersOverviewPage from '../pages/Feders/FedersOverviewPage.jsx'
+import CelulasListPage from '../pages/Feders/CelulasListPage.jsx'
+import CelulaDetailPage from '../pages/Feders/CelulaDetailPage.jsx'
+import FederDetailPage from '../pages/Feders/FederDetailPage.jsx'
 import ClientesListPage from '../pages/Clientes/ClientesListPage.jsx'
 import ClienteDetailPage from '../pages/Clientes/ClienteDetailPage.jsx'
 import AsistenciaPage from '../pages/Asistencia/AsistenciaPage.jsx'
@@ -37,7 +40,7 @@ import PerfilPage from '../pages/Perfil/PerfilPage.jsx'
 
 function FullPageLoader() {
   return (
-    <div style={{ display:'grid', placeItems:'center', minHeight:'100vh' }}>
+    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
       Cargando…
     </div>
   )
@@ -65,6 +68,9 @@ export default function AppRouter() {
           >
             <Route index element={<FedersOverviewPage />} />
             <Route path="listado" element={<FedersList />} />
+            <Route path="celulas" element={<CelulasListPage />} />
+            <Route path="celulas/:id" element={<CelulaDetailPage />} />
+            <Route path="view/:id" element={<FederDetailPage />} />
           </Route>
           <Route
             path="perfil"
@@ -108,7 +114,7 @@ export default function AppRouter() {
             element={<RequirePerm modulo="chat" accion="read"><ChatPage /></RequirePerm>}
           />
 
-         
+
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />
           <Route
@@ -118,8 +124,8 @@ export default function AppRouter() {
             <Route path="usuarios" element={<Users />} />
             <Route path="roles" element={<Roles />} />
             <Route path="roles/:id" element={<RoleDetail />} />
-            <Route path="cargos"     element={<RequirePerm modulo="cargos" accion="read"><AdminCargos /></RequirePerm>} />
-            <Route path="catalogos"  element={<RequirePerm modulo="auth"   accion="assign"><AdminCatalogos /></RequirePerm>} />
+            <Route path="cargos" element={<RequirePerm modulo="cargos" accion="read"><AdminCargos /></RequirePerm>} />
+            <Route path="catalogos" element={<RequirePerm modulo="auth" accion="assign"><AdminCatalogos /></RequirePerm>} />
           </Route>
         </Route>
       </Route>

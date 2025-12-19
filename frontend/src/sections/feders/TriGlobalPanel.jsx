@@ -14,8 +14,9 @@ function TriCard({ title, people = [] }) {
         {people.map((p, i) => (
           <PersonTag
             key={p.feder_id || i}
-            p={{ nombre:p.nombre, apellido:p.apellido, avatar_url:p.avatar_url, roles:p.roles }}
+            p={{ id: p.feder_id, nombre: p.nombre, apellido: p.apellido, avatar_url: p.avatar_url, roles: p.roles }}
             subtitle={p.cargo_nombre || 'Miembro'}
+            extra={p.is_leader && <span className="leaderBadge">Líder</span>}
           />
         ))}
       </div>
@@ -23,18 +24,17 @@ function TriCard({ title, people = [] }) {
   )
 }
 
-export default function TriGlobalPanel({ tri = {} }) {
-  const tecnologia = tri.tecnologia || []
-  const performance = tri.performance || []
-  const marketing = tri.marketing || []
+export default function TriGlobalPanel({ areas = {} }) {
+  const areaList = Object.values(areas)
 
   return (
     <section className="fhTriGlobal">
-      <h3>Tridentes</h3>
+      <h3>Áreas / Departamentos</h3>
       <div className="grid">
-        <TriCard title="Tecnología"   people={tecnologia} />
-        <TriCard title="Performance"  people={performance} />
-        <TriCard title="Marketing"    people={marketing} />
+        {areaList.map(area => (
+          <TriCard key={area.codigo} title={area.nombre} people={area.people} />
+        ))}
+        {areaList.length === 0 && <div className="empty">No se encontraron áreas organicás asignadas.</div>}
       </div>
     </section>
   )
