@@ -11,11 +11,24 @@ export default function ContextMenu({ items = [], children, disabled = false }) 
     const handleContextMenu = (e) => {
         if (disabled) return
         e.preventDefault()
-        e.stopPropagation()
+        e.stopPropagation() // Detener para que el document no lo cierre inmediatamente
 
-        // Calcular posición ajustada para que no se salga de la pantalla
-        const x = Math.min(e.clientX, window.innerWidth - 200)
-        const y = Math.min(e.clientY, window.innerHeight - 150)
+        // Notificar a otros menús abiertos que deben cerrarse
+        window.dispatchEvent(new CustomEvent('fh-close-context-menus'))
+
+        const menuWidth = 200
+        const menuHeight = items.length * 40 + 8
+
+        // Centrado horizontal
+        let x = e.clientX - (menuWidth / 2)
+        // Verticalmente un poco para arriba
+        let y = e.clientY - 20
+
+        // Validar límites de pantalla
+        if (x < 10) x = 10
+        if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10
+        if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10
+        if (y < 10) y = 10
 
         setPosition({ x, y })
         setVisible(true)
@@ -28,23 +41,26 @@ export default function ContextMenu({ items = [], children, disabled = false }) 
     }
 
     useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (menuRef.current && !menuRef.current.contains(e.target)) {
-                setVisible(false)
-            }
-        }
+        const close = () => setVisible(false)
 
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') setVisible(false)
-        }
+        const handleEsc = (e) => { if (e.key === 'Escape') close() }
+
+        // Escuchar el evento personalizado de otras instancias
+        window.addEventListener('fh-close-context-menus', close)
 
         if (visible) {
-            document.addEventListener('click', handleClickOutside)
-            document.addEventListener('keydown', handleEscape)
+            document.addEventListener('click', close)
+            document.addEventListener('contextmenu', close)
+            document.addEventListener('wheel', close, { passive: true })
+            document.addEventListener('keydown', handleEsc)
         }
+
         return () => {
-            document.removeEventListener('click', handleClickOutside)
-            document.removeEventListener('keydown', handleEscape)
+            window.removeEventListener('fh-close-context-menus', close)
+            document.removeEventListener('click', close)
+            document.removeEventListener('contextmenu', close)
+            document.removeEventListener('wheel', close)
+            document.removeEventListener('keydown', handleEsc)
         }
     }, [visible])
 
