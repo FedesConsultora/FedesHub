@@ -18,7 +18,9 @@ import {
   timelineDia,
   meTimelineDia,
   // bulk status
-  bulkStatus
+  bulkStatus,
+  timelineRango,
+  meTimelineRango
 } from './controllers/asistencia.controller.js';
 
 const router = Router();
@@ -44,6 +46,9 @@ router.get('/open', requireAuth, requirePermission('asistencia', 'read'), getOpe
 router.get('/timeline-dia', requireAuth, requirePermission('asistencia', 'report'), timelineDia);
 router.get('/me/timeline-dia', requireAuth, requirePermission('asistencia', 'read'), meTimelineDia);
 
+
+router.get('/timeline-rango', requireAuth, requirePermission('asistencia', 'report'), timelineRango);
+router.get('/me/timeline-rango', requireAuth, requirePermission('asistencia', 'read'), meTimelineRango);
 // Acciones estándar
 router.post('/check-in', requireAuth, requirePermission('asistencia', 'checkin'), postCheckIn);
 router.patch('/registros/:id/check-out', requireAuth, requirePermission('asistencia', 'checkout'), patchCheckOut);

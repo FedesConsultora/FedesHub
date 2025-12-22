@@ -2,7 +2,7 @@
 import {
   listQuerySchema, idParamSchema, openQuerySchema,
   checkInBodySchema, checkOutBodySchema, forceCloseBodySchema, adjustBodySchema,
-  timelineQuerySchema
+  timelineQuerySchema, timelineRangeQuerySchema
   ,
 } from '../validators.js';
 
@@ -10,7 +10,7 @@ import {
   svcCatalogOrigenes, svcCatalogCierreMotivos,
   svcList, svcGet, svcGetOpen, svcCheckIn, svcCheckOut, svcAdjust, svcForceCloseOpen,
   svcToggle, svcGetMyFeder, svcResumenPeriodo,
-  svcTimelineDia, svcBulkStatus
+  svcTimelineDia, svcBulkStatus, svcTimelineRango
 } from '../services/asistencia.service.js';
 
 export const health = (_req, res) => res.json({ module: 'asistencia', ok: true });
@@ -122,6 +122,28 @@ export const meTimelineDia = async (req, res, next) => {
     res.json(await svcTimelineDia({ ...q, feder_id: me.id }));
   } catch (e) { next(e); }
 };
+
+export const timelineRango = async (req, res, next) => {
+  try {
+    const q = timelineRangeQuerySchema.parse(req.query)
+    res.json(await svcTimelineRango(q))
+  } catch (e) {
+    next(e)
+  }
+}
+
+
+export const meTimelineRango = async (req, res, next) => {
+  try {
+    const q = timelineRangeQuerySchema.parse(req.query)
+    const me = await svcGetMyFeder(req.user.id)
+    res.json(await svcTimelineRango({ ...q, feder_id: me.id }))
+  } catch (e) {
+    next(e)
+  }
+}
+
+
 
 // Bulk status for attendance badges
 export const bulkStatus = async (req, res, next) => {

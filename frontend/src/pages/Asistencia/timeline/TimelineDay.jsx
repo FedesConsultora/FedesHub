@@ -27,11 +27,16 @@ const fmtRange = (sIso, eIso) => {
 }
 
 export default function TimelineDay({ payload, startHour = 5 }) {
-  const { fecha, jornada_min = 480, items } = payload
+  const fecha = payload?.fecha
+  const jornada_min = payload?.jornada_min ?? 480
+  const items = payload?.items ?? []
   const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), [])
 
-  // Collect feder IDs for status
-  const federIds = useMemo(() => items.map(p => p.feder_id), [items])
+  const federIds = useMemo(
+    () => Array.isArray(items) ? items.map(p => p.feder_id) : [],
+    [items]
+  )
+
   const { statuses } = useAttendanceStatus(federIds)
 
   // refs
@@ -99,7 +104,7 @@ export default function TimelineDay({ payload, startHour = 5 }) {
               <div className="person-col sticky-left">
                 <div className="person-name-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
                   <div className="person-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {p.feder_apellido}, {p.feder_nombre}
+                    {p.feder_apellido ?? p.apellido}, {p.feder_nombre ?? p.nombre}
                   </div>
                   <div style={{ position: 'relative', width: '16px', height: '16px', flexShrink: 0 }}>
                     <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id)} size={16} />
@@ -127,7 +132,7 @@ export default function TimelineDay({ payload, startHour = 5 }) {
                 </div>
 
                 <div className="blocks-layer">
-                  {p.bloques.map(b => {
+                  {(p.bloques ?? []).map(b => {
                     const s = minsFromMidnight(b.start)
                     const e = minsFromMidnight(b.end)
                     const w = Math.max(0, e - s)

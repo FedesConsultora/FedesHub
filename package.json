@@ -16,6 +16,7 @@
     "prod:logs": "docker compose logs -f"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
     "googleapis": "^159.0.0"
   },
   "devDependencies": {

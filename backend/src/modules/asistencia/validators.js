@@ -73,3 +73,10 @@ export const timelineQuerySchema = z.object({
   feder_id: id.optional(),
   jornada_min: z.coerce.number().int().min(60).max(24*60).optional() 
 });
+
+export const timelineRangeQuerySchema = z.object({
+  desde: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  hasta: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  q: z.string().optional(),
+  feder_id: z.number().optional(),
+})

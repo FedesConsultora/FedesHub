@@ -13,9 +13,8 @@ import './timeline/timeline.scss'
 const getRange = (isoDate, view) => {
   const d = new Date(isoDate)
 
-  if (view === 'day') {
-    return { from: isoDate, to: isoDate }
-  }
+ if (view === 'day') return null
+
 
   if (view === 'week') {
     const day = d.getDay() || 7
@@ -80,6 +79,7 @@ export default function AsistenciaPage() {
         <div className="grow" />
         {canReport && tab === 'equipo' && (
           <input
+            style={{ maxWidth: '200px' }}
             className="fh-input"
             placeholder="Buscar persona…"
             value={q}
@@ -87,7 +87,7 @@ export default function AsistenciaPage() {
           />
         )}
 
-        <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="fh-input" />
+        <input type="date" style={{ maxWidth: '200px' }} value={fecha} onChange={e => setFecha(e.target.value)} className="fh-input" />
         <select
           style={{ maxWidth: '200px' }}
           className="fh-input asst-view-select"
@@ -156,7 +156,7 @@ function TimelineWrapper({ fecha, scope, q = '', view }) {
     setLoading(true)
     setError(null)
 
-    const range = getRange(fecha, view)
+const range = view === 'day' ? null : getRange(fecha, view)
 
     const fn =
       view === 'day'
@@ -179,14 +179,23 @@ function TimelineWrapper({ fecha, scope, q = '', view }) {
       return () => { alive = false }
     }
 
-    fn(params)
-      .then(d => alive && setData(d))
-      .catch(e => {
-        const status = e?.response?.status
-        const msg = e?.response?.data?.message || e.message
-        alive && setError(status ? `${status} · ${msg}` : msg)
-      })
-      .finally(() => alive && setLoading(false))
+fn(params)
+  .then(d => {
+    if (!alive) return
+
+    if (Array.isArray(d)) {
+      setData({ items: d })
+    } else {
+      setData(d)
+    }
+  })
+  .catch(e => {
+    if (!alive) return
+    const status = e?.response?.status
+    const msg = e?.response?.data?.message || e.message
+    setError(status ? `${status} · ${msg}` : msg)
+  })
+  .finally(() => alive && setLoading(false))
 
     return () => { alive = false }
   }, [fecha, scope, q, view])

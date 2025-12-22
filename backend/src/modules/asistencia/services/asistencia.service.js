@@ -4,8 +4,9 @@ import {
   listRegistros, countRegistros, getRegistroById, getOpenByFeder,
   createCheckIn, updateCheckOut, adjustRegistro, forceCloseOpenForFeder,
   toggleForFeder, resumenPorPeriodo, ensureFederExists, getFederByUser,
-  getModalidadBy, getBulkOpenStatus
+  getModalidadBy, getBulkOpenStatus, timelineRangoRepo
 } from '../repositories/asistencia.repo.js';
+import { startOfDay, endOfDay } from 'date-fns';
 
 const resolveModalidadId = async ({ modalidad_id, modalidad_codigo }) => {
   if (modalidad_id) return modalidad_id;
@@ -179,6 +180,20 @@ export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min =
 
   return { fecha, jornada_min, items: out };
 };
+
+export const svcTimelineRango = async (params) => {
+  const desde = startOfDay(new Date(params.desde))
+  const hasta = endOfDay(new Date(params.hasta))
+
+  const items = await timelineRangoRepo({
+    ...params,
+    desde,
+    hasta,
+  })
+
+  return { items }
+}
+
 
 // Bulk status for attendance badges
 export const svcBulkStatus = async (federIds = []) => {

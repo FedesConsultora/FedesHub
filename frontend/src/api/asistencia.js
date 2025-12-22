@@ -12,7 +12,12 @@ const me = {
 
   // ⬇️ Antes recibía un string; ahora acepta params (objeto)
   timelineDia: (params) =>
-    api.get(`${base}/me/timeline-dia`, { params }).then(r => r.data),
+    api.get(`${base}/me/timeline-dia`, { params, headers: { 'Cache-Control': 'no-cache' } }).then(r => r.data),
+
+  timelineRango: (params) =>
+    api.get(`${base}/me/timeline-rango`, { params, headers: { 'Cache-Control': 'no-cache' } },
+
+    ).then(r => r.data),
 }
 
 const apiRoot = {
@@ -26,6 +31,9 @@ const apiRoot = {
 
   timelineDia: (params) =>
     api.get(`${base}/timeline-dia`, { params }).then(r => r.data),
+
+  timelineRango: (params) =>
+    api.get(`${base}/timeline-rango`, { params }).then(r => r.data),
 
   // Bulk status for attendance badges
   bulkStatus: (federIds = []) =>

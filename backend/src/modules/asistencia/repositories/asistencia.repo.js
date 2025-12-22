@@ -331,6 +331,67 @@ export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
   });
 };
 
+
+export const timelineRangoRepo = async ({ desde, hasta, feder_id, celula_id, q }) => {
+  const repl = { desde, hasta }
+  const where = [
+    'ar.check_in_at >= :desde',
+    'ar.check_in_at < :hasta',
+  ]
+
+  if (feder_id) {
+    where.push('ar.feder_id = :feder_id')
+    repl.feder_id = feder_id
+  }
+
+  if (celula_id) {
+    where.push('f.celula_id = :celula_id')
+    repl.celula_id = celula_id
+  }
+
+  if (q) {
+    where.push(`(
+      LOWER(f.nombre) LIKE :q
+      OR LOWER(f.apellido) LIKE :q
+    )`)
+    repl.q = `%${q.toLowerCase()}%`
+  }
+
+  const sql = `
+    SELECT
+      ar.id,
+      ar.feder_id,
+      f.nombre,
+      f.apellido,
+      ar.check_in_at,
+      ar.check_out_at,
+      mt.codigo AS modalidad_codigo,
+      mt.nombre AS modalidad_nombre
+    FROM "AsistenciaRegistro" ar
+    JOIN "Feder" f ON f.id = ar.feder_id
+    LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
+    WHERE ${where.join(' AND ')}
+    ORDER BY ar.check_in_at ASC
+  `
+  const response = sequelize.query(sql, {
+    type: QueryTypes.SELECT,
+    replacements: repl,
+    logging: console.log,
+
+
+  })
+  console.log(response);
+
+
+
+
+
+  return response;
+
+
+}
+
+
 // ================== Bulk Status (for attendance badges) ==================
 export const getBulkOpenStatus = async (federIds = []) => {
   if (!federIds.length) return [];

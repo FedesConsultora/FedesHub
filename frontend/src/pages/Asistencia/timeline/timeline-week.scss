@@ -1,0 +1,215 @@
+@use '../../../styles/variables' as *;
+/* =========================
+   TOKENS & VARIABLES
+========================= */
+:root{
+  /* Layout */
+  --tl-fixed-col: 220px;   /* ancho columna fija con el nombre */
+  --tl-col-min:    36px;   /* mínimo por hora (desktop) */
+  --tl-col-min-md: 32px;   /* mínimo por hora (md) */
+  --tl-col-min-sm: 40px;   /* mínimo por hora (sm): más grande para legibilidad */
+
+  /* Header dinámico: lo seteamos también desde JS */
+  --tl-hours-h: 34px;
+
+  /* Fila + pista */
+  --tl-row-h:   56px;  /* alto de la fila completa */
+  --tl-pad-top: 12px;  /* padding superior del track (baja la pista) */
+  --tl-pad-bot: 10px;  /* padding inferior del track */
+  --tl-block-h: 22px;  /* alto de cada bloque */
+
+  /* Elevación y radios reutilizables */
+  --radius: 14px;
+  --radius-lg: 18px;
+  --elev: 0 16px 40px rgba(0,0,0,.35);
+
+  /* Sticky offset general (si tu app tiene topbar, ajustalo aquí) */
+  --app-sticky-top: 64px;
+}
+
+/* Paleta */
+$surface: rgba(14,18,26,.78);
+$surface-2: rgba(18,22,30,.82);
+$border: rgba(255,255,255,.08);
+$border-strong: rgba(255,255,255,.14);
+$text: $fh-text;
+$muted: $fh-muted;
+
+/* Helpers */
+.fh-card{ background:$surface; border:1px solid $border; border-radius:var(--radius); box-shadow:var(--elev); backdrop-filter:blur(10px); }
+.fh-input{
+  padding:.45rem .6rem; border:1px solid $border; border-radius:10px;
+  background:$surface-2; color:$text;
+}
+.fh-skel{ color:$muted } .fh-err{ color:#ff7676 } .fh-empty{ color:$muted }
+
+/* Focus ring accesible */
+:where(button, a, [tabindex], input, textarea, select):focus-visible{
+  outline:2px solid rgba($fh-primary,.65);
+  outline-offset: 2px;
+  box-shadow:0 0 0 4px rgba($fh-primary,.18);
+}
+
+/* =========================
+   WEEK TIMELINE
+========================= */
+
+.timeline-week{
+  @extend .fh-card;
+  padding: 6px;
+  overflow: auto;
+  color: $fh-text;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.2) transparent;
+
+  &.empty{
+    padding: 24px;
+    text-align: center;
+    color: $fh-muted;
+  }
+}
+
+.week-table{
+  width: 100%;
+border-collapse: separate;
+border-spacing: 0;
+table-layout: fixed;
+border-spacing: 0;
+table-layout: fixed;
+
+  border-spacing: 0;
+  font-size: .85rem;
+  min-width: 860px;
+
+  .week-table tbody tr{
+  height: 44px;
+}
+
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.week-table thead th{
+ 
+  top: var(--app-sticky-top);
+  z-index: 5;
+
+  background: linear-gradient(180deg,
+    rgba(18,24,34,.96),
+    rgba(18,24,34,.90)
+  );
+
+  color: $fh-muted;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.week-table thead th.name-col{
+  left: 0;
+  z-index: 6;
+  text-align: left;
+  padding-left: 14px;
+}
+
+.week-table thead th.total-col{
+  font-weight: 700;
+  color: rgba(255,255,255,.85);
+}
+
+/* =========================
+   BODY
+========================= */
+
+.week-table tbody tr{
+  background: rgba(255,255,255,.02);
+
+  &:nth-child(odd){
+    background: rgba(255,255,255,.035);
+  }
+}
+
+.week-table tbody td{
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-left: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+}
+
+/* Columna persona (sticky) */
+.week-table tbody td.name-col{
+  position: sticky;
+  left: 0;
+  z-index: 4;
+
+  background: linear-gradient(90deg,
+    rgba(18,24,34,.95),
+    rgba(18,24,34,.90)
+  );
+
+  border-right: 1px solid rgba(255,255,255,.12);
+  border-left: none;
+  text-align: left;
+  padding-left: 14px;
+  font-weight: 600;
+}
+
+/* =========================
+   DAYS
+========================= */
+
+.week-table td.weekend,
+.week-table th.weekend{
+  background: rgba(255,255,255,.025);
+  color: rgba(255,255,255,.7);
+}
+
+.week-table td.weekend{
+  font-size: .82rem;
+}
+
+/* =========================
+   TOTALS
+========================= */
+
+.week-table td.total-col{
+  font-weight: 700;
+  color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.04);
+}
+
+/* =========================
+   HOVER (sutil)
+========================= */
+
+.week-table tbody tr:hover td{
+  background: rgba(255,255,255,.045);
+}
+
+.week-table tbody tr:hover td.name-col{
+  background: linear-gradient(90deg,
+    rgba(22,28,40,.96),
+    rgba(18,24,34,.92)
+  );
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px){
+  .week-table{
+    font-size: .82rem;
+  }
+}
+
+@media (max-width: 720px){
+  .week-table{
+    min-width: 720px;
+  }
+}

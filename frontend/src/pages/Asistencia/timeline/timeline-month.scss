@@ -1,0 +1,128 @@
+@use '../../../styles/variables' as *;
+
+:root{
+  /* Layout */
+  --tl-fixed-col: 220px;   /* ancho columna fija con el nombre */
+  --tl-col-min:    36px;   /* mínimo por hora (desktop) */
+  --tl-col-min-md: 32px;   /* mínimo por hora (md) */
+  --tl-col-min-sm: 40px;   /* mínimo por hora (sm): más grande para legibilidad */
+
+  /* Header dinámico: lo seteamos también desde JS */
+  --tl-hours-h: 34px;
+
+  /* Fila + pista */
+  --tl-row-h:   56px;  /* alto de la fila completa */
+  --tl-pad-top: 12px;  /* padding superior del track (baja la pista) */
+  --tl-pad-bot: 10px;  /* padding inferior del track */
+  --tl-block-h: 22px;  /* alto de cada bloque */
+
+  /* Elevación y radios reutilizables */
+  --radius: 14px;
+  --radius-lg: 18px;
+  --elev: 0 16px 40px rgba(0,0,0,.35);
+
+  /* Sticky offset general (si tu app tiene topbar, ajustalo aquí) */
+  --app-sticky-top: 64px;
+}
+
+/* Paleta */
+$surface: rgba(14,18,26,.78);
+$surface-2: rgba(18,22,30,.82);
+$border: rgba(255,255,255,.08);
+$border-strong: rgba(255,255,255,.14);
+$text: $fh-text;
+$muted: $fh-muted;
+
+/* Helpers */
+.fh-card{ background:$surface; border:1px solid $border; border-radius:var(--radius); box-shadow:var(--elev); backdrop-filter:blur(10px); }
+.fh-input{
+  padding:.45rem .6rem; border:1px solid $border; border-radius:10px;
+  background:$surface-2; color:$text;
+}
+.fh-skel{ color:$muted } .fh-err{ color:#ff7676 } .fh-empty{ color:$muted }
+
+/* Focus ring accesible */
+:where(button, a, [tabindex], input, textarea, select):focus-visible{
+  outline:2px solid rgba($fh-primary,.65);
+  outline-offset: 2px;
+  box-shadow:0 0 0 4px rgba($fh-primary,.18);
+}
+
+
+.timeline-month {
+  @extend .fh-card;
+  padding: 16px;
+
+  .tm-month-name {
+    text-transform:capitalize;
+  }
+/* =========================
+   FILA DE DÍAS DE LA SEMANA
+========================= */
+
+
+
+
+}
+
+.tm-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.tm-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  color: $fh-muted;
+}
+
+
+
+
+.tm-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tm-day {
+  position: relative;
+  min-height: 64px;
+  border-radius: 10px;
+  padding: 6px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  font-size: .75rem;
+}
+
+.tm-day.empty {
+  opacity: .35;
+}
+
+.tm-day.has-data {
+  background: linear-gradient(
+    180deg,
+    rgba($fh-primary,.35),
+    rgba($fh-primary,.15)
+  );
+  border-color: rgba($fh-primary,.45);
+}
+
+.day-num {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: .7rem;
+  color: $fh-muted;
+}
+
+.day-hours {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-weight: 700;
+  font-size: .8rem;
+  color: #fff;
+}
