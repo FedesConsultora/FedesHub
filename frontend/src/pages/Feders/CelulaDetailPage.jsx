@@ -9,6 +9,8 @@ import {
     FiArrowLeft, FiEdit2, FiSave, FiX, FiUsers,
     FiTrash2, FiChevronRight, FiClock, FiPlus, FiLogOut, FiBriefcase
 } from 'react-icons/fi'
+import { CiCircleRemove } from "react-icons/ci";
+
 import { clientesApi } from '../../api/clientes'
 import Avatar from '../../components/Avatar'
 import PersonTag from '../../components/PersonTag'
@@ -23,11 +25,11 @@ function AddMemberModal({ availableFeders, roles, onSave, close }) {
 
     const handleOk = async () => {
         if (!mem.feder_id) return toast.warn('Seleccioná una persona')
+        close()
         try {
             await onSave(mem)
-            close()
         } catch (e) {
-            // Error handling done by caller or here
+            // Error handling done by caller or toast
         }
     }
 
@@ -37,20 +39,14 @@ function AddMemberModal({ availableFeders, roles, onSave, close }) {
                 <select value={mem.feder_id} onChange={e => setMem({ ...mem, feder_id: e.target.value })}>
                     <option value="">Seleccionar...</option>
                     {availableFeders.map(f => (
-                        <option key={f.id} value={f.id}>{f.apellido}, {f.nombre}</option>
+                        <option key={f.id} value={f.id}>{f.nombre} {f.apellido}</option>
                     ))}
                 </select>
             </FormRow>
-            <FormRow label="Rol en Célula">
-                <select value={mem.rol_codigo} onChange={e => setMem({ ...mem, rol_codigo: e.target.value })}>
-                    {roles.map(r => (
-                        <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
-                    ))}
-                </select>
-            </FormRow>
+
             <div className="modal-footer">
+                <button className="primary" onClick={handleOk}>Agregar</button>
                 <button onClick={close}>Cancelar</button>
-                <button className="primary" onClick={handleOk}>Agregar Miembro</button>
             </div>
         </div>
     )
@@ -230,10 +226,9 @@ export default function CelulaDetailPage() {
 
         modal.open({
             title: 'Agregar Miembro',
-            render: ({ close }) => (
+            render: (close) => (
                 <AddMemberModal
                     availableFeders={availableFeders}
-                    roles={catalog.roles}
                     close={close}
                     onSave={async (mem) => {
                         try {
@@ -256,7 +251,7 @@ export default function CelulaDetailPage() {
     const handleCloseAsign = (a) => {
         modal.open({
             title: 'Finalizar Participación',
-            render: ({ close }) => (
+            render: (close) => (
                 <CloseAsignModal
                     member={a}
                     close={close}
@@ -365,7 +360,7 @@ export default function CelulaDetailPage() {
                 <div className="leftCol">
                     <section className="detailsPanel">
                         <header className="panelHeader">
-                            <h3>Información y Perfil</h3>
+                            <h3>Descripción</h3>
                         </header>
                         <div className="panelBody">
                             {editing ? (
@@ -397,13 +392,14 @@ export default function CelulaDetailPage() {
                                                 nombre: a.feder_nombre || a.nombre,
                                                 apellido: a.feder_apellido || a.apellido,
                                                 avatar_url: a.feder_avatar_url || a.avatar_url,
-                                                cargo_nombre: a.rol_nombre
+                                                cargo_nombre: a.feder_cargo_nombre || a.rol_nombre
                                             }}
                                         />
                                         <div className="memberActions">
                                             {a.es_principal && <span className="principalTag">Principal</span>}
                                             <button className="closeBtn" onClick={() => handleCloseAsign(a)}>
-                                                <FiLogOut />
+                                                <CiCircleRemove size={30} />
+
                                             </button>
                                         </div>
                                     </div>

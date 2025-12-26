@@ -139,7 +139,7 @@
                 position: relative;
                 display: inline-block;
                 cursor: pointer;
-                border-radius: 12px;
+                border-radius: 50%;
                 overflow: hidden;
 
                 .avOverlay {
@@ -494,4 +494,14 @@
             }
         }
     }
+
+    .custom-modal-form {
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+    }
+
 }

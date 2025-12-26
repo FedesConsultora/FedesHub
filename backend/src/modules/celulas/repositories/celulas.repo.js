@@ -142,6 +142,13 @@ export const getCelulaById = async (id, { tx = null } = {}) => {
              'feder_nombre', f.nombre,
              'feder_apellido', f.apellido,
              'feder_avatar_url', f.avatar_url,
+             'feder_cargo_nombre', (
+                SELECT c3.nombre FROM "FederCargo" fc3
+                JOIN "Cargo" c3 ON c3.id = fc3.cargo_id
+                WHERE fc3.feder_id = f.id AND fc3.es_principal = true
+                  AND (fc3.hasta IS NULL OR fc3.hasta > CURRENT_DATE)
+                ORDER BY fc3.desde DESC, fc3.id DESC LIMIT 1
+             ),
              'rol_codigo', crt.codigo,
              'rol_nombre', crt.nombre,
              'desde', cra.desde,
@@ -196,7 +203,14 @@ export const listAsignaciones = async (celula_id) => {
   const sql = `
     SELECT cra.*, crt.codigo AS rol_codigo, crt.nombre AS rol_nombre,
            f.nombre AS feder_nombre, f.apellido AS feder_apellido,
-           f.avatar_url AS feder_avatar_url
+           f.avatar_url AS feder_avatar_url,
+           (
+             SELECT c3.nombre FROM "FederCargo" fc3
+             JOIN "Cargo" c3 ON c3.id = fc3.cargo_id
+             WHERE fc3.feder_id = f.id AND fc3.es_principal = true
+               AND (fc3.hasta IS NULL OR fc3.hasta > CURRENT_DATE)
+             ORDER BY fc3.desde DESC, fc3.id DESC LIMIT 1
+           ) AS feder_cargo_nombre
     FROM "CelulaRolAsignacion" cra
     JOIN "CelulaRolTipo" crt ON crt.id = cra.rol_tipo_id
     JOIN "Feder" f ON f.id = cra.feder_id

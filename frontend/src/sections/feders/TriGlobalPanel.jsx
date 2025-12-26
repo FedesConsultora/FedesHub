@@ -6,7 +6,7 @@ function TriCard({ title, people = [] }) {
   return (
     <div className="triCard">
       <header className="triHead">
-        <Avatar name={title} size={28} />
+        <Avatar name={title} size={36} />
         <h4>{title}</h4>
       </header>
       <div className="triBody">

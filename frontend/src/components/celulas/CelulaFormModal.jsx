@@ -226,7 +226,7 @@ export default function CelulaFormModal({ open, onClose, celula = null, onSaved 
                             {allFeders
                                 .filter(f => !asignaciones.some(a => Number(a.feder_id) === Number(f.id)))
                                 .map(f => (
-                                    <option key={f.id} value={f.id}>{f.apellido}, {f.nombre}</option>
+                                    <option key={f.id} value={f.id}>{f.nombre} {f.apellido}</option>
                                 ))
                             }
                         </select>
@@ -254,7 +254,7 @@ export default function CelulaFormModal({ open, onClose, celula = null, onSaved 
                                 />
                                 <div className="info">
                                     <span className="name">
-                                        {a.feder_apellido || a.apellido}, {a.feder_nombre || a.nombre}
+                                        {a.feder_nombre || a.nombre} {a.feder_apellido || a.apellido}
                                     </span>
                                     <span className="role">{a.rol_nombre}</span>
                                 </div>

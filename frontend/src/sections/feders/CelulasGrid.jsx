@@ -3,6 +3,8 @@ import { useState } from 'react'
 import PersonTag from '../../components/PersonTag.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import { FiEdit2, FiPlus } from 'react-icons/fi'
+import { MdOutlineModeEditOutline } from "react-icons/md";
+
 import { useAuthCtx } from '../../context/AuthContext'
 import CelulaFormModal from '../../components/celulas/CelulaFormModal.jsx'
 import './CelulasGrid.scss'
@@ -18,12 +20,12 @@ function CelulaCard({ c, onEdit, canUpdate }) {
   return (
     <section className="celCard" onClick={handleClick} style={{ cursor: 'pointer' }}>
       <header className="title">
-        <Avatar src={c.avatar_url} name={c.nombre} size={28} rounded="md" />
+        <Avatar src={c.avatar_url} name={c.nombre} size={36} />
         <h4>{c.nombre}</h4>
         <span className={`chip ${c.estado_codigo}`}>{c.estado_codigo}</span>
         {canUpdate && (
-          <button className="editIconBtn" onClick={() => onEdit(c)} title="Editar célula">
-            <FiEdit2 size={14} />
+          <button style={{ cursor: 'pointer', border: 'none', background: 'transparent' }} onClick={() => onEdit(c)} title="Editar célula">
+            <MdOutlineModeEditOutline size={24} />
           </button>
         )}
       </header>

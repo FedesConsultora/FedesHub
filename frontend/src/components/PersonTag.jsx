@@ -22,7 +22,7 @@ export default function PersonTag({ p = {}, subtitle, extra, clickable = true })
       <Avatar className="avatar" src={p.avatar_url} name={full} size={36} />
       <div className="meta">
         <div className="nameRow">
-          <div className="nm">{[p.apellido, p.nombre].filter(Boolean).join(' ') || '—'}</div>
+          <div className="nm">{[p.nombre, p.apellido].filter(Boolean).join(' ') || '—'}</div>
           {extra}
         </div>
         <div className="sub">
