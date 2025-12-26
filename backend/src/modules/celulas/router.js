@@ -6,7 +6,7 @@ import { requirePermission } from '../auth/middlewares/requirePermission.js';
 
 import {
   health, getEstados, getRolTipos,
-  list, detail, create, patch, postState,
+  list, detail, create, patch, del, postState,
   listAsign, postAsign, closeAsign,
   listClientes, coverage, uploadAvatar
 } from './controllers/celulas.controller.js';
@@ -26,6 +26,7 @@ router.get('/', requireAuth, requirePermission('celulas', 'read'), list);
 router.get('/:id', requireAuth, requirePermission('celulas', 'read'), detail);
 router.post('/', requireAuth, requirePermission('celulas', 'create'), create);
 router.patch('/:id', requireAuth, requirePermission('celulas', 'update'), patch);
+router.delete('/:id', requireAuth, requirePermission('celulas', 'delete'), del);
 router.post('/:id/state', requireAuth, requirePermission('celulas', 'update'), postState);
 
 // Asignaciones

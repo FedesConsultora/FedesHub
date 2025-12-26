@@ -34,7 +34,7 @@ const baseSelect = `
   FROM "Cliente" c
   JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
   JOIN "ClienteEstado" es ON es.id = c.estado_id
-  JOIN "Celula" ce ON ce.id = c.celula_id
+  LEFT JOIN "Celula" ce ON ce.id = c.celula_id
 `;
 
 const metricsCTE = `
@@ -181,7 +181,7 @@ export const getClienteById = async (id) => {
     FROM "Cliente" c
     JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
     JOIN "ClienteEstado" es ON es.id = c.estado_id
-    JOIN "Celula" ce ON ce.id = c.celula_id
+    LEFT JOIN "Celula" ce ON ce.id = c.celula_id
     LEFT JOIN mx ON mx.cliente_id = c.id
     WHERE c.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });

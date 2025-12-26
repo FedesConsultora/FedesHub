@@ -11,6 +11,7 @@ export const celulasApi = {
     get: (id) => get(`/celulas/${id}`),
     create: (body) => post('/celulas', body),
     update: (id, body) => patch(`/celulas/${id}`, body),
+    delete: (id) => api.delete(`/celulas/${id}`).then(r => r.data),
     changeState: (id, body) => post(`/celulas/${id}/state`, body),
 
     // Asignaciones de miembros

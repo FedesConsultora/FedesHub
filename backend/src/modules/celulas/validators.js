@@ -18,7 +18,8 @@ export const createBody = z.object({
   perfil_md: z.string().max(20000).nullish(),
   avatar_url: z.string().url().max(512).nullish(),
   cover_url: z.string().url().max(512).nullish(),
-  estado_codigo: z.enum(['activa', 'pausada', 'cerrada']).optional() // default activa
+  estado_codigo: z.enum(['activa', 'pausada', 'cerrada']).optional(),
+  cliente_ids: z.array(z.coerce.number().int().positive()).optional()
 });
 
 export const updateBody = z.object({
@@ -26,7 +27,9 @@ export const updateBody = z.object({
   descripcion: z.string().max(4000).nullish().optional(),
   perfil_md: z.string().max(20000).nullish().optional(),
   avatar_url: z.string().url().max(512).nullish().optional(),
-  cover_url: z.string().url().max(512).nullish().optional()
+  cover_url: z.string().url().max(512).nullish().optional(),
+  cliente_ids: z.array(z.coerce.number().int().positive()).optional(),
+  estado_codigo: z.enum(['activa', 'pausada', 'cerrada']).optional()
 }).refine(o => Object.keys(o).length > 0, { message: 'Sin cambios' });
 
 export const changeStateBody = z.object({
@@ -35,7 +38,7 @@ export const changeStateBody = z.object({
 
 export const asignarRolBody = z.object({
   feder_id: id,
-  rol_codigo: z.enum(['analista_diseno', 'analista_cuentas', 'analista_audiovisual', 'miembro']),
+  rol_codigo: z.string().min(1).max(50),
   desde: isoDateOnly,
   es_principal: z.boolean().default(true),
   observacion: z.string().max(2000).nullish()
@@ -47,12 +50,9 @@ export const cerrarAsignacionBody = z.object({
 });
 
 export const idParam = z.object({ id });
-
 export const asignacionIdParam = z.object({ asignacionId: id });
 
-export const catalogQuery = z.object({});
-
 export const uploadAvatarSchema = z.object({
-  mimetype: z.string().startsWith('image/'),
+  mimetype: z.string().regex(/^image\/(jpeg|png|webp|gif)$/),
   size: z.number().max(5 * 1024 * 1024) // 5MB
 });

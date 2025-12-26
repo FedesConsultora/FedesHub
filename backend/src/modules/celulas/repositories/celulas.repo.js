@@ -1,7 +1,7 @@
 // /backend/src/modules/celulas/repositories/celulas.repo.js
 
 // celulas.repo.js — Acceso a datos y SQL de apoyo para Células
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
 import { initModels } from '../../../models/registry.js';
 
@@ -56,7 +56,8 @@ async function uniqueSlugFrom(nombre, tx) {
   return slug;
 }
 
-export const createCelula = async ({ nombre, descripcion, perfil_md, avatar_url, cover_url, estado_codigo }) => {
+export const createCelula = async (payload) => {
+  const { nombre, descripcion, perfil_md, avatar_url, cover_url, estado_codigo } = payload;
   return sequelize.transaction(async (tx) => {
     const estado = await getEstadoByCodigo(estado_codigo || 'activa');
     if (!estado) throw Object.assign(new Error('Estado inválido'), { status: 400 });
@@ -67,6 +68,13 @@ export const createCelula = async ({ nombre, descripcion, perfil_md, avatar_url,
       avatar_url: avatar_url ?? null, cover_url: cover_url ?? null,
       slug, estado_id: estado.id
     }, { transaction: tx });
+
+    if (payload.cliente_ids && payload.cliente_ids.length > 0) {
+      await m.Cliente.update({ celula_id: row.id }, {
+        where: { id: payload.cliente_ids },
+        transaction: tx
+      });
+    }
 
     await ensureCalendarioCelula(row.id, tx);
     return getCelulaById(row.id, { tx });
@@ -85,6 +93,25 @@ export const updateCelula = async (id, patch) => {
       next.slug = newSlug;
     }
     await row.update(next, { transaction: tx });
+
+    if (patch.cliente_ids) {
+      // First, remove old links (set to NULL for those currently pointing to this cell but not in the new list)
+      // This is optional depending on if we want "exclusive" management or just "adding"
+      // The user said "asociar uno o más clientes", usually implying management.
+      // Let's do cumulative/replacement management:
+      // 1. Dissociate clients that were in this cell but aren't in the new list
+      await m.Cliente.update({ celula_id: null }, {
+        where: { celula_id: id, id: { [Op.notIn]: patch.cliente_ids || [] } },
+        transaction: tx
+      });
+      // 2. Associate the new list
+      if (patch.cliente_ids.length > 0) {
+        await m.Cliente.update({ celula_id: id }, {
+          where: { id: patch.cliente_ids },
+          transaction: tx
+        });
+      }
+    }
     return getCelulaById(id, { tx });
   });
 };
@@ -215,4 +242,25 @@ export const getClientesByCelula = async (celula_id) => {
     ORDER BY cli.created_at DESC
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: { cid: celula_id } });
+};
+
+export const deleteCelula = async (id) => {
+  return sequelize.transaction(async (tx) => {
+    const row = await m.Celula.findByPk(id, { transaction: tx });
+    if (!row) throw Object.assign(new Error('Célula no encontrada'), { status: 404 });
+
+    // Dissociate clients (only relation, not the client)
+    await m.Cliente.update({ celula_id: null }, { where: { celula_id: id }, transaction: tx });
+
+    // Delete assignments first (or let CASCADE handle it, but let's be explicit if needed)
+    await m.CelulaRolAsignacion.destroy({ where: { celula_id: id }, transaction: tx });
+
+    // Delete calendar if exists
+    if (m.CalendarioLocal) {
+      await m.CalendarioLocal.destroy({ where: { celula_id: id }, transaction: tx });
+    }
+
+    await row.destroy({ transaction: tx });
+    return { ok: true };
+  });
 };

@@ -83,6 +83,17 @@
                 }
             }
 
+            .deleteBtn {
+                background: rgba(229, 62, 62, 0.1);
+                border: 1px solid rgba(229, 62, 62, 0.2) !important;
+                color: #e53e3e;
+
+                &:hover {
+                    background: #e53e3e;
+                    color: #fff;
+                }
+            }
+
             .saveBtn {
                 background: #10b981;
                 color: #fff;
@@ -379,5 +390,96 @@
         color: #4a5568;
         font-style: italic;
         font-size: 0.9rem;
+    }
+
+    .clientsPanel {
+        .clientManagement {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .clientsMiniList {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+
+                .clientMiniItem {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 14px;
+
+                    .removeBtn {
+                        background: none;
+                        border: none;
+                        color: #999;
+                        padding: 0;
+                        display: flex;
+                        cursor: pointer;
+
+                        &:hover {
+                            color: #ef4444;
+                        }
+                    }
+                }
+            }
+        }
+
+        .clientsList {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .clientCard {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                text-decoration: none;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.06);
+                    border-color: rgba(255, 255, 255, 0.1);
+                    transform: translateX(4px);
+                }
+
+                .clientInfo {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+
+                    .clientName {
+                        color: #fff;
+                        font-weight: 500;
+                    }
+
+                    .clientBadge {
+                        font-size: 10px;
+                        text-transform: uppercase;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: rgba(255, 255, 255, 0.1);
+                        color: #ccc;
+
+                        &.activo {
+                            background: rgba(16, 185, 129, 0.1);
+                            color: #10b981;
+                        }
+                    }
+                }
+
+                svg {
+                    color: #666;
+                }
+            }
+        }
     }
 }
