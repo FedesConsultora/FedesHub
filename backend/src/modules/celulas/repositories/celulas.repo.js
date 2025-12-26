@@ -88,10 +88,18 @@ export const updateCelula = async (id, patch) => {
 
     const next = { ...patch };
     if (patch.nombre) {
-      // Si cambia el nombre, recalculamos slug si no hay slug manual
       const newSlug = await uniqueSlugFrom(patch.nombre, tx);
       next.slug = newSlug;
     }
+    if (patch.estado_codigo) {
+      const est = await getEstadoByCodigo(patch.estado_codigo);
+      if (est) next.estado_id = est.id;
+    }
+
+    // Limpiar campos que no pertenecen al modelo o se manejan aparte
+    delete next.cliente_ids;
+    delete next.estado_codigo;
+
     await row.update(next, { transaction: tx });
 
     if (patch.cliente_ids) {

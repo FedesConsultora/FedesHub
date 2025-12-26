@@ -174,7 +174,7 @@ export default function CelulaDetailPage() {
     const handleDelete = async () => {
         const ok = await modal.confirm({
             title: 'Eliminar Célula',
-            message: `¿Estás seguro de que deseas eliminar la célula "${celula.nombre}"? Esta acción no se puede deshacer. Los clientes asociados NO se eliminarán, pero se les quitará la relación con esta célula.`,
+            message: `¿Estás seguro de que deseas eliminar la célula "${celula.nombre}"? Esta acción no se puede deshacer.`,
             tone: 'danger',
             okText: 'Eliminar Célula',
             cancelText: 'Cancelar'
@@ -201,7 +201,7 @@ export default function CelulaDetailPage() {
             const myCls = await celulasApi.listClientes(id)
             setCelulaClientes(myCls)
             setEditing(false)
-            toast.success('Célula y clientes actualizados')
+            toast.success('Célula actualizada')
         } catch (err) {
             toast.error(err.fh?.message || 'Error al guardar')
         } finally {

@@ -14,20 +14,20 @@ export const listQuery = z.object({
 
 export const createBody = z.object({
   nombre: z.string().min(2).max(120),
-  descripcion: z.string().max(4000).nullish(),
-  perfil_md: z.string().max(20000).nullish(),
-  avatar_url: z.string().url().max(512).nullish(),
-  cover_url: z.string().url().max(512).nullish(),
+  descripcion: z.string().max(4000).nullish().transform(v => v === '' ? null : v),
+  perfil_md: z.string().max(20000).nullish().transform(v => v === '' ? null : v),
+  avatar_url: z.string().max(512).nullish().transform(v => v === '' ? null : v),
+  cover_url: z.string().max(512).nullish().transform(v => v === '' ? null : v),
   estado_codigo: z.enum(['activa', 'pausada', 'cerrada']).optional(),
   cliente_ids: z.array(z.coerce.number().int().positive()).optional()
 });
 
 export const updateBody = z.object({
   nombre: z.string().min(2).max(120).optional(),
-  descripcion: z.string().max(4000).nullish().optional(),
-  perfil_md: z.string().max(20000).nullish().optional(),
-  avatar_url: z.string().url().max(512).nullish().optional(),
-  cover_url: z.string().url().max(512).nullish().optional(),
+  descripcion: z.string().max(4000).nullish().optional().transform(v => v === '' ? null : v),
+  perfil_md: z.string().max(20000).nullish().optional().transform(v => v === '' ? null : v),
+  avatar_url: z.string().max(512).nullish().optional().transform(v => v === '' ? null : v),
+  cover_url: z.string().max(512).nullish().optional().transform(v => v === '' ? null : v),
   cliente_ids: z.array(z.coerce.number().int().positive()).optional(),
   estado_codigo: z.enum(['activa', 'pausada', 'cerrada']).optional()
 }).refine(o => Object.keys(o).length > 0, { message: 'Sin cambios' });
