@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { federsApi } from '../api/feders'
 
 const EMPTY = { c_level: [], areas: {}, celulas: [] }
@@ -9,22 +9,21 @@ export default function useFedersOverview(initial = { celulas_estado: 'activa', 
   const [error, setError] = useState(null)
   const [params, setParams] = useState(initial)
 
-  useEffect(() => {
-    let alive = true
-      ; (async () => {
-        try {
-          setLoading(true); setError(null)
-          const json = await federsApi.overview(params)
-          console.log('feder overview: ', json)
-          if (alive) setData({ ...EMPTY, ...json })
-        } catch (e) {
-          if (alive) setError(e)
-        } finally {
-          if (alive) setLoading(false)
-        }
-      })()
-    return () => { alive = false }
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true); setError(null)
+      const json = await federsApi.overview(params)
+      setData({ ...EMPTY, ...json })
+    } catch (e) {
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
   }, [params])
 
-  return { data, loading, error, params, setParams }
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  return { data, loading, error, params, setParams, refresh }
 }

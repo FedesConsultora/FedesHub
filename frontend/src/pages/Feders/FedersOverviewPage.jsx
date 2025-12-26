@@ -7,7 +7,7 @@ import './FedersOverviewPage.scss'
 
 export default function FedersOverviewPage() {
   document.title = 'FedesHub — Feders'
-  const { data, loading, error, params, setParams } = useFedersOverview()
+  const { data, loading, error, params, setParams, refresh } = useFedersOverview()
 
   return (
     <section className="fhFedersOverview">
@@ -18,7 +18,9 @@ export default function FedersOverviewPage() {
         <>
           <CLevelGrid items={data.c_level} />
           <TriGlobalPanel areas={data.areas} />
-          {data.celulas.length > 0 && <CelulasGrid items={data.celulas} />}
+          {data.celulas.length > 0 && (
+            <CelulasGrid items={data.celulas} onRefresh={refresh} />
+          )}
         </>
       )}
     </section>

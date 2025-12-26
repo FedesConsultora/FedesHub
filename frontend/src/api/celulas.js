@@ -16,7 +16,7 @@ export const celulasApi = {
     // Asignaciones de miembros
     listAsignaciones: (id) => get(`/celulas/${id}/asignaciones`),
     addAsignacion: (id, body) => post(`/celulas/${id}/asignaciones`, body),
-    closeAsignacion: (asignacionId) => patch(`/celulas/asignaciones/${asignacionId}`),
+    closeAsignacion: (asignacionId, body) => patch(`/celulas/asignaciones/${asignacionId}`, body),
 
     // Clientes
     listClientes: (id) => get(`/celulas/${id}/clientes`),

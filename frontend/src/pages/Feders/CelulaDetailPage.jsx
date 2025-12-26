@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { celulasApi } from '../../api/celulas'
 import { federsApi } from '../../api/feders'
 import { useToast } from '../../components/toast/ToastProvider'
@@ -11,11 +11,13 @@ import {
 } from 'react-icons/fi'
 import Avatar from '../../components/Avatar'
 import PersonTag from '../../components/PersonTag'
+import FormRow from '../../components/ui/FormRow'
 import './CelulaDetailPage.scss'
 
 export default function CelulaDetailPage() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const toast = useToast()
     const modal = useModal()
     const { roles, hasPerm } = useAuthCtx() || {}
@@ -33,7 +35,8 @@ export default function CelulaDetailPage() {
         descripcion: '',
         perfil_md: '',
         avatar_url: '',
-        cover_url: ''
+        cover_url: '',
+        estado_codigo: 'activa'
     })
 
     const canUpdate = hasPerm('celulas', 'update')
@@ -45,7 +48,7 @@ export default function CelulaDetailPage() {
             const [data, cat, feders] = await Promise.all([
                 celulasApi.get(id),
                 celulasApi.catalog(),
-                federsApi.list({ limit: 500, is_activo: true })
+                federsApi.list({ limit: 200, is_activo: true })
             ])
             setCelula(data)
             setCatalog(cat)
@@ -55,7 +58,8 @@ export default function CelulaDetailPage() {
                 descripcion: data.descripcion || '',
                 perfil_md: data.perfil_md || '',
                 avatar_url: data.avatar_url || '',
-                cover_url: data.cover_url || ''
+                cover_url: data.cover_url || '',
+                estado_codigo: data.estado_codigo || 'activa'
             })
             document.title = `${data.nombre} | FedesHub`
         } catch (err) {
@@ -65,7 +69,14 @@ export default function CelulaDetailPage() {
         }
     }, [id, toast])
 
-    useEffect(() => { reload() }, [reload])
+    useEffect(() => {
+        reload().then(() => {
+            const params = new URLSearchParams(location.search)
+            if (params.get('edit') === 'true') {
+                setEditing(true)
+            }
+        })
+    }, [reload, location.search])
 
     const startEdit = () => setEditing(true)
     const cancelEdit = () => {
@@ -75,7 +86,8 @@ export default function CelulaDetailPage() {
             descripcion: celula.descripcion || '',
             perfil_md: celula.perfil_md || '',
             avatar_url: celula.avatar_url || '',
-            cover_url: celula.cover_url || ''
+            cover_url: celula.cover_url || '',
+            estado_codigo: celula.estado_codigo || 'activa'
         })
     }
 
@@ -109,14 +121,59 @@ export default function CelulaDetailPage() {
     }
 
     const handleAddMember = async () => {
-        const ok = await modal.prompt({
+        let selection = {
+            feder_id: '',
+            rol_codigo: catalog.roles?.[0]?.codigo || 'miembro',
+            desde: new Date().toISOString().split('T')[0]
+        }
+
+        const ok = await modal.open({
             title: 'Agregar Miembro',
-            fields: [
-                { name: 'feder_id', label: 'Feder', type: 'select', options: allFeders.map(f => ({ value: f.id, label: `${f.apellido}, ${f.nombre}` })) },
-                { name: 'rol_codigo', label: 'Rol', type: 'select', options: catalog.roles.map(r => ({ value: r.codigo, label: r.nombre })) },
-                { name: 'desde', label: 'Desde', type: 'date', defaultValue: new Date().toISOString().split('T')[0] }
-            ]
+            width: 400,
+            render: (close) => (
+                <div className="celulas-modal" style={{ padding: '0 4px' }}>
+                    <FormRow label="Feder">
+                        <select
+                            onChange={e => selection.feder_id = e.target.value}
+                            defaultValue=""
+                        >
+                            <option value="" disabled>Seleccionar Persona...</option>
+                            {allFeders
+                                .filter(f => !celula.asignaciones?.some(a => !a.hasta && Number(a.feder_id) === Number(f.id)))
+                                .map(f => (
+                                    <option key={f.id} value={f.id}>{f.apellido}, {f.nombre}</option>
+                                ))
+                            }
+                        </select>
+                    </FormRow>
+                    <FormRow label="Rol">
+                        <select
+                            onChange={e => selection.rol_codigo = e.target.value}
+                            defaultValue={selection.rol_codigo}
+                        >
+                            {catalog.roles.map(r => (
+                                <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+                            ))}
+                        </select>
+                    </FormRow>
+                    <FormRow label="Desde">
+                        <input
+                            type="date"
+                            onChange={e => selection.desde = e.target.value}
+                            defaultValue={selection.desde}
+                        />
+                    </FormRow>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <button className="fh-btn" onClick={() => close(false)}>Cancelar</button>
+                        <button className="fh-btn primary" onClick={() => {
+                            if (!selection.feder_id) return toast.warn('Seleccioná una persona')
+                            close(selection)
+                        }}>Asignar</button>
+                    </div>
+                </div>
+            )
         })
+
         if (!ok) return
         try {
             await celulasApi.addAsignacion(id, ok)
@@ -128,13 +185,33 @@ export default function CelulaDetailPage() {
     }
 
     const handleCloseAsign = async (asignId) => {
-        const ok = await modal.prompt({
+        let selection = {
+            hasta: new Date().toISOString().split('T')[0]
+        }
+
+        const ok = await modal.open({
             title: 'Finalizar Asignación',
-            message: '¿Cuándo finaliza esta participación?',
-            fields: [
-                { name: 'hasta', label: 'Fecha Fin', type: 'date', defaultValue: new Date().toISOString().split('T')[0] }
-            ]
+            width: 400,
+            render: (close) => (
+                <div className="celulas-modal" style={{ padding: '0 4px' }}>
+                    <p style={{ marginBottom: '16px', fontSize: '0.9rem', color: '#a0aec0' }}>
+                        ¿Cuándo finaliza esta participación?
+                    </p>
+                    <FormRow label="Fecha Fin">
+                        <input
+                            type="date"
+                            onChange={e => selection.hasta = e.target.value}
+                            defaultValue={selection.hasta}
+                        />
+                    </FormRow>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <button className="fh-btn" onClick={() => close(false)}>Cancelar</button>
+                        <button className="fh-btn primary danger" onClick={() => close(selection)}>Finalizar</button>
+                    </div>
+                </div>
+            )
         })
+
         if (!ok) return
         try {
             await celulasApi.closeAsignacion(asignId, ok)
@@ -209,8 +286,22 @@ export default function CelulaDetailPage() {
                                 <h1>{celula.nombre}</h1>
                             )}
                             <div className="badgesRow">
-                                <span className={`badge state ${celula.estado_codigo}`}>{celula.estado_nombre}</span>
-                                <span className="badge members"><FiUsers /> {celula.asignaciones?.filter(a => !a.hasta).length || 0} miembros</span>
+                                {editing ? (
+                                    <select
+                                        className="stateSelect"
+                                        value={form.estado_codigo}
+                                        onChange={e => setForm({ ...form, estado_codigo: e.target.value })}
+                                    >
+                                        {catalog.estados.map(est => (
+                                            <option key={est.codigo} value={est.codigo}>{est.nombre}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <span className={`badge state ${celula.estado_codigo}`}>{celula.estado_nombre}</span>
+                                )}
+                                <span className="badge members">
+                                    <FiUsers /> {celula.asignaciones?.filter(a => !a.hasta || a.hasta > new Date().toISOString().split('T')[0]).length || 0} miembros
+                                </span>
                             </div>
                         </div>
                     </section>
@@ -239,10 +330,15 @@ export default function CelulaDetailPage() {
                             {canAssign && <button className="addBtn" onClick={handleAddMember}><FiPlus /> Agregar</button>}
                         </div>
                         <div className="panelBody membersList">
-                            {celula.asignaciones?.filter(a => !a.hasta).map(a => (
+                            {celula.asignaciones?.filter(a => !a.hasta || a.hasta > new Date().toISOString().split('T')[0]).map(a => (
                                 <div key={a.id} className="memberRow">
                                     <PersonTag
-                                        p={{ id: a.feder_id, nombre: a.nombre, apellido: a.apellido, avatar_url: a.avatar_url }}
+                                        p={{
+                                            id: a.feder_id,
+                                            nombre: a.feder_nombre || a.nombre,
+                                            apellido: a.feder_apellido || a.apellido,
+                                            avatar_url: a.feder_avatar_url || a.avatar_url
+                                        }}
                                         subtitle={a.rol_nombre}
                                     />
                                     <div className="memberActions">
@@ -255,7 +351,7 @@ export default function CelulaDetailPage() {
                                     </div>
                                 </div>
                             ))}
-                            {celula.asignaciones?.filter(a => !a.hasta).length === 0 && <p className="empty">No hay miembros asignados.</p>}
+                            {celula.asignaciones?.filter(a => !a.hasta || a.hasta > new Date().toISOString().split('T')[0]).length === 0 && <p className="empty">No hay miembros asignados.</p>}
                         </div>
                     </section>
                 </main>

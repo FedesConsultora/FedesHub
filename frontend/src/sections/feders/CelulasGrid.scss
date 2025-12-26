@@ -1,27 +1,279 @@
 @use '../../styles/variables' as v;
 
-.fhCelulas{
-  margin-top:18px;
-  h3{ margin:0 0 10px }
-  .grid{
-    display:grid; gap:12px;
+.fhCelulas {
+  .gridHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+    }
+
+    .newBtn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: v.$fh-primary;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+
+  .grid {
+    display: grid;
+    gap: 12px;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }
-.celCard{
-  background: v.$fh-card; border-radius: v.$radius-2xl; padding:12px;
-  border:1px solid rgba(255,255,255,.08); box-shadow: v.$shadow-soft;
-  .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
-  .chip{
-    margin-left:auto;
-    padding:2px 8px; border-radius:999px; font-size:.8em; text-transform:capitalize;
-    border:1px solid rgba(255,255,255,.12); background: lighten(v.$fh-card, 4%);
-    &.activa{ color:#a3ffcf; border-color: rgba(69,173,124,.35) }
-    &.pausada{ color:#ffd59d }
-    &.cerrada{ color:#ffb4b4 }
+
+.celCard {
+  background: v.$fh-card;
+  border-radius: v.$radius-2xl;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: v.$shadow-soft;
+  transition: transform 0.2s, border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
   }
-  .miembros{ display:flex; flex-direction:column; gap:8px }
-  .empty{
-    opacity:.75; text-align:center; padding:6px 0;
+
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+
+    .editIconBtn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: v.$fh-muted;
+      transition: all 0.2s;
+      cursor: pointer;
+      margin-left: 4px;
+
+      &:hover {
+        background: rgba(v.$fh-primary, 0.2);
+        color: white;
+        border-color: rgba(v.$fh-primary, 0.4);
+      }
+    }
+  }
+
+  .chip {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .8em;
+    text-transform: capitalize;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: lighten(v.$fh-card, 4%);
+
+    &.activa {
+      color: #a3ffcf;
+      border-color: rgba(69, 173, 124, .35)
+    }
+
+    &.pausada {
+      color: #ffd59d
+    }
+
+    &.cerrada {
+      color: #ffb4b4
+    }
+  }
+
+  .miembros {
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+  }
+
+  .empty {
+    opacity: .75;
+    text-align: center;
+    padding: 6px 0;
+  }
+}
+
+.celulas-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: v.$fh-primary;
+      background: rgba(0, 0, 0, 0.3);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(v.$fh-primary, 0.2);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .members-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: v.$fh-text;
+      opacity: 0.9;
+
+      h4 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+    }
+
+    .add-member-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      .feder-select {
+        flex: 2;
+      }
+
+      .rol-select {
+        flex: 1;
+      }
+
+      .add-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: v.$fh-primary;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover:not(:disabled) {
+          filter: brightness(1.1);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .members-list-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .member-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+
+        .info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+
+          .name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: v.$fh-text;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .role {
+            font-size: 0.75rem;
+            color: v.$fh-muted;
+          }
+        }
+
+        .del-btn {
+          background: transparent;
+          border: none;
+          color: #ffb4b4;
+          padding: 6px;
+          cursor: pointer;
+          opacity: 0.6;
+          transition: all 0.2s;
+
+          &:hover {
+            opacity: 1;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 6px;
+          }
+        }
+      }
+
+      .empty-mini {
+        text-align: center;
+        padding: 12px;
+        font-size: 0.85rem;
+        color: v.$fh-muted;
+        font-style: italic;
+      }
+    }
   }
 }

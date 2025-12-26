@@ -4,7 +4,7 @@ import CelulasGrid from '../../sections/feders/CelulasGrid'
 import './CelulasListPage.scss'
 
 export default function CelulasListPage() {
-    const { data, loading, error } = useFedersOverview()
+    const { data, loading, error, refresh } = useFedersOverview()
 
     return (
         <div className="CelulasListPage">
@@ -17,7 +17,7 @@ export default function CelulasListPage() {
             {error && <div className="error">Error: {error}</div>}
 
             {!loading && !error && (
-                <CelulasGrid items={data.celulas} />
+                <CelulasGrid items={data.celulas} onRefresh={refresh} />
             )}
         </div>
     )

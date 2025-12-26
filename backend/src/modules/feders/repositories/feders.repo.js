@@ -89,7 +89,7 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
       JOIN "CargoAmbito" ca ON ca.id = c2.ambito_id
       WHERE fc2.feder_id = f.id
         AND fc2.es_principal = true
-        AND (fc2.hasta IS NULL OR fc2.hasta >= CURRENT_DATE)
+        AND (fc2.hasta IS NULL OR fc2.hasta > CURRENT_DATE)
       ORDER BY fc2.desde DESC, fc2.id DESC
       LIMIT 1
     ) AS c ON TRUE
@@ -147,7 +147,7 @@ export const getFederById = async (id) => {
         JOIN "Cargo" c ON c.id = fc.cargo_id
         WHERE fc.feder_id = f.id
           AND fc.es_principal = true
-          AND (fc.hasta IS NULL OR fc.hasta >= CURRENT_DATE)
+          AND (fc.hasta IS NULL OR fc.hasta > CURRENT_DATE)
         ORDER BY fc.desde DESC, fc.id DESC
         LIMIT 1
       ) AS cargo_principal
@@ -285,7 +285,7 @@ export const repoOverview = async ({
       JOIN "CargoAmbito" ca ON ca.id = c2.ambito_id
       WHERE fc2.feder_id = f.id
         AND fc2.es_principal = true
-        AND (fc2.hasta IS NULL OR fc2.hasta >= CURRENT_DATE)
+        AND (fc2.hasta IS NULL OR fc2.hasta > CURRENT_DATE)
       ORDER BY fc2.desde DESC, fc2.id DESC
       LIMIT 1
     ) AS c ON TRUE
@@ -404,7 +404,7 @@ export const repoOverview = async ({
                       JOIN "Cargo" c3 ON c3.id = fc3.cargo_id
                       WHERE fc3.feder_id = f.id
                         AND fc3.es_principal = true
-                        AND (fc3.hasta IS NULL OR fc3.hasta >= CURRENT_DATE)
+                        AND (fc3.hasta IS NULL OR fc3.hasta > CURRENT_DATE)
                       ORDER BY fc3.desde DESC, fc3.id DESC
                       LIMIT 1)
                  ) AS obj,
@@ -416,7 +416,7 @@ export const repoOverview = async ({
                JOIN "Feder" f ON f.id = a.feder_id
                WHERE a.celula_id = c.id
                  AND a.desde <= CURRENT_DATE
-                 AND (a.hasta IS NULL OR a.hasta >= CURRENT_DATE)
+                 AND (a.hasta IS NULL OR a.hasta > CURRENT_DATE)
                GROUP BY
                  f.id, f.nombre, f.apellido, f.avatar_url,
                  a.es_principal, a.desde, a.hasta

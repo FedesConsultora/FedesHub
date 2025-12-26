@@ -9,11 +9,11 @@ const m = await initModels();
 
 const slugify = (s) =>
   s.normalize('NFKD')
-   .replace(/[\u0300-\u036f]/g,'')
-   .replace(/[^a-zA-Z0-9]+/g,'-')
-   .replace(/^-+|-+$/g,'')
-   .toLowerCase()
-   .slice(0, 120);
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .slice(0, 120);
 
 export const getEstadoByCodigo = (codigo) =>
   m.CelulaEstado.findOne({ where: { codigo } });
@@ -21,9 +21,9 @@ export const getEstadoByCodigo = (codigo) =>
 export const getRolTipoByCodigo = (codigo) =>
   m.CelulaRolTipo.findOne({ where: { codigo } });
 
-export const listEstados = () => m.CelulaEstado.findAll({ order: [['id','ASC']] });
+export const listEstados = () => m.CelulaEstado.findAll({ order: [['id', 'ASC']] });
 
-export const listRolTipos = () => m.CelulaRolTipo.findAll({ order: [['nombre','ASC']] });
+export const listRolTipos = () => m.CelulaRolTipo.findAll({ order: [['nombre', 'ASC']] });
 
 async function ensureCalendarioCelula(celula_id, tx) {
   if (!m.CalendarioLocal) return null;
@@ -102,8 +102,11 @@ export const getCelulaById = async (id, { tx = null } = {}) => {
   const sql = `
     SELECT c.*, ce.codigo AS estado_codigo, ce.nombre AS estado_nombre,
            COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
-             'asig_id', cra.id,
+             'id', cra.id,
              'feder_id', cra.feder_id,
+             'feder_nombre', f.nombre,
+             'feder_apellido', f.apellido,
+             'feder_avatar_url', f.avatar_url,
              'rol_codigo', crt.codigo,
              'rol_nombre', crt.nombre,
              'desde', cra.desde,
@@ -115,6 +118,7 @@ export const getCelulaById = async (id, { tx = null } = {}) => {
     JOIN "CelulaEstado" ce ON ce.id = c.estado_id
     LEFT JOIN "CelulaRolAsignacion" cra ON cra.celula_id = c.id
     LEFT JOIN "CelulaRolTipo" crt ON crt.id = cra.rol_tipo_id
+    LEFT JOIN "Feder" f ON f.id = cra.feder_id
     WHERE c.id = :id
     GROUP BY c.id, ce.codigo, ce.nombre
   `;
@@ -130,9 +134,9 @@ export const listCelulas = async ({ q, estado_codigo, limit, offset }) => {
   const sql = `
     WITH roster AS (
       SELECT cra.celula_id,
-        bool_or(crt.codigo='analista_diseno' AND (cra.hasta IS NULL OR cra.hasta >= CURRENT_DATE)) AS has_diseno,
-        bool_or(crt.codigo='analista_cuentas' AND (cra.hasta IS NULL OR cra.hasta >= CURRENT_DATE)) AS has_cuentas,
-        bool_or(crt.codigo='analista_audiovisual' AND (cra.hasta IS NULL OR cra.hasta >= CURRENT_DATE)) AS has_audiovisual
+        bool_or(crt.codigo='analista_diseno' AND (cra.hasta IS NULL OR cra.hasta > CURRENT_DATE)) AS has_diseno,
+        bool_or(crt.codigo='analista_cuentas' AND (cra.hasta IS NULL OR cra.hasta > CURRENT_DATE)) AS has_cuentas,
+        bool_or(crt.codigo='analista_audiovisual' AND (cra.hasta IS NULL OR cra.hasta > CURRENT_DATE)) AS has_audiovisual
       FROM "CelulaRolAsignacion" cra
       JOIN "CelulaRolTipo" crt ON crt.id = cra.rol_tipo_id
       GROUP BY cra.celula_id
@@ -156,7 +160,8 @@ export const listCelulas = async ({ q, estado_codigo, limit, offset }) => {
 export const listAsignaciones = async (celula_id) => {
   const sql = `
     SELECT cra.*, crt.codigo AS rol_codigo, crt.nombre AS rol_nombre,
-           f.nombre AS feder_nombre, f.apellido AS feder_apellido
+           f.nombre AS feder_nombre, f.apellido AS feder_apellido,
+           f.avatar_url AS feder_avatar_url
     FROM "CelulaRolAsignacion" cra
     JOIN "CelulaRolTipo" crt ON crt.id = cra.rol_tipo_id
     JOIN "Feder" f ON f.id = cra.feder_id
