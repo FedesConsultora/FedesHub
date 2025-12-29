@@ -1,15 +1,20 @@
 import { groupByFederAndDay } from "./timeline.utils"
 import './timeline-month.scss'
 
-export default function TimelineMonth({ payload }) {
+export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
     if (!payload?.items?.length) return null
 
-    const yyyyMmDd = (date) => date.toISOString().slice(0, 10)
+    const yyyyMmDd = (date) => {
+        const y = date.getFullYear()
+        const m = String(date.getMonth() + 1).padStart(2, '0')
+        const d = String(date.getDate()).padStart(2, '0')
+        return `${y}-${m}-${d}`
+    }
     const grouped = groupByFederAndDay(payload.items)
 
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth()
+    const dateRef = new Date(currentFecha + 'T12:00:00') // Use midday to avoid TZ issues
+    const year = dateRef.getFullYear()
+    const month = dateRef.getMonth()
 
     const firstDayOfMonth = new Date(year, month, 1)
     const lastDayOfMonth = new Date(year, month + 1, 0)
@@ -30,7 +35,7 @@ export default function TimelineMonth({ payload }) {
     // Completar la última fila si no termina en sábado
     while (calendarCells.length % 7 !== 0) calendarCells.push(null)
 
-    const monthName = today.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
+    const monthName = dateRef.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
     const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
     return (
@@ -58,8 +63,9 @@ export default function TimelineMonth({ payload }) {
                             return (
                                 <div
                                     key={key}
-                                    className={`tm-day ${minutes ? 'has-data' : 'empty'}`}
-                                    title={minutes ? `${(minutes / 60).toFixed(2)} h` : ''}
+                                    className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
+                                    title={minutes ? `${(minutes / 60).toFixed(2)} h` : 'Ver día'}
+                                    onClick={() => onNavigate(key, 'day')}
                                 >
                                     <span className="day-num">{d.getDate()}</span>
                                     {minutes > 0 && (

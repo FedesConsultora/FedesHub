@@ -13,7 +13,7 @@ import './timeline/timeline.scss'
 const getRange = (isoDate, view) => {
   const d = new Date(isoDate)
 
- if (view === 'day') return null
+  if (view === 'day') return null
 
 
   if (view === 'week') {
@@ -140,13 +140,13 @@ export default function AsistenciaPage() {
       </div>
 
       {tab === 'mi' && <TimelineWrapper view={view}
-        fecha={fecha} scope="me" />}
-      {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} />}
+        fecha={fecha} scope="me" onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
+      {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
     </div>
   )
 }
 
-function TimelineWrapper({ fecha, scope, q = '', view }) {
+function TimelineWrapper({ fecha, scope, q = '', view, onNavigate }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -156,7 +156,7 @@ function TimelineWrapper({ fecha, scope, q = '', view }) {
     setLoading(true)
     setError(null)
 
-const range = view === 'day' ? null : getRange(fecha, view)
+    const range = view === 'day' ? null : getRange(fecha, view)
 
     const fn =
       view === 'day'
@@ -179,23 +179,23 @@ const range = view === 'day' ? null : getRange(fecha, view)
       return () => { alive = false }
     }
 
-fn(params)
-  .then(d => {
-    if (!alive) return
+    fn(params)
+      .then(d => {
+        if (!alive) return
 
-    if (Array.isArray(d)) {
-      setData({ items: d })
-    } else {
-      setData(d)
-    }
-  })
-  .catch(e => {
-    if (!alive) return
-    const status = e?.response?.status
-    const msg = e?.response?.data?.message || e.message
-    setError(status ? `${status} · ${msg}` : msg)
-  })
-  .finally(() => alive && setLoading(false))
+        if (Array.isArray(d)) {
+          setData({ items: d })
+        } else {
+          setData(d)
+        }
+      })
+      .catch(e => {
+        if (!alive) return
+        const status = e?.response?.status
+        const msg = e?.response?.data?.message || e.message
+        setError(status ? `${status} · ${msg}` : msg)
+      })
+      .finally(() => alive && setLoading(false))
 
     return () => { alive = false }
   }, [fecha, scope, q, view])
@@ -209,11 +209,11 @@ fn(params)
   }
 
   if (view === 'week') {
-    return <TimelineWeek payload={data} />
+    return <TimelineWeek payload={data} onNavigate={onNavigate} currentFecha={fecha} />
   }
 
   if (view === 'month') {
-    return <TimelineMonth payload={data} />
+    return <TimelineMonth payload={data} onNavigate={onNavigate} currentFecha={fecha} />
   }
 
   return null
