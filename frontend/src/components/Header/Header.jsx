@@ -7,12 +7,14 @@ import { FiHeadphones } from 'react-icons/fi'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import Avatar from '../Avatar.jsx'
+import { useProfilePreview } from '../../context/ProfilePreviewProvider.jsx'
 import './Header.scss'
 
 const SUPPORT_URL = 'https://miro.com/welcomeonboard/RXZKMUp0aFBBcDhiYU5pV0ZOMmtvcWh1Y3BOWWxJaHhqYm9FZkZWRXRObFZMVjIyK3hrRklHaVc5cW1lVnNhVlM5OGhyVDBqcC9vM013d01JbXJza3l6MisyQllpVmkzcVFZeW11N3lVYjhxQ1NRaks5d0NsZmJ2b2pwZGNzQUNNakdSWkpBejJWRjJhRnhhb1UwcS9BPT0hdjE=?share_link_id=915613671673'
 
 export default function Header() {
   const { user, hasPerm, logout } = useAuthCtx()
+  const { openProfile } = useProfilePreview()
 
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
@@ -48,13 +50,14 @@ export default function Header() {
               src={user?.avatar_url}
               name={`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || user?.email}
               size={28}
+              federId={user?.feder_id}
             />
             <span className="email">{user?.email}</span>
             <span className="caret">▾</span>
           </button>
           {open && (
             <div className="menu" role="menu" onMouseLeave={() => setOpen(false)}>
-              <button onClick={() => { setOpen(false); nav('/perfil') }} role="menuitem">Mi perfil</button>
+              <button onClick={() => { setOpen(false); openProfile(user?.feder_id) }} role="menuitem">Mi perfil</button>
               {isAdmin && (
                 <button onClick={() => { setOpen(false); setAdminOpen(true) }} role="menuitem">Admin</button>
               )}

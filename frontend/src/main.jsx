@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { ProfilePreviewProvider } from './context/ProfilePreviewProvider.jsx'
 import { UploadProvider } from './context/UploadProvider.jsx'
 import { ToastProvider } from './components/toast/ToastProvider.jsx'
 import { ModalProvider } from './components/modal/ModalProvider.jsx'
@@ -35,8 +36,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <UploadProvider>
               <RealtimeProvider>
                 <BrowserRouter>
-                  <AppRouter />
-                  <UploadIndicator />
+                  <ProfilePreviewProvider>
+                    <AppRouter />
+                    <UploadIndicator />
+                  </ProfilePreviewProvider>
                 </BrowserRouter>
               </RealtimeProvider>
             </UploadProvider>

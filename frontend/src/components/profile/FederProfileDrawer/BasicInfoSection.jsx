@@ -59,7 +59,7 @@ function parsePhone(raw = '') {
 
 const pretty = (d = '') => digitsOnly(d).replace(/(\d{3})(?=\d)/g, '$1 ').trim()
 
-export default function BasicInfoSection({ feder, celulaName, canEditCargo = false, isSelf = false }) {
+export default function BasicInfoSection({ feder, celulaName, canEditCargo = false, isSelf = false, readOnly = false }) {
   // baseline para detectar cambios reales
   const baseRef = useRef({
     nombre: feder?.nombre || '',
@@ -145,8 +145,8 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
 
   return (
     <section className="pfBasic card" aria-label="Información básica">
-      {/* Botón flotante: aparece sólo si hay cambios o está guardando */}
-      {(dirty || saving) && (
+      {/* Botón flotante: aparece sólo si hay cambios o está guardando, y NO es solo lectura */}
+      {(!readOnly && (dirty || saving)) && (
         <button
           type="button"
           className={'btnSaveFloating' + (saving ? ' saving' : '')}
@@ -169,6 +169,7 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
             id="feder-nombre" name="nombre" className="control" placeholder="Nombre"
             autoComplete="given-name" value={local.nombre}
             onChange={(e) => setField('nombre', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
 
@@ -179,6 +180,7 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
             id="feder-apellido" name="apellido" className="control" placeholder="Apellido"
             autoComplete="family-name" value={local.apellido}
             onChange={(e) => setField('apellido', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
 
@@ -189,9 +191,9 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
             id="feder-cargo" name="cargo_principal" className="control"
             placeholder="Ej. Desarrollador Fullstack" autoComplete="organization-title"
             value={local.cargo_principal} onChange={(e) => setField('cargo_principal', e.target.value)}
-            disabled={!canEditCargo} readOnly={!canEditCargo}
+            disabled={readOnly || !canEditCargo} readOnly={readOnly || !canEditCargo}
           />
-          {!canEditCargo && <small className="hint">No editable desde aquí</small>}
+          {(readOnly || !canEditCargo) && <small className="hint">No editable desde aquí</small>}
         </div>
 
         {/* Teléfono – País + Área + Número (CONTROLADOS) */}
@@ -202,6 +204,7 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
             <select
               name="tel_cc" className="control control--select cc" aria-label="Código de país"
               value={cc} onChange={(e) => setPhoneField({ cc: e.target.value })}
+              disabled={readOnly}
             >
               {COUNTRY_OPTIONS.map(o => <option key={o.cc} value={o.cc}>{o.label}</option>)}
             </select>
@@ -211,6 +214,7 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
               placeholder="Área" title="Código de área (sin 0)"
               value={area} maxLength={5}
               onChange={(e) => setPhoneField({ area: digitsOnly(e.target.value).slice(0, 5) })}
+              disabled={readOnly} readOnly={readOnly}
             />
 
             <input
@@ -218,6 +222,7 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
               autoComplete="tel-national" placeholder="Número" title="Número de teléfono"
               value={pretty(num)} maxLength={20}
               onChange={(e) => setPhoneField({ num: digitsOnly(e.target.value).slice(0, 16) })}
+              disabled={readOnly} readOnly={readOnly}
             />
           </div>
 

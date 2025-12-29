@@ -3,7 +3,7 @@ import AvatarUpload from './AvatarUpload'
 import { resolveMediaUrl } from '../../../utils/media'
 import './HeaderBasic.scss'
 
-export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefresh }) {
+export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefresh, readOnly = false }) {
   const federName = `${feder?.nombre || ''} ${feder?.apellido || ''}`.trim()
 
   return (
@@ -14,6 +14,7 @@ export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefre
           src={resolveMediaUrl(feder?.avatar_url)}
           alt={federName}
           onUpdated={onRefresh}
+          disabled={readOnly}
         />
       </div>
 

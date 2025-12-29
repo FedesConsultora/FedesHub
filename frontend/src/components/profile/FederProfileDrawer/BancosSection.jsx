@@ -12,7 +12,7 @@ const INITIAL_BANK = {
   es_principal: false
 }
 
-export default function BancosSection({ federId, isSelf = false }) {
+export default function BancosSection({ federId, isSelf = false, readOnly = false }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null) // null | bank object
@@ -128,8 +128,8 @@ export default function BancosSection({ federId, isSelf = false }) {
 
   return (
     <section className="pfBancos card" aria-label="Cuentas bancarias">
-      {/* Botón flotante: se muestra si estamos editando y hubo cambios */}
-      {(editing && (dirty || saving)) && (
+      {/* Botón flotante: se muestra si estamos editando y hubo cambios, y NO es solo lectura */}
+      {(!readOnly && editing && (dirty || saving)) && (
         <button
           type="button"
           className={'btnSaveFloating' + (saving ? ' saving' : '')}
@@ -144,7 +144,7 @@ export default function BancosSection({ federId, isSelf = false }) {
 
       <div className="headRow">
         <h3>Cuentas Bancarias</h3>
-        {!editing && (
+        {!readOnly && !editing && (
           <button className="btn small" onClick={startNew}>
             <FaPlus /> Agregar cuenta
           </button>
@@ -239,17 +239,21 @@ export default function BancosSection({ federId, isSelf = false }) {
                       </div>
                     </div>
                     <div className="actions">
-                      <button className="btn tiny" onClick={() => onEdit(r)} title="Editar">
-                        <FaPenToSquare />
-                      </button>
-                      {!r.es_principal && (
-                        <button className="btn tiny" onClick={() => makePrincipal(r.id)} title="Hacer principal">
-                          <FaStar />
-                        </button>
+                      {!readOnly && (
+                        <>
+                          <button className="btn tiny" onClick={() => onEdit(r)} title="Editar">
+                            <FaPenToSquare />
+                          </button>
+                          {!r.es_principal && (
+                            <button className="btn tiny" onClick={() => makePrincipal(r.id)} title="Hacer principal">
+                              <FaStar />
+                            </button>
+                          )}
+                          <button className="btn tiny danger" onClick={() => onDelete(r.id)} title="Eliminar">
+                            <FaTrash />
+                          </button>
+                        </>
                       )}
-                      <button className="btn tiny danger" onClick={() => onDelete(r.id)} title="Eliminar">
-                        <FaTrash />
-                      </button>
                     </div>
                   </li>
                 ))}
@@ -257,10 +261,12 @@ export default function BancosSection({ federId, isSelf = false }) {
             ) : (
               <div className="emptyState">
                 <div className="icon">🏦</div>
-                <div className="msg">No tenés cuentas bancarias registradas.</div>
-                <button className="btn small" onClick={startNew}>
-                  Comenzar a cargar
-                </button>
+                <div className="msg">No hay cuentas bancarias registradas.</div>
+                {!readOnly && (
+                  <button className="btn small" onClick={startNew}>
+                    Comenzar a cargar
+                  </button>
+                )}
               </div>
             )
           )}

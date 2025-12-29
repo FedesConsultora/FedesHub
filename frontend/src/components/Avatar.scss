@@ -1,11 +1,36 @@
 @use '../styles/variables' as v;
 
-.fhAvatar{
-  display:inline-block; object-fit:cover; user-select:none;
-  background: #1f2632; color: v.$fh-text; text-align:center; font-weight: 800;
-  letter-spacing:.3px;
-  &.is-circle{ border-radius: 50% }
-  &.is-round{ border-radius: 12px }
-  box-shadow: 0 2px 8px rgba(0,0,0,.25);
-  border:1px solid rgba(255,255,255,.06);
+.fhAvatar {
+  display: inline-block;
+  object-fit: cover;
+  user-select: none;
+  background: #1f2632;
+  color: v.$fh-text;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: .3px;
+
+  &.is-circle {
+    border-radius: 50%
+  }
+
+  &.is-round {
+    border-radius: 12px
+  }
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  border:1px solid rgba(255, 255, 255, .06);
+  transition: transform .15s ease,
+  border-color .15s ease,
+  box-shadow .15s ease;
+
+  &.is-previewable {
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.08);
+      border-color: rgba(255, 255, 255, .25);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
+    }
+  }
 }

@@ -44,6 +44,26 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
 
   useEffect(() => setCid(currentId || channels?.[0]?.id || null), [currentId, channels])
 
+  // Sync view tab with selected channel type
+  useEffect(() => {
+    if (!cid) return
+
+    // 1. Check in normal channels
+    if (sel?.tipo?.codigo) {
+      const tipo = sel.tipo.codigo
+      if (tipo === 'dm' && view !== 'dms') setViewPersist('dms')
+      else if (tipo === 'grupo' && view !== 'groups') setViewPersist('groups')
+      else if (tipo !== 'dm' && tipo !== 'grupo' && view !== 'channels') setViewPersist('channels')
+      return
+    }
+
+    // 2. Fallback: Check in DM items (for just created DMs or those not in 'mine' scope yet)
+    const isDM = dmItems.some(u => u.dm_canal_id === cid)
+    if (isDM && view !== 'dms') {
+      setViewPersist('dms')
+    }
+  }, [cid, sel, dmItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ordenar canales por updated_at desc
   const sortedChannels = useMemo(() => {
     const arr = Array.isArray(channels) ? [...channels] : []

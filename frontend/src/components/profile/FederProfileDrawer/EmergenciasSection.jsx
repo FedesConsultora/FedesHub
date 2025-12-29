@@ -11,7 +11,7 @@ const INITIAL_CONTACT = {
   email: ''
 }
 
-export default function EmergenciasSection({ federId, isSelf = false }) {
+export default function EmergenciasSection({ federId, isSelf = false, readOnly = false }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
@@ -114,8 +114,8 @@ export default function EmergenciasSection({ federId, isSelf = false }) {
 
   return (
     <section className="pfEmerg card" aria-label="Contactos de emergencia">
-      {/* Botón flotante: se muestra si estamos editando y hubo cambios */}
-      {(editing && (dirty || saving)) && (
+      {/* Botón flotante: se muestra si estamos editando y hubo cambios, y NO es solo lectura */}
+      {(!readOnly && editing && (dirty || saving)) && (
         <button
           type="button"
           className={'btnSaveFloating' + (saving ? ' saving' : '')}
@@ -130,7 +130,7 @@ export default function EmergenciasSection({ federId, isSelf = false }) {
 
       <div className="headRow">
         <h3>Contactos de emergencia</h3>
-        {!editing && (
+        {!readOnly && !editing && (
           <button className="btn small" onClick={startNew}>
             <FaPlus /> Agregar contacto
           </button>
@@ -216,12 +216,16 @@ export default function EmergenciasSection({ federId, isSelf = false }) {
                       </div>
                     </div>
                     <div className="actions">
-                      <button className="btn tiny" onClick={() => onEdit(r)} title="Editar">
-                        <FaPenToSquare />
-                      </button>
-                      <button className="btn tiny danger" onClick={() => onDelete(r.id)} title="Eliminar">
-                        <FaTrash />
-                      </button>
+                      {!readOnly && (
+                        <>
+                          <button className="btn tiny" onClick={() => onEdit(r)} title="Editar">
+                            <FaPenToSquare />
+                          </button>
+                          <button className="btn tiny danger" onClick={() => onDelete(r.id)} title="Eliminar">
+                            <FaTrash />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -230,9 +234,11 @@ export default function EmergenciasSection({ federId, isSelf = false }) {
               <div className="emptyState">
                 <div className="icon">🆘</div>
                 <div className="msg">No hay contactos de emergencia cargados.</div>
-                <button className="btn small" onClick={startNew}>
-                  Comenzar a cargar
-                </button>
+                {!readOnly && (
+                  <button className="btn small" onClick={startNew}>
+                    Comenzar a cargar
+                  </button>
+                )}
               </div>
             )
           )}

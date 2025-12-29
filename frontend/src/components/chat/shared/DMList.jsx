@@ -30,7 +30,7 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
               title={u.email}
             >
               <span className={'avatarWrap' + (hasMention ? ' mention' : '')}>
-                <Avatar src={pickAvatar(u)} name={name} size={36} />
+                <Avatar src={pickAvatar(u)} name={name} size={36} federId={u.feder_id || u.id_feder} />
                 {unread && <i className="dot" />}
                 <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
               </span>

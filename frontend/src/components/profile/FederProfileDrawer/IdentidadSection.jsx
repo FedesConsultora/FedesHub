@@ -12,7 +12,7 @@ const DOCUMENT_TYPES = [
   { value: 'Otro', label: 'Otro' }
 ]
 
-export default function IdentidadSection({ feder, isSelf = false }) {
+export default function IdentidadSection({ feder, isSelf = false, readOnly = false }) {
   // baseline para detectar cambios reales
   const baseRef = useRef({
     nombre_legal: feder?.nombre_legal || '',
@@ -94,8 +94,8 @@ export default function IdentidadSection({ feder, isSelf = false }) {
 
   return (
     <section className="pfIdentidad card" aria-label="Identidad y legales">
-      {/* Botón flotante: aparece sólo si hay cambios o está guardando */}
-      {(dirty || saving) && (
+      {/* Botón flotante: aparece sólo si hay cambios o está guardando, y NO es solo lectura */}
+      {(!readOnly && (dirty || saving)) && (
         <button
           type="button"
           className={'btnSaveFloating' + (saving ? ' saving' : '')}
@@ -122,6 +122,7 @@ export default function IdentidadSection({ feder, isSelf = false }) {
             autoComplete="name"
             value={local.nombre_legal}
             onChange={(e) => setField('nombre_legal', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
 
@@ -134,6 +135,7 @@ export default function IdentidadSection({ feder, isSelf = false }) {
             className="control control--select"
             value={local.dni_tipo || ''}
             onChange={(e) => setField('dni_tipo', e.target.value)}
+            disabled={readOnly}
           >
             {DOCUMENT_TYPES.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -152,6 +154,7 @@ export default function IdentidadSection({ feder, isSelf = false }) {
             inputMode="numeric"
             value={local.dni_numero || ''}
             onChange={(e) => setField('dni_numero', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
 
@@ -166,6 +169,7 @@ export default function IdentidadSection({ feder, isSelf = false }) {
             autoComplete="bday"
             value={local.fecha_nacimiento || ''}
             onChange={(e) => setField('fecha_nacimiento', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
 
@@ -180,6 +184,7 @@ export default function IdentidadSection({ feder, isSelf = false }) {
             inputMode="numeric"
             value={local.cuil_cuit || ''}
             onChange={(e) => setField('cuil_cuit', e.target.value)}
+            disabled={readOnly} readOnly={readOnly}
           />
         </div>
       </div>

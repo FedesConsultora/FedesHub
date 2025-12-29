@@ -212,6 +212,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
             src={pickAvatar(member) || pickAvatar(m)}
             name={author}
             size={28}
+            federId={authorFederId}
           />
           <AttendanceBadge modalidad={getModalidad(statuses, authorFederId)} size={12} />
         </div>

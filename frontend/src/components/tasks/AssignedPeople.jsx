@@ -110,7 +110,12 @@ const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handle
           return (
             <div className="person" key={p.id || p.feder_id || i}>
               <div className="avatarWrapper">
-                <Avatar src={pickAvatar(p)} name={fullName} size={36} />
+                <Avatar
+                  src={pickAvatar(p)}
+                  name={fullName}
+                  size={36}
+                  federId={p.feder_id || p.id}
+                />
                 <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id || p.id)} size={14} />
 
                 {/* Tooltip con el nombre */}

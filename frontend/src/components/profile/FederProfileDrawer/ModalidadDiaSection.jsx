@@ -4,7 +4,7 @@ import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
 import './ModalidadDiaSection.scss'
 
-export default function ModalidadDiaSection({ federId, catalog, isSelf = false }) {
+export default function ModalidadDiaSection({ federId, catalog, isSelf = false, readOnly = false }) {
   const [dias, setDias] = useState([])
   const [mods, setMods] = useState([])
   const [val, setVal] = useState({})            // { [dia_id]: modalidad_id }
@@ -80,8 +80,8 @@ export default function ModalidadDiaSection({ federId, catalog, isSelf = false }
 
   return (
     <section className="pfModalidad card" aria-label="Modalidad por día">
-      {/* Botón flotante: aparece sólo si hay cambios o está guardando */}
-      {(dirty || saving) && (
+      {/* Botón flotante: aparece sólo si hay cambios o está guardando, y NO es solo lectura */}
+      {(!readOnly && (dirty || saving)) && (
         <button
           className={'btnSaveFloating' + (saving ? ' saving' : '')}
           onClick={onSave}
@@ -121,6 +121,7 @@ export default function ModalidadDiaSection({ federId, catalog, isSelf = false }
                   aria-label={`Modalidad para ${d.nombre}`}
                   value={val[d.id] || ''}
                   onChange={e => onChange(d.id, e.target.value)}
+                  disabled={readOnly}
                 >
                   <option value="">—</option>
                   {mods.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}

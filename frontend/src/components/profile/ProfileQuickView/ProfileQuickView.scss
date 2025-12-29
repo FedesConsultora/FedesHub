@@ -1,0 +1,173 @@
+@use '../../../styles/variables' as *;
+
+.pfQuickView {
+    position: absolute;
+    z-index: 9999;
+    width: 300px;
+    background: rgba(15, 23, 32, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    animation: qvScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center;
+    color: $fh-text;
+
+    .qHeader {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 24px;
+
+        .qMainInfo {
+            flex: 1;
+            min-width: 0;
+
+            .qName {
+                font-weight: 800;
+                font-size: 1.15rem;
+                margin-bottom: 4px;
+                color: #fff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                letter-spacing: -0.3px;
+            }
+
+            .qRole {
+                font-size: 0.9rem;
+                color: $fh-primary;
+                font-weight: 600;
+            }
+
+            .qCell {
+                font-size: 0.8rem;
+                color: $fh-muted;
+                margin-top: 4px;
+            }
+        }
+    }
+
+    .qBody {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .qItem {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            color: $fh-text;
+            opacity: 0.9;
+
+            svg {
+                color: $fh-muted;
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    .qActions {
+        display: flex;
+        gap: 12px;
+
+        .qBtn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: $fh-text;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08);
+                transform: translateY(-2px);
+            }
+
+            &.primary {
+                background: $fh-primary;
+                color: white;
+                border-color: transparent;
+                box-shadow: 0 4px 15px rgba(68, 113, 141, 0.3);
+
+                &:hover {
+                    background: lighten($fh-primary, 5%);
+                    box-shadow: 0 6px 20px rgba(68, 113, 141, 0.45);
+                    transform: translateY(-2px);
+                }
+            }
+
+            svg {
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    &.loading {
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .qvLoading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: $fh-muted;
+        font-size: 0.85rem;
+        font-weight: 500;
+
+        .qvSpinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: $fh-primary;
+            border-radius: 50%;
+            animation: qvSpin 0.6s linear infinite;
+        }
+    }
+
+    .qTip {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.7rem;
+        color: $fh-muted;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.6;
+    }
+}
+
+@keyframes qvSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes qvScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

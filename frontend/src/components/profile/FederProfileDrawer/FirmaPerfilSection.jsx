@@ -42,7 +42,7 @@ function svgIniciales(initials, { color = '#ffffff', bg = '#0b0f15' } = {}) {
 </svg>`.trim()
 }
 
-export default function FirmaPerfilSection({ federId, federNombre, federApellido }) {
+export default function FirmaPerfilSection({ federId, federNombre, federApellido, readOnly = false }) {
   const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -174,15 +174,16 @@ export default function FirmaPerfilSection({ federId, federNombre, federApellido
               autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              disabled={readOnly} readOnly={readOnly}
             />
-            <div className="hint">Se usa para generar la firma cursiva (elegante) y las iniciales.</div>
+            {!readOnly && <div className="hint">Se usa para generar la firma cursiva (elegante) y las iniciales.</div>}
           </div>
 
           {/* Solo inclinación (curvatura) */}
           <div className="optsRow">
             <div className="opt">
               <label htmlFor="firma-skew" className="lbl firma">Inclinación cursiva</label>
-              <input id="firma-skew" type="range" min="-12" max="0" step="1" value={skew} onChange={e => setSkew(Number(e.target.value))} />
+              <input id="firma-skew" type="range" min="-12" max="0" step="1" value={skew} onChange={e => setSkew(Number(e.target.value))} disabled={readOnly} />
               <span className="muted valTag">{skew}°</span>
             </div>
           </div>
@@ -214,8 +215,8 @@ export default function FirmaPerfilSection({ federId, federNombre, federApellido
             </div>
           </div>
 
-          {/* Botón flotante */}
-          {(dirty || saving) && (
+          {/* Botón flotante: solo si es editable */}
+          {(!readOnly && (dirty || saving)) && (
             <button
               type="button"
               className={'btnSaveFloating' + (saving ? ' saving' : '')}

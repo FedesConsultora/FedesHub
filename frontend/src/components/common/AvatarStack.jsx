@@ -18,7 +18,7 @@ export default function AvatarStack({ people = [], size = 22, titlePrefix = '', 
             title={`${titlePrefix}${fullName}`}
             style={{ zIndex: 10 - i, position: 'relative' }}
           >
-            <Avatar src={avatarUrl} name={fullName} size={size} />
+            <Avatar src={avatarUrl} name={fullName} size={size} federId={federId} />
             {attendanceStatuses && (
               <AttendanceBadge modalidad={getModalidad(attendanceStatuses, federId)} size={size * 0.6} />
             )}

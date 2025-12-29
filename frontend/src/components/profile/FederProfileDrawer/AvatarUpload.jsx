@@ -5,7 +5,7 @@ import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
 import './AvatarUpload.scss'
 
-export default function AvatarUpload({ federId, src, alt, onUpdated }) {
+export default function AvatarUpload({ federId, src, alt, onUpdated, disabled = false }) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const toast = useToast()
@@ -44,10 +44,12 @@ export default function AvatarUpload({ federId, src, alt, onUpdated }) {
       ) : (
         <div className="avaFallback">{label}</div>
       )}
-      <button type="button" className="uploadBtn" onClick={pick} title="Cambiar avatar" disabled={uploading}>
-        <FaCamera />
-        <input ref={inputRef} type="file" accept="image/*" onChange={onFile} aria-label="Subir avatar" />
-      </button>
+      {!disabled && (
+        <button type="button" className="uploadBtn" onClick={pick} title="Cambiar avatar" disabled={uploading}>
+          <FaCamera />
+          <input ref={inputRef} type="file" accept="image/*" onChange={onFile} aria-label="Subir avatar" />
+        </button>
+      )}
     </div>
   )
 }
