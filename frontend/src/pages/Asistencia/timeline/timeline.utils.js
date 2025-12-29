@@ -32,7 +32,20 @@ export const groupByFederAndDay = (items) => {
       (end - start) / 60000
 
     map[federKey].days[day].registros.push(r)
+    // Sort registers descending by check-in time so the first one is the latest
+    map[federKey].days[day].registros.sort((a, b) => new Date(b.check_in_at) - new Date(a.check_in_at))
   })
 
   return Object.values(map)
+}
+
+export const formatDuration = (totalMinutes) => {
+  const mins = Math.round(totalMinutes)
+  if (mins < 60) {
+    return `${mins} min`
+  }
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  if (m === 0) return `${h}h`
+  return `${h}h ${m} min`
 }

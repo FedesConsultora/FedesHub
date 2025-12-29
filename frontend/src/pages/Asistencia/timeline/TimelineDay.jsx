@@ -1,5 +1,6 @@
 // src/pages/asistencia/timeline/TimelineDay.jsx
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { formatDuration } from './timeline.utils'
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 
@@ -19,7 +20,7 @@ const nowMinsLocal = () => {
   const n = new Date(); const m = new Date(n); m.setHours(0, 0, 0, 0)
   return (n - m) / 60000
 }
-const toH = (m) => `${(m / 60).toFixed(1)}h`
+const toH = (m) => formatDuration(m)
 const two = (n) => String(n).padStart(2, '0')
 const fmtRange = (sIso, eIso) => {
   const s = new Date(sIso); const e = new Date(eIso)

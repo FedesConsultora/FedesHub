@@ -13,7 +13,7 @@ import './timeline/timeline.scss'
 const getRange = (isoDate, view) => {
   const d = new Date(isoDate)
 
- if (view === 'day') return null
+  if (view === 'day') return null
 
 
   if (view === 'week') {
@@ -128,76 +128,82 @@ export default function AsistenciaPage() {
 
       </div>
 
-      <div className="asst-tabs">
-        <button className={`tab ${tab === 'mi' ? 'active' : ''}`} onClick={() => setTab('mi')}>
-          Mi asistencia
-        </button>
-        {canReport && (
+      {canReport && (
+        <div className="asst-tabs">
+          <button className={`tab ${tab === 'mi' ? 'active' : ''}`} onClick={() => setTab('mi')}>
+            Mi asistencia
+          </button>
           <button className={`tab ${tab === 'equipo' ? 'active' : ''}`} onClick={() => setTab('equipo')}>
             Equipo
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {tab === 'mi' && <TimelineWrapper view={view}
-        fecha={fecha} scope="me" />}
-      {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} />}
+        fecha={fecha} scope="me" onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
+      {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
     </div>
   )
 }
 
-function TimelineWrapper({ fecha, scope, q = '', view }) {
+function TimelineWrapper({ fecha, scope, q = '', view, onNavigate }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     let alive = true
-    setLoading(true)
-    setError(null)
+    const fetch = (isFirst = false) => {
+      if (!alive) return
+      if (isFirst) setLoading(true)
+      setError(null)
 
-const range = view === 'day' ? null : getRange(fecha, view)
+      const range = view === 'day' ? null : getRange(fecha, view)
+      const fn =
+        view === 'day'
+          ? scope === 'me'
+            ? asistenciaApi.me.timelineDia
+            : asistenciaApi.timelineDia
+          : scope === 'me'
+            ? asistenciaApi.me.timelineRango
+            : asistenciaApi.timelineRango
 
-    const fn =
-      view === 'day'
-        ? scope === 'me'
-          ? asistenciaApi.me.timelineDia
-          : asistenciaApi.timelineDia
-        : scope === 'me'
-          ? asistenciaApi.me.timelineRango
-          : asistenciaApi.timelineRango
+      const params =
+        view === 'day'
+          ? { fecha }
+          : { desde: range.from, hasta: range.to, q }
 
-    const params =
-      view === 'day'
-        ? { fecha }
-        : { desde: range.from, hasta: range.to, q }
+      if (typeof fn !== 'function') {
+        alive && setError('Vista no disponible aún')
+        alive && setLoading(false)
+        return
+      }
 
-
-    if (typeof fn !== 'function') {
-      alive && setError('Vista no disponible aún')
-      alive && setLoading(false)
-      return () => { alive = false }
+      fn(params)
+        .then(d => {
+          if (!alive) return
+          if (Array.isArray(d)) {
+            setData({ items: d })
+          } else {
+            setData(d)
+          }
+        })
+        .catch(e => {
+          if (!alive) return
+          const status = e?.response?.status
+          const msg = e?.response?.data?.message || e.message
+          setError(status ? `${status} · ${msg}` : msg)
+        })
+        .finally(() => alive && setLoading(false))
     }
 
-fn(params)
-  .then(d => {
-    if (!alive) return
+    fetch(true)
+    const poll = setInterval(fetch, 30000) // Re-fetch every 30s
 
-    if (Array.isArray(d)) {
-      setData({ items: d })
-    } else {
-      setData(d)
+    return () => {
+      alive = false
+      clearInterval(poll)
     }
-  })
-  .catch(e => {
-    if (!alive) return
-    const status = e?.response?.status
-    const msg = e?.response?.data?.message || e.message
-    setError(status ? `${status} · ${msg}` : msg)
-  })
-  .finally(() => alive && setLoading(false))
-
-    return () => { alive = false }
   }, [fecha, scope, q, view])
 
   if (loading) return <div className="fh-skel">Cargando…</div>
@@ -209,11 +215,11 @@ fn(params)
   }
 
   if (view === 'week') {
-    return <TimelineWeek payload={data} />
+    return <TimelineWeek payload={data} onNavigate={onNavigate} currentFecha={fecha} />
   }
 
   if (view === 'month') {
-    return <TimelineMonth payload={data} />
+    return <TimelineMonth payload={data} onNavigate={onNavigate} currentFecha={fecha} />
   }
 
   return null

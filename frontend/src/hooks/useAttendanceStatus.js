@@ -4,8 +4,8 @@ import { asistenciaApi } from '../api/asistencia'
 
 // Global cache shared across all hook instances
 const cache = new Map()
-const CACHE_TTL_MS = 30000 // 30 seconds cache validity
-const POLL_MS = 60000 // Refresh every 60 seconds
+const CACHE_TTL_MS = 10000 // 10 seconds cache validity
+const POLL_MS = 15000 // Refresh every 15 seconds
 
 let lastFetchTime = 0
 
