@@ -7,6 +7,7 @@ import { uploadFiles, multerErrorHandler } from '../../infra/uploads/multer.js';
 import {
   health, listCatalogos,
   listTareas, getTarea, postTarea, patchTarea, archiveTarea, deleteTarea,
+  listTrash, patchRestore,
   patchEstado, patchAprobacion, patchKanban,
   postResponsable, deleteResponsable, postColaborador, deleteColaborador,
   postEtiqueta, deleteEtiqueta,
@@ -28,6 +29,10 @@ router.get('/health', health);
 router.get('/catalog', requireAuth, requirePermission('tareas', 'read'), listCatalogos);
 
 router.get('/compose', requireAuth, requirePermission('tareas', 'read'), getCompose);
+
+// Papelera
+router.get('/trash', requireAuth, listTrash);
+router.patch('/:id/restore', requireAuth, patchRestore);
 
 // Listado y CRUD
 router.get('/', requireAuth, requirePermission('tareas', 'read'), listTareas);

@@ -13,6 +13,7 @@ import {
 
 import {
   svcListCatalogos, svcListTasks, svcGetTask, svcCreateTask, svcUpdateTask, svcArchiveTask, svcDeleteTask,
+  svcListTrash, svcRestoreTask,
   svcAddResponsable, svcRemoveResponsable, svcAddColaborador, svcRemoveColaborador,
   svcAssignEtiqueta, svcUnassignEtiqueta,
   svcListChecklist, svcCreateChecklistItem, svcUpdateChecklistItem, svcDeleteChecklistItem, svcReorderChecklist,
@@ -229,6 +230,29 @@ export const deleteTarea = async (req, res, next) => {
     const { id } = taskIdParamSchema.parse(req.params);
     const result = await svcDeleteTask(id, req.user);
     res.json(result);
+  } catch (e) { next(e); }
+};
+
+export const listTrash = async (req, res, next) => {
+  try {
+    // Solo directivos pueden ver la papelera
+    const roles = req.user?.roles || [];
+    if (!roles.includes('NivelA') && !roles.includes('NivelB')) {
+      throw Object.assign(new Error('No tiene permisos para ver la papelera'), { status: 403 });
+    }
+    res.json(await svcListTrash(req.user));
+  } catch (e) { next(e); }
+};
+
+export const patchRestore = async (req, res, next) => {
+  try {
+    const { id } = taskIdParamSchema.parse(req.params);
+    // Solo directivos pueden restaurar
+    const roles = req.user?.roles || [];
+    if (!roles.includes('NivelA') && !roles.includes('NivelB')) {
+      throw Object.assign(new Error('No tiene permisos para restaurar tareas'), { status: 403 });
+    }
+    res.json(await svcRestoreTask(id, req.user));
   } catch (e) { next(e); }
 };
 

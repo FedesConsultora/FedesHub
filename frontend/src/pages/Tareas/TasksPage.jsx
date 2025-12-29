@@ -9,6 +9,7 @@ import TaskList from "../../components/tasks/TaskList";
 import CreateTaskModal from "../../components/tasks/CreateTaskModal";
 import ModalPanel from "./components/ModalPanel";
 import TaskDetail from "./TaskDetail";
+import TrashView from "./components/TrashView";
 import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
@@ -194,8 +195,8 @@ export default function TasksPage() {
     if (!isDirectivo) return;
 
     const ok = await modal.confirm({
-      title: 'Eliminar tarea',
-      message: `¿Estás seguro de que querés eliminar "${task.title || task.titulo}"? Esta acción no se puede deshacer.`,
+      title: 'Mover a la papelera',
+      message: `¿Estás seguro de que querés eliminar "${task.title || task.titulo}"? Podrás restaurarla desde la papelera durante 2 meses.`,
       okText: 'Eliminar',
       cancelText: 'Cancelar'
     });
@@ -204,7 +205,7 @@ export default function TasksPage() {
 
     try {
       await tareasApi.delete(task.id);
-      toast?.success('Tarea eliminada');
+      toast?.success('Tarea enviada a la papelera');
       refetch();
     } catch (err) {
       toast?.error(err?.fh?.message || 'No se pudo eliminar la tarea');
@@ -246,6 +247,18 @@ export default function TasksPage() {
             >
               Lista
             </button>
+            {isDirectivo && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === "trash"}
+                className={view === "trash" ? "active" : ""}
+                onClick={() => handleSetView("trash")}
+                title="Ver papelera"
+              >
+                Papelera
+              </button>
+            )}
           </div>
 
           <button
@@ -278,7 +291,7 @@ export default function TasksPage() {
             canDelete={isDirectivo}
             attendanceStatuses={attendanceStatuses}
           />
-        ) : (
+        ) : view === "list" ? (
           <TaskList
             onOpenTask={setOpenTaskId}
             rows={tableRows}
@@ -286,6 +299,8 @@ export default function TasksPage() {
             onRowClick={(t) => setOpenTaskId(t.id)}
             attendanceStatuses={attendanceStatuses}
           />
+        ) : (
+          <TrashView onRestore={refetch} />
         )}
       </section>
 

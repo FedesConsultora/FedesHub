@@ -28,11 +28,15 @@ export default (sequelize, DataTypes) => {
     is_archivada: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     finalizada_at: { type: DataTypes.DATE },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
+    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    deleted_at: { type: DataTypes.DATE },
+    deleted_by_feder_id: { type: DataTypes.INTEGER }
   }, {
-    tableName: 'Tarea', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
+    tableName: 'Tarea', underscored: true, timestamps: true,
+    paranoid: true, // Enables soft delete
+    createdAt: 'created_at', updatedAt: 'updated_at', deletedAt: 'deleted_at',
     indexes: [{ fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
-    { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }]
+    { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }, { fields: ['deleted_at'] }]
   });
   return Tarea;
 };

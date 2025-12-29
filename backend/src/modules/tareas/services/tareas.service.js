@@ -262,6 +262,9 @@ const buildListSQL = (params = {}, currentUser) => {
   if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
   if (typeof prioridad_max === 'number') { where.push(`t.prioridad_num <= :pmax`); repl.pmax = prioridad_max; }
 
+  // Excluir eliminadas por defecto (soft delete)
+  where.push(`t.deleted_at IS NULL`);
+
   if (where.length) sql += ` WHERE ${where.join(' AND ')}\n`;
 
   // Orden
@@ -431,7 +434,7 @@ export const getTaskById = async (id, currentUser) => {
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
-    WHERE t.id = :id
+    WHERE t.id = :id AND t.deleted_at IS NULL
     LIMIT 1
   `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 } });
 
@@ -1264,34 +1267,87 @@ export const svcUpdateTask = async (id, body, user) => {
   return getTaskById(id, user);
 };
 
-// ========== ELIMINAR TAREA (solo directivos) ========== //
+// ---------- ELIMINAR TAREA (Soft Delete) ---------- //
 const deleteTask = async (id, feder_id = null) => {
   return sequelize.transaction(async (t) => {
     const tarea = await models.Tarea.findByPk(id, { transaction: t });
     if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
 
-    // Eliminar relaciones
-    await models.TareaResponsable.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaColaborador.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaEtiquetaAsig.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaChecklistItem.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaComentario.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaAdjunto.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaRelacion.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaRelacion.destroy({ where: { relacionada_id: id }, transaction: t });
-    await models.TareaFavorito.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaSeguidor.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaKanbanPos.destroy({ where: { tarea_id: id }, transaction: t });
-    await models.TareaHistorial.destroy({ where: { tarea_id: id }, transaction: t });
+    // Registramos en historial ANTES de borrar
+    if (feder_id) {
+      await registrarCambio({
+        tarea_id: id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.ARCHIVADO, // Reusamos archivado p/ historial o definimos uno
+        accion: ACCION.DELETED,
+        valor_anterior: { titulo: tarea.titulo },
+        descripcion: `Movió la tarea "${tarea.titulo}" a la papelera`,
+        transaction: t
+      });
+      // Guardar quién la borró en la propia tarea antes del soft delete
+      await models.Tarea.update({ deleted_by_feder_id: feder_id }, { where: { id }, transaction: t });
+    }
 
-    // Eliminar subtareas (hijos)
-    await models.Tarea.destroy({ where: { tarea_padre_id: id }, transaction: t });
-
-    // Eliminar tarea principal
+    // Soft delete (Sequelize con paranoid: true lo hace automáticamente si usamos destroy)
     await models.Tarea.destroy({ where: { id }, transaction: t });
+
+    // Soft delete subtareas (hijos)
+    if (feder_id) {
+      await models.Tarea.update({ deleted_by_feder_id: feder_id }, { where: { tarea_padre_id: id }, transaction: t });
+    }
+    await models.Tarea.destroy({ where: { tarea_padre_id: id }, transaction: t });
 
     return { ok: true, deleted_id: id };
   });
+};
+
+const restoreTask = async (id, feder_id = null) => {
+  return sequelize.transaction(async (t) => {
+    const tarea = await models.Tarea.findByPk(id, { paranoid: false, transaction: t });
+    if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+    if (!tarea.deleted_at) return { ok: true, restored_id: id };
+
+    await tarea.restore({ transaction: t });
+    // Limpiar quién la borró
+    await tarea.update({ deleted_by_feder_id: null }, { transaction: t });
+
+    // Restaurar subtareas que fueron borradas al mismo tiempo (aprox)
+    // O simplemente restaurar todas las que tengan tarea_padre_id = id y estén borradas
+    await models.Tarea.restore({ where: { tarea_padre_id: id }, transaction: t });
+    await models.Tarea.update({ deleted_by_feder_id: null }, { where: { tarea_padre_id: id }, transaction: t });
+
+    if (feder_id) {
+      await registrarCambio({
+        tarea_id: id,
+        feder_id,
+        tipo_cambio: TIPO_CAMBIO.ARCHIVADO,
+        accion: ACCION.UPDATED,
+        valor_nuevo: { titulo: tarea.titulo },
+        descripcion: `Restauró la tarea "${tarea.titulo}" de la papelera`,
+        transaction: t
+      });
+    }
+
+    return { ok: true, restored_id: id };
+  });
+};
+
+const listTrash = async (user) => {
+  const repl = { uid: user?.id ?? 0 };
+  const sql = `
+    SELECT
+      t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id,
+      t.creado_por_feder_id, t.deleted_at, t.deleted_by_feder_id,
+      c.nombre AS cliente_nombre,
+      c.color AS cliente_color,
+      f.nombre AS autor_nombre, f.apellido AS autor_apellido
+    FROM "Tarea" t
+    LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "Feder" f ON f.id = t.deleted_by_feder_id
+    WHERE t.deleted_at IS NOT NULL
+    ORDER BY t.deleted_at DESC
+  `;
+  return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
 };
 
 export const svcDeleteTask = async (id, user) => {
@@ -1375,6 +1431,8 @@ export const svcSetBoostManual = async (tarea_id, enabled, user) => {
 };
 
 export const svcArchiveTask = (id, on = true) => archiveTask(id, on);
+export const svcListTrash = (user) => listTrash(user);
+export const svcRestoreTask = (id, user) => restoreTask(id, user?.feder_id);
 
 // Responsables / Colaboradores
 export const svcAddResponsable = (tarea_id, { feder_id, es_lider = false }, user) => addResponsable(tarea_id, feder_id, es_lider, user?.feder_id);
