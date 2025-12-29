@@ -32,6 +32,8 @@ export const groupByFederAndDay = (items) => {
       (end - start) / 60000
 
     map[federKey].days[day].registros.push(r)
+    // Sort registers descending by check-in time so the first one is the latest
+    map[federKey].days[day].registros.sort((a, b) => new Date(b.check_in_at) - new Date(a.check_in_at))
   })
 
   return Object.values(map)

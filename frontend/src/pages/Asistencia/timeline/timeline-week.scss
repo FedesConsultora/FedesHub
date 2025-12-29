@@ -250,3 +250,11 @@ $muted: $fh-muted;
     background: rgba($fh-primary, 0.15) !important;
   }
 }
+
+// Reset badge absolute position for weekly table
+.week-table .attendance-badge {
+  position: static;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}

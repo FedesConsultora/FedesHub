@@ -1,4 +1,6 @@
 import { groupByFederAndDay } from './timeline.utils'
+import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import './timeline-week.scss'
 
 const WEEK_DAYS = [
@@ -18,6 +20,8 @@ const getDayKey = (yyyyMmDd) => {
 
 export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
   const grouped = groupByFederAndDay(payload.items)
+  const federIds = grouped.map(f => f.feder_id)
+  const { statuses } = useAttendanceStatus(federIds)
 
   const getWeekDaysWithDates = () => {
     const d = new Date(currentFecha + 'T12:00:00')
@@ -66,7 +70,14 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
 
             return (
               <tr key={f.feder_id}>
-                <td className="name-col">{f.nombre}</td>
+                <td className="name-col">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="person-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {f.nombre}
+                    </div>
+                    <AttendanceBadge modalidad={getModalidad(statuses, f.feder_id)} size={14} />
+                  </div>
+                </td>
 
                 {daysWithDates.map(d => {
                   const dayEntry = Object.values(f.days).find(
@@ -83,7 +94,12 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
                       onClick={() => onNavigate(d.dateIso, 'day')}
                       title={`Ver día ${d.dateIso}`}
                     >
-                      {(minutes / 60).toFixed(2)} h
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {(minutes / 60).toFixed(2)} h
+                        {minutes > 0 && dayEntry?.registros?.[0]?.modalidad_codigo && (
+                          <AttendanceBadge modalidad={dayEntry.registros[0].modalidad_codigo} size={13} />
+                        )}
+                      </div>
                     </td>
                   )
                 })}

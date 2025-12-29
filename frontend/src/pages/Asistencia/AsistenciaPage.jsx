@@ -153,51 +153,57 @@ function TimelineWrapper({ fecha, scope, q = '', view, onNavigate }) {
 
   useEffect(() => {
     let alive = true
-    setLoading(true)
-    setError(null)
+    const fetch = (isFirst = false) => {
+      if (!alive) return
+      if (isFirst) setLoading(true)
+      setError(null)
 
-    const range = view === 'day' ? null : getRange(fecha, view)
+      const range = view === 'day' ? null : getRange(fecha, view)
+      const fn =
+        view === 'day'
+          ? scope === 'me'
+            ? asistenciaApi.me.timelineDia
+            : asistenciaApi.timelineDia
+          : scope === 'me'
+            ? asistenciaApi.me.timelineRango
+            : asistenciaApi.timelineRango
 
-    const fn =
-      view === 'day'
-        ? scope === 'me'
-          ? asistenciaApi.me.timelineDia
-          : asistenciaApi.timelineDia
-        : scope === 'me'
-          ? asistenciaApi.me.timelineRango
-          : asistenciaApi.timelineRango
+      const params =
+        view === 'day'
+          ? { fecha }
+          : { desde: range.from, hasta: range.to, q }
 
-    const params =
-      view === 'day'
-        ? { fecha }
-        : { desde: range.from, hasta: range.to, q }
+      if (typeof fn !== 'function') {
+        alive && setError('Vista no disponible aún')
+        alive && setLoading(false)
+        return
+      }
 
-
-    if (typeof fn !== 'function') {
-      alive && setError('Vista no disponible aún')
-      alive && setLoading(false)
-      return () => { alive = false }
+      fn(params)
+        .then(d => {
+          if (!alive) return
+          if (Array.isArray(d)) {
+            setData({ items: d })
+          } else {
+            setData(d)
+          }
+        })
+        .catch(e => {
+          if (!alive) return
+          const status = e?.response?.status
+          const msg = e?.response?.data?.message || e.message
+          setError(status ? `${status} · ${msg}` : msg)
+        })
+        .finally(() => alive && setLoading(false))
     }
 
-    fn(params)
-      .then(d => {
-        if (!alive) return
+    fetch(true)
+    const poll = setInterval(fetch, 30000) // Re-fetch every 30s
 
-        if (Array.isArray(d)) {
-          setData({ items: d })
-        } else {
-          setData(d)
-        }
-      })
-      .catch(e => {
-        if (!alive) return
-        const status = e?.response?.status
-        const msg = e?.response?.data?.message || e.message
-        setError(status ? `${status} · ${msg}` : msg)
-      })
-      .finally(() => alive && setLoading(false))
-
-    return () => { alive = false }
+    return () => {
+      alive = false
+      clearInterval(poll)
+    }
   }, [fecha, scope, q, view])
 
   if (loading) return <div className="fh-skel">Cargando…</div>

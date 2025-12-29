@@ -1,4 +1,6 @@
 import { groupByFederAndDay } from "./timeline.utils"
+import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
+import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import './timeline-month.scss'
 
 export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
@@ -11,6 +13,8 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
         return `${y}-${m}-${d}`
     }
     const grouped = groupByFederAndDay(payload.items)
+    const federIds = grouped.map(f => f.feder_id)
+    const { statuses } = useAttendanceStatus(federIds)
 
     const dateRef = new Date(currentFecha + 'T12:00:00') // Use midday to avoid TZ issues
     const year = dateRef.getFullYear()
@@ -44,7 +48,10 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
 
             {grouped.map(f => (
                 <div key={f.feder_id} className="tm-person">
-                    <h3 className="tm-name">{f.nombre}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <h3 className="tm-name" style={{ margin: 0 }}>{f.nombre}</h3>
+                        <AttendanceBadge modalidad={getModalidad(statuses, f.feder_id)} size={16} />
+                    </div>
 
                     {/* FILA DE DÍAS DE LA SEMANA */}
                     <div className="tm-weekdays">
@@ -64,12 +71,17 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
                                 <div
                                     key={key}
                                     className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
-                                    title={minutes ? `${(minutes / 60).toFixed(2)} h` : 'Ver día'}
+                                    title={'Ver detalle diario'}
                                     onClick={() => onNavigate(key, 'day')}
                                 >
                                     <span className="day-num">{d.getDate()}</span>
                                     {minutes > 0 && (
-                                        <span className="day-hours">{(minutes / 60).toFixed(1)}h</span>
+                                        <div className="day-info">
+                                            <span className="day-hours">{(minutes / 60).toFixed(1)}h</span>
+                                            {f.days[key]?.registros?.[0]?.modalidad_codigo && (
+                                                <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             )
