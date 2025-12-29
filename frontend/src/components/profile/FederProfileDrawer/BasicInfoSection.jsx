@@ -18,16 +18,31 @@ const COUNTRY_OPTIONS = [
 
 // ---- helpers teléfono ----
 const digitsOnly = (s = '') => String(s).replace(/\D/g, '')
+
+// Dividir característica y número basado en longitud total
+// Para Argentina: característica 2-4 dígitos, número 6-8 dígitos
 function splitAreaNum(restDigits = '') {
   const d = digitsOnly(restDigits)
+
+  // Si es muy corto, todo va al número
   if (d.length <= 6) return { area: '', num: d }
-  for (let areaLen = 2; areaLen <= 5; areaLen++) {
-    const area = d.slice(0, areaLen)
-    const num = d.slice(areaLen)
-    if (num.length >= 6) return { area, num }
+
+  // Heurística: característica mínima 2 dígitos, número mínimo 6 dígitos
+  // Probamos de MAYOR a MENOR (4, 3, 2) para preferir áreas más largas
+  if (d.length >= 8) {
+    // Para 10+ dígitos: área de 4, 3, 2, resto es número
+    for (let areaLen = 4; areaLen >= 2; areaLen--) {
+      const area = d.slice(0, areaLen)
+      const num = d.slice(areaLen)
+      if (num.length >= 6 && num.length <= 8) return { area, num }
+    }
   }
+
+  // Fallback: primeros 2-3 dígitos son área, resto número
+  if (d.length >= 8) return { area: d.slice(0, 2), num: d.slice(2) }
   return { area: '', num: d }
 }
+
 function parsePhone(raw = '') {
   const s = String(raw).trim()
   const m = s.match(/^\+(\d{1,3})\s*(.*)$/)
@@ -41,9 +56,10 @@ function parsePhone(raw = '') {
   const { area, num } = splitAreaNum(rest)
   return { cc: '+54', area, num }
 }
+
 const pretty = (d = '') => digitsOnly(d).replace(/(\d{3})(?=\d)/g, '$1 ').trim()
 
-export default function BasicInfoSection({ feder, celulaName, canEditCargo = false }) {
+export default function BasicInfoSection({ feder, celulaName, canEditCargo = false, isSelf = false }) {
   // baseline para detectar cambios reales
   const baseRef = useRef({
     nombre: feder?.nombre || '',
@@ -89,16 +105,24 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
   const buildPayload = () => {
     const base = baseRef.current
     const p = {}
-    if ((local.nombre ?? '') !== base.nombre) p.nombre = local.nombre ?? ''
-    if ((local.apellido ?? '') !== base.apellido) p.apellido = local.apellido ?? ''
-    if (canEditCargo && (local.cargo_principal ?? '') !== base.cargo_principal) p.cargo_principal = local.cargo_principal ?? ''
+    // Normalizar a string vacía para comparaciones consistentes
+    const normalize = (v) => (v ?? '') === '' ? '' : String(v)
+
+    if (normalize(local.nombre) !== normalize(base.nombre)) p.nombre = local.nombre || ''
+    if (normalize(local.apellido) !== normalize(base.apellido)) p.apellido = local.apellido || ''
+    if (canEditCargo && normalize(local.cargo_principal) !== normalize(base.cargo_principal)) p.cargo_principal = local.cargo_principal || ''
     if (telFlat !== (base.telefono || '')) p.telefono = telFlat
     return p
   }
 
   const onSave = async () => {
     const payload = buildPayload()
-    if (!Object.keys(payload).length) return
+    if (!Object.keys(payload).length) {
+      // No hay cambios reales, resetear dirty sin hacer request
+      setDirty(false)
+      toast.info('No hay cambios para guardar')
+      return
+    }
     setSaving(true)
     try {
       if (isSelf) {
@@ -106,9 +130,11 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
       } else {
         await federsApi.update(feder.id, payload)
       }
+      // Actualizar baseline local para evitar refetch
       baseRef.current = { ...baseRef.current, ...payload }
       setDirty(false)
       toast.success('Guardado')
+      // Disparamos evento para consistencia (ahora es "silent refetch" sin parpadeo)
       try { window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'feders.updated', feder_id: feder.id, payload } })) } catch { }
     } catch (e) {
       toast.error(e?.fh?.message || e?.error || 'No se pudo guardar')

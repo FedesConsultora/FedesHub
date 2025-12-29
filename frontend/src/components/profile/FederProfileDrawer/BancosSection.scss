@@ -1,79 +1,299 @@
 @use '../../../styles/variables' as v;
 
-/* Card */
-.pfBasic{
-  position: relative; /* para overlay */
-  background: rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
+.pfBancos {
+  position: relative;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
   border-radius: v.$radius-2xl;
-  padding:14px;
+  padding: 14px;
   box-shadow: v.$shadow-soft;
   color: v.$fh-text;
 
-  h3{ margin:0 0 12px 0; margin-bottom: 1rem; }
-}
-
-/* Overlay de guardado */
-.pfBusy{
-  position:absolute; inset:0; z-index: 2;
-  background: rgba(8,12,18,.6);
-  backdrop-filter: blur(2px);
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  border-radius: inherit;
-
-  .spinner{
-    width:18px; height:18px; border-radius:50%;
-    border:2px solid rgba(255,255,255,.35);
-    border-top-color: v.$fh-primary;
-    animation: pfspin .9s linear infinite;
+  h3 {
+    margin: 0 0 12px 0;
   }
-  .txt{ font-weight:800; font-size:.95rem; letter-spacing:.2px }
+
+  .headRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+      line-height: 1
+    }
+  }
+
+  .btn {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .16);
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: .2px;
+    color: v.$fh-text;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background: rgba(255, 255, 255, .1)
+    }
+
+    &.small {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    &.tiny {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    &.danger {
+      color: #ff8b8b;
+      border-color: rgba(255, 139, 139, .3);
+
+      &:hover {
+        background: rgba(255, 139, 139, .1)
+      }
+    }
+
+    &:disabled {
+      opacity: .65;
+      cursor: not-allowed
+    }
+  }
 }
-@keyframes pfspin{ to{ transform: rotate(360deg) } }
 
-/* Grid fluido */
-.pfFormGrid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap:12px;
+/* Formulario de banco */
+.bankForm {
+  background: rgba(0, 0, 0, .15);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  animation: slideInDown .25s ease;
+
+  .labelRow {
+    font-weight: 800;
+    font-size: 13px;
+    color: v.$fh-muted;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 
-/* Field */
-.pfInput{ display:flex; flex-direction:column; gap:8px; }
-.pfInput .lbl{ margin:0; font-weight:800; font-size:12px; letter-spacing:.2px; color: v.$fh-muted; }
-.pfInput .hint{ font-size:11px; color:v.$fh-muted; margin-top:-4px; }
-
-/* Controles */
-.pfBasic .control{
-  width:100%; background:#0f141b; color:v.$fh-text;
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:14px; outline:none; font-size:1rem; line-height:1.2;
-  padding:12px 14px; min-height:48px;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease, opacity .15s ease;
-  &::placeholder{ color: rgba(255,255,255,.45) }
-  &:focus{ border-color: rgba(v.$fh-primary,.9); box-shadow:0 0 0 2px rgba(v.$fh-primary,.28); background:#111823; }
-  &:disabled{ opacity:.65; cursor:not-allowed }
+/* Listado de bancos */
+.bankList {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
-.pfBasic .control--ro{ color: v.$fh-muted; }
 
-/* Modo saving: atenúa inputs (overlay bloquea clicks) */
-.pfBasic.isSaving .control{ opacity:.7 }
+.bankTile {
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform .15s ease, background .15s ease;
 
-/* Teléfono */
-.pfInput.pfPhone{ grid-column: span 2; }
-.phoneGroup{ display:flex; gap:8px; }
-.control--select.cc{
-  width: 220px; min-width: 160px; appearance:none; padding-right:40px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-  background-repeat:no-repeat; background-position:right 12px center; background-size:14px;
+  &:hover {
+    background: rgba(255, 255, 255, .05);
+    transform: translateY(-1px);
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: v.$fh-text;
+
+      .pill {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: v.$fh-primary;
+        color: white;
+        text-transform: uppercase;
+      }
+    }
+
+    .sub {
+      font-size: 13px;
+      color: v.$fh-muted;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      span {
+        opacity: .7
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 6px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+    }
+  }
 }
-.phoneGroup .number{ flex:1 }
 
-/* Responsive */
-@media (max-width: 900px){
-  .pfInput.pfPhone{ grid-column: span 1; }
+/* Botón flotante */
+.btnSaveFloating {
+  position: absolute;
+  top: 0px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #0b0f15;
+  border: 1px solid rgba(255, 255, 255, .85);
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  font-size: .92rem;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+  transition: transform .06s ease, box-shadow .12s ease, opacity .12s ease;
+  cursor: pointer;
+  z-index: 20;
+
+  .txt {
+    line-height: 1;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, .25);
+    border-top-color: #0b0f15;
+    animation: pfspin_bank .8s linear infinite;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
 }
-@media (max-width: 520px){
-  .phoneGroup{ flex-direction:column; }
-  .control--select.cc{ width:100%; min-width:0 }
+
+@keyframes pfspin_bank {
+  to {
+    transform: rotate(360deg)
+  }
+}
+
+/* Controles de formulario (reutilizando estilos globales de perfil) */
+.pfBancos .pfInput {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .lbl {
+    font-weight: 800;
+    font-size: 12px;
+    color: v.$fh-muted;
+  }
+
+  .control {
+    width: 100%;
+    background: #0f141b;
+    color: v.$fh-text;
+    border: 1px solid rgba(255, 255, 255, .12);
+    padding: 10px 14px;
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.95rem;
+
+    &:focus {
+      border-color: v.$fh-primary;
+    }
+  }
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  user-select: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: v.$fh-text;
+  font-weight: 700;
+
+  input {
+    cursor: pointer
+  }
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, .01);
+  border: 1px dashed rgba(255, 255, 255, .08);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  .icon {
+    font-size: 32px;
+    opacity: .4
+  }
+
+  .msg {
+    font-size: 14px;
+    color: v.$fh-muted
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

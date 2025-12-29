@@ -1,89 +1,284 @@
 @use '../../../styles/variables' as v;
 
-.pfEmerg{
-  background: rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
+.pfEmerg {
+  position: relative;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
   border-radius: v.$radius-2xl;
-  padding:14px;
+  padding: 14px;
   box-shadow: v.$shadow-soft;
   color: v.$fh-text;
 
-  h3{ margin:0 0 10px 0 }
-  .rowBetween{ display:flex; align-items:center; justify-content:space-between; gap:8px }
-
-  /* Botones base */
-  .btn{
-    background: rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.16);
-    padding:10px 14px; border-radius:12px; cursor:pointer;
-    font-weight:800; letter-spacing:.2px; color:v.$fh-text;
-    transition: background .15s ease, transform .05s ease;
-    &:hover{ background: rgba(255,255,255,.1) }
-    &:active{ transform: translateY(1px) }
-    &:disabled{ opacity:.6; cursor:not-allowed }
-    &.danger{ border-color:#5a2d2d; background:#3a1f1f; color:#ffb4b4 }
-  }
-  .cta{
-    background:v.$fh-primary; border:none; color:white; padding:.92rem 1rem; border-radius:12px; font-weight:800;
-    box-shadow:0 8px 20px rgba(68,113,141,.35);
-    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
-    &:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 12px 26px rgba(68,113,141,.5); filter:brightness(1.04) }
-    &:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none }
+  h3 {
+    margin: 0 0 12px 0;
   }
 
-  /* ----- Formulario ----- */
-  .emForm{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap:12px;
-    margin-top:6px;
+  .headRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+      line-height: 1
+    }
   }
 
-  .pfInput{ display:flex; flex-direction:column; gap:6px }
-  .lbl{
-    display:inline-flex; align-items:center;
-    font-weight:800; font-size:12px; letter-spacing:.2px;
-    color:v.$fh-muted; line-height:1.1; margin:0 0 2px 0; white-space:nowrap;
+  .btn {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .16);
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: .2px;
+    color: v.$fh-text;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background: rgba(255, 255, 255, .1)
+    }
+
+    &.small {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    &.tiny {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    &.danger {
+      color: #ff8b8b;
+      border-color: rgba(255, 139, 139, .3);
+
+      &:hover {
+        background: rgba(255, 139, 139, .1)
+      }
+    }
+
+    &:disabled {
+      opacity: .65;
+      cursor: not-allowed
+    }
   }
-  @media (max-width:480px){ .lbl{ white-space: normal } }
+}
 
-  .hint{ color:v.$fh-muted; font-size:12px; margin-top:2px }
+/* Formulario */
+.emForm {
+  background: rgba(0, 0, 0, .15);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  animation: slideInDownEm .25s ease;
 
-  .control{
-    width:100%;
-    background:#0f141b; color:v.$fh-text;
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:14px; outline:none; font-size:1rem; line-height:1.2;
-    padding:12px 14px; min-height:48px;
-    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-    &::placeholder{ color: rgba(255,255,255,.45) }
-    &:focus{ border-color: rgba(v.$fh-primary,.9); box-shadow:0 0 0 2px rgba(v.$fh-primary,.28); background:#111823; }
+  .labelRow {
+    font-weight: 800;
+    font-size: 13px;
+    color: v.$fh-muted;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .formActions{ grid-column: 1 / -1; }
+  .formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 
-  /* ----- Listado ----- */
-  .list{ list-style:none; padding:0; margin:6px 0 0; display:grid; gap:10px }
-
-  .rowEm{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    border:1px solid rgba(255,255,255,.08);
-    background:#0f141b; border-radius:14px; padding:12px;
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
   }
-  .col .nm{ font-weight:900 }
-  .col .sub{ color:v.$fh-muted; margin-top:2px }
-  .actions{ display:flex; gap:8px; flex-wrap:wrap }
+}
 
-  /* Empty state */
-  .empty{
-    display:grid; place-items:center; text-align:center; gap:10px;
-    border:1px dashed rgba(255,255,255,.14);
-    border-radius:14px; padding:18px; background: rgba(255,255,255,.03);
-    .emoji{ font-size:22px }
-    .txt{ color:v.$fh-muted }
+/* Listado */
+.emList {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.emTile {
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform .15s ease, background .15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, .05);
+    transform: translateY(-1px);
   }
 
-  /* Mensajes */
-  .error{ color:#ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f; padding:8px 10px; border-radius:12px; margin-top:8px }
-  .muted{ color:v.$fh-muted }
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: v.$fh-text;
+
+      .pill {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .08);
+        border: 1px solid rgba(255, 255, 255, .1);
+        color: v.$fh-muted;
+        text-transform: uppercase;
+      }
+    }
+
+    .sub {
+      font-size: 13px;
+      color: v.$fh-muted;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      span {
+        opacity: .7
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 6px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+    }
+  }
+}
+
+/* Botón flotante */
+.btnSaveFloating {
+  position: absolute;
+  top: 0px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #0b0f15;
+  border: 1px solid rgba(255, 255, 255, .85);
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  font-size: .92rem;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+  transition: transform .06s ease, box-shadow .12s ease, opacity .12s ease;
+  cursor: pointer;
+  z-index: 20;
+
+  .txt {
+    line-height: 1;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, .25);
+    border-top-color: #0b0f15;
+    animation: pfspin_emerg .8s linear infinite;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes pfspin_emerg {
+  to {
+    transform: rotate(360deg)
+  }
+}
+
+/* Inputs */
+.pfEmerg .pfInput {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .lbl {
+    font-weight: 800;
+    font-size: 12px;
+    color: v.$fh-muted;
+  }
+
+  .control {
+    width: 100%;
+    background: #0f141b;
+    color: v.$fh-text;
+    border: 1px solid rgba(255, 255, 255, .12);
+    padding: 10px 14px;
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.95rem;
+
+    &:focus {
+      border-color: v.$fh-primary;
+    }
+  }
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, .01);
+  border: 1px dashed rgba(255, 255, 255, .08);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  .icon {
+    font-size: 32px;
+    opacity: .4
+  }
+
+  .msg {
+    font-size: 14px;
+    color: v.$fh-muted
+  }
+}
+
+@keyframes slideInDownEm {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

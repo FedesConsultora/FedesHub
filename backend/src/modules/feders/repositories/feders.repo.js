@@ -54,6 +54,7 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
     SELECT
       f.id, f.nombre, f.apellido, f.telefono, f.avatar_url,
       f.fecha_ingreso, f.fecha_egreso, f.is_activo,
+      f.dni_numero_enc AS dni_numero, f.cuil_cuit_enc AS cuil_cuit,
       u.id AS user_id, u.email AS user_email,
       ce.id AS celula_id, ce.nombre AS celula_nombre,
       est.id AS estado_id, est.codigo AS estado_codigo, est.nombre AS estado_nombre,
@@ -138,6 +139,8 @@ export const getFederById = async (id) => {
   const rows = await sequelize.query(`
     SELECT
       f.*,
+      f.dni_numero_enc AS dni_numero,
+      f.cuil_cuit_enc AS cuil_cuit,
       u.email AS user_email,
       ce.nombre AS celula_nombre,
       est.codigo AS estado_codigo, est.nombre AS estado_nombre,
@@ -165,7 +168,18 @@ export const createFeder = async (payload) => {
   await ensureEstadoExists(payload.estado_id);
   await ensureUserExists(payload.user_id);
   await ensureCelulaExists(payload.celula_id);
-  const row = await models.Feder.create(payload);
+
+  const data = { ...payload };
+  if (data.dni_numero !== undefined) {
+    data.dni_numero_enc = data.dni_numero;
+    delete data.dni_numero;
+  }
+  if (data.cuil_cuit !== undefined) {
+    data.cuil_cuit_enc = data.cuil_cuit;
+    delete data.cuil_cuit;
+  }
+
+  const row = await models.Feder.create(data);
   return row;
 };
 
@@ -173,7 +187,18 @@ export const updateFeder = async (id, payload) => {
   if (payload.estado_id) await ensureEstadoExists(payload.estado_id);
   if (payload.user_id !== undefined) await ensureUserExists(payload.user_id);
   if (payload.celula_id !== undefined) await ensureCelulaExists(payload.celula_id);
-  await models.Feder.update(payload, { where: { id } });
+
+  const data = { ...payload };
+  if (data.dni_numero !== undefined) {
+    data.dni_numero_enc = data.dni_numero;
+    delete data.dni_numero;
+  }
+  if (data.cuil_cuit !== undefined) {
+    data.cuil_cuit_enc = data.cuil_cuit;
+    delete data.cuil_cuit;
+  }
+
+  await models.Feder.update(data, { where: { id } });
   return getFederById(id);
 };
 
@@ -453,23 +478,34 @@ export const upsertFirmaPerfil = async (feder_id, payload) => {
 // ========== Bancos ==========
 export const listBancos = async (feder_id) => {
   await ensureFederExists(feder_id);
-  return models.FederBanco.findAll({
-    where: { feder_id },
-    order: [['es_principal', 'DESC'], ['id', 'ASC']]
-  });
+  // Aliaseamos para que el front no vea el "_enc"
+  const rows = await sequelize.query(`
+    SELECT 
+      id, feder_id, banco_nombre, titular_nombre, es_principal, created_at, updated_at,
+      cbu_enc AS cbu,
+      alias_enc AS alias
+    FROM "FederBanco"
+    WHERE feder_id = :feder_id
+    ORDER BY es_principal DESC, id ASC
+  `, { type: QueryTypes.SELECT, replacements: { feder_id } });
+  return rows;
 };
 
 export const createBanco = async (feder_id, payload) => {
   await ensureFederExists(feder_id);
+  const data = { ...payload };
+  if (data.cbu !== undefined) { data.cbu_enc = data.cbu; delete data.cbu; }
+  if (data.alias !== undefined) { data.alias_enc = data.alias; delete data.alias; }
+
   return sequelize.transaction(async (t) => {
     // si viene es_principal=true => apago los demás
-    if (payload.es_principal) {
+    if (data.es_principal) {
       await models.FederBanco.update(
         { es_principal: false },
-        { where: { feder_id, id: { [Op.ne]: bank_id } }, transaction: t }
+        { where: { feder_id }, transaction: t }
       );
     }
-    const row = await models.FederBanco.create({ feder_id, ...payload }, { transaction: t });
+    const row = await models.FederBanco.create({ feder_id, ...data }, { transaction: t });
     return row;
   });
 };
@@ -478,13 +514,17 @@ export const updateBanco = async (feder_id, bank_id, payload) => {
   await ensureFederExists(feder_id);
   const row = await models.FederBanco.findOne({ where: { id: bank_id, feder_id } });
   if (!row) throw Object.assign(new Error('Banco no encontrado'), { status: 404 });
+
+  const data = { ...payload };
+  if (data.cbu !== undefined) { data.cbu_enc = data.cbu; delete data.cbu; }
+  if (data.alias !== undefined) { data.alias_enc = data.alias; delete data.alias; }
+
   return sequelize.transaction(async (t) => {
-    if (payload.es_principal) {
-      await models.FederBanco.update({ es_principal: false }, { where: { feder_id, id: { [models.Sequelize.Op.ne]: bank_id } }, transaction: t });
+    if (data.es_principal) {
+      await models.FederBanco.update({ es_principal: false }, { where: { feder_id, id: { [Op.ne]: bank_id } }, transaction: t });
     }
-    Object.assign(row, payload);
-    await row.save({ transaction: t });
-    return row;
+    await models.FederBanco.update(data, { where: { id: bank_id }, transaction: t });
+    return models.FederBanco.findByPk(bank_id, { transaction: t });
   });
 };
 

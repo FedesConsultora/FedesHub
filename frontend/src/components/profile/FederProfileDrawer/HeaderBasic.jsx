@@ -25,12 +25,8 @@ export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefre
       </div>
 
       <div className="pfActions">
-        <label className="switchLbl" title="Estado activo">
-          <input type="checkbox" defaultChecked={!!feder?.is_activo} onChange={onToggleActivo} aria-label="Alternar activo" />
-          <span>Activo</span>
-        </label>
-        <button className="btn" onClick={onRefresh} title="Actualizar">
-          <FaRotateRight style={{ marginRight: 6 }} />Actualizar
+        <button className="btnIcon" onClick={onRefresh} title="Actualizar datos">
+          <FaRotateRight />
         </button>
       </div>
     </div>

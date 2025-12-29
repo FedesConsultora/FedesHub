@@ -116,6 +116,15 @@ export const getFederModalidad = async (req, res, next) => {
 export const putFederModalidadBulk = async (req, res, next) => {
   try {
     const { federId } = federIdRouteSchema.parse(req.params);
+
+    const perms = req.auth?.perms || []
+    const isSelf = req.user?.feder_id === Number(federId)
+    const canAssign = perms.includes('feders.assign') || perms.includes('*.*')
+
+    if (!isSelf && !canAssign) {
+      return res.status(403).json({ error: 'Permiso insuficiente para cambiar esta modalidad' })
+    }
+
     const { items } = bulkModalidadSchema.parse(req.body);
     res.json(await svcBulkSetFederModalidad(federId, items));
   } catch (e) { next(e); }

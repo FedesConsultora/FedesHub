@@ -9,11 +9,23 @@ export default function useFederDetail(federId, { listen = true } = {}) {
 
   const refetch = useCallback(async () => {
     if (!federId) return
-    setLoading(true); setError(null)
+    setError(null)
+    // Usamos el estado anterior para decidir si mostrar el spinner global
+    setLoading(prevLoading => {
+      // Si ya tenemos data, no mostramos loading global (evita parpadeo)
+      // Pero si es el primer fetch, sí mostramos loading.
+      return data ? false : true
+    })
+
     try {
       const f = await federsApi.get(federId)
       setData(f)
-    } catch (e) { setError(e) } finally { setLoading(false) }
+    } catch (e) {
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [federId])
 
   useEffect(() => { refetch() }, [refetch])

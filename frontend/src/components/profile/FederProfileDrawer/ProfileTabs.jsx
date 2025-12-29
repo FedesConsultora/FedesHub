@@ -2,11 +2,29 @@ import { useEffect, useState } from 'react'
 import { FiUser } from 'react-icons/fi'
 import './ProfileTabs.scss'
 
-export default function ProfileTabs({ tabs = [], defaultId = 'basic', onChange }) {
-  const [active, setActive] = useState(defaultId)
-  useEffect(() => { setActive(defaultId) }, [defaultId])
+const STORAGE_KEY = 'fh:profile:activeTab'
 
-  const setTab = (id) => { setActive(id); onChange?.(id) }
+export default function ProfileTabs({ tabs = [], defaultId = 'basic', onChange }) {
+  // Intentar recuperar del localStorage, sino usar defaultId
+  const [active, setActive] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    // Verificar que el tab almacenado existe en los tabs actuales
+    if (stored && tabs.some(t => t.id === stored)) return stored
+    return defaultId
+  })
+
+  // Solo resetear al defaultId si es la primera vez (tabs vacío -> tabs con data)
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.some(t => t.id === active)) {
+      setActive(defaultId)
+    }
+  }, [tabs.length])
+
+  const setTab = (id) => {
+    setActive(id)
+    localStorage.setItem(STORAGE_KEY, id)
+    onChange?.(id)
+  }
 
   return (
     <section className="pfTabs">

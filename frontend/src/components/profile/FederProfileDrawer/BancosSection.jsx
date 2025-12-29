@@ -1,180 +1,270 @@
-import { useCallback, useEffect, useState } from 'react'
-import { FaTrash, FaPlus, FaPenToSquare, FaStar } from 'react-icons/fa6'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FaTrash, FaPlus, FaPenToSquare, FaStar, FaRegFloppyDisk, FaXmark } from 'react-icons/fa6'
 import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
 import './BancosSection.scss'
 
-export default function BancosSection({ federId }) {
+const INITIAL_BANK = {
+  banco_nombre: '',
+  titular_nombre: '',
+  cbu: '',
+  alias: '',
+  es_principal: false
+}
+
+export default function BancosSection({ federId, isSelf = false }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing] = useState(null) // null | bank object
   const [saving, setSaving] = useState(false)
+  const [dirty, setDirty] = useState(false)
 
+  const initialRef = useRef(null)
   const toast = useToast()
+
+  const push = useCallback(() => {
+    try {
+      window.dispatchEvent(new CustomEvent('fh:push', {
+        detail: { type: 'feders.bancos.updated', feder_id: federId }
+      }))
+    } catch (e) { /* ignore */ }
+  }, [federId])
 
   const load = useCallback(async () => {
     try {
-      setLoading(true); setErr(null)
+      setLoading(true)
       const data = await federsApi.listBancos(federId)
-      setRows(Array.isArray(data) ? data : (data?.data || []))
+      const list = Array.isArray(data) ? data : (data?.data || [])
+      setRows(list)
     } catch (e) {
-      setErr(e)
+      toast.error('No se pudieron cargar las cuentas')
     } finally {
       setLoading(false)
     }
-  }, [federId])
+  }, [federId, toast])
 
   useEffect(() => { load() }, [load])
 
-  const startNew = () => setEditing({
-    banco_nombre:'', cbu_enc:'', alias_enc:'', titular_nombre:'', es_principal: rows.length === 0
-  })
-  const onEdit = (r) => setEditing({ ...r })
-  const onCancel = () => setEditing(null)
+  // Lógica de edición
+  const startNew = () => {
+    const fresh = { ...INITIAL_BANK, es_principal: rows.length === 0 }
+    setEditing(fresh)
+    initialRef.current = fresh
+    setDirty(false)
+  }
 
-  const onSave = async (e) => {
-    e?.preventDefault?.()
-    const f = new FormData(e.currentTarget)
-    const payload = {
-      banco_nombre: f.get('banco_nombre') || null,
-      cbu_enc: f.get('cbu_enc') || null,
-      alias_enc: f.get('alias_enc') || null,
-      titular_nombre: f.get('titular_nombre') || null,
-      es_principal: f.get('es_principal') === 'on'
+  const onEdit = (r) => {
+    setEditing({ ...r })
+    initialRef.current = { ...r }
+    setDirty(false)
+  }
+
+  const onCancel = () => {
+    setEditing(null)
+    setDirty(false)
+  }
+
+  const setField = (k, v) => {
+    setEditing(prev => ({ ...prev, [k]: v }))
+    setDirty(true)
+  }
+
+  const onSave = async () => {
+    if (!editing.banco_nombre || !editing.cbu) {
+      toast.error('Banco y CBU son obligatorios')
+      return
     }
+
     try {
       setSaving(true)
-      if (editing?.id) await federsApi.updateBanco(federId, editing.id, payload)
-      else await federsApi.createBanco(federId, payload)
+      const payload = {
+        banco_nombre: editing.banco_nombre,
+        titular_nombre: editing.titular_nombre,
+        cbu: String(editing.cbu || '').replace(/\D/g, ''), // solo números
+        alias: editing.alias,
+        es_principal: editing.es_principal
+      }
 
-      toast.success('Datos bancarios guardados')
+      if (editing.id) {
+        await federsApi.updateBanco(federId, editing.id, payload)
+      } else {
+        await federsApi.createBanco(federId, payload)
+      }
+
+      toast.success('Cuenta guardada')
       setEditing(null)
+      setDirty(false)
+      push()
       await load()
-      try { window.dispatchEvent(new CustomEvent('fh:push', { detail: { type:'feders.bancos.updated', feder_id: federId } })) } catch {}
     } catch (e) {
-      toast.error(e?.error || 'No se pudo guardar')
+      toast.error(e?.error || 'No se pudo guardar la cuenta')
     } finally {
       setSaving(false)
     }
   }
 
   const onDelete = async (id) => {
-    if (!confirm('¿Eliminar banco?')) return
+    if (!confirm('¿Eliminar esta cuenta bancaria?')) return
     try {
       await federsApi.deleteBanco(federId, id)
-      toast.success('Banco eliminado')
+      toast.success('Cuenta eliminada')
+      push()
       await load()
     } catch (e) {
-      toast.error(e?.error || 'No se pudo eliminar')
+      toast.error('No se pudo eliminar')
     }
   }
 
-  const setPrincipal = async (row) => {
-    if (row?.es_principal) return
+  const makePrincipal = async (id) => {
     try {
-      await federsApi.updateBanco(federId, row.id, { es_principal: true })
-      toast.success('Marcado como principal')
+      await federsApi.updateBanco(federId, id, { es_principal: true })
+      toast.success('Cuenta marcada como principal')
+      push()
       await load()
     } catch (e) {
-      toast.error(e?.error || 'No se pudo actualizar')
+      toast.error('No se pudo actualizar la cuenta')
     }
   }
 
   return (
     <section className="pfBancos card" aria-label="Cuentas bancarias">
-      <div className="rowBetween">
-        <h3 title="Bancos">Bancos</h3>
+      {/* Botón flotante: se muestra si estamos editando y hubo cambios */}
+      {(editing && (dirty || saving)) && (
+        <button
+          type="button"
+          className={'btnSaveFloating' + (saving ? ' saving' : '')}
+          onClick={onSave}
+          disabled={saving}
+          title="Guardar cuenta"
+        >
+          {saving ? <span className="spinner" aria-hidden="true" /> : <FaRegFloppyDisk />}
+          <span className="txt">{saving ? 'Guardando' : 'Guardar'}</span>
+        </button>
+      )}
+
+      <div className="headRow">
+        <h3>Cuentas Bancarias</h3>
         {!editing && (
-          <button className="btn" onClick={startNew} title="Agregar banco" type="button">
-            <FaPlus style={{marginRight:6}}/>Agregar
+          <button className="btn small" onClick={startNew}>
+            <FaPlus /> Agregar cuenta
           </button>
         )}
       </div>
 
-      {err && <div className="error">Error cargando datos bancarios.</div>}
-      {loading && <div className="muted">Cargando…</div>}
+      {loading && !rows.length ? (
+        <div className="muted" style={{ marginTop: 20 }}>Cargando datos bancarios…</div>
+      ) : (
+        <>
+          {/* Formulario de Alta/Edición */}
+          {editing && (
+            <div className="bankForm">
+              <div className="labelRow">
+                {editing.id ? <FaPenToSquare /> : <FaPlus />}
+                <span>{editing.id ? 'Editar cuenta' : 'Nueva cuenta'}</span>
+                <button
+                  type="button"
+                  className="btn tiny"
+                  style={{ marginLeft: 'auto', background: 'transparent', border: 'none' }}
+                  onClick={onCancel}
+                >
+                  <FaXmark /> Cancelar
+                </button>
+              </div>
 
-      {/* Formulario */}
-      {editing && (
-        <form className="bankForm" onSubmit={onSave} aria-label="Formulario banco">
-          <div className="pfInput">
-            <label htmlFor="banco_nombre" className="lbl" title="Nombre del banco">Banco</label>
-            <input id="banco_nombre" name="banco_nombre" className="control"
-                   placeholder="Ej. Banco Nación"
-                   defaultValue={editing.banco_nombre || ''} />
-          </div>
-
-          <div className="pfInput">
-            <label htmlFor="titular_nombre" className="lbl" title="Titular de la cuenta">Titular</label>
-            <input id="titular_nombre" name="titular_nombre" className="control"
-                   placeholder="Nombre del titular"
-                   defaultValue={editing.titular_nombre || ''} />
-          </div>
-
-          <div className="pfInput">
-            <label htmlFor="cbu_enc" className="lbl" title="CBU (encriptado)">CBU (enc)</label>
-            <input id="cbu_enc" name="cbu_enc" className="control"
-                   placeholder="valor encriptado"
-                   defaultValue={editing.cbu_enc || ''} required />
-            <div className="hint">Guardamos el CBU en forma encriptada/hasheada.</div>
-          </div>
-
-          <div className="pfInput">
-            <label htmlFor="alias_enc" className="lbl" title="Alias (encriptado)">Alias (enc)</label>
-            <input id="alias_enc" name="alias_enc" className="control"
-                   placeholder="valor encriptado"
-                   defaultValue={editing.alias_enc || ''} />
-          </div>
-
-          <div className="checkRow">
-            <label className="switchLbl" title="Marcar como principal">
-              <input name="es_principal" type="checkbox" defaultChecked={!!editing.es_principal} />
-              <span>Principal</span>
-            </label>
-          </div>
-
-          <div className="rowEnd formActions">
-            <button type="button" className="btn" onClick={onCancel} title="Cancelar">Cancelar</button>
-            <button className="cta" title="Guardar" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
-          </div>
-        </form>
-      )}
-
-      {/* Listado */}
-      {!editing && !loading && (
-        rows.length > 0 ? (
-          <ul className="list">
-            {rows.map(r => (
-              <li key={r.id} className="rowBank">
-                <div className="col">
-                  <div className="nm">
-                    {r.banco_nombre || '—'}
-                    {r.es_principal && <span className="pill ok" title="Cuenta principal">Principal</span>}
-                  </div>
-                  <div className="sub">{r.titular_nombre || 'Sin titular'}</div>
+              <div className="formGrid">
+                <div className="pfInput">
+                  <label className="lbl">Nombre del Banco</label>
+                  <input
+                    className="control"
+                    placeholder="Ej: Banco Galicia"
+                    value={editing.banco_nombre}
+                    onChange={e => setField('banco_nombre', e.target.value)}
+                  />
                 </div>
-                <div className="actions">
-                  <button className="btn" onClick={()=>onEdit(r)} title="Editar banco" type="button">
-                    <FaPenToSquare style={{marginRight:6}}/>Editar
-                  </button>
-                  <button className="btn" onClick={()=>setPrincipal(r)} disabled={!!r.es_principal} title="Hacer principal" type="button">
-                    <FaStar style={{marginRight:6}}/>{r.es_principal ? 'Principal' : 'Hacer principal'}
-                  </button>
-                  <button className="btn danger" onClick={()=>onDelete(r.id)} title="Eliminar banco" type="button">
-                    <FaTrash style={{marginRight:6}}/>Eliminar
-                  </button>
+                <div className="pfInput">
+                  <label className="lbl">Titular de la Cuenta</label>
+                  <input
+                    className="control"
+                    placeholder="Nombre completo"
+                    value={editing.titular_nombre}
+                    onChange={e => setField('titular_nombre', e.target.value)}
+                  />
                 </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="empty">
-            <div className="emoji">🏦</div>
-            <div className="txt">No hay cuentas cargadas.</div>
-            <button className="btn" onClick={startNew} type="button"><FaPlus style={{marginRight:6}}/>Agregar la primera</button>
-          </div>
-        )
+                <div className="pfInput">
+                  <label className="lbl">CBU / CVU</label>
+                  <input
+                    className="control"
+                    placeholder="22 dígitos"
+                    value={editing.cbu}
+                    onChange={e => setField('cbu', e.target.value)}
+                  />
+                </div>
+                <div className="pfInput">
+                  <label className="lbl">Alias</label>
+                  <input
+                    className="control"
+                    placeholder="Ej: marina.sol.fedes"
+                    value={editing.alias}
+                    onChange={e => setField('alias', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <label className="checkRow">
+                <input
+                  type="checkbox"
+                  checked={editing.es_principal}
+                  onChange={e => setField('es_principal', e.target.checked)}
+                />
+                <span>Marcar como cuenta principal</span>
+              </label>
+            </div>
+          )}
+
+          {/* Listado de cuentas */}
+          {!editing && (
+            rows.length > 0 ? (
+              <ul className="bankList">
+                {rows.map(r => (
+                  <li key={r.id} className="bankTile">
+                    <div className="info">
+                      <div className="top">
+                        {r.banco_nombre || '—'}
+                        {r.es_principal && <span className="pill">Principal</span>}
+                      </div>
+                      <div className="sub">
+                        <span><strong>Titular:</strong> {r.titular_nombre || '—'}</span>
+                        <span><strong>CBU:</strong> {r.cbu || '—'}</span>
+                        {r.alias && <span><strong>Alias:</strong> {r.alias}</span>}
+                      </div>
+                    </div>
+                    <div className="actions">
+                      <button className="btn tiny" onClick={() => onEdit(r)} title="Editar">
+                        <FaPenToSquare />
+                      </button>
+                      {!r.es_principal && (
+                        <button className="btn tiny" onClick={() => makePrincipal(r.id)} title="Hacer principal">
+                          <FaStar />
+                        </button>
+                      )}
+                      <button className="btn tiny danger" onClick={() => onDelete(r.id)} title="Eliminar">
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="emptyState">
+                <div className="icon">🏦</div>
+                <div className="msg">No tenés cuentas bancarias registradas.</div>
+                <button className="btn small" onClick={startNew}>
+                  Comenzar a cargar
+                </button>
+              </div>
+            )
+          )}
+        </>
       )}
     </section>
   )

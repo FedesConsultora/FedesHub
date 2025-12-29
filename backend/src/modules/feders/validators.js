@@ -1,10 +1,19 @@
 // backend/src/modules/feders/validators.js
 import { z } from 'zod';
 
+// Helper para fechas (debe estar declarado antes de usarse)
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato esperado YYYY-MM-DD');
+
 export const updateFederSelfSchema = z.object({
   nombre: z.string().min(2).max(120).optional(),
   apellido: z.string().min(2).max(120).optional(),
   telefono: z.string().max(30).nullish().optional(),
+  // Campos de identidad (el backend encripta automáticamente)
+  nombre_legal: z.string().max(180).nullish().optional(),
+  dni_tipo: z.string().max(20).nullish().optional(),
+  dni_numero: z.string().max(50).nullish().optional(), // texto plano, backend encripta
+  cuil_cuit: z.string().max(50).nullish().optional(),   // texto plano, backend encripta
+  fecha_nacimiento: dateOnly.nullish().optional(),
   // avatar_url NO lo actualizamos desde aquí por UX (se sube por /avatar)
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
 
@@ -17,11 +26,10 @@ export const listFedersQuerySchema = z.object({
   is_activo: z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean().optional())
 });
 
+
 export const federIdParamSchema = z.object({
   id: z.coerce.number().int().positive()
 });
-
-const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato esperado YYYY-MM-DD');
 
 export const createFederSchema = z.object({
   user_id: z.number().int().positive().optional().nullable(),
@@ -46,7 +54,14 @@ export const updateFederSchema = z.object({
   avatar_url: z.string().url().max(512).nullish().optional(),
   fecha_ingreso: dateOnly.nullish().optional(),
   fecha_egreso: dateOnly.nullish().optional(),
-  is_activo: z.boolean().optional()
+  is_activo: z.boolean().optional(),
+  // Campos de identidad y legales
+  nombre_legal: z.string().max(180).nullish().optional(),
+  dni_tipo: z.string().max(20).nullish().optional(),
+  dni_numero: z.string().max(50).nullish().optional(), // texto plano, backend encripta
+  cuil_cuit: z.string().max(50).nullish().optional(),   // texto plano, backend encripta
+  fecha_nacimiento: dateOnly.nullish().optional(),
+  cargo_principal: z.string().max(120).nullish().optional(),
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
 
 export const setFederActiveSchema = z.object({
@@ -94,16 +109,16 @@ export const bankIdParamSchema = z.object({
 });
 export const createFederBancoSchema = z.object({
   banco_nombre: z.string().max(120).nullish(),
-  cbu_enc: encJson, // requerido
-  alias_enc: encJson,
+  cbu: z.string().regex(/^\d{22}$/, 'El CBU/CVU debe tener exactamente 22 dígitos'),
+  alias: z.string().max(100).nullish(),
   titular_nombre: z.string().max(180).nullish(),
   es_principal: z.boolean().optional().default(true)
-}).refine(v => !!v.cbu_enc, { message: 'cbu_enc es requerido' });
+});
 
 export const updateFederBancoSchema = z.object({
   banco_nombre: z.string().max(120).nullish().optional(),
-  cbu_enc: encJson.optional(),
-  alias_enc: encJson.optional(),
+  cbu: z.string().regex(/^\d{22}$/, 'El CBU/CVU debe tener exactamente 22 dígitos').optional(),
+  alias: z.string().max(100).nullish().optional(),
   titular_nombre: z.string().max(180).nullish().optional(),
   es_principal: z.boolean().optional()
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });

@@ -71,43 +71,8 @@ export const svcUpsertFirmaPerfil = (federId, body) => {
 // ---- Bancos
 export const svcListBancos = (federId) => listBancos(federId);
 
-export const svcCreateBanco = async (federId, body) => {
-  const payload = { ...body };
-  if (payload.cbu_enc !== undefined) payload.cbu_enc = stringifyIfObj(payload.cbu_enc);
-  if (payload.alias_enc !== undefined) payload.alias_enc = stringifyIfObj(payload.alias_enc);
-
-  return models.sequelize.transaction(async (t) => {
-    if (payload.es_principal) {
-      await models.FederBanco.update(
-        { es_principal: false },
-        { where: { feder_id: federId }, transaction: t } // <-- no bank_id acá
-      );
-    }
-    const row = await models.FederBanco.create({ feder_id: federId, ...payload }, { transaction: t });
-    return row;
-  });
-};
-
-export const svcUpdateBanco = async (federId, bankId, body) => {
-  const payload = { ...body };
-  if (payload.cbu_enc !== undefined) payload.cbu_enc = stringifyIfObj(payload.cbu_enc);
-  if (payload.alias_enc !== undefined) payload.alias_enc = stringifyIfObj(payload.alias_enc);
-
-  const row = await models.FederBanco.findOne({ where: { id: bankId, feder_id: federId } });
-  if (!row) throw Object.assign(new Error('Banco no encontrado'), { status: 404 });
-
-  return models.sequelize.transaction(async (t) => {
-    if (payload.es_principal) {
-      await models.FederBanco.update(
-        { es_principal: false },
-        { where: { feder_id: federId, id: { [Op.ne]: bankId } }, transaction: t } // <-- usar Op.ne
-      );
-    }
-    Object.assign(row, payload);
-    await row.save({ transaction: t });
-    return row;
-  });
-};
+export const svcCreateBanco = (federId, body) => createBanco(federId, body);
+export const svcUpdateBanco = (federId, bankId, body) => updateBanco(federId, bankId, body);
 
 export const svcDeleteBanco = (federId, bankId) => deleteBanco(federId, bankId);
 

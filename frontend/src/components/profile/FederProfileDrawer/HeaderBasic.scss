@@ -1,30 +1,93 @@
 @use '../../../styles/variables' as v;
 
-.pfHeader{
-  display:flex; align-items:center; gap:16px; margin-bottom:12px; flex-wrap:wrap; margin-left:.8rem;
+.pfHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  margin-left: .8rem;
 
-  .pfAvatar{ position:relative; width:56px; height:56px; flex:0 0 56px;
-    .circle{ width:56px; height:56px; border-radius:50%;
-      background:linear-gradient(135deg,#1b2735,#233548);
-      display:grid; place-items:center; font-weight:900 }
-    .ghost{ position:absolute; right:-6px; bottom:-6px; border-radius:10px; padding:6px 8px;
-      border:1px solid rgba(255,255,255,.24); background: rgba(255,255,255,.06) }
+  .pfAvatar {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+
+    .circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1b2735, #233548);
+      display: grid;
+      place-items: center;
+      font-weight: 900
+    }
+
+    .ghost {
+      position: absolute;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 10px;
+      padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      background: rgba(255, 255, 255, .06)
+    }
   }
 
-  .pfMeta{
-    min-width:220px;
-    .nm{ font-size:18px; font-weight:900; margin:0 }
-    .sub{ color:v.$fh-muted; font-size:12px }
-    .pill{ display:inline-block; margin-top:6px; padding:4px 8px; border-radius:999px; font-size:12px;
-      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06) }
+  .pfMeta {
+    min-width: 220px;
+
+    .nm {
+      font-size: 18px;
+      font-weight: 900;
+      margin: 0
+    }
+
+    .sub {
+      color: v.$fh-muted;
+      font-size: 12px
+    }
+
+    .pill {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06)
+    }
   }
 
-  .pfActions{ margin-left:auto; display:flex; gap:10px; align-items:center; }
-  .switchLbl{ display:flex; align-items:center; gap:8px; font-weight:700; input{ accent-color:v.$fh-primary } }
+  .pfActions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    
+  }
 
-  .btn{
-    background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16);
-    padding:8px 12px; border-radius:12px; cursor:pointer; font-weight:800; letter-spacing:.2px; color:v.$fh-text;
-    &:hover{ background: rgba(255,255,255,.1) }
+  .btnIcon {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .16);
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    cursor: pointer;
+    color: v.$fh-text;
+    font-size: 1.1rem;
+    transition: background .15s ease, transform .1s ease;
+    padding: 0 !important;
+    &:hover {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
   }
 }

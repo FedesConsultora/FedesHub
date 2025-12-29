@@ -44,7 +44,7 @@ router.post(
 )
 // Modalidad por día (feders.assign: “gestión de configuración del feder”)
 router.get('/:federId/modalidad', requireAuth, requirePermission('feders', 'read'), getFederModalidad);
-router.put('/:federId/modalidad', requireAuth, requirePermission('feders', 'assign'), putFederModalidadBulk);
+router.put('/:federId/modalidad', requireAuth, putFederModalidadBulk);
 router.patch('/:federId/modalidad', requireAuth, requirePermission('feders', 'assign'), patchFederModalidad);
 router.delete('/:federId/modalidad/:diaId', requireAuth, requirePermission('feders', 'assign'), deleteFederModalidad);
 

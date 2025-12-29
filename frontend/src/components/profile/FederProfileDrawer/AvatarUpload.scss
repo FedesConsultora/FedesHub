@@ -29,7 +29,7 @@
   display: grid;
   place-items: center;
   font-size: 14px;
-
+  padding: 0 !important;
   &:hover {
     background: rgba(255, 255, 255, .12)
   }

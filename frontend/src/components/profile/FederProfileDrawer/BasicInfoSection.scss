@@ -14,7 +14,7 @@
 
 /* Botón “Guardar” flotante (aparece sólo si hay cambios) */
 .btnSaveFloating{
-  position:absolute; top:10px; right:12px;
+  position:absolute; top:0px; right:12px;
   display:inline-flex; align-items:center; gap:10px;
   background:#fff; color:#0b0f15; border:1px solid rgba(255,255,255,.85);
   padding:9px 12px; border-radius:14px; font-weight:900; letter-spacing:.2px; font-size:.92rem;

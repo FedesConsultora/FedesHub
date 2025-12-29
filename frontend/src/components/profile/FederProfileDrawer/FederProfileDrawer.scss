@@ -1,30 +1,102 @@
 @use '../../../styles/variables' as v;
 
 /* Overlay + panel */
-.pfWrap{ position:fixed; inset:0; z-index:1000; display:flex; pointer-events:none; opacity:0; transition:opacity .2s ease; color:v.$fh-text; }
-.pfWrap.open{ pointer-events:auto; opacity:1 }
-.pfWrap.closing{ opacity:0 }
-.pfBackdrop{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,12,18,.55), rgba(8,12,18,.8)); }
-
-.pfPanel{
-  position:relative; margin-left:auto; height:100%; width:min(980px, 100%);
-  background:v.$fh-card; backdrop-filter: blur(18px);
-  border-left:1px solid rgba(255,255,255,.08);
-  box-shadow:v.$shadow-soft;
-  display:flex; flex-direction:column;
-  border-top-left-radius:v.$radius-2xl; border-bottom-left-radius:v.$radius-2xl;
+.pfWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .22s ease;
+  color: v.$fh-text;
 }
 
-.pfTopBar{
-  padding:16px; border-bottom:1px solid rgba(255,255,255,.08);
-  display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
-  .brand{
-    .logo{ font-weight:900; font-size:22px; letter-spacing:.3px; color:#fff }
-    .sub{ color:v.$fh-muted; margin-top:2px; font-size:12px }
+.pfWrap.open {
+  pointer-events: auto;
+  opacity: 1
+}
+
+.pfWrap.closing {
+  opacity: 0
+}
+
+.pfBackdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .8));
+  cursor: pointer;
+}
+
+.pfPanel {
+  position: relative;
+  margin-left: auto;
+  height: 100%;
+  width: min(980px, 100%);
+  background: v.$fh-card;
+  backdrop-filter: blur(18px);
+  border-left: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: v.$shadow-soft;
+  display: flex;
+  flex-direction: column;
+  border-top-left-radius: v.$radius-2xl;
+  border-bottom-left-radius: v.$radius-2xl;
+  /* Slide-in animation from right */
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .pfWrap.open & {
+    transform: translateX(0);
   }
-  .close{ border:0; background:transparent; color:inherit; font-size:22px; width:36px; height:36px; border-radius:10px; display:grid; place-items:center; cursor:pointer;
-    &:hover{ background: rgba(255,255,255,.06) }
+
+  .pfWrap.closing & {
+    transform: translateX(100%);
   }
 }
 
-.pfBody{ flex:1 1 auto; overflow:auto; padding:14px 16px; }
+.pfTopBar {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  .brand {
+    .logo {
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: .3px;
+      color: #fff
+    }
+
+    .sub {
+      color: v.$fh-muted;
+      margin-top: 2px;
+      font-size: 12px
+    }
+  }
+
+  .close {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, .06)
+    }
+  }
+}
+
+.pfBody {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 14px 16px;
+}

@@ -14,7 +14,7 @@ import ModalidadDiaSection from './ModalidadDiaSection.jsx'
 import ProfileTabs from './ProfileTabs.jsx'
 import './FederProfileDrawer.scss'
 
-export default function FederProfileDrawer({ open = false, federId, onClose, catalog }) {
+export default function FederProfileDrawer({ open = false, federId, onClose, catalog, canEditCargo = false, isSelf = false }) {
   const [mounted, setMounted] = useState(false)
   const [closing, setClosing] = useState(false)
   const { data: feder, loading, refetch, toggleActive } = useFederDetail(federId)
@@ -99,11 +99,11 @@ export default function FederProfileDrawer({ open = false, federId, onClose, cat
                   },
                   {
                     id: 'id', label: 'Identidad y legales', icon: FiFileText,
-                    content: <IdentidadSection feder={feder} />
+                    content: <IdentidadSection feder={feder} isSelf={isSelf} />
                   },
                   {
                     id: 'mode', label: 'Modalidad por día', icon: FiCalendar,
-                    content: <ModalidadDiaSection federId={feder.id} catalog={catLocal || {}} />
+                    content: <ModalidadDiaSection federId={feder.id} catalog={catLocal || {}} isSelf={isSelf} />
                   },
                   {
                     id: 'firma', label: 'Firma', icon: FiEdit3,
@@ -111,11 +111,11 @@ export default function FederProfileDrawer({ open = false, federId, onClose, cat
                   },
                   {
                     id: 'bancos', label: 'Bancos', icon: FiCreditCard,
-                    content: <BancosSection federId={feder.id} />
+                    content: <BancosSection federId={feder.id} isSelf={isSelf} />
                   },
                   {
                     id: 'emerg', label: 'Emergencias', icon: FiLifeBuoy,
-                    content: <EmergenciasSection federId={feder.id} />
+                    content: <EmergenciasSection federId={feder.id} isSelf={isSelf} />
                   },
                 ]}
               />
