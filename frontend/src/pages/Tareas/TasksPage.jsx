@@ -10,6 +10,7 @@ import CreateTaskModal from "../../components/tasks/CreateTaskModal";
 import ModalPanel from "./components/ModalPanel";
 import TaskDetail from "./TaskDetail";
 import TrashView from "./components/TrashView";
+import FavoritesView from "./components/FavoritesView";
 import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
@@ -60,7 +61,7 @@ export default function TasksPage() {
     vencimiento_to: undefined,
     solo_mias: true,
     include_archivadas: false,
-    limit: 200,
+    limit: 500,
     orden_by: "prioridad",
     sort: "desc",
   });
@@ -247,6 +248,16 @@ export default function TasksPage() {
             >
               Lista
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "starred"}
+              className={view === "starred" ? "active" : ""}
+              onClick={() => handleSetView("starred")}
+              title="Ver destacados"
+            >
+              Destacadas
+            </button>
             {isDirectivo && (
               <button
                 type="button"
@@ -299,6 +310,8 @@ export default function TasksPage() {
             onRowClick={(t) => setOpenTaskId(t.id)}
             attendanceStatuses={attendanceStatuses}
           />
+        ) : view === "starred" ? (
+          <FavoritesView onRemoveFavorite={refetch} />
         ) : (
           <TrashView onRestore={refetch} />
         )}

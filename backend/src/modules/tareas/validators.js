@@ -12,7 +12,7 @@ export const composeQuerySchema = z.object({
 
 // ---------- Listado con filtros extendidos ----------
 export const listTasksQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
 
   q: z.string().trim().max(200).optional(),

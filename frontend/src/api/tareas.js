@@ -17,7 +17,20 @@ export const tareasApi = {
 
 
   // Listado/CRUD
-  list: (params = {}) => api.get(base, { params }).then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data })),
+  list: (params = {}) => {
+    // Convertir booleanos a strings para que axios los envíe correctamente
+    const serializedParams = { ...params };
+    if (typeof serializedParams.solo_mias === 'boolean') {
+      serializedParams.solo_mias = serializedParams.solo_mias ? 'true' : 'false';
+    }
+    if (typeof serializedParams.include_archivadas === 'boolean') {
+      serializedParams.include_archivadas = serializedParams.include_archivadas ? 'true' : 'false';
+    }
+    if (typeof serializedParams.is_favorita === 'boolean') {
+      serializedParams.is_favorita = serializedParams.is_favorita ? 'true' : 'false';
+    }
+    return api.get(base, { params: serializedParams }).then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data }));
+  },
   get: (id) => api.get(`${base}/${id}`).then(r => r.data),
   create: (body) => api.post(base, body).then(r => r.data),
   update: (id, body) => {
