@@ -97,7 +97,7 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
   `;
 
   if (q) {
-    where.push(`(f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
+    where.push(`(CONCAT_WS(' ', f.nombre, f.apellido) ILIKE :q OR CONCAT_WS(' ', f.apellido, f.nombre) ILIKE :q OR f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
     repl.q = `%${q}%`;
   }
   if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
@@ -125,7 +125,10 @@ export const countFeders = async ({ q, celula_id, estado_id, is_activo } = {}) =
     FROM "Feder" f
     LEFT JOIN "User" u ON u.id = f.user_id
   `;
-  if (q) { where.push(`(f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`); repl.q = `%${q}%`; }
+  if (q) {
+    where.push(`(CONCAT_WS(' ', f.nombre, f.apellido) ILIKE :q OR CONCAT_WS(' ', f.apellido, f.nombre) ILIKE :q OR f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
+    repl.q = `%${q}%`;
+  }
   if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
   if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
