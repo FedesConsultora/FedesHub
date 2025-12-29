@@ -11,7 +11,7 @@ import {
   catEstados, catRoles,
   svcCreate, svcUpdate, svcChangeState,
   svcDetail, svcList, svcListAsignaciones, svcAssignRol, svcCloseAsignacion,
-  svcListClientes, svcCoverage, svcUploadAvatar
+  svcListClientes, svcCoverage, svcUploadAvatar, svcDelete
 } from '../services/celulas.service.js';
 
 export const health = (_req, res) => res.json({ module: 'celulas', ok: true });
@@ -41,6 +41,13 @@ export const postState = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params); const { estado_codigo } = changeStateBody.parse(req.body);
     res.json(await svcChangeState(id, estado_codigo));
+  } catch (e) { next(e); }
+};
+
+export const del = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json(await svcDelete(id));
   } catch (e) { next(e); }
 };
 

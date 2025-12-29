@@ -7,7 +7,7 @@ import {
   listEstados, listRolTipos, getEstadoByCodigo,
   createCelula, updateCelula, changeCelulaState,
   getCelulaById, listCelulas, listAsignaciones,
-  assignRol, closeAsignacion, getClientesByCelula
+  assignRol, closeAsignacion, getClientesByCelula, deleteCelula
 } from '../repositories/celulas.repo.js';
 import { initModels } from '../../../models/registry.js';
 
@@ -22,6 +22,7 @@ export const svcChangeState = (id, estado_codigo) => changeCelulaState(id, estad
 
 export const svcDetail = (id) => getCelulaById(id);
 export const svcList = (q) => listCelulas(q);
+export const svcDelete = (id) => deleteCelula(id);
 
 export const svcListAsignaciones = (celula_id) => listAsignaciones(celula_id);
 export const svcAssignRol = (celula_id, body) => assignRol({ celula_id, ...body });

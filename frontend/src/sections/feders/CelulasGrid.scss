@@ -1,27 +1,330 @@
 @use '../../styles/variables' as v;
 
-.fhCelulas{
-  margin-top:18px;
-  h3{ margin:0 0 10px }
-  .grid{
-    display:grid; gap:12px;
+.fhCelulas {
+  .gridHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    margin-top: 16px;
+
+    h3 {
+      margin: 0;
+    }
+
+    .newBtn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: v.$fh-primary;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+
+  .grid {
+    display: grid;
+    gap: 12px;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }
-.celCard{
-  background: v.$fh-card; border-radius: v.$radius-2xl; padding:12px;
-  border:1px solid rgba(255,255,255,.08); box-shadow: v.$shadow-soft;
-  .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
-  .chip{
-    margin-left:auto;
-    padding:2px 8px; border-radius:999px; font-size:.8em; text-transform:capitalize;
-    border:1px solid rgba(255,255,255,.12); background: lighten(v.$fh-card, 4%);
-    &.activa{ color:#a3ffcf; border-color: rgba(69,173,124,.35) }
-    &.pausada{ color:#ffd59d }
-    &.cerrada{ color:#ffb4b4 }
+
+.celCard {
+  background: v.$fh-card;
+  border-radius: v.$radius-2xl;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: v.$shadow-soft;
+  transition: transform 0.2s, border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
   }
-  .miembros{ display:flex; flex-direction:column; gap:8px }
-  .empty{
-    opacity:.75; text-align:center; padding:6px 0;
+
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+
+    .editIconBtn {
+
+      width: 28px;
+      height: 28px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      cursor: pointer;
+      margin-left: 4px;
+
+
+    }
+  }
+
+  .chip {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .8em;
+    text-transform: capitalize;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: lighten(v.$fh-card, 4%);
+
+    &.activa {
+      color: #a3ffcf;
+      border-color: rgba(69, 173, 124, .35)
+    }
+
+    &.pausada {
+      color: #ffd59d
+    }
+
+    &.cerrada {
+      color: #ffb4b4
+    }
+  }
+
+  .miembros {
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+  }
+
+  .empty {
+    opacity: .75;
+    text-align: center;
+    padding: 6px 0;
+  }
+}
+
+.celulas-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 4px;
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    height: 42px; // Consistent height for all inputs/selects
+
+    &::placeholder {
+      color: #64748b;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &:focus {
+      background: rgba(0, 0, 0, 0.2);
+      border-color: v.$fh-primary;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.15);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+    height: auto;
+  }
+
+  .members-section {
+    margin-top: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: v.$fh-primary;
+
+      svg {
+        font-size: 1.1rem;
+      }
+
+      h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    .add-member-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+
+      .feder-select {
+        flex: 1.5;
+      }
+
+      .rol-select {
+        flex: 1;
+      }
+
+      .add-btn {
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: v.$fh-primary;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(v.$fh-primary, 0.2);
+
+        &:hover:not(:disabled) {
+          transform: translateY(-1px);
+          filter: brightness(1.1);
+          box-shadow: 0 6px 16px rgba(v.$fh-primary, 0.3);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+      }
+    }
+
+    .members-list-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 6px;
+
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .member-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 12px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          gap: 2px;
+
+          .name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .role {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 500;
+          }
+        }
+
+        .del-btn {
+          background: transparent;
+          border: none;
+          color: #f87171;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          opacity: 0.4;
+          transition: all 0.2s;
+          border-radius: 8px;
+
+          &:hover {
+            opacity: 1;
+            background: rgba(248, 113, 113, 0.1);
+          }
+        }
+      }
+
+      .empty-mini {
+        text-align: center;
+        padding: 24px;
+        font-size: 0.85rem;
+        color: #64748b;
+        font-style: italic;
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+      }
+    }
+  }
+
+  .clients-section {
+    margin-top: 20px;
+    border-top: none; // Already using card style
   }
 }

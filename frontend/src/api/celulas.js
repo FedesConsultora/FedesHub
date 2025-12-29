@@ -11,12 +11,13 @@ export const celulasApi = {
     get: (id) => get(`/celulas/${id}`),
     create: (body) => post('/celulas', body),
     update: (id, body) => patch(`/celulas/${id}`, body),
+    delete: (id) => api.delete(`/celulas/${id}`).then(r => r.data),
     changeState: (id, body) => post(`/celulas/${id}/state`, body),
 
     // Asignaciones de miembros
     listAsignaciones: (id) => get(`/celulas/${id}/asignaciones`),
     addAsignacion: (id, body) => post(`/celulas/${id}/asignaciones`, body),
-    closeAsignacion: (asignacionId) => patch(`/celulas/asignaciones/${asignacionId}`),
+    closeAsignacion: (asignacionId, body) => patch(`/celulas/asignaciones/${asignacionId}`, body),
 
     // Clientes
     listClientes: (id) => get(`/celulas/${id}/clientes`),

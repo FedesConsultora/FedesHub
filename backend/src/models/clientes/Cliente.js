@@ -2,7 +2,7 @@
 export default (sequelize, DataTypes) => {
   const Cliente = sequelize.define('Cliente', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    celula_id: { type: DataTypes.INTEGER, allowNull: false },
+    celula_id: { type: DataTypes.INTEGER, allowNull: true },
     tipo_id: { type: DataTypes.INTEGER, allowNull: false },
     estado_id: { type: DataTypes.INTEGER, allowNull: false },
     nombre: { type: DataTypes.STRING(160), allowNull: false, unique: true },
