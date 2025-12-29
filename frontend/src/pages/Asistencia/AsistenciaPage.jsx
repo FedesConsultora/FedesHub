@@ -128,16 +128,16 @@ export default function AsistenciaPage() {
 
       </div>
 
-      <div className="asst-tabs">
-        <button className={`tab ${tab === 'mi' ? 'active' : ''}`} onClick={() => setTab('mi')}>
-          Mi asistencia
-        </button>
-        {canReport && (
+      {canReport && (
+        <div className="asst-tabs">
+          <button className={`tab ${tab === 'mi' ? 'active' : ''}`} onClick={() => setTab('mi')}>
+            Mi asistencia
+          </button>
           <button className={`tab ${tab === 'equipo' ? 'active' : ''}`} onClick={() => setTab('equipo')}>
             Equipo
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {tab === 'mi' && <TimelineWrapper view={view}
         fecha={fecha} scope="me" onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
