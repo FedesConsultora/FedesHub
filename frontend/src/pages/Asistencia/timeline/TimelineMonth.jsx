@@ -46,49 +46,57 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
         <div className="timeline-month">
             <div className="tm-month-name">{monthName}</div>
 
-            {grouped.map(f => (
-                <div key={f.feder_id} className="tm-person">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <h3 className="tm-name" style={{ margin: 0 }}>{f.nombre}</h3>
-                        <AttendanceBadge modalidad={getModalidad(statuses, f.feder_id)} size={16} />
-                    </div>
+            {grouped.map(f => {
+                const totalMonthMinutes = Object.values(f.days).reduce((acc, d) => acc + (d.minutes || 0), 0)
 
-                    {/* FILA DE DÍAS DE LA SEMANA */}
-                    <div className="tm-weekdays">
-                        {weekdays.map((wd, idx) => (
-                            <div key={idx} className="tm-weekday">{wd}</div>
-                        ))}
-                    </div>
+                return (
+                    <div key={f.feder_id} className="tm-person">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                            <h3 className="tm-name" style={{ margin: 0 }}>{f.nombre}</h3>
 
-                    {/* CALENDARIO */}
-                    <div className="tm-calendar">
-                        {calendarCells.map((d, idx) => {
-                            if (!d) return <div key={`empty-${idx}`} className="tm-day empty"></div>
+                            <AttendanceBadge modalidad={getModalidad(statuses, f.feder_id)} size={16} />
+                            <span className="person-total-meta">
+                                (Total horas {monthName}: {formatDuration(totalMonthMinutes)})
+                            </span>
+                        </div>
 
-                            const key = yyyyMmDd(d)
-                            const minutes = f.days[key]?.minutes ?? 0
-                            return (
-                                <div
-                                    key={key}
-                                    className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
-                                    title={'Ver detalle diario'}
-                                    onClick={() => onNavigate(key, 'day')}
-                                >
-                                    <span className="day-num">{d.getDate()}</span>
-                                    {minutes > 0 && (
-                                        <div className="day-info">
-                                            <span className="day-hours">{formatDuration(minutes)}</span>
-                                            {f.days[key]?.registros?.[0]?.modalidad_codigo && (
-                                                <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
+                        {/* FILA DE DÍAS DE LA SEMANA */}
+                        <div className="tm-weekdays">
+                            {weekdays.map((wd, idx) => (
+                                <div key={idx} className="tm-weekday">{wd}</div>
+                            ))}
+                        </div>
+
+                        {/* CALENDARIO */}
+                        <div className="tm-calendar">
+                            {calendarCells.map((d, idx) => {
+                                if (!d) return <div key={`empty-${idx}`} className="tm-day empty"></div>
+
+                                const key = yyyyMmDd(d)
+                                const minutes = f.days[key]?.minutes ?? 0
+                                return (
+                                    <div
+                                        key={key}
+                                        className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
+                                        title={'Ver detalle diario'}
+                                        onClick={() => onNavigate(key, 'day')}
+                                    >
+                                        <span className="day-num">{d.getDate()}</span>
+                                        {minutes > 0 && (
+                                            <div className="day-info">
+                                                <span className="day-hours">{formatDuration(minutes)}</span>
+                                                {f.days[key]?.registros?.[0]?.modalidad_codigo && (
+                                                    <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>
-            ))}
+                )
+            })}
         </div>
     )
 }

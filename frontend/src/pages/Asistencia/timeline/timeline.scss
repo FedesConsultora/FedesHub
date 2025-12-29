@@ -394,3 +394,10 @@ $muted: $fh-muted;
     height: 26px;
   }
 }
+
+.person-total-meta {
+  font-size: 0.8rem;
+  color: $fh-muted;
+  opacity: 0.8;
+  font-weight: 500;
+}
