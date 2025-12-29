@@ -151,7 +151,9 @@ export default function CelulaDetailPage() {
                 setEditing(true)
             }
         })
-    }, [reload, location.search])
+        // Guardar como última célula vista para persistencia de navegación
+        localStorage.setItem('fh_last_celula_id', id)
+    }, [reload, location.search, id])
 
     const startEdit = () => setEditing(true)
     const cancelEdit = () => {
