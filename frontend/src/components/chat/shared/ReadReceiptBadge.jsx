@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { displayName } from "../../../utils/people";
 import "./ReadReceiptBadge.scss";
 
@@ -103,10 +103,23 @@ export default function ReadReceiptBadge({
 
 function ReceiptGroupBadge({ align, allSeen, vistos, noVistos, total }) {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
   const countTxt = `${vistos.length}/${total}`;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (ev) => {
+      if (rootRef.current && !rootRef.current.contains(ev.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
 
   return (
     <div
+      ref={rootRef}
       className={`rrb rrb-group ${align === "left" ? "left" : "right"} ${open ? "open" : ""}`}
     >
       <button

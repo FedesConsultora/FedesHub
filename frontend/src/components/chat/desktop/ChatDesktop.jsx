@@ -44,6 +44,36 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
 
   useEffect(() => setCid(currentId || channels?.[0]?.id || null), [currentId, channels])
 
+  // ordenar canales por updated_at desc
+  const sortedChannels = useMemo(() => {
+    const arr = Array.isArray(channels) ? [...channels] : []
+    arr.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+    return arr
+  }, [channels])
+
+  const sel = useMemo(() => sortedChannels.find(c => c.id === cid) || null, [cid, sortedChannels])
+
+  // DMs barra lateral
+  const dmQ = useDmCandidates()
+  const dmItems = useMemo(() => {
+    const arr = [...(dmQ.data || [])]
+    arr.sort((a, b) => {
+      const ta = a.last_msg_at ? new Date(a.last_msg_at).getTime() : 0
+      const tb = b.last_msg_at ? new Date(b.last_msg_at).getTime() : 0
+      if (ta === tb) {
+        const na = (displayName(a) || '').toLowerCase()
+        const nb = (displayName(b) || '').toLowerCase()
+        return na.localeCompare(nb)
+      }
+      return tb - ta
+    })
+    return arr
+  }, [dmQ.data])
+
+  const msgs = useMessages(cid, { limit: 50 })
+  useChatRealtime()
+  const { data: membersFull = [] } = useChannelMembers(cid)
+
   // Sync view tab with selected channel type
   useEffect(() => {
     if (!cid) return
@@ -63,36 +93,6 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
       setViewPersist('dms')
     }
   }, [cid, sel, dmItems]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ordenar canales por updated_at desc
-  const sortedChannels = useMemo(() => {
-    const arr = Array.isArray(channels) ? [...channels] : []
-    arr.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
-    return arr
-  }, [channels])
-
-  const sel = useMemo(() => sortedChannels.find(c => c.id === cid) || null, [cid, sortedChannels])
-  const msgs = useMessages(cid, { limit: 50 })
-  useChatRealtime()
-
-  const { data: membersFull = [] } = useChannelMembers(cid)
-
-  // DMs barra lateral
-  const dmQ = useDmCandidates()
-  const dmItems = useMemo(() => {
-    const arr = [...(dmQ.data || [])]
-    arr.sort((a, b) => {
-      const ta = a.last_msg_at ? new Date(a.last_msg_at).getTime() : 0
-      const tb = b.last_msg_at ? new Date(b.last_msg_at).getTime() : 0
-      if (ta === tb) {
-        const na = (displayName(a) || '').toLowerCase()
-        const nb = (displayName(b) || '').toLowerCase()
-        return na.localeCompare(nb)
-      }
-      return tb - ta
-    })
-    return arr
-  }, [dmQ.data])
 
   // ---- Badges por pestaña
   const anyUnread = (ids = []) => ids.some(id => (unreadByCanal?.[id] | 0) > 0 || (mentionByCanal?.[id] | 0) > 0)
