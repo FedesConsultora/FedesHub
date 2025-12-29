@@ -38,3 +38,14 @@ export const groupByFederAndDay = (items) => {
 
   return Object.values(map)
 }
+
+export const formatDuration = (totalMinutes) => {
+  const mins = Math.round(totalMinutes)
+  if (mins < 60) {
+    return `${mins} min`
+  }
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  if (m === 0) return `${h}h`
+  return `${h}h ${m} min`
+}

@@ -1,4 +1,4 @@
-import { groupByFederAndDay } from "./timeline.utils"
+import { groupByFederAndDay, formatDuration } from "./timeline.utils"
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import './timeline-month.scss'
@@ -77,7 +77,7 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
                                     <span className="day-num">{d.getDate()}</span>
                                     {minutes > 0 && (
                                         <div className="day-info">
-                                            <span className="day-hours">{(minutes / 60).toFixed(1)}h</span>
+                                            <span className="day-hours">{formatDuration(minutes)}</span>
                                             {f.days[key]?.registros?.[0]?.modalidad_codigo && (
                                                 <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
                                             )}

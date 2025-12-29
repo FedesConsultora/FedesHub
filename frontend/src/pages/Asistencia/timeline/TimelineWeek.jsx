@@ -1,4 +1,4 @@
-import { groupByFederAndDay } from './timeline.utils'
+import { groupByFederAndDay, formatDuration } from './timeline.utils'
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
 import './timeline-week.scss'
@@ -75,7 +75,7 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
                     <div className="person-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {f.nombre}
                     </div>
-                    <AttendanceBadge modalidad={getModalidad(statuses, f.feder_id)} size={14} />
+
                   </div>
                 </td>
 
@@ -95,7 +95,7 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
                       title={`Ver día ${d.dateIso}`}
                     >
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {(minutes / 60).toFixed(2)} h
+                        {formatDuration(minutes)}
                         {minutes > 0 && dayEntry?.registros?.[0]?.modalidad_codigo && (
                           <AttendanceBadge modalidad={dayEntry.registros[0].modalidad_codigo} size={13} />
                         )}
@@ -105,7 +105,7 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
                 })}
 
                 <td className="total-col">
-                  {(totalMinutes / 60).toFixed(2)} h
+                  {formatDuration(totalMinutes)}
                 </td>
               </tr>
             )
