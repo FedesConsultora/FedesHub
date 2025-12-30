@@ -7,7 +7,7 @@ export default function MetricsGrid({ data }) {
 
   const items = [
     { k: 'tareas_prioritarias', label: 'Tareas prioritarias', value: metrics.tareas_prioritarias ?? 0 },
-    { k: 'tareas_semana', label: 'Tareas semana', value: metrics.tareas_semana + metrics.tareas_hoy ?? 0 },
+    { k: 'tareas_semana', label: 'Tareas semana', value: (metrics.tareas_semana ?? 0) + (metrics.tareas_hoy ?? 0) },
     // { k: 'reuniones_prox', label: 'Próximas reuniones', value: metrics.eventos_prox ?? 0 },
   ]
 

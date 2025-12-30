@@ -71,14 +71,14 @@ export default function AppRouter() {
             <Route path="celulas" element={<CelulasListPage />} />
             <Route path="celulas/:id" element={<CelulaDetailPage />} />
             <Route path="view/:id" element={<FederDetailPage />} />
+            <Route
+              path="cargos"
+              element={<RequirePerm modulo="cargos" accion="read"><CargosList /></RequirePerm>}
+            />
           </Route>
           <Route
             path="perfil"
             element={<RequirePerm modulo="feders" accion="read"><PerfilPage /></RequirePerm>}
-          />
-          <Route
-            path="cargos"
-            element={<RequirePerm modulo="cargos" accion="read"><CargosList /></RequirePerm>}
           />
 
           {/* LISTA de tareas */}

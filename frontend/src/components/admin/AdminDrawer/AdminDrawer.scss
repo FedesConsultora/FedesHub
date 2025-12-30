@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../../styles/variables' as v;
 
 /* Overlay + panel - basado en FederProfileDrawer */
@@ -181,7 +182,7 @@
             gap: 6px;
 
             &:hover {
-                background: lighten(v.$fh-accent, 5%);
+                background: color.adjust(v.$fh-accent, $lightness: 5%);
             }
         }
     }
@@ -403,7 +404,7 @@
                 color: #fff;
 
                 &:hover {
-                    background: lighten(v.$fh-accent, 5%);
+                    background: color.adjust(v.$fh-accent, $lightness: 5%);
                 }
             }
         }

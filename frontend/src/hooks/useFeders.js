@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { federsApi } from '../api/feders'
 
-const DEFAULT_PARAMS = { limit: 50, offset: 0, q: '', celula_id: '', estado_id: '', is_activo: '' }
+const DEFAULT_PARAMS = { limit: 50, offset: 0, q: '', celula_id: '', estado_id: '', is_activo: 'true' }
 
 export default function useFeders(initial = {}) {
   const [params, setParams] = useState({ ...DEFAULT_PARAMS, ...initial })

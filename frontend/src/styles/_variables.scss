@@ -5,11 +5,15 @@ $font-mono: fonts.$font-mono;
 
 /* Paleta / tokens */
 $fh-primary: #44718D;
+$fh-primary-rgb: 68, 113, 141;
+$fh-secondary: #4dd0e1;
+$fh-secondary-rgb: 77, 208, 225;
 $fh-bg: #0f1720;
 $fh-card: #0a0e13cf;
 $fh-text: #e8eef6;
 $fh-muted: #a6b3c3;
 $fh-accent: #4dd0e1;
+$fh-danger: #ff5252;
 $border: #0a0e13cf;
 $radius-2xl: 18px;
-$shadow-soft: 0 10px 30px rgba(0,0,0,.25);
+$shadow-soft: 0 10px 30px rgba(0, 0, 0, .25);

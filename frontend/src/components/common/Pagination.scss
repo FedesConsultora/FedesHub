@@ -1,14 +1,34 @@
+@use "sass:color";
 @use '../../styles/variables' as v;
 
-.Pagination{
-  display:flex; gap:12px; align-items:center; justify-content:center; margin:12px 0;
+.Pagination {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0;
   margin-top: 2rem;
 
-  button{
-    border-radius:12px; padding:8px 12px; border:1px solid rgba(255,255,255,.12);
-    background: lighten(v.$fh-card, 4%); color: v.$fh-text; font-weight:700;
-    &:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none }
-    &:not(:disabled):hover{ background: lighten(v.$fh-card, 8%) }
+  button {
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: color.adjust(v.$fh-card, $lightness: 4%);
+    color: v.$fh-text;
+    font-weight: 700;
+
+    &:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none
+    }
+
+    &:not(:disabled):hover {
+      background: color.adjust(v.$fh-card, $lightness: 8%)
+    }
   }
-  span{ color: v.$fh-muted; }
+
+  span {
+    color: v.$fh-muted;
+  }
 }

@@ -8,6 +8,8 @@ import {
   listFederCargos, createAssignment, updateAssignment, deleteAssignment
 } from '../repositories/federCargo.repo.js';
 
+import { listCargosWithPeople } from '../repositories/cargo.repo.js';
+
 // ========== Catálogos ==========
 export const svcListAmbitos = () => listAmbitos();
 
@@ -17,6 +19,8 @@ export const svcListCargos = async (q) => {
   const total = await countCargos(q);
   return { total, rows };
 };
+
+export const svcListCargosWithPeople = () => listCargosWithPeople();
 
 export const svcGetCargo = async (id) => {
   const c = await getCargoById(id);

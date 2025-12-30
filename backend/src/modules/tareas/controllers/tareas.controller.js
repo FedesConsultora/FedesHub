@@ -44,7 +44,7 @@ function buildBaseUrl(req) {
 async function federIdsToDestinos(federIds = [], req) {
   const uniq = Array.from(new Set(federIds.map(Number).filter(Boolean)));
   if (!uniq.length) return [];
-  const feders = await models.Feder.findAll({ where: { id: uniq }, attributes: ['id', 'user_id'] });
+  const feders = await models.Feder.findAll({ where: { id: uniq, is_activo: true }, attributes: ['id', 'user_id'] });
   return feders
     .map(f => ({ user_id: f.user_id, feder_id: f.id }))
     .filter(d => d.user_id && d.user_id !== req.user?.id);

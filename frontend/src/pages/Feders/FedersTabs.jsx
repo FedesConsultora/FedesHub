@@ -27,7 +27,7 @@ export default function FedersTabs() {
             <FiLayers /> Células
           </NavLink>
         )}
-        {canSeeCargos && <NavLink to="/cargos" className="tab"><FiBriefcase /> Cargos</NavLink>}
+        {canSeeCargos && <NavLink to="/feders/cargos" className="tab"><FiBriefcase /> Cargos</NavLink>}
       </header>
       <div className="tabBody"><Outlet /></div>
     </section>

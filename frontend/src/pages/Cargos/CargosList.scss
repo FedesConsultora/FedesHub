@@ -1,0 +1,36 @@
+@use '../../styles/variables' as v;
+
+.fhCargosPage {
+    padding: 1.5rem 0;
+
+    .pageHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+
+        .title {
+            h2 {
+                margin: 0;
+                font-weight: 900;
+                letter-spacing: 0.2px;
+            }
+
+            p {
+                margin: 4px 0 0;
+                color: v.$fh-muted;
+                font-size: 0.95rem;
+            }
+        }
+    }
+
+    .error {
+        color: v.$fh-danger;
+        padding: 1rem;
+    }
+
+    .loading {
+        color: v.$fh-muted;
+        padding: 1rem;
+    }
+}

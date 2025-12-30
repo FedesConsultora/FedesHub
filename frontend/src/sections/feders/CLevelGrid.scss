@@ -1,7 +1,9 @@
 @use '../../styles/variables' as v;
 
 .fhCLevel{
-  h3{ margin:14px 0 10px }
+  h3{ margin:14px 0 10px;
+    margin-top: 1.5rem; 
+  }
   .grid{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
   .card{
     background: v.$fh-card; border:1px solid rgba(255,255,255,.08);

@@ -328,6 +328,7 @@ export async function listMiembros(canal_id, t) {
       // Siempre traigo el user y SU feder (por user_id) → garantiza nombre y apellido
       {
         model: m.User, as: 'user', attributes: ['id', 'email'],
+        where: { is_activo: true },
         include: [
           { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'], required: false }
         ]

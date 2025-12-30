@@ -348,7 +348,7 @@ export default function HeaderPopover({
     setShowAddMemberModal(true)
     setLoadingUsers(true)
     try {
-      const response = await adminListUsers('')
+      const response = await adminListUsers({ q: '', is_activo: true })
       const users = response?.data || []
       // Filtrar usuarios que ya son miembros
       const memberIds = new Set(members.map(m => Number(m.user_id)))

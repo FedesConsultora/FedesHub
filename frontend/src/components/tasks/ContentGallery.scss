@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 
 .content-gallery {
@@ -136,7 +137,7 @@
 
                 .progress-bar {
                     height: 100%;
-                    background: linear-gradient(90deg, $fh-accent, lighten($fh-accent, 15%));
+                    background: linear-gradient(90deg, $fh-accent, color.adjust($fh-accent, $lightness: 15%));
                     border-radius: 4px;
                     transition: width 0.3s ease;
 
@@ -223,7 +224,7 @@
             bottom: 0.45rem;
 
             &:hover:not(:disabled) {
-                background: lighten($fh-accent, 8%);
+                background: color.adjust($fh-accent, $lightness: 8%);
                 transform: scale(1.05);
             }
 

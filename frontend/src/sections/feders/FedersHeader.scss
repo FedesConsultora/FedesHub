@@ -1,24 +1,49 @@
+@use "sass:color";
 @use '../../styles/variables' as v;
 
-.fhFedersHeader{
-  display:flex; align-items:center; justify-content:space-between; margin:8px 0 14px;
+.fhFedersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 14px;
 
-  .title h2{ margin:0; font-weight:900; letter-spacing:.2px }
+  .title {
+    padding: 0;
+  }
 
-  .filters{
-    display:flex; gap:12px; align-items:center;
-    .ctl{
-      display:flex; align-items:center; gap:8px;
-      span{ opacity:.8; }
-      select{
-        border-radius:12px; padding:8px 12px; outline:none;
-        border:1px solid rgba(255,255,255,.12);
-        background: v.$fh-card; color: v.$fh-text;
+  .title h2 {
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: .2px
+  }
+
+  .filters {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    .ctl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      span {
+        opacity: .8;
+      }
+
+      select {
+        border-radius: 12px;
+        padding: 8px 12px;
+        outline: none;
+        border: 1px solid rgba(255, 255, 255, .12);
+        background: v.$fh-card;
+        color: v.$fh-text;
         transition: border-color .18s, box-shadow .18s, background .18s, filter .18s;
-        &:focus{
-          border-color: rgba(v.$fh-primary,.85);
-          box-shadow: 0 0 0 2px rgba(v.$fh-primary,.28);
-          background: mix(v.$fh-card, v.$fh-bg, 50%);
+
+        &:focus {
+          border-color: rgba(v.$fh-primary, .85);
+          box-shadow: 0 0 0 2px rgba(v.$fh-primary, .28);
+          background: color.mix(v.$fh-card, v.$fh-bg, 50%);
         }
       }
     }

@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as v;
 
 .fhCelulas {
@@ -6,7 +7,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
-    margin-top: 16px;
+    margin-top: 1.5rem;
 
     h3 {
       margin: 0;
@@ -83,7 +84,7 @@
     font-size: .8em;
     text-transform: capitalize;
     border: 1px solid rgba(255, 255, 255, .12);
-    background: lighten(v.$fh-card, 4%);
+    background: color.adjust(v.$fh-card, $lightness: 4%);
 
     &.activa {
       color: #a3ffcf;

@@ -1,65 +1,109 @@
+@use "sass:meta";
+@use "sass:color";
 @use '../../styles/variables' as *;
 
 /* Fallbacks suaves */
-$fh-primary: if(global-variable-exists(fh-primary), $fh-primary, #44718D);
-$fh-text:    if(global-variable-exists(fh-text),    $fh-text,    #e8eef6);
-$fh-muted:   if(global-variable-exists(fh-muted),   $fh-muted,   #a6b3c3);
+$fh-primary: if(meta.global-variable-exists(fh-primary), $fh-primary, #44718D);
+$fh-text: if(meta.global-variable-exists(fh-text), $fh-text, #e8eef6);
+$fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a6b3c3);
 
-.catalogos-page{
-  display:grid;
-  gap:16px;
+.catalogos-page {
+  display: grid;
+  gap: 16px;
 
   /* Tarjeta genérica para este grid */
-  .catalog-card{
-    padding:12px;
+  .catalog-card {
+    padding: 12px;
 
-    .cardHead{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:6px 4px 10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      h3{ margin:0; font-size:1.05rem; }
-      .meta{ color:$fh-muted; font-size:.86rem; }
+    .cardHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 4px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+
+      h3 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .meta {
+        color: $fh-muted;
+        font-size: .86rem;
+      }
     }
 
     /* Listado responsive “sin bullets” */
-    .catalog-list{
-      list-style:none; margin:0; padding:12px 0 0;
-      display:grid; gap:8px;
+    .catalog-list {
+      list-style: none;
+      margin: 0;
+      padding: 12px 0 0;
+      display: grid;
+      gap: 8px;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 
       /* Variante con grid más ancho (role types) */
-      &.wide{ grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+      &.wide {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
     }
 
     /* Chip sobrio y consistente con Admin.scss */
-    .catalog-chip{
-      display:flex; align-items:center; gap:.55rem; min-width:0;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.04);
-      border-radius:12px; padding:.5rem .66rem; 
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .catalog-chip {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .04);
+      border-radius: 12px;
+      padding: .5rem .66rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       transition: background .16s ease, border-color .16s ease, transform .06s ease;
 
-      .code{
-        display:inline-block; padding:.14rem .44rem; border-radius:999px; font-weight:800;
-        background: rgba($fh-primary,.18);
-        border:1px solid rgba($fh-primary,.3);
-        color:$fh-text;
+      .code {
+        display: inline-block;
+        padding: .14rem .44rem;
+        border-radius: 999px;
+        font-weight: 800;
+        background: rgba($fh-primary, .18);
+        border: 1px solid rgba($fh-primary, .3);
+        color: $fh-text;
       }
-      .name{ opacity:.95; overflow:hidden; text-overflow:ellipsis; }
 
-      &:hover{ background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
-      &:active{ transform: translateY(1px); }
+      .name {
+        opacity: .95;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, .07);
+        border-color: rgba(255, 255, 255, .18);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
     }
 
-    .hint{
-      margin-top:10px; font-size:.88rem; color:lighten($fh-muted, 8%);
+    .hint {
+      margin-top: 10px;
+      font-size: .88rem;
+      color: color.adjust($fh-muted, $lightness: 8%);
     }
   }
 }
 
 /* Densidad en móviles */
-@media (max-width: 520px){
-  .catalogos-page .catalog-card{ padding:10px; }
-  .catalogos-page .catalog-card .cardHead{ padding:4px 2px 8px }
+@media (max-width: 520px) {
+  .catalogos-page .catalog-card {
+    padding: 10px;
+  }
+
+  .catalogos-page .catalog-card .cardHead {
+    padding: 4px 2px 8px
+  }
 }

@@ -28,11 +28,11 @@ export const getUserRoles = async (userId) => {
     FROM "UserRol" ur
     JOIN "Rol" r ON r.id = ur.rol_id
     WHERE ur.user_id = :uid
-  `, { type: QueryTypes.SELECT, replacements: { uid: userId }});
+  `, { type: QueryTypes.SELECT, replacements: { uid: userId } });
 };
 
 export const assignRoles = async (userId, rolIds) => {
-  await models.UserRol.destroy({ where: { user_id: userId }});
+  await models.UserRol.destroy({ where: { user_id: userId } });
   const rows = rolIds.map(rol_id => ({ user_id: userId, rol_id }));
   if (rows.length) await models.UserRol.bulkCreate(rows, { ignoreDuplicates: true });
   return getUserRoles(userId);
@@ -48,12 +48,28 @@ export const getPermisosByUserId = async (userId) => {
     JOIN "Accion" ac ON ac.id = p.accion_id
     WHERE ur.user_id = :uid
     GROUP BY md.codigo, ac.codigo
-  `, { type: QueryTypes.SELECT, replacements: { uid: userId }});
+  `, { type: QueryTypes.SELECT, replacements: { uid: userId } });
   return rows.map(r => `${r.modulo}.${r.accion}`);
 };
 
 // listado admin (con roles)
-export const listUsersWithRoles = async ({ limit = 50, offset = 0 }) => {
+export const listUsersWithRoles = async ({ limit = 50, offset = 0, q, is_activo } = {}) => {
+  const repl = { limit, offset };
+  const where = [];
+
+  if (q) {
+    where.push(`u.email ILIKE :q`);
+    repl.q = `%${q}%`;
+  }
+
+  if (is_activo !== undefined) {
+    const activeBool = (is_activo === true || is_activo === 'true' || is_activo === 1 || is_activo === '1');
+    where.push(`u.is_activo = :is_activo`);
+    repl.is_activo = activeBool;
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
   const rows = await sequelize.query(`
     SELECT
       u.id, u.email, u.is_activo,
@@ -64,9 +80,10 @@ export const listUsersWithRoles = async ({ limit = 50, offset = 0 }) => {
     FROM "User" u
     LEFT JOIN "UserRol" ur ON ur.user_id = u.id
     LEFT JOIN "Rol" r ON r.id = ur.rol_id
+    ${whereSql}
     GROUP BY u.id
     ORDER BY u.id
     LIMIT :limit OFFSET :offset
-  `, { type: QueryTypes.SELECT, replacements: { limit, offset }});
+  `, { type: QueryTypes.SELECT, replacements: repl });
   return rows;
 };

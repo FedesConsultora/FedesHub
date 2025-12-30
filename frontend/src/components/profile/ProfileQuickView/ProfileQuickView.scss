@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../../styles/variables' as *;
 
 .pfQuickView {
@@ -103,7 +104,7 @@
                 box-shadow: 0 4px 15px rgba(68, 113, 141, 0.3);
 
                 &:hover {
-                    background: lighten($fh-primary, 5%);
+                    background: color.adjust($fh-primary, $lightness: 5%);
                     box-shadow: 0 6px 20px rgba(68, 113, 141, 0.45);
                     transform: translateY(-2px);
                 }

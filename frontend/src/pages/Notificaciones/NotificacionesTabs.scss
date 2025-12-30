@@ -1,20 +1,38 @@
-/* src/pages/Notificaciones/NotificacionesTabs.scss */
+@use "sass:color";
 @use '../../styles/variables' as v;
 
-.fhNotifTabs{
-  .tabsBar{
-    display:flex; gap:8px; align-items:center; margin-bottom:10px;
+.fhNotifTabs {
+  .tabsBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
   }
-  .tab{
-    display:inline-flex; gap:8px; align-items:center;
-    padding:6px 12px; border-radius:999px;
-    background: lighten(v.$fh-card, 3%); color: v.$fh-text; text-decoration:none;
-    border:1px solid rgba(255,255,255,.08);
-    svg{ width:16px; height:16px; }
-    &:hover{ background: lighten(v.$fh-card, 6%) }
+
+  .tab {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: color.adjust(v.$fh-card, $lightness: 3%);
+    color: v.$fh-text;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, .08);
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      background: color.adjust(v.$fh-card, $lightness: 6%)
+    }
   }
-  a.tab[aria-current="page"]{
+
+  a.tab[aria-current="page"] {
     background: rgba(v.$fh-primary, .18);
-    box-shadow: v.$shadow-soft; font-weight:600;
+    box-shadow: v.$shadow-soft;
+    font-weight: 600;
   }
 }

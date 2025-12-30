@@ -8,8 +8,8 @@ const models = await initModels();
 // === Catálogo de Ámbitos ===
 export const listAmbitos = () =>
   models.CargoAmbito.findAll({
-    attributes: ['id','codigo','nombre','descripcion'],
-    order: [['codigo','ASC']]
+    attributes: ['id', 'codigo', 'nombre', 'descripcion'],
+    order: [['codigo', 'ASC']]
   });
 
 // === CRUD de cargos ===
@@ -53,7 +53,7 @@ export const getCargoById = async (id) => {
     JOIN "CargoAmbito" a ON a.id = c.ambito_id
     WHERE c.id = :id
     LIMIT 1
-  `, { type: QueryTypes.SELECT, replacements: { id }});
+  `, { type: QueryTypes.SELECT, replacements: { id } });
   return rows[0] || null;
 };
 
@@ -85,4 +85,36 @@ export const hasFederCargoUsage = async (cargo_id) =>
 export const deleteCargo = async (id) => {
   await models.Cargo.destroy({ where: { id } });
   return { ok: true };
+};
+
+// === Vista de Cargos con Personas (Overview) ===
+export const listCargosWithPeople = async () => {
+  const sql = `
+    SELECT 
+      c.id, c.nombre, c.descripcion, c.ambito_id, 
+      a.nombre AS ambito_nombre, a.codigo AS ambito_codigo,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', f.id,
+            'user_id', f.user_id,
+            'nombre', f.nombre,
+            'apellido', f.apellido,
+            'avatar_url', f.avatar_url
+          ) ORDER BY f.apellido ASC, f.nombre ASC
+        ) FILTER (WHERE f.id IS NOT NULL AND f.is_activo = true),
+        '[]'::json
+      ) AS people
+    FROM "Cargo" c
+    JOIN "CargoAmbito" a ON a.id = c.ambito_id
+    LEFT JOIN "FederCargo" fc ON fc.cargo_id = c.id 
+      AND fc.es_principal = true 
+      AND (fc.hasta IS NULL OR fc.hasta > CURRENT_DATE)
+    LEFT JOIN "Feder" f ON f.id = fc.feder_id
+    WHERE c.is_activo = true
+    GROUP BY c.id, a.id
+    ORDER BY a.codigo ASC, c.nombre ASC
+  `;
+
+  return sequelize.query(sql, { type: QueryTypes.SELECT });
 };

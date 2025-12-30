@@ -141,7 +141,10 @@ export const changePassword = async (userId, { old_password, new_password }) => 
 
 // ===== Admin: helpers & catálogos =====
 export const adminListRoles = () => listAllRoles();
-export const adminListUsers = (q) => listUsersWithRoles(q);
+export const adminListUsers = (q) => {
+  if (typeof q === 'string') return listUsersWithRoles({ q });
+  return listUsersWithRoles(q);
+};
 export const adminAssignUserRoles = (userId, roles) => assignRoles(userId, roles);
 export const adminSetUserActive = (userId, is_activo) => setUserActive(userId, is_activo);
 

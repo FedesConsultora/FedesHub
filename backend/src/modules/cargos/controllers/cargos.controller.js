@@ -6,7 +6,8 @@ import {
 
 import {
   svcListAmbitos, svcListCargos, svcGetCargo, svcCreateCargo, svcUpdateCargo, svcSetCargoActive, svcDeleteCargo,
-  svcListFederCargos, svcCreateAssignment, svcUpdateAssignment, svcDeleteAssignment
+  svcListFederCargos, svcCreateAssignment, svcUpdateAssignment, svcDeleteAssignment,
+  svcListCargosWithPeople
 } from '../services/cargos.service.js';
 
 export const health = (_req, res) => res.json({ module: 'cargos', ok: true });
@@ -22,6 +23,10 @@ export const listCargos = async (req, res, next) => {
     const q = listCargosQuerySchema.parse(req.query);
     res.json(await svcListCargos(q));
   } catch (e) { next(e); }
+};
+
+export const listCargosWithPeopleCtrl = async (_req, res, next) => {
+  try { res.json(await svcListCargosWithPeople()); } catch (e) { next(e); }
 };
 
 export const getCargo = async (req, res, next) => {

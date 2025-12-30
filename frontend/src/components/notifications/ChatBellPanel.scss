@@ -1,53 +1,134 @@
+@use "sass:color";
 @use '../../styles/variables' as v;
 
-.chatBellPanel{
-  width:380px; max-height:70vh; overflow:auto;
+.chatBellPanel {
+  width: 380px;
+  max-height: 70vh;
+  overflow: auto;
 
-  .tabs{
-    display:flex; align-items:center; gap:6px; padding:8px 8px 0;
-    .tab{
-      flex:1 1 auto; border:none; background:transparent; color:v.$fh-text; cursor:pointer;
-      padding:6px 8px; border-radius:10px; position:relative; font-weight:700;
-      &.active{ background: rgba(v.$fh-primary,.18); }
-      .dot{
-        position:absolute; right:8px; top:8px; width:7px; height:7px; border-radius:50%;
-        background:#ff5151;
+  .tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 0;
+
+    .tab {
+      flex: 1 1 auto;
+      border: none;
+      background: transparent;
+      color: v.$fh-text;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 10px;
+      position: relative;
+      font-weight: 700;
+
+      &.active {
+        background: rgba(v.$fh-primary, .18);
+      }
+
+      .dot {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ff5151;
         pointer-events: none;
       }
     }
-    .seeAll{
-      margin-left:auto; display:inline-flex; gap:6px; align-items:center;
-      border-radius:10px; padding:6px 10px; cursor:pointer;
-      background: rgba(v.$fh-primary,.18); color: v.$fh-text; border:1px solid rgba(255,255,255,.1);
-      &:hover{ filter: brightness(1.07) }
+
+    .seeAll {
+      margin-left: auto;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      background: rgba(v.$fh-primary, .18);
+      color: v.$fh-text;
+      border: 1px solid rgba(255, 255, 255, .1);
+
+      &:hover {
+        filter: brightness(1.07)
+      }
     }
   }
 
-  .list{
-    display:flex; flex-direction:column; gap:8px; padding:8px;
-    .row{
-      display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
-      background: lighten(v.$fh-card, 2%); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:8px 10px;
-      text-align:left; color:v.$fh-text; cursor:pointer;
-      &:hover{ background: rgba(255,255,255,.04) }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
 
-      .avatar{
-        width:36px; height:36px; border-radius:50%; display:grid; place-items:center; position:relative;
-        background:#1b2434; border:1px solid rgba(255,255,255,.06); font-weight:800;
-        .dot{
-          position:absolute; right:-2px; top:-2px; width:9px; height:9px; border-radius:50%;
-          background:#ff5151; border:2px solid #0b1118;
-          &.mention{
-            background:#ffc14d; /* distinto para mención */
-            box-shadow: 0 0 0 2px rgba(255,193,77,.35);
+    .row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: color.adjust(v.$fh-card, $lightness: 2%);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 14px;
+      padding: 8px 10px;
+      text-align: left;
+      color: v.$fh-text;
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, .04)
+      }
+
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        position: relative;
+        background: #1b2434;
+        border: 1px solid rgba(255, 255, 255, .06);
+        font-weight: 800;
+
+        .dot {
+          position: absolute;
+          right: -2px;
+          top: -2px;
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          background: #ff5151;
+          border: 2px solid #0b1118;
+
+          &.mention {
+            background: #ffc14d;
+            /* distinto para mención */
+            box-shadow: 0 0 0 2px rgba(255, 193, 77, .35);
           }
+
           pointer-events: none;
         }
       }
-      .meta{ display:flex; flex-direction:column; }
-      .name{ font-weight:700; }
-      .sub{ color:v.$fh-muted; font-size:.86rem; }
-      .ago{ color:v.$fh-muted; font-size:.86rem; }
+
+      .meta {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .name {
+        font-weight: 700;
+      }
+
+      .sub {
+        color: v.$fh-muted;
+        font-size: .86rem;
+      }
+
+      .ago {
+        color: v.$fh-muted;
+        font-size: .86rem;
+      }
     }
   }
 }

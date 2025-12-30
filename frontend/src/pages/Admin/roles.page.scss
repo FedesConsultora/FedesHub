@@ -1,82 +1,129 @@
+@use "sass:meta";
+@use "sass:color";
 @use '../../styles/variables' as *;
 
 /* ====== Fallbacks seguros (si algún token no existe) ====== */
-$fh-primary:  if(global-variable-exists(fh-primary),  $fh-primary,  #44718D);
-$fh-accent:   if(global-variable-exists(fh-accent),   $fh-accent,   #4dd0e1);
-$fh-bg:       if(global-variable-exists(fh-bg),       $fh-bg,       #0f1720);
-$fh-card:     if(global-variable-exists(fh-card),     $fh-card,     #121a23);
-$fh-text:     if(global-variable-exists(fh-text),     $fh-text,     #e8eef6);
-$fh-muted:    if(global-variable-exists(fh-muted),    $fh-muted,    #a6b3c3);
-$radius-2xl:  if(global-variable-exists(radius-2xl),  $radius-2xl,  18px);
-$shadow-soft: if(global-variable-exists(shadow-soft), $shadow-soft, 0 10px 30px rgba(0,0,0,.25));
+$fh-primary: if(meta.global-variable-exists(fh-primary), $fh-primary, #44718D);
+$fh-accent: if(meta.global-variable-exists(fh-accent), $fh-accent, #4dd0e1);
+$fh-bg: if(meta.global-variable-exists(fh-bg), $fh-bg, #0f1720);
+$fh-card: if(meta.global-variable-exists(fh-card), $fh-card, #121a23);
+$fh-text: if(meta.global-variable-exists(fh-text), $fh-text, #e8eef6);
+$fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a6b3c3);
+$radius-2xl: if(meta.global-variable-exists(radius-2xl), $radius-2xl, 18px);
+$shadow-soft: if(meta.global-variable-exists(shadow-soft), $shadow-soft, 0 10px 30px rgba(0, 0, 0, .25));
 
 /* ====== Página de Roles ====== */
-.roles-page{
-  display:flex; flex-direction:column; min-height:60dvh;
+.roles-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 60dvh;
 
   /* Toolbar solo de acciones, pegada y sobria */
-  .toolbar.only-actions{
-    position: sticky; top: 64px; z-index: 5;
-    display:flex; justify-content:flex-start; gap:10px;
-    padding:10px;
-    background: linear-gradient(180deg, rgba($fh-card,.96), rgba($fh-card,.92));
-    border:1px solid rgba(255,255,255,.06);
-    border-radius:14px; margin-bottom:12px;
+  .toolbar.only-actions {
+    position: sticky;
+    top: 64px;
+    z-index: 5;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba($fh-card, .96), rgba($fh-card, .92));
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 14px;
+    margin-bottom: 12px;
     backdrop-filter: blur(8px);
     box-shadow: $shadow-soft;
 
-    button{ height:42px; padding:.6rem .9rem }
+    button {
+      height: 42px;
+      padding: .6rem .9rem
+    }
   }
 
-  .tableWrap{
-    border-radius:14px; background: rgba(255,255,255,.02);
-    border:1px solid rgba(255,255,255,.06); padding:6px; min-height:260px;
-    .loading{ margin:auto; padding:16px; color:$fh-muted }
+  .tableWrap {
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .02);
+    border: 1px solid rgba(255, 255, 255, .06);
+    padding: 6px;
+    min-height: 260px;
+
+    .loading {
+      margin: auto;
+      padding: 16px;
+      color: $fh-muted
+    }
 
     /* Acciones compactas y alineadas */
-    td:last-child{ width:1%; white-space:nowrap }
-    .row-actions{ display:flex; gap:8px; }
+    td:last-child {
+      width: 1%;
+      white-space: nowrap
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+    }
   }
 }
 
 /* ====== Estilos del Modal de Roles ======
    Mismos inputs/foco que el login/cargos para coherencia visual */
-.roles-modal{
-  > * + *{ margin-top:10px } /* separación entre filas */
+.roles-modal {
+  >*+* {
+    margin-top: 10px
+  }
 
-  input{
-    width:100%; min-width:0; height:42px;
-    border-radius:12px; padding:.65rem .75rem;
-    background:#0f141b; color:$fh-text;
-    border:1px solid rgba(255,255,255,.12);
+  /* separación entre filas */
+
+  input {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    border-radius: 12px;
+    padding: .65rem .75rem;
+    background: #0f141b;
+    color: $fh-text;
+    border: 1px solid rgba(255, 255, 255, .12);
     transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-    &::placeholder{ color: rgba(255,255,255,.45) }
-    &:focus{
+
+    &::placeholder {
+      color: rgba(255, 255, 255, .45)
+    }
+
+    &:focus {
       border-color: $fh-primary;
-      background:#111823;
-      box-shadow: 0 0 0 2px rgba($fh-primary,.3);
+      background: #111823;
+      box-shadow: 0 0 0 2px rgba($fh-primary, .3);
       outline: none;
     }
   }
 
-  .hint{ font-size:12px; color: lighten($fh-muted, 8%) }
-  .error{
-    margin-top:8px; padding:10px; border:1px solid #5a2d2d;
-    background:#3a1f1f; border-radius:12px; color:#ffb4b4;
+  .hint {
+    font-size: 12px;
+    color: color.adjust($fh-muted, $lightness: 8%)
+  }
+
+  .error {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #5a2d2d;
+    background: #3a1f1f;
+    border-radius: 12px;
+    color: #ffb4b4;
   }
 }
 
 /* ====== pequeños detalles ====== */
-.roles-page .toolbar.only-actions:focus-within{
+.roles-page .toolbar.only-actions:focus-within {
   box-shadow:
-    0 0 0 1px rgba(255,255,255,.04) inset,
-    0 10px 24px rgba(0,0,0,.25);
+    0 0 0 1px rgba(255, 255, 255, .04) inset,
+    0 10px 24px rgba(0, 0, 0, .25);
 }
 
 /* Safari/Chrome autofill sin overlay celeste */
 .roles-modal input:-webkit-autofill,
 .roles-modal input:-webkit-autofill:hover,
-.roles-modal input:-webkit-autofill:focus{
+.roles-modal input:-webkit-autofill:focus {
   -webkit-text-fill-color: $fh-text;
   transition: background-color 9999s ease-out 0s;
   box-shadow: 0 0 0px 1000px #0f141b inset !important;

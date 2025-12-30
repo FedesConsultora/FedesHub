@@ -1,34 +1,50 @@
+@use "sass:color";
 @use '../../../styles/variables' as v;
 
-.pfTabs{}
 
-.pfTabsBar{
-  display:grid;
+.pfTabsBar {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, max-content));
-  justify-content:start;
-  align-items:center;
-  gap:8px;
+  justify-content: start;
+  align-items: center;
+  gap: 8px;
   margin: 12px 0 14px;
   margin-top: 2rem;
   margin-left: 0.8rem;
 }
 
-.pfTabsBar .tab{
-  display:inline-flex; gap:8px; align-items:center;
-  padding:6px 12px; border-radius:999px;
-  background: lighten(v.$fh-card, 3%);
-  color:v.$fh-text; border:1px solid rgba(255,255,255,.08);
+.pfTabsBar .tab {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color.adjust(v.$fh-card, $lightness: 3%);
+  color: v.$fh-text;
+  border: 1px solid rgba(255, 255, 255, .08);
   transition: background .18s ease, transform .06s ease;
-  cursor:pointer; white-space:nowrap; min-height:34px;
-  svg{ width:16px; height:16px; opacity:.9 }
-  &:hover{ background: lighten(v.$fh-card, 6%) }
-  &:active{ transform: translateY(1px) }
-}
-.pfTabsBar .tab.active,
-.pfTabsBar .tab[aria-selected="true"]{
-  background: rgba(v.$fh-primary,.18);
-  box-shadow: 0 8px 20px rgba(0,0,0,.25);
-  font-weight:600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 34px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    opacity: .9
+  }
+
+  &:hover {
+    background: color.adjust(v.$fh-card, $lightness: 6%)
+  }
+
+  &:active {
+    transform: translateY(1px)
+  }
 }
 
-.pfTabBody{}
+.pfTabsBar .tab.active,
+.pfTabsBar .tab[aria-selected="true"] {
+  background: rgba(v.$fh-primary, .18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .25);
+  font-weight: 600;
+}

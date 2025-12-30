@@ -1,18 +1,34 @@
+@use "sass:color";
 @use '../../styles/variables' as v;
 
-.fhPerson{
-  display:flex; gap:10px; align-items:center; color: v.$fh-text;
+.fhPerson {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: v.$fh-text;
 
-  img{
-    width:36px; height:36px; border-radius:50%;
-    object-fit:cover;
-    background: lighten(v.$fh-card, 8%);
-    border:1px solid rgba(255,255,255,.06);
-    box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: color.adjust(v.$fh-card, $lightness: 8%);
+    border: 1px solid rgba(255, 255, 255, .06);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
   }
 
-  .nm{ font-weight:700; letter-spacing:.2px }
-  .sub{ font-size:.85em; color: v.$fh-muted }
+  .nm {
+    font-weight: 700;
+    letter-spacing: .2px
+  }
 
-  &.off{ opacity:.6; font-style:italic }
+  .sub {
+    font-size: .85em;
+    color: v.$fh-muted
+  }
+
+  &.off {
+    opacity: .6;
+    font-style: italic
+  }
 }

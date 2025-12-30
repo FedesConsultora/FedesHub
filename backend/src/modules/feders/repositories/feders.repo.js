@@ -318,6 +318,7 @@ export const repoOverview = async ({
       LIMIT 1
     ) AS c ON TRUE
     WHERE f.nombre NOT ILIKE 'Admin%'
+      AND f.is_activo = true
       AND u.email NOT IN ('sistemas@fedes.ai', 'admin@fedes.ai')
     ORDER BY f.apellido ASC, f.nombre ASC
   `, { type: QueryTypes.SELECT });
@@ -442,9 +443,10 @@ export const repoOverview = async ({
                FROM "CelulaRolAsignacion" a
                JOIN "CelulaRolTipo" rt ON rt.id = a.rol_tipo_id
                JOIN "Feder" f ON f.id = a.feder_id
-               WHERE a.celula_id = c.id
-                 AND a.desde <= CURRENT_DATE
-                 AND (a.hasta IS NULL OR a.hasta > CURRENT_DATE)
+                WHERE a.celula_id = c.id
+                  AND f.is_activo = true
+                  AND a.desde <= CURRENT_DATE
+                  AND (a.hasta IS NULL OR a.hasta > CURRENT_DATE)
                GROUP BY
                  f.id, f.nombre, f.apellido, f.avatar_url,
                  a.es_principal, a.desde, a.hasta
