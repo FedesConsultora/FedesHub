@@ -60,7 +60,7 @@ module.exports = {
 
     // ---- Roles: 3 niveles jerárquicos
     const existing = await queryInterface.sequelize.query(
-      `SELECT id FROM "RolTipo"`,
+      `SELECT id, codigo FROM "RolTipo"`,
       { type: Sequelize.QueryTypes.SELECT }
     );
     const rolTipoRows = existing;
