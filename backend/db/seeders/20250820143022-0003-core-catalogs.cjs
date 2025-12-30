@@ -148,42 +148,42 @@ module.exports = {
     ]);
 
     await bulkInsertIfNotExists('SyncDireccionTipo', [
-      { codigo: 'local_a_google', nombre: 'Sólo local → Google', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'google_a_local', nombre: 'Sólo Google → local', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'bidireccional', nombre: 'Bidireccional', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'local_a_google', nombre: 'Sólo local → Google', descripcion: null },
+      { codigo: 'google_a_local', nombre: 'Sólo Google → local', descripcion: null },
+      { codigo: 'bidireccional', nombre: 'Bidireccional', descripcion: null },
     ]);
 
     await bulkInsertIfNotExists('AsistenteTipo', [
-      { codigo: 'obligatorio', nombre: 'Obligatorio', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'opcional', nombre: 'Opcional', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'informativo', nombre: 'Informativo', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'obligatorio', nombre: 'Obligatorio', descripcion: null },
+      { codigo: 'opcional', nombre: 'Opcional', descripcion: null },
+      { codigo: 'informativo', nombre: 'Informativo', descripcion: null },
     ]);
 
     // ===== NOTIFICACIONES (SOLO catálogos que NO dependen de buzon_id)
     await bulkInsertIfNotExists('CanalTipo', [
-      { codigo: 'in_app', nombre: 'In-App', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'email', nombre: 'Email', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'in_app', nombre: 'In-App', descripcion: null },
+      { codigo: 'email', nombre: 'Email', descripcion: null },
     ]);
 
     await bulkInsertIfNotExists('ImportanciaTipo', [
-      { codigo: 'alta', nombre: 'Alta', orden: 1, created_at: now, updated_at: now },
-      { codigo: 'media', nombre: 'Media', orden: 2, created_at: now, updated_at: now },
-      { codigo: 'baja', nombre: 'Baja', orden: 3, created_at: now, updated_at: now },
+      { codigo: 'alta', nombre: 'Alta', orden: 1 },
+      { codigo: 'media', nombre: 'Media', orden: 2 },
+      { codigo: 'baja', nombre: 'Baja', orden: 3 },
     ]);
 
     await bulkInsertIfNotExists('EstadoEnvio', [
-      { codigo: 'queued', nombre: 'En cola', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'sent', nombre: 'Enviado', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'delivered', nombre: 'Entregado', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'opened', nombre: 'Abierto', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'read', nombre: 'Leído', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'failed', nombre: 'Fallido', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'queued', nombre: 'En cola', descripcion: null },
+      { codigo: 'sent', nombre: 'Enviado', descripcion: null },
+      { codigo: 'delivered', nombre: 'Entregado', descripcion: null },
+      { codigo: 'opened', nombre: 'Abierto', descripcion: null },
+      { codigo: 'read', nombre: 'Leído', descripcion: null },
+      { codigo: 'failed', nombre: 'Fallido', descripcion: null },
     ]);
 
     await bulkInsertIfNotExists('ProveedorTipo', [
-      { codigo: 'smtp', nombre: 'SMTP', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'firebase', nombre: 'Firebase', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'sendgrid', nombre: 'SendGrid', descripcion: null, created_at: now, updated_at: now },
+      { codigo: 'smtp', nombre: 'SMTP', descripcion: null },
+      { codigo: 'firebase', nombre: 'Firebase', descripcion: null },
+      { codigo: 'sendgrid', nombre: 'SendGrid', descripcion: null },
     ]);
   },
 
