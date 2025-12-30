@@ -55,6 +55,36 @@ export function useSendMessage() {
   })
 }
 
+export function useEditMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mensaje_id, body_text }) =>
+      chatApi.messages.update(mensaje_id, { body_text }),
+    onSuccess: (_r, { canal_id }) => {
+      if (canal_id) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
+      }
+    }
+  })
+}
+
+export function useDeleteMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mensaje_id }) =>
+      chatApi.messages.delete(mensaje_id),
+    onSuccess: (_r, { canal_id }) => {
+      if (canal_id) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
+      }
+    }
+  })
+}
+
 export function useTyping() {
   return useMutation({
     mutationFn: ({ canal_id, on, ttl_seconds = 5 }) => chatApi.presence.typing(canal_id, on, ttl_seconds)
