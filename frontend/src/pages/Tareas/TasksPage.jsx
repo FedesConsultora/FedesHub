@@ -81,6 +81,7 @@ export default function TasksPage() {
       "sort",
       "solo_mias",
       "include_archivadas",
+      "include_archivadas",
     ];
     keys.forEach((k) => {
       const v = searchParams.get(k);
@@ -121,6 +122,7 @@ export default function TasksPage() {
       "orden_by",
       "sort",
       "solo_mias",
+      "include_archivadas",
       "include_archivadas",
     ];
     urlKeys.forEach((k) => {

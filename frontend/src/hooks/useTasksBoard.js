@@ -32,12 +32,16 @@ export default function useTasksBoard(
     setLoading(true)
     try {
       const { rows: r } = await tareasApi.list(params)
-      tasksRef.current = new Map(r.map(t => [t.id, t]))
-      setRows(r)
+
+      // Filtro frontend: excluir aprobadas y canceladas por defecto (a menos que se filtre explícitamente por estado)
+      const filteredRows = params.estado_id ? r : r.filter(t => t.estado_codigo !== 'aprobada' && t.estado_codigo !== 'cancelada');
+
+      tasksRef.current = new Map(filteredRows.map(t => [t.id, t]))
+      setRows(filteredRows)
 
       // mapear a columnas del kanban (preferir stage/orden guardados por usuario)
       const cols = emptyColumns()
-      r.forEach(t => {
+      filteredRows.forEach(t => {
         const stage = t.kanban_stage || stageFromDue(t.vencimiento)
 
         // Mapear responsables: extraer datos del feder anidado

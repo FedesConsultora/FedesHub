@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState, useContext } from 'react'
 import { FaArrowDown } from 'react-icons/fa'
-import { useSetRead } from '../../../hooks/useChat'
+import { FiEdit2, FiTrash2, FiCheck, FiX } from 'react-icons/fi'
+import { useSetRead, useEditMessage, useDeleteMessage } from '../../../hooks/useChat'
 import ReactionBar from './ReactionBar'
 import MessageAttachments from './MessageAttachments'
 import ReplyPreview from './ReplyPreview'
@@ -160,6 +161,13 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
   const ts = new Date(m.created_at || m.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const { setReplyTo } = useContext(ChatActionCtx)
 
+  // Edit/Delete state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const editMessage = useEditMessage()
+  const deleteMessage = useDeleteMessage()
+
   const memberByUserId = useMemo(() => {
     const map = new Map()
     for (const mm of (members || [])) {
@@ -170,6 +178,14 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
 
   const msgUserId = toNum(m.user_id ?? m.autor?.id ?? null)
   const isMine = (msgUserId != null && my_user_id != null && msgUserId === my_user_id)
+  const isDeleted = !!m.deleted_at
+  const isEdited = !!m.is_edited
+
+  // Check if message is older than 30 minutes (use created_at for the original send time)
+  const messageTime = new Date(m.created_at).getTime()
+  const now = Date.now()
+  const thirtyMinutes = 30 * 60 * 1000
+  const canEditOrDelete = !isNaN(messageTime) && (now - messageTime) < thirtyMinutes
 
   const member = memberByUserId.get(toNum(m.user_id))
   const author = member ? displayName(member) : displayName(m?.autor) || 'usuario'
@@ -200,11 +216,60 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
     setTimeout(() => el.classList.remove('hi-lite'), 1200)
   }
 
+  const handleEdit = () => {
+    setEditText(m.body_text || '')
+    setIsEditing(true)
+  }
+
+  const handleSaveEdit = () => {
+    if (!editText.trim()) return
+    editMessage.mutate(
+      { mensaje_id: m.id, body_text: editText, canal_id }
+    )
+  }
+
+  // Close edit mode when mutation succeeds
+  useEffect(() => {
+    if (editMessage.isSuccess && isEditing) {
+      setIsEditing(false)
+      setEditText('')
+      editMessage.reset() // Reset mutation state
+    }
+  }, [editMessage.isSuccess, isEditing, editMessage])
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditText('')
+  }
+
+  const handleDelete = () => {
+    deleteMessage.mutate(
+      { mensaje_id: m.id, canal_id },
+      {
+        onSuccess: () => {
+          setShowDeleteConfirm(false)
+        }
+      }
+    )
+  }
+
   const msgTs = new Date(m.created_at || m.updated_at).getTime()
 
   return (
-    <div id={`msg-${m.id}`} className={'bubble' + (isMine ? ' mine' : '')}>
-      <button className="replyIco" title="Responder" onClick={() => setReplyTo(m)}>↩</button>
+    <div id={`msg-${m.id}`} className={'bubble' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '')}>
+      {!isDeleted && <button className="replyIco" title="Responder" onClick={() => setReplyTo(m)}>↩</button>}
+
+      {/* Message actions menu (edit/delete) - only for own messages and within 30 minutes */}
+      {isMine && !isDeleted && !isEditing && canEditOrDelete && (
+        <div className="msgActions">
+          <button className="actionBtn" title="Editar" onClick={handleEdit}>
+            <FiEdit2 />
+          </button>
+          <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
+            <FiTrash2 />
+          </button>
+        </div>
+      )}
 
       <div className="meta">
         <div className="avatarSide" style={{ position: 'relative' }}>
@@ -219,9 +284,10 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
         <div className="author">{author}</div>
         <span className="dot">•</span>
         <div className="fecha">{ts}</div>
+        {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
       </div>
 
-      {m.parent && (
+      {m.parent && !isDeleted && (
         <div onClick={goToParent} style={{ cursor: 'pointer' }}>
           <ReplyPreview
             autor={fullName(m.parent?.autor) || displayName(m.parent?.autor) || 'alguien'}
@@ -230,23 +296,75 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
         </div>
       )}
 
-      <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
-      <MessageAttachments items={m.adjuntos || []} />
+      {/* Deleted message display */}
+      {isDeleted && (
+        <div className="txt deleted">
+          <em>{author} ha eliminado este mensaje</em>
+        </div>
+      )}
+
+      {/* Edit mode */}
+      {!isDeleted && isEditing && (
+        <div className="editMode">
+          <textarea
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            rows={3}
+            autoFocus
+          />
+          <div className="editActions">
+            <button className="saveBtn" onClick={handleSaveEdit} disabled={!editText.trim() || editMessage.isPending}>
+              <FiCheck /> Guardar
+            </button>
+            <button className="cancelBtn" onClick={handleCancelEdit}>
+              <FiX /> Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Normal message display */}
+      {!isDeleted && !isEditing && (
+        <>
+          <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
+          <MessageAttachments items={m.adjuntos || []} />
+        </>
+      )}
 
       {/* Footer: reacciones + visto, alineados derecha */}
-      <div className="msgFooter">
-        <ReactionBar canal_id={canal_id} mensaje={m} members={members} />
-        {isMine && (
-          <ReadReceiptBadge
-            canal_id={canal_id}
-            msg_id={m.id}
-            msg_ts={msgTs}
-            my_user_id={my_user_id}
-            members={members}
-            align={isMine ? 'right' : 'left'}
-          />
-        )}
-      </div>
+      {!isDeleted && (
+        <div className="msgFooter">
+          <ReactionBar canal_id={canal_id} mensaje={m} members={members} />
+          {isMine && (
+            <ReadReceiptBadge
+              canal_id={canal_id}
+              msg_id={m.id}
+              msg_ts={msgTs}
+              my_user_id={my_user_id}
+              members={members}
+              align={isMine ? 'right' : 'left'}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="deleteConfirmOverlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="deleteConfirmModal" onClick={(e) => e.stopPropagation()}>
+            <h3>¿Eliminar mensaje?</h3>
+            <p>Esta acción no se puede deshacer.</p>
+            <div className="modalActions">
+              <button className="cancelBtn" onClick={() => setShowDeleteConfirm(false)}>
+                Cancelar
+              </button>
+              <button className="deleteBtn" onClick={handleDelete} disabled={deleteMessage.isPending}>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
