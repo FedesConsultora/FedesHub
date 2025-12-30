@@ -22,6 +22,9 @@ services:
       - "4000:4000"
     env_file:
       - ./backend/.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
     depends_on:
       - db
 
@@ -37,6 +40,8 @@ services:
       - "3000:5173"
     environment:
       - VITE_PROXY_TARGET=http://backend:4000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
 
