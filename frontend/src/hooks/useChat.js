@@ -157,18 +157,17 @@ export function useAddMember() {
   })
 }
 
-/* ---- NUEVO: eliminar canal (preparado para cuando el endpoint esté disponible) */
-// export function useDeleteChannel(){
-//   const qc = useQueryClient()
-//   return useMutation({
-//     mutationFn: ({ canal_id }) =>
-//       chatApi.channels.delete(canal_id),
-//     onSuccess: () => {
-//       qc.invalidateQueries({ queryKey: ['chat','channels'] })
-//       qc.invalidateQueries({ queryKey: ['chat','dms'] })
-//     }
-//   })
-// }
+export function useDeleteChannel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ canal_id }) =>
+      chatApi.channels.delete(canal_id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
+    }
+  })
+}
 
 /* ---- Realtime (igual que tenías) */
 export function useChatRealtime() {

@@ -11,8 +11,8 @@ const baseClaims = () => ({
 
 export const newJti = () => crypto.randomUUID();
 
-export const signAccess = ({ userId, email, roles = [], permisos = [], jti }) => jwt.sign(
-  { sub: String(userId), email, roles, perms: permisos, jti, ...baseClaims() },
+export const signAccess = ({ userId, email, jti }) => jwt.sign(
+  { sub: String(userId), email, jti, ...baseClaims() },
   process.env.JWT_ACCESS_SECRET,
   { expiresIn: TOKEN.ACCESS_TTL }
 );

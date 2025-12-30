@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash, FiTrash2, FiUserPlus } from 'react-icons/fi'
+import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash, FiTrash2, FiUserPlus, FiMessageSquare, FiInfo, FiChevronUp } from 'react-icons/fi'
 import { IoRemoveCircleOutline } from "react-icons/io5";
 
 import AttachmentIcon from '../shared/AttachmentIcon'
@@ -12,7 +12,9 @@ import {
   usePatchMemberRole,
   useRemoveMember,
   useAddMember,
+  useDeleteChannel,
 } from '../../../hooks/useChat'
+import { useModal } from '../../modal/ModalProvider'
 import { adminListUsers } from '../../../api/auth'
 import './HeaderPopover.scss'
 import { resolveMediaUrl } from '../../../utils/media'
@@ -94,6 +96,7 @@ export default function HeaderPopover({
   const popRef = useRef(null)
   const fileRef = useRef(null)
   const { user } = useAuthCtx() || {}
+  const modal = useModal()
   const myId = Number(user?.id || 0)
 
   const [tab, setTab] = useState('members')
@@ -103,19 +106,12 @@ export default function HeaderPopover({
 
   // edición inline
   const [edit, setEdit] = useState(false)
-  const [form, setForm] = useState({ nombre: '', slug: '', topic: '', is_privado: false, only_mods_can_post: false })
+  const [form, setForm] = useState({ nombre: '', slug: '', topic: '', descripcion: '', is_privado: false, only_mods_can_post: false })
 
   // avatar (compreso)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState('')
   const previewUrlRef = useRef('')
-
-  // modal de eliminar canal
-  const [showDeleteChannelModal, setShowDeleteChannelModal] = useState(false)
-
-  // modal de eliminar miembro
-  const [showDeleteMemberModal, setShowDeleteMemberModal] = useState(false)
-  const [memberToDelete, setMemberToDelete] = useState(null)
 
   // modal de agregar miembro
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
@@ -129,6 +125,7 @@ export default function HeaderPopover({
   const { mutateAsync: patchRole, isLoading: roleSaving } = usePatchMemberRole()
   const { mutateAsync: removeMember, isLoading: removingMember } = useRemoveMember()
   const { mutateAsync: addMember, isLoading: addingMember } = useAddMember()
+  const { mutateAsync: deleteChannel } = useDeleteChannel()
 
   const isDM = canal?.tipo?.codigo === 'dm'
   const myMember = members.find(m => Number(m.user_id) === myId) || null
@@ -211,6 +208,7 @@ export default function HeaderPopover({
       nombre: canal?.nombre || '',
       slug: canal?.slug || '',
       topic: canal?.topic || '',
+      descripcion: canal?.descripcion || '',
       is_privado: !!canal?.is_privado,
       only_mods_can_post: !!canal?.only_mods_can_post
     })
@@ -305,29 +303,44 @@ export default function HeaderPopover({
     try { await patchRole({ canal_id: canal.id, user_id: m.user_id, rol_codigo: next }) } catch { }
   }
 
-  // abrir modal eliminar miembro
-  const onRemoveMember = (m) => {
+  // modal eliminar miembro
+  const onRemoveMember = async (m) => {
     if (!canTouchUser(m)) return
-    setMemberToDelete(m)
-    setShowDeleteMemberModal(true)
-  }
-
-  // confirmar eliminar miembro
-  const confirmRemoveMember = async () => {
-    if (!memberToDelete) return
-    try {
-      await removeMember({ canal_id: canal.id, user_id: memberToDelete.user_id })
-      setShowDeleteMemberModal(false)
-      setMemberToDelete(null)
-    } catch (e) {
-      console.error('remove member', e)
-      alert('Error al eliminar el miembro')
+    const ok = await modal.confirm({
+      title: 'Eliminar integrante',
+      message: `¿Estás seguro de eliminar a ${displayName(m)} del ${canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}?`,
+      tone: 'danger',
+      okText: 'Eliminar',
+      cancelText: 'Cancelar'
+    })
+    if (ok) {
+      try {
+        await removeMember({ canal_id: canal.id, user_id: m.user_id })
+      } catch (e) {
+        console.error('remove member', e)
+        alert('Error al eliminar el miembro')
+      }
     }
   }
 
   // eliminar canal (modal)
-  const onDeleteChannel = () => {
-    setShowDeleteChannelModal(true)
+  const onDeleteChannel = async () => {
+    const ok = await modal.confirm({
+      title: 'Eliminar canal',
+      message: `¿Estás seguro de eliminar "${title}" de forma permanente? Nota: Esta acción no se puede deshacer.`,
+      tone: 'danger',
+      okText: 'Eliminar',
+      cancelText: 'Cancelar'
+    })
+    if (ok) {
+      try {
+        await deleteChannel({ canal_id: canal.id })
+        onClose?.()
+      } catch (e) {
+        console.error('delete channel', e)
+        alert('Error al eliminar el canal')
+      }
+    }
   }
 
   // agregar miembro (modal)
@@ -369,45 +382,6 @@ export default function HeaderPopover({
       <div className="hdrPop_panel" ref={popRef}>
         {/* Header */}
         <div className="hdrPop_header">
-
-
-          <div className="meta">
-            <div className="actions">
-              {!isDM && canEditSettings && !edit && (
-                <>
-                  <button className="chip ghost" onClick={() => setEdit(true)}><FiEdit2 /> Editar</button>
-                  <button className="chip danger" onClick={onDeleteChannel}><FiTrash2 /> Eliminar {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}</button>
-                </>
-              )}
-
-
-              {edit && (
-                <>
-                  <button className="chip ghost" onClick={() => setEdit(false)}><FiX /> Cancelar</button>
-                  <button className="chip primary" onClick={onSave} disabled={saving || uploading}>
-                    <FiSave />{(saving || uploading) ? ' Guardando…' : ' Guardar'}
-                  </button>
-                </>
-              )}
-              {isDM && (
-                <button className="chip primary" onClick={onCreatedGroupFromDm}><FiPlus /> Crear grupo</button>
-              )}
-              <button className="chip ghost" onClick={onClose} aria-label="Cerrar"><FiX /></button>
-            </div>
-            <div className="title">{title}</div>
-            {!!canal?.topic && !edit && (
-              <div className="row small"><FiTag />{canal.topic}</div>
-            )}
-            {!isDM && !edit && (
-              <div className="row small">
-                <FiLock />{canal?.only_mods_can_post ? 'Sólo owner/admin/mod' : 'Todos pueden postear'}
-              </div>
-            )}
-            {canal?.tipo?.codigo === 'grupo' && !edit && (
-              <div className="row small"><FiLock />{canal?.is_privado ? 'Grupo privado' : 'Grupo público'}</div>
-            )}
-          </div>
-
           <div className="avaWrap">
             <Avatar src={avatarUrl} name={title} size={80} />
             {!isDM && canEditSettings && (
@@ -423,31 +397,98 @@ export default function HeaderPopover({
             )}
             {(uploading) && <span className="uploading">Guardando…</span>}
           </div>
+
+          <div className="meta">
+            {edit ? (
+              <div className="editForm_integrated">
+                <div className="fGroup">
+                  <input
+                    className="title-input"
+                    value={form.nombre}
+                    onChange={e => setForm({ ...form, nombre: e.target.value })}
+                    placeholder="Nombre del canal"
+                  />
+                </div>
+                {canal?.tipo?.codigo === 'canal' && (
+                  <div className="fGroup">
+                    <FiTag className="ico" />
+                    <input
+                      value={form.slug}
+                      onChange={e => setForm({ ...form, slug: e.target.value })}
+                      placeholder="Identificador (slug)"
+                    />
+                  </div>
+                )}
+                <div className="fGroup">
+                  <FiTag className="ico" />
+                  <input
+                    value={form.topic}
+                    onChange={e => setForm({ ...form, topic: e.target.value })}
+                    placeholder="Tema o tagline…"
+                  />
+                </div>
+                <div className="fGroup vertical">
+                  <textarea
+                    value={form.descripcion}
+                    onChange={e => setForm({ ...form, descripcion: e.target.value })}
+                    placeholder="Descripción detallada…"
+                    rows={2}
+                  />
+                </div>
+                <div className="fChecks_integrated">
+                  <label className="check"><input type="checkbox" checked={form.is_privado} onChange={e => setForm({ ...form, is_privado: e.target.checked })} /> <FiLock /> Privado</label>
+                  <label className="check"><input type="checkbox" checked={form.only_mods_can_post} onChange={e => setForm({ ...form, only_mods_can_post: e.target.checked })} /> <FiMessageSquare /> Sólo mods</label>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="title">{title}</div>
+                <div className="meta-chips">
+                  {!!canal?.topic && (
+                    <div className="info-chip"><FiTag /> {canal.topic}</div>
+                  )}
+                  {!!canal?.descripcion && (
+                    <div className="info-chip desc"><FiInfo /> {canal.descripcion}</div>
+                  )}
+                  {!isDM && (
+                    <div className="info-chip">
+                      <FiLock /> {canal?.only_mods_can_post ? 'Sólo owner/admin/mod' : 'Todos pueden postear'}
+                    </div>
+                  )}
+                  {canal?.tipo?.codigo === 'grupo' && (
+                    <div className="info-chip"><FiLock /> {canal?.is_privado ? 'Grupo privado' : 'Grupo público'}</div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="actions">
+            {!isDM && canEditSettings && !edit && (
+              <>
+                <button className="icon-btn ghost" onClick={() => setEdit(true)} title="Editar"><FiEdit2 /></button>
+                <button className="icon-btn danger" onClick={onDeleteChannel} title="Eliminar"><FiTrash2 /></button>
+              </>
+            )}
+
+            {edit && (
+              <>
+                <button className="icon-btn ghost" onClick={() => setEdit(false)} title="Cancelar"><FiX /></button>
+                <button className="icon-btn primary" onClick={onSave} disabled={saving || uploading} title="Guardar">
+                  {(saving || uploading) ? <FiSave className="spin" /> : <FiSave />}
+                </button>
+              </>
+            )}
+            {isDM && (
+              <button className="chip primary" onClick={onCreatedGroupFromDm}><FiPlus /> Crear grupo</button>
+            )}
+            <button className="icon-btn ghost" onClick={onClose} aria-label="Cerrar" title="Cerrar"><FiChevronUp /></button>
+          </div>
         </div>
 
 
         {/* Edición inline */}
-        {!isDM && edit && (
-          <div className="editForm">
-            <label className="fLbl" htmlFor="f_nombre">Nombre</label>
-            <div className="fField"><FiHash className="ico" /><input id="f_nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre visible" /></div>
-
-            {canal?.tipo?.codigo === 'canal' && (
-              <>
-                <label className="fLbl" htmlFor="f_slug">Slug</label>
-                <div className="fField"><FiTag className="ico" /><input id="f_slug" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="general / soporte" /></div>
-              </>
-            )}
-
-            <label className="fLbl" htmlFor="f_topic">Tema</label>
-            <div className="fField"><FiTag className="ico" /><input id="f_topic" value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })} placeholder="Descripción breve…" /></div>
-
-            <div className="fChecks">
-              <label className="check"><input type="checkbox" checked={form.is_privado} onChange={e => setForm({ ...form, is_privado: e.target.checked })} /> <FiLock /> Privado</label>
-              <label className="check"><input type="checkbox" checked={form.only_mods_can_post} onChange={e => setForm({ ...form, only_mods_can_post: e.target.checked })} /> Sólo moderadores pueden postear</label>
-            </div>
-          </div>
-        )}
+        {/* The editForm content was moved into the header's meta section */}
 
         {/* DM: ficha de la otra persona */}
         {isDM && !!otherUser && (
@@ -568,34 +609,6 @@ export default function HeaderPopover({
       </div>
 
       {/* Modal de confirmación para eliminar canal */}
-      {showDeleteChannelModal && (
-        <>
-          <div className="deleteModal_scrim" onClick={() => setShowDeleteChannelModal(false)} />
-          <div className="deleteModal_panel">
-            <div className="deleteModal_header">
-              <FiTrash2 className="deleteModal_icon" />
-              <h3>Eliminar {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}</h3>
-            </div>
-            <div className="deleteModal_body">
-              <p>
-                ¿Estás seguro de eliminar <strong>"{title}"</strong> de forma permanente?
-              </p>
-              <p className="deleteModal_note">
-                <strong>Nota:</strong> Esta acción no se puede deshacer.
-              </p>
-            </div>
-            <div className="deleteModal_actions">
-              <button className="chip danger" onClick={onDeleteChannel}>
-                Eliminar
-              </button>
-              <button className="chip ghost" onClick={() => setShowDeleteChannelModal(false)}>
-                Cancelar
-              </button>
-
-            </div>
-          </div>
-        </>
-      )}
 
       {/* Modal de agregar miembro */}
       {showAddMemberModal && (
@@ -658,31 +671,6 @@ export default function HeaderPopover({
         </>
       )}
 
-      {/* Modal de eliminar miembro */}
-      {showDeleteMemberModal && memberToDelete && (
-        <>
-          <div className="deleteModal_scrim" onClick={() => setShowDeleteMemberModal(false)} />
-          <div className="deleteModal_panel">
-            <div className="deleteModal_header">
-              <FiTrash2 className="deleteModal_icon" />
-              <h3>Eliminar integrante</h3>
-            </div>
-            <div className="deleteModal_body">
-              <p>
-                ¿Estás seguro de eliminar a <strong>{displayName(memberToDelete)}</strong> del {canal?.tipo?.codigo === 'grupo' ? 'grupo' : 'canal'}?
-              </p>
-            </div>
-            <div className="deleteModal_actions">
-              <button className="chip danger" onClick={confirmRemoveMember} disabled={removingMember}>
-                {removingMember ? 'Eliminando...' : 'Eliminar'}
-              </button>
-              <button className="chip ghost" onClick={() => setShowDeleteMemberModal(false)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </>
-      )}
 
 
     </>

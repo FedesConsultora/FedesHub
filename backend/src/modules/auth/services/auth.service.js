@@ -42,15 +42,15 @@ const issueSession = async (res, { user, roles, permisos }) => {
   const atJti = newJti();
   const rtJti = newJti();
 
-  const access = signAccess({ userId: user.id, email: user.email, roles: roles.map(r => r.nombre), permisos, jti: atJti });
+  const access = signAccess({ userId: user.id, email: user.email, jti: atJti });
   const refresh = signRefresh({ userId: user.id, jti: rtJti });
 
   // CSRF doble cookie
   const csrf = crypto.randomBytes(24).toString('base64url');
 
-  res.cookie(COOKIE.ACCESS,  access,  { ...COOKIE_OPTS.base /*, maxAge: 15*60*1000 */ });
+  res.cookie(COOKIE.ACCESS, access, { ...COOKIE_OPTS.base /*, maxAge: 15*60*1000 */ });
   res.cookie(COOKIE.REFRESH, refresh, { ...COOKIE_OPTS.base /*, maxAge: 7*24*60*60*1000 */ });
-  res.cookie(COOKIE.CSRF,    csrf,    { ...COOKIE_OPTS.csrf });
+  res.cookie(COOKIE.CSRF, csrf, { ...COOKIE_OPTS.csrf });
 
   return { access, refresh, csrf };
 };
@@ -100,18 +100,18 @@ export const logoutAll = async (_req, res) => {
       const d = decodeUnsafe(rt);
       await revokeJti({ jti: p.jti, user_id: Number(p.sub), expires_at: new Date((d.exp || 0) * 1000), motivo: 'logout' });
     }
-  } catch {}
+  } catch { }
   try {
     if (at) {
       const p = verifyAccess(at, { ignoreExpiration: true });
       const d = decodeUnsafe(at);
       await revokeJti({ jti: p.jti, user_id: Number(p.sub), expires_at: new Date((d.exp || 0) * 1000), motivo: 'logout' });
     }
-  } catch {}
+  } catch { }
 
-  res.clearCookie(COOKIE.ACCESS,  { ...COOKIE_OPTS.base });
+  res.clearCookie(COOKIE.ACCESS, { ...COOKIE_OPTS.base });
   res.clearCookie(COOKIE.REFRESH, { ...COOKIE_OPTS.base });
-  res.clearCookie(COOKIE.CSRF,    { ...COOKIE_OPTS.csrf });
+  res.clearCookie(COOKIE.CSRF, { ...COOKIE_OPTS.csrf });
   return { ok: true };
 };
 

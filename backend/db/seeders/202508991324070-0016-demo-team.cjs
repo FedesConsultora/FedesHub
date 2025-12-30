@@ -435,6 +435,7 @@ module.exports = {
       const [[ctCelula]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='celula' LIMIT 1`, { transaction: t });
       const [[ctCliente]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='cliente' LIMIT 1`, { transaction: t });
       const [[rtOwner]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='owner'  LIMIT 1`, { transaction: t });
+      const [[rtAdmin]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='admin'  LIMIT 1`, { transaction: t });
       const [[rtMember]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='member' LIMIT 1`, { transaction: t });
 
       if (!ctCanal?.id || !rtOwner?.id || !rtMember?.id) {
@@ -447,7 +448,13 @@ module.exports = {
           `SELECT id FROM "ChatCanal" WHERE slug=:slug LIMIT 1`,
           { transaction: t, replacements: { slug } }
         );
-        if (exists?.id) return exists.id;
+        if (exists?.id) {
+          await qi.sequelize.query(
+            `UPDATE "ChatCanal" SET nombre=:nombre, topic=:topic, updated_at=:now WHERE id=:id`,
+            { transaction: t, replacements: { id: exists.id, nombre, topic, now } }
+          );
+          return exists.id;
+        }
 
         await qi.bulkInsert('ChatCanal', [{
           tipo_id, slug, nombre, topic,
@@ -530,8 +537,8 @@ module.exports = {
 
       // ---- Canales base ----
       const canalesDef = [
-        { slug: 'general', nombre: '#general', tipo_id: ctCanal.id, topic: 'Bienvenidos al chat general de FedesHub', is_privado: false, only_mods_can_post: false },
-        { slug: 'anuncios', nombre: '#anuncios', tipo_id: ctCanal.id, topic: 'Anuncios internos (solo staff publica)', is_privado: false, only_mods_can_post: true },
+        { slug: 'general', nombre: '#Feders', tipo_id: ctCanal.id, topic: 'Bienvenidos al chat general de Feders', is_privado: false, only_mods_can_post: false },
+        { slug: 'anuncios', nombre: '#FedesHub', tipo_id: ctCanal.id, topic: 'Anuncios internos (solo directorio publica)', is_privado: false, only_mods_can_post: true },
       ];
       const canalIds = {};
       for (const c of canalesDef) {
@@ -548,17 +555,6 @@ module.exports = {
         topic: 'Canal de la Célula 2', is_privado: false, only_mods_can_post: false, celula_id: cel2Id
       });
 
-      // Canal para Cliente Demo (si existe)
-      const [[clienteDemo]] = await qi.sequelize.query(
-        `SELECT id FROM "Cliente" WHERE nombre='Cliente Demo' LIMIT 1`, { transaction: t }
-      );
-      if (clienteDemo?.id && ctCliente?.id) {
-        canalIds['cliente-demo'] = await ensureChannel({
-          slug: 'cliente-demo', nombre: '#cliente-demo', tipo_id: ctCliente.id,
-          topic: 'Canal del Cliente Demo', is_privado: false, only_mods_can_post: false, cliente_id: clienteDemo.id
-        });
-      }
-
       // ---- Miembros ----
       // Owner: Sistemas
       for (const slug of Object.keys(canalIds)) {
@@ -570,8 +566,12 @@ module.exports = {
       for (const slug of ['general', 'anuncios']) {
         const cid = canalIds[slug];
         if (!cid) continue;
-        for (const u of audienceUserIds) {
-          await ensureMember(cid, u, rtMember.id);
+        for (const uId of audienceUserIds) {
+          // Si el usuario es NivelA o NivelB, hacerlo admin del canal
+          const person = PEOPLE.find(p => uid[p.email] === uId);
+          const rolInCanal = (person?.nivel === 'NivelA' || person?.nivel === 'NivelB') ? rtAdmin.id : rtMember.id;
+
+          await ensureMember(cid, uId, rolInCanal);
         }
       }
 
@@ -614,15 +614,14 @@ module.exports = {
 
       // ---- Mensajes de bienvenida (pinned) ----
       await ensureWelcomeMessage(canalIds['general'], '👋 ¡Bienvenidos a #general! Usen este canal para discusiones transversales.');
-      await ensureWelcomeMessage(canalIds['anuncios'], '📣 Canal de anuncios internos. Sólo el staff puede publicar aquí.');
+      if (canalIds['anuncios']) {
+        await ensureWelcomeMessage(canalIds['anuncios'], '📣 Canal de anuncios internos. Sólo el staff puede publicar aquí.');
+      }
       if (canalIds['celula-1']) {
         await ensureWelcomeMessage(canalIds['celula-1'], '👥 Bienvenidos a #celula-1. Canal operativo de la célula.');
       }
       if (canalIds['celula-2']) {
         await ensureWelcomeMessage(canalIds['celula-2'], '👥 Bienvenidos a #celula-2. Canal operativo de la célula.');
-      }
-      if (canalIds['cliente-demo']) {
-        await ensureWelcomeMessage(canalIds['cliente-demo'], '🤝 Canal del Cliente Demo. Coordinación, materiales y enlaces.');
       }
 
       // ==================================================================================
