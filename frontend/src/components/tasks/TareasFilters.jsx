@@ -158,6 +158,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
             <FaArchive className="icon" />
             <span>Archivadas</span>
           </button>
+
         </div>
 
         {/* BOTÓN FILTROS AVANZADOS */}
@@ -224,7 +225,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
                   value={v.estado_id ?? ''}
                   onChange={e => upd({ estado_id: e.target.value === '' ? undefined : Number(e.target.value) })}
                 >
-                  <option value="">Cualquier estado</option>
+                  <option value="">Pendientes y en curso</option>
                   {catalog.estados?.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
               </Field>
