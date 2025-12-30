@@ -17,7 +17,7 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial, patchBoostManual, getDriveImage
+  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -29,6 +29,7 @@ router.get('/health', health);
 router.get('/catalog', requireAuth, requirePermission('tareas', 'read'), listCatalogos);
 
 router.get('/compose', requireAuth, requirePermission('tareas', 'read'), getCompose);
+router.get('/metrics', requireAuth, getDashboardMetricsCtrl);
 
 // Papelera
 router.get('/trash', requireAuth, listTrash);

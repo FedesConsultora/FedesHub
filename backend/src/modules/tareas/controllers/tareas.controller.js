@@ -21,6 +21,7 @@ import {
   svcCreateRelacion, svcDeleteRelacion,
   svcSetFavorito, svcSetSeguidor, svcSetEstado, svcSetAprobacion, svcMoveKanban,
   svcGetCompose, svcSetResponsableLeader,
+  svcGetDashboardMetrics,
   svcGetHistorial, svcSetBoostManual
 } from '../services/tareas.service.js';
 
@@ -99,6 +100,12 @@ export const getCompose = async (req, res, next) => {
 // ---- Catálogos
 export const listCatalogos = async (_req, res, next) => {
   try { res.json(await svcListCatalogos(models)); } catch (e) { next(e); }
+};
+
+export const getDashboardMetricsCtrl = async (req, res, next) => {
+  try {
+    res.json(await svcGetDashboardMetrics(req.user));
+  } catch (e) { next(e); }
 };
 
 export const postAdjuntoUpload = async (req, res, next) => {

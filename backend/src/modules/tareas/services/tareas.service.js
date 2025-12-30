@@ -1488,3 +1488,83 @@ export const svcGetHistorial = async (tarea_id, query) => {
   ]);
   return { total, rows };
 };
+
+// ---------- Métricas del Dashboard ----------
+const getDashboardMetrics = async (user) => {
+  const feder_id = user?.feder_id;
+  if (!feder_id) return {};
+
+  const replacements = { fid: feder_id, today: new Date().toISOString().split('T')[0] };
+
+  const sqlHoy = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false 
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
+      AND t.vencimiento::date = :today
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+      )
+  `;
+
+  const sqlSemana = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false 
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
+      AND t.vencimiento::date > :today 
+      AND t.vencimiento::date <= (:today::date + interval '7 days')
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+      )
+  `;
+
+  const sqlPrioritarias = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false 
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
+      AND t.prioridad_num >= 300
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+      )
+  `;
+
+  const sqlClientes = `
+    SELECT COUNT(DISTINCT t.cliente_id)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false 
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+      )
+  `;
+
+  const [hoy, semana, prioritarias, clientes] = await Promise.all([
+    sequelize.query(sqlHoy, { type: QueryTypes.SELECT, replacements }),
+    sequelize.query(sqlSemana, { type: QueryTypes.SELECT, replacements }),
+    sequelize.query(sqlPrioritarias, { type: QueryTypes.SELECT, replacements }),
+    sequelize.query(sqlClientes, { type: QueryTypes.SELECT, replacements })
+  ]);
+
+  return {
+    tareas_hoy: hoy[0]?.count || 0,
+    tareas_semana: semana[0]?.count || 0,
+    tareas_prioritarias: prioritarias[0]?.count || 0,
+    clientes_activos: clientes[0]?.count || 0
+  };
+};
+
+export const svcGetDashboardMetrics = (user) => getDashboardMetrics(user);
