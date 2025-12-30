@@ -13,73 +13,41 @@ export default function CharacterLimitPlugin({ maxLength }) {
     const [charCount, setCharCount] = useState(0);
     const [showWarning, setShowWarning] = useState(false);
     const warningTimeoutRef = useRef(null);
+    const lastCountRef = useRef(0);
 
     useEffect(() => {
         return mergeRegister(
-            // Monitor character count
+            // Monitor character count and show warning
             editor.registerUpdateListener(({ editorState }) => {
                 try {
                     editorState.read(() => {
                         const root = $getRoot();
                         const text = root.getTextContent();
                         const length = text.length;
-                        setCharCount(length);
+
+                        if (length !== lastCountRef.current) {
+                            lastCountRef.current = length;
+                            setCharCount(length);
+                        }
+
+                        if (length > maxLength) {
+                            setShowWarning(true);
+                            if (warningTimeoutRef.current) {
+                                clearTimeout(warningTimeoutRef.current);
+                            }
+                            warningTimeoutRef.current = setTimeout(() => {
+                                setShowWarning(false);
+                            }, 5000);
+                        } else if (showWarning) {
+                            setShowWarning(false);
+                        }
                     });
                 } catch (error) {
                     console.error('[CharacterLimitPlugin] Error reading character count:', error);
                 }
-            }),
-
-            // Prevent input when at limit
-            editor.registerTextContentListener((textContent) => {
-                try {
-                    const length = textContent.length;
-
-                    if (length > maxLength) {
-                        // Show warning message
-                        setShowWarning(true);
-                        if (warningTimeoutRef.current) {
-                            clearTimeout(warningTimeoutRef.current);
-                        }
-                        warningTimeoutRef.current = setTimeout(() => {
-                            setShowWarning(false);
-                        }, 3000);
-
-                        // Truncate to max length safely
-                        editor.update(() => {
-                            try {
-                                const root = $getRoot();
-                                const currentText = root.getTextContent();
-
-                                if (currentText.length > maxLength) {
-                                    const selection = $getSelection();
-
-                                    // Get the truncated text
-                                    const truncatedText = currentText.substring(0, maxLength);
-
-                                    // Clear and set new content
-                                    root.clear();
-                                    const paragraph = root.getFirstChild();
-                                    if (paragraph) {
-                                        paragraph.select();
-                                    }
-
-                                    // Insert truncated text
-                                    if ($isRangeSelection(selection)) {
-                                        selection.insertText(truncatedText);
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('[CharacterLimitPlugin] Error truncating text:', error);
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error('[CharacterLimitPlugin] Error in text content listener:', error);
-                }
             })
         );
-    }, [editor, maxLength]);
+    }, [editor, maxLength, showWarning]);
 
     // Cleanup timeout on unmount
     useEffect(() => {

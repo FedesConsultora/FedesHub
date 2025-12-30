@@ -133,8 +133,9 @@ export default function TaskList({
               const clickable = typeof onRowClick === "function";
 
               // Prioridad
-              const prio = getPriorityMeta(Number(t.prioridad) || 0, due);
-              const prioColor = prio.level >= 2 ? '#f44336' : prio.level === 1 ? '#ff9800' : 'transparent';
+              const prio = getPriorityMeta(t.prioridad_num || t.prioridad || 0, t.boost_manual || 0, due);
+              const prioColor = prio.color;
+              const hasBolt = prio.isBoosted;
 
               // Combinar responsables y colaboradores
               const allPeople = [...(t.responsables || []), ...(t.colaboradores || [])];
@@ -150,17 +151,24 @@ export default function TaskList({
                   }}
                 >
                   {/* Indicador de prioridad */}
-                  <td className={`px-2 ${RowPad}`} style={{ width: '32px' }}>
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: prioColor,
-                        boxShadow: prioColor !== 'transparent' ? `0 0 6px ${prioColor}` : 'none'
-                      }}
-                      title={prio.label}
-                    />
+                  <td className={`px-2 ${RowPad}`} style={{ width: '42px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: prioColor,
+                          boxShadow: prio.level > 0 ? `0 0 8px ${prioColor}` : 'none'
+                        }}
+                        title={prio.label}
+                      />
+                      {hasBolt && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffeb3b" style={{ filter: 'drop-shadow(0 0 4px rgba(255,235,59,0.6))' }}>
+                          <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                        </svg>
+                      )}
+                    </div>
                   </td>
                   <td className={`px-3 ${RowPad} font-medium cursor-pointer `}>
                     {t.titulo || t.title}

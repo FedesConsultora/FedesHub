@@ -167,6 +167,7 @@ export default function TasksPage() {
         vencimiento: t.vencimiento,
         progreso_pct: t.progreso_pct ?? 0,
         prioridad: t.prioridad_num ?? t.prioridad ?? 0,
+        boost_manual: t.boost_manual ?? 0,
         // Mapear responsables: extraer datos del feder anidado
         responsables: (t.responsables || []).map(r => ({
           id: r.feder?.id || r.feder_id || r.id,

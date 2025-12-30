@@ -2,7 +2,8 @@
 import { z } from 'zod';
 
 const boolish = z.preprocess(v => (v === 'true' ? true : v === 'false' ? false : v), z.boolean().optional());
-const dateOpt = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional());
+const dateOpt = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional()
+  .refine(d => !d || d >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "La fecha debe ser igual o posterior a hoy" }));
 const intId = z.coerce.number().int().positive();
 
 // ---------- NUEVO: compose ----------
@@ -131,7 +132,7 @@ export const setAprobacionSchema = z.object({
 });
 
 export const moveKanbanSchema = z.object({
-  stage: z.enum(['inbox', 'today', 'week', 'month', 'later']),
+  stage: z.enum(['inbox', 'today', 'week', 'month']),
   orden: z.coerce.number().int().optional().default(0)
 });
 

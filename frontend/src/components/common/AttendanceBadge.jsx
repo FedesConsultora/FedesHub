@@ -8,7 +8,7 @@ import './AttendanceBadge.scss'
  * @param {string} modalidad - 'oficina' | 'remoto' | null
  * @param {number} size - Icon size in px (default: 14)
  */
-export default function AttendanceBadge({ modalidad, size = 14 }) {
+export default function AttendanceBadge({ modalidad, size = 14, inline = false }) {
     const isActive = !!modalidad
 
     // Icon selection: Home for remote, Building for office, Circle (dot) for offline
@@ -26,7 +26,7 @@ export default function AttendanceBadge({ modalidad, size = 14 }) {
 
     return (
         <span
-            className={`attendance-badge ${isActive ? 'is-active' : 'is-offline'}`}
+            className={`attendance-badge ${isActive ? 'is-active' : 'is-offline'} ${inline ? 'is-inline' : ''}`}
             title={title}
             style={{ '--badge-size': `${size}px` }}
         >

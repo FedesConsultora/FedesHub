@@ -5,6 +5,7 @@ import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircl
 import { MdKeyboardArrowDown } from "react-icons/md";
 import AttendanceBadge from '../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
+import RichTextEditor from '../common/RichTextEditor.jsx'
 
 import './CreateTask.scss'
 
@@ -18,23 +19,24 @@ function useClickOutside(ref, onOutside) {
   }, [ref, onOutside])
 }
 
-/* ================= Multiselect accesible ================= */
-function MultiSelect({
+/* ================= CustomSelect (Single/Multi) ================= */
+function CustomSelect({
   id,
   labelId,
   leftIcon = null,
   options = [],
-  value = [],
+  value = [], // always array internally for consistency
   onChange,
   placeholder = 'Seleccionar…',
   disabled = false,
-  renderLabel = null
+  multi = true,
+  renderLabel = null,
+  isOptionDisabled = null
 }) {
   const rid = useId()
   const controlId = id || `ms-${rid}`
   const listboxId = `${controlId}-listbox`
 
-  // ⬅️ clave: envolvemos trigger + panel
   const wrapRef = useRef(null)
   useClickOutside(wrapRef, () => setOpen(false))
 
@@ -49,9 +51,17 @@ function MultiSelect({
 
   const toggleVal = (val) => {
     if (disabled) return
+    const opt = optionsByVal.get(String(val))
+    if (isOptionDisabled?.(opt)) return
+
     const s = String(val)
-    const next = value.includes(s) ? value.filter(v => v !== s) : [...value, s]
-    onChange?.(next)
+    if (multi) {
+      const next = value.includes(s) ? value.filter(v => v !== s) : [...value, s]
+      onChange?.(next)
+    } else {
+      onChange?.([s])
+      setOpen(false) // Close on single selection
+    }
   }
 
   const optionsByVal = useMemo(() => {
@@ -71,8 +81,7 @@ function MultiSelect({
       {/* Trigger */}
       <div
         id={controlId}
-        className="field"
-        style={S.field}
+        className={`field ${open ? 'is-open' : ''}`}
         role="combobox"
         aria-expanded={open}
         aria-controls={listboxId}
@@ -82,6 +91,7 @@ function MultiSelect({
         onKeyDown={(e) => {
           if (disabled) return
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o) }
+          if (e.key === 'ArrowDown' && !open) { e.preventDefault(); setOpen(true) }
         }}
       >
         {leftIcon}
@@ -93,45 +103,65 @@ function MultiSelect({
             <span className="msPlaceholder">{placeholder}</span>
           ) : (
             <div className="selected-tags" onClick={(e) => e.stopPropagation()}>
-              {value.map(val => {
-                const v = String(val)
-                const opt = optionsByVal.get(v)
-                if (!opt) return null
-                return (
-                  <div className="tag" key={v} role="button" tabIndex={0}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                    onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
-                  >
-                    {renderLabel ? renderLabel(opt) : opt.label}
-                  </div>
-                )
-              })}
+              {!multi ? (
+                // Single select display
+                <div className="single-val">
+                  {renderLabel ? renderLabel(optionsByVal.get(String(value[0]))) : selectedLabels[0]}
+                </div>
+              ) : (
+                // Multi select tags
+                value.map(val => {
+                  const v = String(val)
+                  const opt = optionsByVal.get(v)
+                  if (!opt) return null
+                  return (
+                    <div className="tag" key={v} role="button" tabIndex={0}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onKeyDown={(e) => { if (e.key === 'Backspace' || e.key === 'Delete') toggleVal(v) }}
+                    >
+                      {renderLabel ? renderLabel(opt) : opt.label}
+                      <FiX size={12} className="remove-tag" onClick={(e) => { e.stopPropagation(); toggleVal(v) }} />
+                    </div>
+                  )
+                })
+              )}
             </div>
           )}
         </div>
 
         <div className="addon" style={S.addon}>
-          <MdKeyboardArrowDown />
+          <MdKeyboardArrowDown className={`chevron ${open ? 'open' : ''}`} />
         </div>
       </div>
 
       {open && !disabled && (
-        <div className="msPanel" id={listboxId} role="listbox" aria-multiselectable="true">
+        <div className="msPanel" id={listboxId} role="listbox" aria-multiselectable={multi}>
+          {options.length > 8 && (
+            <div className="msSearch">
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                autoFocus
+              />
+            </div>
+          )}
           <ul>
             {filtered.map(opt => {
               const val = String(opt.value)
               const checked = value.includes(val)
+              const isLocked = isOptionDisabled?.(opt)
+
               return (
-                <li key={val}>
-                  <label className="msRow" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleVal(val)} />
-                    <span className="ellipsis" style={{ flex: 1 }}>{opt.label}</span>
-                    {renderLabel && (
-                      <div style={{ position: 'relative', width: '14px', height: '14px' }}>
-                        {renderLabel(opt)}
-                      </div>
-                    )}
-                  </label>
+                <li key={val} onClick={(e) => { e.stopPropagation(); !isLocked && toggleVal(val) }}>
+                  <div className={`msRow ${checked ? 'selected' : ''} ${isLocked ? 'disabled' : ''}`}>
+                    {multi && <input type="checkbox" checked={checked} readOnly disabled={isLocked} />}
+                    <div className="msRowContent">
+                      {renderLabel ? renderLabel(opt) : <span className="ellipsis">{opt.label}</span>}
+                    </div>
+                  </div>
                 </li>
               )
             })}
@@ -144,31 +174,14 @@ function MultiSelect({
 }
 
 
-/* ====== Estilos inline críticos de layout/ancho ====== */
+/* ====== Estilos inline mínimos ====== */
 const S = {
-  // field base: icono izquierda + control que ocupa 100%
-  field: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '14px 14px', borderRadius: 12,
-    border: '1px solid rgba(255,255,255,.12)',
-    background: '#0f141b', boxSizing: 'border-box', width: '100%',
-
-  },
-  fieldArea: { alignItems: 'flex-start' },
-  fieldCheckbox: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '12px 12px', borderRadius: 12,
-    border: '1px solid rgba(255,255,255,.12)', background: '#0f141b'
-  },
-  ico: { flex: '0 0 22px', width: 22, height: 22, opacity: .85 },
+  ico: { flex: '0 0 20px', width: 20, height: 20, opacity: .7 },
   control: { flex: '1 1 auto', minWidth: 0, width: '100%' },
-  addon: { flex: '0 0 22px', width: 22, height: 22, color: 'white' },
-
+  addon: { flex: '0 0 22px', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   datesRow: { display: 'flex', gap: 6, width: '100%' },
   dateCell: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
-
   fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
-
 }
 
 export default function CreateTaskModal({ onClose, onCreated }) {
@@ -217,19 +230,24 @@ export default function CreateTaskModal({ onClose, onCreated }) {
     return null
   }, [titulo])
   const fechaError = useMemo(() => {
-    if (!fechaInicio || !vencimiento) return null
-    return new Date(vencimiento) < new Date(fechaInicio)
-      ? 'El vencimiento no puede ser anterior al inicio' : null
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (fechaInicio && new Date(fechaInicio) < today) {
+      return 'La fecha de inicio no puede ser anterior a hoy';
+    }
+    if (vencimiento && new Date(vencimiento) < today) {
+      return 'El vencimiento no puede ser anterior a hoy';
+    }
+    if (fechaInicio && vencimiento && new Date(vencimiento) < new Date(fechaInicio)) {
+      return 'El vencimiento no puede ser anterior al inicio';
+    }
+    return null;
   }, [fechaInicio, vencimiento])
 
   const canSubmit = !!clienteId && !!titulo.trim() && !tituloError && !fechaError && !loading
 
-  // Enter para enviar
-  useEffect(() => {
-    const f = formRef.current; if (!f) return
-    const onKey = (ev) => { if (ev.key === 'Enter' && canSubmit) f.requestSubmit() }
-    f.addEventListener('keydown', onKey); return () => f.removeEventListener('keydown', onKey)
-  }, [canSubmit])
+  // No enviar por Enter (evitar cierre accidental)
 
   // foco + escape
   useEffect(() => {
@@ -242,6 +260,16 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   useEffect(() => {
     if (leaderId && !responsables.includes(String(leaderId))) setLeaderId(responsables[0] || '')
   }, [responsables, leaderId])
+
+  // Si alguien se vuelve responsable, lo quitamos de colaboradores si estaba
+  useEffect(() => {
+    if (responsables.length > 0) {
+      const respId = responsables[0]
+      if (colaboradores.includes(respId)) {
+        setColaboradores(prev => prev.filter(id => id !== respId))
+      }
+    }
+  }, [responsables])
 
   const parseNumOrNull = (v) => (v === '' || v == null ? null : Number(v))
 
@@ -302,14 +330,24 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   }), [cat.feders])
   const etiquetasOpts = useMemo(() => (cat.etiquetas || []).map(et => ({ value: String(et.id), label: et.nombre })), [cat.etiquetas])
 
-  const renderFederLabel = (opt) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
-      <span>{opt.label}</span>
-      <div style={{ position: 'relative', width: '14px', height: '14px' }}>
-        <AttendanceBadge modalidad={getModalidad(statuses, opt.feder_id)} size={14} />
+  const renderFederLabel = (opt) => {
+    if (!opt) return null
+    return (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', verticalAlign: 'middle' }}>
+        <span>{opt.label}</span>
+        <div className="badge-wrapper" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '14px',
+          height: '14px',
+          position: 'relative'
+        }}>
+          <AttendanceBadge modalidad={getModalidad(statuses, opt.feder_id)} size={14} inline />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // IDs de labels para accesibilidad y click-to-open
   const lblEtiquetasId = 'lbl-etiquetas'
@@ -334,19 +372,19 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
 
 
-              <MultiSelect
+              <CustomSelect
                 id="ms-cliente"
-
                 labelId={lblClienteId}
                 leftIcon={<FiBriefcase className="ico" aria-hidden style={S.ico} />}
                 options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
                 value={clienteId ? [String(clienteId)] : []}
                 onChange={(next) => {
-                  const first = (next && next.length) ? String(next[0]) : ''
+                  const first = (next && next.length) ? String(next[next.length - 1]) : ''
                   setClienteId(first)
                 }}
                 placeholder="Clientes"
                 disabled={loading}
+                multi={false}
               />
 
               <div className="addon" style={S.addon} />
@@ -355,18 +393,15 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
 
               {hitosOpts.length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="hito">Hito</label>
-                  <div className="field" style={S.field}>
-                    <FiHash className="ico" aria-hidden style={S.ico} />
-                    <select id="hito" value={hitoId} onChange={(e) => setHitoId(e.target.value)}
-                      disabled={loading} style={S.control}>
-                      <option value="">— Ninguno —</option>
-                      {hitosOpts.map(h => <option key={h.id} value={h.id}>{h.nombre}</option>)}
-                    </select>
-                    <div className="addon" style={S.addon} />
-                  </div>
-                </>
+                <div className="field">
+                  <FiHash className="ico" aria-hidden style={S.ico} />
+                  <select id="hito" value={hitoId} onChange={(e) => setHitoId(e.target.value)}
+                    disabled={loading} style={S.control}>
+                    <option value="">— Hito —</option>
+                    {hitosOpts.map(h => <option key={h.id} value={h.id}>{h.nombre}</option>)}
+                  </select>
+                  <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                </div>
               )}
               {/* Deadline + Responsable (solo uno) */}
 
@@ -390,22 +425,18 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   </div>
                   {fechaError && <div className="help error-inline">{fechaError}</div>}
                   <div style={{ width: '50%' }}>
-                    <div className="field" style={S.field}>
-                      <FiUsers className="ico" aria-hidden style={S.ico} />
-                      <select
-                        id="responsable"
-                        value={responsables[0] || ''}
-                        onChange={(e) => setResponsables(e.target.value ? [e.target.value] : [])}
-                        disabled={loading}
-                        style={S.control}
-                      >
-                        <option value="">— Seleccionar responsable —</option>
-                        {federsOpts.map(f => (
-                          <option key={f.value} value={f.value}>{f.label}</option>
-                        ))}
-                      </select>
-                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
-                    </div>
+                    <CustomSelect
+                      id="responsable"
+                      labelId={lblRespsId}
+                      leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
+                      options={federsOpts}
+                      value={responsables}
+                      onChange={setResponsables}
+                      placeholder="Seleccionar responsable"
+                      disabled={loading}
+                      multi={false}
+                      renderLabel={renderFederLabel}
+                    />
                   </div>
 
 
@@ -419,7 +450,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 }}>
 
                   <div style={{ width: '100%' }}>
-                    <MultiSelect
+                    <CustomSelect
                       id="ms-colabs"
                       labelId={lblColabsId}
                       leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
@@ -428,7 +459,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                       onChange={setColaboradores}
                       placeholder="Asignar a"
                       disabled={loading}
+                      multi={true}
                       renderLabel={renderFederLabel}
+                      isOptionDisabled={(opt) => responsables.includes(String(opt.value))}
                     />
                   </div>
 
@@ -453,25 +486,25 @@ export default function CreateTaskModal({ onClose, onCreated }) {
               </div>
 
 
-              <div className={'field ' + (tituloError ? 'is-error' : '')} style={S.field}>
+              <div className={'field ' + (tituloError ? 'is-error' : '')}>
                 <FiFlag className="ico" aria-hidden style={S.ico} />
                 <input
                   id="titulo" type="text" placeholder=" Título - Ej. Implementar integración con Google"
                   value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={220}
                   disabled={loading} style={S.control} aria-invalid={!!tituloError}
                 />
-                <div className="addon" style={S.addon} />
               </div>
 
 
-              <div className="field area" style={{ ...S.field, ...S.fieldArea }}>
-                <FiTag className="ico" aria-hidden style={{ ...S.ico, alignSelf: 'flex-start' }} />
-                <textarea
-                  id="desc" rows={6} placeholder="Descripción de la tarea"
-                  value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-                  disabled={loading} style={S.control}
-                />
-              </div>
+              <div className="tcEditorLabel">Descripción</div>
+              <RichTextEditor
+                value={descripcion}
+                onChange={setDescripcion}
+                placeholder="Descripción de la tarea - Ej. Detalles de la implementación..."
+                taskId={null}
+                maxLength={3600}
+                minHeight="200px"
+              />
 
 
             </div>
@@ -480,7 +513,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
             <div className="col">
 
-              <div className={"field upload-files"} style={S.field}>
+              <div className={"field upload-files"}>
 
                 <label htmlFor="files">
                   Carga de Archivos</label>
@@ -574,57 +607,42 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
 
               {/* {(cat.impactos || []).length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="impacto">Impacto</label>
-                  <div className="field" style={S.field}>
-                    <FiTag className="ico" aria-hidden style={S.ico}/>
-                    <select id="impacto" value={impactoId} onChange={(e)=>setImpactoId(e.target.value)}
-                            disabled={loading} style={S.control}>
-                      <option value="">— Por defecto —</option>
-                      {(cat.impactos || []).map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-                    </select>
-                    <div className="addon" aria-hidden style={S.addon}/>
-                  </div>
-                </>
+                <div className="field">
+                  <FiTag className="ico" aria-hidden style={S.ico}/>
+                  <select id="impacto" value={impactoId} onChange={(e)=>setImpactoId(e.target.value)}
+                          disabled={loading} style={S.control}>
+                    <option value="">— Impacto —</option>
+                    {(cat.impactos || []).map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+                  </select>
+                  <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                </div>
               )} */}
 
               {/* {(cat.urgencias || []).length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="urgencia">Urgencia</label>
-                  <div className="field" style={S.field}>
-                    <FiTag className="ico" aria-hidden style={S.ico}/>
-                    <select id="urgencia" value={urgenciaId} onChange={(e)=>setUrgenciaId(e.target.value)}
-                            disabled={loading} style={S.control}>
-                      <option value="">— Automática —</option>
-                      {(cat.urgencias || []).map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
-                    </select>
-                    <div className="addon" aria-hidden style={S.addon}/>
-                  </div>
-                </>
+                <div className="field">
+                  <FiTag className="ico" aria-hidden style={S.ico}/>
+                  <select id="urgencia" value={urgenciaId} onChange={(e)=>setUrgenciaId(e.target.value)}
+                          disabled={loading} style={S.control}>
+                    <option value="">— Urgencia —</option>
+                    {(cat.urgencias || []).map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
+                  </select>
+                  <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                </div>
               )} */}
 
 
-              {/* Etiquetas */}
               {/* {(cat.etiquetas || []).length > 0 && (
-                <>
-                  <label
-                    className="lbl"
-                    id={lblEtiquetasId}
-                    onMouseDown={(e)=>{ e.preventDefault(); document.getElementById('ms-etiquetas')?.click() }}
-                  >
-                    Etiquetas
-                  </label>
-                  <MultiSelect
-                    id="ms-etiquetas"
-                    labelId={lblEtiquetasId}
-                    leftIcon={<FiTag className="ico" aria-hidden style={S.ico}/>}
-                    options={etiquetasOpts}
-                    value={etiquetas}
-                    onChange={setEtiquetas}
-                    placeholder="Seleccionar etiquetas…"
-                    disabled={loading}
-                  />
-                </>
+                <CustomSelect
+                  id="ms-etiquetas"
+                  labelId={lblEtiquetasId}
+                  leftIcon={<FiTag className="ico" aria-hidden style={S.ico}/>}
+                  options={etiquetasOpts}
+                  value={etiquetas}
+                  onChange={setEtiquetas}
+                  placeholder="Etiquetas"
+                  disabled={loading}
+                  multi={true}
+                />
               )} */}
 
 

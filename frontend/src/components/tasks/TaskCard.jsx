@@ -23,8 +23,16 @@ export default function TaskCard({ t, onPointerDown, onOpenTask, onDelete, canDe
     : '—'
 
   // Calcular nivel de prioridad para el indicador de color
-  const prio = getPriorityMeta(Number(t.prioridad) || 0, t.due)
-  const prioClass = prio.level >= 2 ? 'prio-high' : prio.level === 1 ? 'prio-med' : ''
+  const prio = getPriorityMeta(t.prioridad_num || t.prioridad || 0, t.boost_manual || 0, t.due || t.vencimiento)
+  const prioClass = prio.level >= 3 ? 'prio-crit' : prio.level === 2 ? 'prio-high' : prio.level === 1 ? 'prio-med' : 'prio-low'
+
+  const boltIcon = prio.isBoosted && (
+    <div className="fh-k-prio-bolt" title="Prioridad manual activada">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffeb3b" style={{ filter: 'drop-shadow(0 0 4px rgba(255,235,59,0.8))' }}>
+        <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+      </svg>
+    </div>
+  )
 
   const statusColor = STATUS_COLORS[t.status?.code] || '#94a3b8'
 
@@ -79,6 +87,7 @@ export default function TaskCard({ t, onPointerDown, onOpenTask, onDelete, canDe
               {t.status?.name || '—'}
             </div>
             <div className="fh-k-date" title="Vencimiento">{dueTxt}</div>
+            {boltIcon}
           </div>
         </div>
 

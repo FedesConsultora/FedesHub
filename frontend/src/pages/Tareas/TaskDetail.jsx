@@ -480,6 +480,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const vencimientoISO = task?.vencimiento || null
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
+  const boostManual = task?.boost_manual || 0
   const clienteColor = task?.cliente?.color || task?.cliente_color || null
 
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
@@ -625,6 +626,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               progresoPct={progreso}
               aprobLabel={aprobLabel}
               prioridad={prioridad}
+              boostManual={boostManual}
               vencimientoISO={vencimientoISO}
               etiquetas={etiquetas}
               estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
@@ -992,6 +994,7 @@ function InlineDue({ value, onChange, disabled = false }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(value || '')
   const modal = useModal()
+  const toast = useToast()
 
   useEffect(() => { setLocal(value || '') }, [value])
 
@@ -1000,6 +1003,17 @@ function InlineDue({ value, onChange, disabled = false }) {
 
     // Si no cambió, no hacer nada
     if (local === value) return
+
+    // Validar fecha futura
+    if (local) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (new Date(local + 'T23:59:59') < today) {
+        toast?.error('La fecha no puede ser anterior a hoy');
+        setLocal(value || '');
+        return;
+      }
+    }
 
     // Si intenta borrar la fecha, pedir confirmación
     if (!local && value) {

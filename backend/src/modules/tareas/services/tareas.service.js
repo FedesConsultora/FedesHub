@@ -72,7 +72,7 @@ const getClientePonderacion = async (cliente_id) => {
 };
 
 const calcPrioridad = (ponderacion, puntosImpacto, puntosUrgencia) =>
-  (ponderacion * 100) + (puntosImpacto || 0) + (puntosUrgencia || 0);
+  (ponderacion * 10) + (puntosImpacto || 0);
 
 // --- Contexto de usuario para compose (roles y celula) ---
 const getUserContext = async (user) => {

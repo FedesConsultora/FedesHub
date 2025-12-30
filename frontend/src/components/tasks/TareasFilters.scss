@@ -196,6 +196,7 @@
         cursor: pointer;
         transition: all 0.12s ease;
         padding: 0 !important;
+
         &:hover {
           background: rgba(255, 255, 255, 0.35);
           transform: scale(1.1);
@@ -268,7 +269,7 @@
 
     .popBody {
       padding: 24px;
-      max-height: 500px;
+      max-height: calc(90vh - 120px); // Ajuste dinámico para que no se corte
       overflow-y: auto;
 
       &::-webkit-scrollbar {

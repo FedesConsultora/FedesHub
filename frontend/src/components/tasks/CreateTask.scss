@@ -77,6 +77,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     cursor: pointer;
     display: grid;
     place-items: center;
+    padding: 0 !important;
 
     &:hover {
       background: rgba(255, 255, 255, .06)
@@ -114,6 +115,15 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   margin-left: 4px;
 }
 
+.tcEditorLabel {
+  display: block;
+  margin: 20px 0 8px;
+  font-weight: 700;
+  font-size: 13px;
+  color: $fh-text;
+  opacity: 0.9;
+}
+
 .muted {
   color: $fh-muted;
   font-size: .9rem;
@@ -121,7 +131,17 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
 
 .field {
-  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #0f141b;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  cursor: text;
+  transition: all .2s ease;
 
   input,
   select,
@@ -134,6 +154,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     font-size: 1rem;
     line-height: 1.2;
     min-height: 24px;
+    cursor: pointer;
 
     &::placeholder {
       color: rgba(255, 255, 255, .45);
@@ -164,10 +185,11 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     /* opcional */
   }
 
-  &:focus-within {
+  &:focus-within,
+  &.is-open {
     border-color: $fh-primary;
-    box-shadow: 0 0 0 2px rgba($fh-primary, .30);
-    background: #111823;
+    box-shadow: 0 0 0 2px rgba($fh-primary, .15);
+    background: rgba(17, 24, 35, 0.8);
   }
 
   &.is-error {
@@ -223,36 +245,44 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   }
 
   .placeholder {
-    color: #aaa;
+    color: rgba(255, 255, 255, .4);
+    font-size: 0.95rem;
   }
 
   .tag {
-    padding: 4px 8px;
-    white-space: normal;
-    border-radius: 12px;
-    background: transparent;
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: rgba($fh-primary, 0.15);
+    border: 1px solid rgba($fh-primary, 0.2);
+    color: #fff;
     font-size: 0.85rem;
-    background-color: #2C4450;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
 
+    &:hover {
+      background: rgba($fh-primary, 0.25);
+    }
 
+    .remove-tag {
+      opacity: 0.6;
+      cursor: pointer;
 
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 
-  .cli-tag {
-    padding: 4px 8px;
-    white-space: normal;
-    border-radius: 12px;
-    background: transparent;
-    font-size: 0.85rem;
-    background-color: #9F1B1B !important;
+  .single-val {
+    color: #fff;
+    font-size: 0.95rem;
   }
 
   min-width: 0;
   width: 100%;
-
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .msDisplay.placeholder {
@@ -266,45 +296,105 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 .msPanel {
   position: absolute;
   inset-inline: 0;
-  top: calc(100% + 6px);
-  z-index: 30;
-  background: #0f141b;
-  border: 1px solid rgba(255, 255, 255, .12);
+  top: calc(100% + 4px);
+  z-index: 1000;
+  background: #151b26;
+  border: 1px solid rgba(255, 255, 255, .1);
   border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, .35);
-  max-height: 260px;
-  overflow: auto;
-  padding: 8px;
-  padding-top: 1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .5);
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.msSearch {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+
+  input {
+    width: 100%;
+    background: rgba(0, 0, 0, .2) !important;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 0.9rem;
+
+    &:focus {
+      border-color: $fh-primary;
+    }
+  }
 }
 
 .msPanel ul {
   list-style: none;
-  padding: 0;
+  padding: 6px;
   margin: 0;
-  display: grid;
-  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
 }
 
 .msRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.15s ease;
+  color: rgba(255, 255, 255, 0.8);
 
   &:hover {
-    background: rgba(255, 255, 255, .04);
+    background: rgba(255, 255, 255, .05);
+    color: #fff;
   }
 
-  input {
-    width: auto;
-
+  &.selected {
+    background: rgba($fh-primary, 0.1);
+    color: $fh-primary;
   }
 
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(1);
 
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: $fh-primary;
+    margin: 0;
+  }
+
+  .msRowContent {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.addon {
+  .chevron {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
 }
 
 .filesList {

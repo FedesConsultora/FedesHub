@@ -19,6 +19,7 @@ export default function TaskStatusCard({
   progresoPct = 0,
   aprobLabel = null,
   prioridad = null,
+  boostManual = 0,
   vencimientoISO = null,
   etiquetas = [],
   estadosCatalog = [],
@@ -147,7 +148,7 @@ export default function TaskStatusCard({
     }
   }
 
-  const prio = getPriorityMeta(Number(prioridad) || 0, vencimientoISO)
+  const prio = getPriorityMeta(Number(prioridad) || 0, Number(boostManual) || 0, vencimientoISO)
 
   return (
 

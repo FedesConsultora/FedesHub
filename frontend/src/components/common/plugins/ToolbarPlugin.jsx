@@ -71,6 +71,18 @@ export default function ToolbarPlugin() {
             const parent = node.getParent();
             setIsLink($isLinkNode(parent) || $isLinkNode(node));
 
+            // Extract style (color, font-size)
+            if ($isTextNode(node)) {
+                const style = node.getStyle() || '';
+                const colorMatch = style.match(/color:\s*([^;]+)/i);
+                if (colorMatch) setCurrentColor(colorMatch[1].trim());
+                else setCurrentColor('#ffffff'); // reset to default if no color
+
+                const sizeMatch = style.match(/font-size:\s*([^;]+)/i);
+                if (sizeMatch) setCurrentFontSize(sizeMatch[1].trim());
+                else setCurrentFontSize('16px');
+            }
+
             // Check if in list - simplified
             let element = node;
             let foundList = false;

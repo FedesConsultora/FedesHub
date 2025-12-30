@@ -229,25 +229,6 @@ export default function TareasFilters({ value, catalog, onChange }) {
                 </select>
               </Field>
 
-              <Field label="Impacto">
-                <select
-                  value={v.impacto_id ?? ''}
-                  onChange={e => upd({ impacto_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                >
-                  <option value="">Cualquiera</option>
-                  {catalog.impactos?.map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-                </select>
-              </Field>
-
-              <Field label="Urgencia">
-                <select
-                  value={v.urgencia_id ?? ''}
-                  onChange={e => upd({ urgencia_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                >
-                  <option value="">Cualquiera</option>
-                  {catalog.urgencias?.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
-                </select>
-              </Field>
 
               <div className="dateRange">
                 <span className="label">Vencimiento</span>

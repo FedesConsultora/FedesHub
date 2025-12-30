@@ -12,7 +12,57 @@ import { ListItemNode, ListNode } from '@lexical/list';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $insertNodes } from 'lexical';
+import { $getRoot, $insertNodes, $createParagraphNode, TextNode, ParagraphNode, $isTextNode } from 'lexical';
+
+class ExtendedTextNode extends TextNode {
+    static getType() {
+        return 'extended-text';
+    }
+
+    static clone(node) {
+        const clone = new ExtendedTextNode(node.__text, node.__key);
+        // Copiar todas las propiedades internas para que Lexical no se pierda
+        clone.__format = node.__format;
+        clone.__style = node.__style;
+        clone.__detail = node.__detail;
+        clone.__mode = node.__mode;
+        clone.__parent = node.__parent;
+        return clone;
+    }
+
+    static importDOM() {
+        const importers = TextNode.importDOM();
+        return {
+            ...importers,
+            span: () => ({
+                conversion: (domNode) => {
+                    const style = domNode.getAttribute('style');
+                    if (style) {
+                        return {
+                            forChild: (lexicalNode) => {
+                                if ($isTextNode(lexicalNode)) {
+                                    lexicalNode.setStyle(style);
+                                }
+                                return lexicalNode;
+                            },
+                        };
+                    }
+                    return null;
+                },
+                priority: 1,
+            }),
+        };
+    }
+
+    static importJSON(serializedNode) {
+        return TextNode.importJSON(serializedNode);
+    }
+
+    exportJSON() {
+        return super.exportJSON();
+    }
+}
+
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import CharacterLimitPlugin from './plugins/CharacterLimitPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
@@ -41,6 +91,7 @@ const getEditorConfig = () => ({
         quote: 'editor-quote',
     },
     nodes: [
+        ParagraphNode,
         HeadingNode,
         ListNode,
         ListItemNode,
@@ -48,6 +99,12 @@ const getEditorConfig = () => ({
         LinkNode,
         AutoLinkNode,
         FileNode,
+        ExtendedTextNode,
+        {
+            replace: TextNode,
+            with: (node) => new ExtendedTextNode(node.__text),
+            withKlass: ExtendedTextNode,
+        },
     ],
     onError(error) {
         console.error('Lexical Error:', error);
@@ -59,11 +116,32 @@ function InitialValuePlugin({ initialValue }) {
     const [editor] = useLexicalComposerContext();
     const hasInitialized = useRef(false);
 
+    // Si el usuario empieza a escribir, ya no queremos sobreescribir con el valor inicial tardío
+    useEffect(() => {
+        return editor.registerUpdateListener((params) => {
+            const { dirtyElements, dirtyNodes } = params;
+            if ((dirtyElements && dirtyElements.size > 0) || (dirtyNodes && dirtyNodes.size > 0)) {
+                hasInitialized.current = true;
+            }
+        });
+    }, [editor]);
+
     useEffect(() => {
         if (hasInitialized.current) return;
-        hasInitialized.current = true;
 
-        if (!initialValue) return;
+        // Si no hay valor inicial real, igual aseguramos un párrafo para que el editor no esté roto
+        if (!initialValue) {
+            editor.update(() => {
+                const root = $getRoot();
+                if (root.getChildrenSize() === 0) {
+                    root.append($createParagraphNode());
+                }
+            });
+            // NO marcamos hasInitialized como true aún, por si llega la data del server después
+            return;
+        }
+
+        hasInitialized.current = true;
 
         editor.update(() => {
             try {
@@ -72,34 +150,33 @@ function InitialValuePlugin({ initialValue }) {
                 const dom = parser.parseFromString(initialValue, 'text/html');
                 const nodes = $generateNodesFromDOM(editor, dom);
 
-                // Filtrar nodos válidos - solo ElementNode y DecoratorNode pueden ir en root
-                // TextNodes y otros deben estar envueltos en un párrafo
-                const validNodes = nodes.filter(node => {
-                    // Check if it's an element node (paragraph, list, heading, etc.) or decorator
-                    const nodeType = node.getType?.() || '';
-                    // These are element nodes that can be inserted to root
-                    const validRootNodes = ['paragraph', 'heading', 'list', 'quote', 'root', 'code'];
-                    return validRootNodes.includes(nodeType) ||
-                        node.isInline?.() === false ||
-                        node.constructor?.name?.includes('Element') ||
-                        node.constructor?.name?.includes('Decorator');
-                });
-
-                root.clear();
-
-                if (validNodes.length > 0) {
-                    // Use root.append instead of $insertNodes for safer insertion
-                    validNodes.forEach(node => {
-                        try {
-                            root.append(node);
-                        } catch (appendError) {
-                            console.warn('InitialValuePlugin: Could not append node', node.getType?.(), appendError);
+                if (nodes.length > 0) {
+                    root.clear();
+                    nodes.forEach(node => {
+                        if (node.isInline?.()) {
+                            let last = root.getLastChild();
+                            if (last === null || last.isInline?.() === false) {
+                                last = $createParagraphNode();
+                                root.append(last);
+                            }
+                            last.append(node);
+                        } else {
+                            try {
+                                root.append(node);
+                            } catch (e) {
+                                const p = $createParagraphNode();
+                                p.append(node);
+                                root.append(p);
+                            }
                         }
                     });
                 }
+
+                if (root.getChildrenSize() === 0) {
+                    root.append($createParagraphNode());
+                }
             } catch (error) {
-                console.error('InitialValuePlugin: Error initializing content', error);
-                // Don't crash - just leave editor empty
+                console.error('InitialValuePlugin Error:', error);
             }
         });
     }, [editor, initialValue]);
@@ -111,14 +188,16 @@ function InitialValuePlugin({ initialValue }) {
 function OnChangeHTMLPlugin({ onChange }) {
     const [editor] = useLexicalComposerContext();
 
-    const handleChange = (editorState) => {
-        editorState.read(() => {
-            const htmlString = $generateHtmlFromNodes(editor);
-            onChange?.(htmlString);
-        });
-    };
-
-    return <OnChangePlugin onChange={handleChange} />;
+    return (
+        <OnChangePlugin
+            onChange={(editorState) => {
+                editorState.read(() => {
+                    const htmlString = $generateHtmlFromNodes(editor);
+                    onChange?.(htmlString);
+                });
+            }}
+        />
+    );
 }
 
 // Plugin para manejar blur
@@ -174,16 +253,10 @@ export default function RichTextEditor({
     // Memoize config to avoid unnecessary recreation
     const editorConfig = useMemo(() => getEditorConfig(), []);
 
-    // Stop propagation to prevent parent modal from closing on text selection
-    const handleMouseDown = (e) => {
-        e.stopPropagation();
-    };
-
     return (
         <div
             className="richTextEditor"
             style={{ minHeight }}
-            onMouseDown={handleMouseDown}
         >
             <LexicalComposer key={editorKey} initialConfig={editorConfig}>
                 <div className="editor-container">

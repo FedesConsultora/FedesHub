@@ -7,19 +7,13 @@ export const STAGES = [
   { code: 'today', name: 'Hoy' },
   { code: 'week', name: 'Esta semana' },
   { code: 'month', name: 'Este mes' },
-  { code: 'later', name: 'Después' },
 ]
 
 const emptyColumns = () => Object.fromEntries(STAGES.map(s => [s.code, []]))
 
 const stageFromDue = (iso) => {
-  if (!iso) return 'inbox'
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const dd = Math.floor((new Date(iso) - today) / 86400000)
-  if (dd <= 0) return 'today'
-  if (dd <= 7) return 'week'
-  if (dd <= 30) return 'month'
-  return 'later'
+  // Las tareas nuevas o sin stage asignado SIEMPRE van a inbox primero
+  return 'inbox'
 }
 
 /**
@@ -69,6 +63,7 @@ export default function useTasksBoard(
           title: t.titulo,
           due: t.vencimiento,
           prioridad: t.prioridad_num ?? t.prioridad ?? 0,
+          boost_manual: t.boost_manual ?? 0,
           client: { id: t.cliente_id, name: t.cliente_nombre, weight: t.cliente_ponderacion ?? 0 },
           status: { code: t.estado_codigo, name: t.estado_nombre },
           responsables,
