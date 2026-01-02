@@ -427,8 +427,8 @@ export const getOverdueOpenRecords = async () => {
         id,
         feder_id,
         check_in_at,
-        -- Aseguramos que tratamos el check_in como timestamptz y lo pasamos a hora local
-        (check_in_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires') as local_in
+        -- Convertimos timestamptz a timestamp (hora local ART) para extraer la hora correctamente
+        (check_in_at AT TIME ZONE 'America/Argentina/Buenos_Aires') as local_in
       FROM "AsistenciaRegistro" 
       WHERE check_out_at IS NULL
     ),
