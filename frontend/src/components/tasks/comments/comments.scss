@@ -171,6 +171,10 @@
       background: #e8f0fe;
       border-color: rgba(66, 133, 244, .3);
 
+      .author {
+        color: #202124; // Reinstating original color
+      }
+
       .mentions {
         background: rgba(66, 133, 244, .14);
         color: #1a73e8;
@@ -267,9 +271,11 @@
       height: auto;
       max-height: 300px;
       border-radius: 16px;
-      border: 1px solid #dadce0;
+
       background: #f8f9fa;
       padding: 20px 22px;
+      border: #5f6368 solid 1px;
+
 
 
       &:focus {
@@ -315,23 +321,51 @@
     opacity: 1;
     transform: scale(1);
   }
-}.taskDetail .comments{
-  .replyPreview{
-    display:flex; align-items:center; gap:6px;
-    margin:6px 0 2px; padding:6px 8px;
-    border:1px dashed rgba(0,0,0,.12); border-radius:8px;
-    background:rgba(0,0,0,.02);
-    .label{ color:#6b7280; }
-    .replyAuthor{ color:#0d1117; }
-    .muted{ color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .replyExcerpt{ min-width:0; }
-    .ico{ width:14px; height:14px; color:#6b7280; }
+}
+
+.taskDetail .comments {
+  .replyPreview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 2px;
+    padding: 6px 8px;
+    border: 1px dashed rgba(0, 0, 0, .12);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .02);
+
+    .label {
+      color: #6b7280;
+    }
+
+    .replyAuthor {
+      color: #0d1117;
+    }
+
+    .muted {
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .replyExcerpt {
+      min-width: 0;
+    }
+
+    .ico {
+      width: 14px;
+      height: 14px;
+      color: #6b7280;
+    }
   }
 }
+
 // /* Transparente como pediste, y usando las clases del textarea */
 .taskDetail .comments {
   .mentionBox {
     position: relative;
+    flex: 1; // Added for right alignment
   }
 
   .mentionInput {
@@ -390,19 +424,60 @@
     }
   }
 
-}.taskDetail .comments{
-  .attachList{ display:grid; gap:6px; margin-top:8px; }
-  .attachItem{
-    display:flex; align-items:center; gap:10px; padding:8px 10px;
-    border:1px solid rgba(0,0,0,.08); border-radius:10px; background:#fff;
-    text-decoration:none; color:#0d1117;
-    img{ height:44px; width:44px; object-fit:cover; border-radius:6px; border:1px solid rgba(0,0,0,.06); }
-    .ico{ width:22px; height:22px; opacity:.85; }
-    .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size: .8rem; color:  #6b7280;}
-    .muted{ margin-left:auto; color:#6b7280; font-size:.86rem; }
-    &:hover{ background:rgba(0,0,0,.02); }
+}
+
+.taskDetail .comments {
+  .attachList {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .attachItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 10px;
+    background: #fff;
+    text-decoration: none;
+    color: #0d1117;
+
+    img {
+      height: 44px;
+      width: 44px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 0, 0, .06);
+    }
+
+    .ico {
+      width: 22px;
+      height: 22px;
+      opacity: .85;
+    }
+
+    .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: .8rem;
+      color: #6b7280;
+    }
+
+    .muted {
+      margin-left: auto;
+      color: #6b7280;
+      font-size: .86rem;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, .02);
+    }
   }
 }
+
 .taskDetail .comments {
   .composer {
     display: grid;
@@ -420,22 +495,16 @@
       border-radius: 16px;
       cursor: pointer;
       align-self: center;
+      order: 2; // Ensure button stays on right if flex is used
     }
-
-
-
   }
 
   .type {
-
     display: flex;
     align-items: center;
     justify-content: flex-start;
     width: 100% !important;
     gap: 6px;
-
-
-
   }
 
   .replyingTo {

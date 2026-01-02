@@ -985,7 +985,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       </div>
 
 
-    </div>
+    </div >
   )
 }
 

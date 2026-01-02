@@ -298,8 +298,13 @@ export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
       f.id      AS feder_id,
       f.nombre  AS feder_nombre,
       f.apellido AS feder_apellido,
+      ar.check_in_at,
+      ar.check_out_at,
       mt.codigo AS modalidad_codigo,
       mt.nombre AS modalidad_nombre,
+      cm.id     AS cierre_motivo_id,
+      cm.codigo AS cierre_motivo_codigo,
+      cm.nombre AS cierre_motivo_nombre,
 
       GREATEST(ar.check_in_at,  (SELECT day_start FROM bounds))   AS seg_start_at,
       LEAST  (COALESCE(ar.check_out_at, NOW()), (SELECT day_end FROM bounds)) AS seg_end_at,
@@ -316,6 +321,7 @@ export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
     FROM "AsistenciaRegistro" ar
     JOIN "Feder" f ON f.id = ar.feder_id
     LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
+    LEFT JOIN "AsistenciaCierreMotivoTipo" cm ON cm.id = ar.cierre_motivo_id
     WHERE
       -- que el tramo se superponga con el día
       ar.check_in_at <  (SELECT day_end   FROM bounds)
@@ -366,30 +372,22 @@ export const timelineRangoRepo = async ({ desde, hasta, feder_id, celula_id, q }
       ar.check_in_at,
       ar.check_out_at,
       mt.codigo AS modalidad_codigo,
-      mt.nombre AS modalidad_nombre
+      mt.nombre AS modalidad_nombre,
+      cm.id AS cierre_motivo_id,
+      cm.codigo AS cierre_motivo_codigo,
+      cm.nombre AS cierre_motivo_nombre
     FROM "AsistenciaRegistro" ar
     JOIN "Feder" f ON f.id = ar.feder_id
     LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
+    LEFT JOIN "AsistenciaCierreMotivoTipo" cm ON cm.id = ar.cierre_motivo_id
     WHERE ${where.join(' AND ')}
     ORDER BY ar.check_in_at ASC
   `
-  const response = sequelize.query(sql, {
+  return sequelize.query(sql, {
     type: QueryTypes.SELECT,
-    replacements: repl,
-    logging: console.log,
-
-
-  })
-  console.log(response);
-
-
-
-
-
-  return response;
-
-
-}
+    replacements: repl
+  });
+};
 
 
 // ================== Bulk Status (for attendance badges) ==================
@@ -414,4 +412,42 @@ export const getBulkOpenStatus = async (federIds = []) => {
   return await sequelize.query(sql, {
     type: QueryTypes.SELECT
   });
+};
+
+// ================== Auto-close overdue records ==================
+/**
+ * Obtiene registros abiertos que deberían haberse cerrado automáticamente a las 21:00
+ * Zona horaria: Argentina (UTC-3)
+ * Retorna registros cuyo check_in fue antes de las 21:00 del día anterior
+ */
+export const getOverdueOpenRecords = async () => {
+  const sql = `
+    WITH TargetRecords AS (
+      SELECT 
+        id,
+        feder_id,
+        check_in_at,
+        -- Aseguramos que tratamos el check_in como timestamptz y lo pasamos a hora local
+        (check_in_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires') as local_in
+      FROM "AsistenciaRegistro" 
+      WHERE check_out_at IS NULL
+    ),
+    Calculated AS (
+      SELECT 
+        id, feder_id, check_in_at,
+        CASE 
+          -- Turno noche/tarde: arranca a las 19:00 ART o después -> corta 23:59 ART del mismo día
+          WHEN EXTRACT(HOUR FROM local_in) >= 19 
+            THEN (date_trunc('day', local_in) + TIME '23:59:00')
+          -- Turno día: arranca antes de las 19:00 ART -> corta 21:00 ART del mismo día
+          ELSE (date_trunc('day', local_in) + TIME '21:00:00')
+        END AT TIME ZONE 'America/Argentina/Buenos_Aires' AS cutoff_utc
+      FROM TargetRecords
+    )
+    SELECT id, feder_id, check_in_at, cutoff_utc as cutoff_time
+    FROM Calculated
+    WHERE cutoff_utc < NOW()
+    ORDER BY check_in_at ASC
+  `;
+  return sequelize.query(sql, { type: QueryTypes.SELECT });
 };

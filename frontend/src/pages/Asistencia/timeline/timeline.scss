@@ -401,3 +401,32 @@ $muted: $fh-muted;
   opacity: 0.8;
   font-weight: 500;
 }
+
+/* =========================
+   AUTO-CLOSE STYLES
+========================= */
+.block.auto-closed {
+  border-color: rgba(245, 158, 11, 0.4); // Amber
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #f59e0b;
+    border-radius: 8px 0 0 8px;
+  }
+
+  background: linear-gradient(180deg, rgba(86, 94, 108, 0.95), rgba(45, 51, 62, 0.96));
+}
+
+.auto-close-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-left: 5px;
+  font-size: 14px;
+  display: inline-block;
+  vertical-align: middle;
+}

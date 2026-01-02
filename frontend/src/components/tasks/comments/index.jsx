@@ -157,10 +157,13 @@ export default function TaskComments({ taskId, catalog }) {
   return (
     <div className="card comments" style={{ marginTop: 10 }}>
       <div className="cardHeader">
-        <div className="title">Conversación</div>
-        <div className="subtitle">
-          {loading ? 'Cargando…' : (sorted?.length ? `${sorted.length}` : 'Sin comentarios')}
+        <div className="header-info">
+          <div className="title">Conversación</div>
+          <div className="subtitle">
+            {loading ? 'Cargando…' : (sorted?.length ? `${sorted.length}` : 'Sin comentarios')}
+          </div>
         </div>
+
       </div>
 
       <div className="list" ref={listRef}>

@@ -5,7 +5,7 @@ import FilesPicker from '../../common/FilesPicker'
 import { IoMdSend } from "react-icons/io";
 
 
-const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCancelReply, onSend }, ref){
+const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCancelReply, onSend }, ref) {
   const [msg, setMsg] = useState('')
   const [files, setFiles] = useState([])
   const inputRef = useRef(null)
@@ -14,21 +14,21 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
     focus: () => { inputRef.current?.focus() }
   }), [])
 
-  const escapeHtml = (s='') => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  const escapeHtml = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const replyHtml = useMemo(() => {
     if (!replyTo) return null
-    let html = escapeHtml((replyTo.contenido||'').replace(/\s+/g,' '))
+    let html = escapeHtml((replyTo.contenido || '').replace(/\s+/g, ' '))
     html = html.replace(/@(\d+)\b/g, (_, id) => {
       const f = feders.find(ff => Number(ff.id) === Number(id))
       if (!f) return `@${id}`
-      return `<span class="mentions">@${(f.nombre||'')+' '+(f.apellido||'')}</span>`
+      return `<span class="mentions">@${(f.nombre || '') + ' ' + (f.apellido || '')}</span>`
     })
     return { __html: ` — ${html}` }
   }, [replyTo, feders])
 
   const handleSend = async () => {
     if (!msg.trim() && files.length === 0) return
-    const adj = files.map(f => ({ nombre:f.name, mime:f.type||null, tamano_bytes:f.size||0 }))
+    const adj = files.map(f => ({ nombre: f.name, mime: f.type || null, tamano_bytes: f.size || 0 }))
     const menciones = Array.from(new Set(
       [...(msg.matchAll(/@(\d+)\b/g))].map(m => Number(m[1]))
     )).filter(n => Number.isFinite(n))
@@ -40,7 +40,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
   // ⬇️ ÚNICO handler de pegado para tareas
   const onPaste = (e) => {
     if (!e.clipboardData) return
-    const imgs = Array.from(e.clipboardData.items||[])
+    const imgs = Array.from(e.clipboardData.items || [])
       .filter(it => it.type?.startsWith('image/'))
       .map(it => it.getAsFile())
       .filter(Boolean)
@@ -63,31 +63,33 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
 
   return (
     <div className="composer" onPasteCapture={onPaste}>
-      <div style={{display:'grid', gap:6}}>
+      <div style={{ display: 'grid', gap: 6 }}>
         {replyTo && (
           <div className="replyingTo">
             <FaReply className="ico" aria-hidden="true" />
-            Respondiendo a <b>{[replyTo.autor_nombre, replyTo.autor_apellido].filter(Boolean).join(' ')||'Feder'}</b>
-            <span className="muted" style={{marginLeft:6}} dangerouslySetInnerHTML={replyHtml} />
+            Respondiendo a <b>{[replyTo.autor_nombre, replyTo.autor_apellido].filter(Boolean).join(' ') || 'Feder'}</b>
+            <span className="muted" style={{ marginLeft: 6 }} dangerouslySetInnerHTML={replyHtml} />
             <button className="ghost" onClick={onCancelReply} title="Cancelar">✕</button>
           </div>
         )}
         <div className='type'  >
-           <button className="primary" onClick={handleSend} disabled={!canPost || (!msg.trim() && files.length===0)}>
+          <MentionTextArea
+            value={msg}
+            onChange={setMsg}
+            feders={feders}
+            disabled={!canPost}
+            // ⛔️ NO pasamos onPaste acá para que no duplique
+            placeholder={'Escribir un mensaje… (mencioná con @nombre)'}
+            classNames={{ root: 'mentionBox', textarea: 'mentionInput', popover: 'mentionPopover', item: 'mentionItem' }}
+            inputRef={inputRef}
+          />
+          <button
+            className="primary send-btn"
+            onClick={handleSend}
+            disabled={!canPost || (!msg.trim() && files.length === 0)}
+          >
             <IoMdSend aria-hidden="true" />
           </button>
-        <MentionTextArea
-          value={msg}
-          onChange={setMsg}
-          feders={feders}
-          disabled={!canPost}
-          // ⛔️ NO pasamos onPaste acá para que no duplique
-          placeholder={'Escribir un mensaje… (mencioná con @nombre)'}
-          classNames={{ root:'mentionBox', textarea:'mentionInput', popover:'mentionPopover', item:'mentionItem' }}
-          inputRef={inputRef}
-        />
-
-          
         </div>
       </div>
 
