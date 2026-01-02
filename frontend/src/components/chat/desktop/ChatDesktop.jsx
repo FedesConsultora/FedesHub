@@ -116,11 +116,20 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
 
   const canPost = useMemo(() => {
     if (!sel) return true
-    const onlyMods = !!sel.only_mods_can_post
-    if (!onlyMods) return true
-    const myMember = sel.miembros?.find(m => m.user_id === myId) || sel.miembros?.[0] || null
-    const myRol = myMember?.rol?.codigo || null
-    return ['owner', 'admin', 'mod'].includes(myRol)
+    if (!sel.only_mods_can_post) return true
+
+    // Si hay miembros, validamos rigurosamente
+    if (sel.miembros && Array.isArray(sel.miembros)) {
+      const myMember = sel.miembros.find(m => m.user_id === myId)
+      if (myMember) {
+        const myRol = myMember.rol?.codigo || null
+        return ['owner', 'admin', 'mod'].includes(myRol)
+      }
+    }
+
+    // Por defecto, si el canal está cargado pero no tenemos la data de membresía aún, 
+    // permitimos para no "congelar" la UI innecesariamente.
+    return true
   }, [sel, myId])
 
   const onZoneDragOver = (e) => { e.preventDefault(); if (!canPost) return; e.dataTransfer.dropEffect = 'copy' }

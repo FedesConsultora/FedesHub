@@ -17,7 +17,19 @@ export async function getChannelMemberUserIds(canal_id, { except_user_id = null 
 // Publicadores (convención: type + payload)
 export async function publishMessageCreated(canal_id, message, { except_user_id } = {}) {
   const userIds = await getChannelMemberUserIds(canal_id, { except_user_id });
-  return publishMany(userIds, { type: 'chat.message.created', canal_id, message });
+
+  // Enriquecemos el payload SSE para que sea igual de rico que el Push
+  const fed = message.feder;
+  const authorName = fed ? [fed.nombre, fed.apellido].filter(Boolean).join(' ') : (message.autor?.email || 'FedesHub');
+  const authorAvatar = fed?.avatar_url || null;
+
+  return publishMany(userIds, {
+    type: 'chat.message.created',
+    canal_id,
+    message,
+    author_name: authorName,
+    author_avatar: authorAvatar
+  });
 }
 
 export async function publishMessageEdited(canal_id, message, { except_user_id } = {}) {

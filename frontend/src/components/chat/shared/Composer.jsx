@@ -12,7 +12,7 @@ import { displayName } from '../../../utils/people'
 import './Composer.scss'
 
 /* ---------------- Helpers menciones ---------------- */
-const escapeRe = (s='') => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const escapeRe = (s = '') => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 /**
  * Convierte @Nombre Apellido -> @user:<id>, respetando espacios/puntuación.
  * No toca las menciones que YA vienen en forma @user:<id>.
@@ -37,7 +37,7 @@ function normalizeMentions(plainText = '', feders = []) {
   return out
 }
 
-const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false, reason='' }, ref) {
+const Composer = forwardRef(function Composer({ canal_id, canal, disabled = false, reason = '' }, ref) {
   const [text, setText] = useState('')
   const [openEmoji, setOpenEmoji] = useState(false)
   const [files, setFiles] = useState([])
@@ -45,7 +45,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
   const fileRef = useRef(null)
   const { replyTo, setReplyTo } = useContext(ChatActionCtx)
 
-  const { data: members=[] } = useChannelMembers(canal_id)
+  const { data: members = [] } = useChannelMembers(canal_id)
   const { user } = useAuthCtx()
   const myId = user?.id
 
@@ -56,7 +56,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
     debugSelf: process.env.NODE_ENV !== 'production'
   })
 
-  useImperativeHandle(ref, () => ({ addFiles: (arr=[]) => setFiles(prev => prev.concat(arr)) }))
+  useImperativeHandle(ref, () => ({ addFiles: (arr = []) => setFiles(prev => prev.concat(arr)) }))
 
   const feders = members.map(m => ({
     id: m.user_id,
@@ -95,10 +95,15 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
   async function onSubmit(e) {
 
     e?.preventDefault?.()
-    if (send.isPending) return;
+    const isStuck = send.isPending && (Date.now() - lastSubmitAt.current > 10000)
+    if (send.isPending && !isStuck) return
     if (disabled) return
+    lastSubmitAt.current = Date.now()
     const bodyTextRaw = text.trim()
-    if ((bodyTextRaw.length===0 && files.length===0) || disabled) return
+    if ((bodyTextRaw.length === 0 && files.length === 0) || disabled) return
+
+    // Prevenir clics dobles rápidos, pero sin bloquear el reintento si algo falló.
+    // Usamos el estado isPending de react-query.
 
     // 🔁 Normalizamos menciones visibles a tokens para el backend
     const bodyText = normalizeMentions(bodyTextRaw, feders)
@@ -123,20 +128,24 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled=false,
     }
   }
 
-  function onChange(v){ setText(v); typing.ping() }
-const onKeyDown = (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    if (send.isPending) {
-      e.preventDefault()
-      return
+  function onChange(v) { setText(v); typing.ping() }
+  const lastSubmitAt = useRef(0)
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // Safety: si isPending está trabado (más de 10s), permitimos intentar de nuevo
+      const isStuck = send.isPending && (Date.now() - lastSubmitAt.current > 10000)
+      if (send.isPending && !isStuck) {
+        e.preventDefault()
+        return
+      }
+      lastSubmitAt.current = Date.now()
     }
+    typing.ping()
   }
-  typing.ping()
-}
-  const onBlur    = () => { typing.stop() }
+  const onBlur = () => { typing.stop() }
   const addEmoji = (em) => setText(t => (t + em))
-  const onPickFiles = (e) => { const arr = Array.from(e.target.files || []); setFiles(prev => prev.concat(arr)); e.target.value='' }
-  const removeFile = (idx) => setFiles(prev => prev.filter((_,i)=>i!==idx))
+  const onPickFiles = (e) => { const arr = Array.from(e.target.files || []); setFiles(prev => prev.concat(arr)); e.target.value = '' }
+  const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx))
   const onDragOver = (e) => { e.preventDefault(); if (disabled) return }
   const onDrop = (e) => { e.preventDefault(); if (disabled) return; const arr = Array.from(e.dataTransfer?.files || []); if (arr.length) setFiles(prev => prev.concat(arr)) }
 
@@ -144,15 +153,15 @@ const onKeyDown = (e) => {
 
   return (
     <form
-      className={`chat-composer ${disabled?'is-disabled':''}`}
+      className={`chat-composer ${disabled ? 'is-disabled' : ''}`}
       onSubmit={onSubmit}
       onDragOver={onDragOver}
       onDrop={onDrop}
       onPasteCapture={addClipboardImages} /* captura aunque el input hijo no propague */
     >
       <div className="controlsLeft">
-        <button type="button" className="attachBtn" disabled={disabled} title="Adjuntar archivos" onClick={()=> fileRef.current?.click()}>
-          <FaRegFile/>
+        <button type="button" className="attachBtn" disabled={disabled} title="Adjuntar archivos" onClick={() => fileRef.current?.click()}>
+          <FaRegFile />
         </button>
         <input ref={fileRef} type="file" multiple hidden onChange={onPickFiles} />
       </div>
@@ -162,7 +171,7 @@ const onKeyDown = (e) => {
           <div className="replyingTo">
             <span className="lbl">RESPONDIENDO A</span>
             <span className="who" title={replyAuthor}>{replyAuthor}</span>
-            <button className="ghost" type="button" onClick={()=> setReplyTo(null)}><FiX/></button>
+            <button className="ghost" type="button" onClick={() => setReplyTo(null)}><FiX /></button>
           </div>
         )}
 
@@ -178,29 +187,33 @@ const onKeyDown = (e) => {
         />
 
         <div className="emojiIn">
-          <button type="button" className="emojiBtn" disabled={disabled} onClick={()=> setOpenEmoji(v => !v)} title="Emojis">
-            <FiSmile/>
+          <button type="button" className="emojiBtn" disabled={disabled} onClick={() => setOpenEmoji(v => !v)} title="Emojis">
+            <FiSmile />
           </button>
           {openEmoji && !disabled && (
-            <EmojiPicker onSelect={(em)=> { addEmoji(em); setOpenEmoji(false) }} onClickOutside={()=>setOpenEmoji(false)} />
+            <EmojiPicker onSelect={(em) => { addEmoji(em); setOpenEmoji(false) }} onClickOutside={() => setOpenEmoji(false)} />
           )}
         </div>
 
         {!!files.length && (
           <div className="attachPreview">
-            {files.map((f,idx)=>(
+            {files.map((f, idx) => (
               <div key={`${f.name}-${idx}`} className="chip">
                 <span className="ico"><AttachmentIcon mime={f.type} name={f.name} /></span>
                 <span className="nm" title={f.name}>{f.name}</span>
-                <button type="button" className="rm" title="Quitar" onClick={()=> removeFile(idx)}><FiX/></button>
+                <button type="button" className="rm" title="Quitar" onClick={() => removeFile(idx)}><FiX /></button>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <button className="sendBtn" disabled={disabled || send.isPending || (!text.trim() && files.length===0)} title="Enviar">
-        <FiSend/>
+      <button
+        className="sendBtn"
+        disabled={disabled || (send.isPending && (Date.now() - lastSubmitAt.current < 10000)) || (!text.trim() && files.length === 0)}
+        title="Enviar"
+      >
+        <FiSend />
       </button>
 
       {disabled && (

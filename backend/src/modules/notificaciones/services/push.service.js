@@ -20,7 +20,8 @@ export const sendNotificationPush = async (notificacion_id, t) => {
       { model: m.Tarea, as: 'tarea', include: [{ model: m.Cliente, as: 'cliente' }] },
       { model: m.Evento, as: 'evento' },
       { model: m.ChatCanal, as: 'chatCanal' },
-      { model: m.NotificacionDestino, as: 'destinos', include: [{ model: m.User, as: 'user' }] }
+      { model: m.NotificacionDestino, as: 'destinos', include: [{ model: m.User, as: 'user' }] },
+      { model: m.User, as: 'createdBy', include: [{ model: m.Feder, as: 'feder' }] }
     ],
     transaction: t
   });
@@ -33,11 +34,11 @@ export const sendNotificationPush = async (notificacion_id, t) => {
 
   const defaults = Array.isArray(notif.tipo?.canales_default_json) && notif.tipo.canales_default_json.length
     ? notif.tipo.canales_default_json
-    : (process.env.NODE_ENV === 'production' ? ['in_app'] : ['in_app','email','push']); // ⬅️ fallback más conservador en prod
+    : (process.env.NODE_ENV === 'production' ? ['in_app'] : ['in_app', 'email', 'push']); // ⬅️ fallback más conservador en prod
 
   const pushDefaultOn = defaults.includes('push');
 
-  const estadoSent  = await m.EstadoEnvio.findOne({ where: { codigo: 'sent'  }, transaction: t });
+  const estadoSent = await m.EstadoEnvio.findOne({ where: { codigo: 'sent' }, transaction: t });
   const estadoError = await m.EstadoEnvio.findOne({ where: { codigo: 'error' }, transaction: t });
 
   log.info('push:start', {
@@ -71,20 +72,28 @@ export const sendNotificationPush = async (notificacion_id, t) => {
 
     if (!tokens.length) continue;
 
-    const title = notif.titulo || notif.tipo?.nombre || 'FedesHub';
+    const author = notif.createdBy;
+    const authorFed = author?.feder;
+    const authorName = authorFed ? [authorFed.nombre, authorFed.apellido].filter(Boolean).join(' ') : (author?.email || 'FedesHub');
+    const authorAvatar = authorFed?.avatar_url || author?.avatar_url || null;
+
+    const title = notif.titulo || authorName || 'FedesHub';
     const body =
       notif.mensaje ||
       (notif.tarea ? notif.tarea.titulo :
-       notif.evento ? notif.evento.titulo :
-       notif.chatCanal ? `Mención en ${notif.chatCanal.nombre}` : '');
+        notif.evento ? notif.evento.titulo :
+          notif.chatCanal ? `Mención en ${notif.chatCanal.nombre}` : '');
 
     const data = {
+      ...(notif.data || {}), // Importante: Incluir metadatos como mensaje_id
       notificacion_id: String(notif.id),
       tipo: String(notif.tipo?.codigo || ''),
       link_url: notif.link_url || '',
       tarea_id: notif.tarea_id ? String(notif.tarea_id) : '',
       evento_id: notif.evento_id ? String(notif.evento_id) : '',
       chat_canal_id: notif.chat_canal_id ? String(notif.chat_canal_id) : '',
+      author_name: authorName,
+      author_avatar: authorAvatar || '',
     };
 
     const res = await sendToTokens(tokens, { title, body }, data);

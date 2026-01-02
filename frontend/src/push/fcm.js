@@ -2,11 +2,11 @@
 import { notifApi } from '../api/notificaciones'
 
 const firebaseConfig = {
-  apiKey:             import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:         import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:          import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  messagingSenderId:  import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:              import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
 let messaging, firebaseApp
@@ -20,8 +20,14 @@ export async function initFCM() {
   firebaseApp = initializeApp(firebaseConfig)
   messaging = getMessaging(firebaseApp)
 
-  if (Notification.permission === 'default') {
-    try { await Notification.requestPermission() } catch {}
+  // Solicitar permisos de notificación (esencial para el sistema híbrido)
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    try {
+      const perm = await Notification.requestPermission()
+      console.log('[Notification] Permission:', perm)
+    } catch (e) {
+      console.warn('[Notification] Request failed:', e)
+    }
   }
 
   if ('serviceWorker' in navigator) {
@@ -46,18 +52,49 @@ export async function initFCM() {
     onMessage(messaging, (payload) => {
       console.log('[FCM] onMessage', payload)
       const data = payload?.data || {}
-      const detail = { ...data, __src:'fcm:onMessage', __fcmId: payload?.messageId || data?.message_id || data?.notificacion_id }
+      const notification = payload?.notification || {}
+      const detail = {
+        ...data,
+        fcm_title: notification.title,
+        fcm_body: notification.body,
+        fcm_icon: notification.icon || notification.image || data.author_avatar || data.fcm_icon || data.avatar_url,
+        __src: 'fcm:onMessage',
+        __fcmId: payload?.messageId || data?.message_id || data?.notificacion_id
+      }
       window.dispatchEvent(new CustomEvent('fh:push', { detail }))
     })
 
     navigator.serviceWorker.addEventListener('message', (e) => {
+      // 1. Recepción de Push (desde SW a UI)
       if (e?.data?.type === 'fh:push') {
-        const data = e.data.data || {}
-        console.log('[FCM] mensaje desde SW', data)
-        const detail = { ...data, __src:'fcm:sw', __fcmId: e.data.messageId || data?.message_id || data?.notificacion_id }
+        const payload = e.data || {}
+        const data = payload.data || {}
+        const notification = payload.notification || {}
+        console.log('[FCM] mensaje rico desde SW', payload)
+
+        const detail = {
+          ...data,
+          fcm_title: notification?.title,
+          fcm_body: notification?.body,
+          fcm_icon: notification?.icon || notification?.image,
+          __src: 'fcm:sw',
+          __fcmId: e.data.messageId || data?.message_id || data?.notificacion_id
+        }
         window.dispatchEvent(new CustomEvent('fh:push', { detail }))
       }
+
+      // 2. Depuración: Ack desde SW (Confirmación de recepción de orden)
+      if (e?.data?.type === 'fh:sw_ack') {
+        console.log('[SW] ✅ Confirmación de orden recibida por el Worker:', e.data.title)
+      }
     })
+
+    // Log de estado del controlador
+    if (navigator.serviceWorker.controller) {
+      console.log('[SW] Page controlled by:', navigator.serviceWorker.controller.scriptURL)
+    } else {
+      console.warn('[SW] Page NOT controlled. postMessage may fail.')
+    }
   }
 
   return messaging

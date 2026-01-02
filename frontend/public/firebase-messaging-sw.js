@@ -20,19 +20,55 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()))
 
 messaging.onBackgroundMessage(async (payload) => {
   const title = payload?.notification?.title || 'FedesHub'
-  const body  = payload?.notification?.body  || ''
-  const data  = payload?.data || {}
+  const body = payload?.notification?.body || ''
+  const data = payload?.data || {}
 
   await self.registration.showNotification(title, {
     body,
     data,
     icon: '/favicon.ico',
-    badge: '/favicon.ico'
+    badge: '/favicon.ico',
+    vibrate: [200, 100, 200], // Vibración en móviles
+    requireInteraction: false,
+    silent: false
   })
 
   // Eco a todas las ventanas abiertas (tiempo real in-app)
   const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
-  clientsList.forEach(c => c.postMessage({ type: 'fh:push', data }))
+  clientsList.forEach(c => c.postMessage({
+    type: 'fh:push',
+    data,
+    notification: payload?.notification, // NUEVO: Pasamos el objeto rico
+    messageId: payload?.messageId
+  }))
+})
+
+// 🚀 Listener para delegación de notificaciones desde el hilo principal
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'fh:show_notification') {
+    const { title, options } = event.data
+
+    // Confirmar recepción al cliente para depuración
+    event.source?.postMessage({ type: 'fh:sw_ack', title })
+
+    event.waitUntil((async () => {
+      try {
+        // En Lv1 (sin tag en RealtimeProvider), options.tag será undefined o no colisionará
+        if (options.tag) {
+          const currentNotifs = await self.registration.getNotifications({ tag: options.tag })
+          currentNotifs.forEach(n => n.close())
+        }
+
+        await self.registration.showNotification(title, {
+          ...options,
+          silent: false,
+          renotify: !!options.tag
+        })
+      } catch (err) {
+        console.error('[SW] Notification Error:', err)
+      }
+    })())
+  }
 })
 
 self.addEventListener('notificationclick', (event) => {
