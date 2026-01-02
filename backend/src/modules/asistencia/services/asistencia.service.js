@@ -213,7 +213,7 @@ export const svcBulkStatus = async (federIds = []) => {
 
 // ================== Auto-close overdue records ==================
 /**
- * Cierra automáticamente registros que deberían haberse cerrado a las 21:00
+ * Cierra automáticamente registros que deberían haberse cerrado (a las 21:00 o 23:59 según el horario de inicio)
  * Se ejecuta periódicamente desde el job
  */
 export const svcAutoCloseOverdueRecords = async () => {
@@ -244,7 +244,7 @@ export const svcAutoCloseOverdueRecords = async () => {
     let closed = 0;
     let errors = 0;
 
-    // Cerrar cada registro a las 21:00 de su día de check-in
+    // Cerrar cada registro según su horario de corte (21:00 o 23:59)
     for (const record of overdueRecords) {
       try {
         await updateCheckOut(record.id, {

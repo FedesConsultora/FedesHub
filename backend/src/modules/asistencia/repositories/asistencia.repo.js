@@ -436,10 +436,10 @@ export const getOverdueOpenRecords = async () => {
       SELECT 
         id, feder_id, check_in_at,
         CASE 
-          -- Turno noche: arranca a las 21:00 ART o después -> corta 23:59 ART del mismo día
-          WHEN EXTRACT(HOUR FROM local_in) >= 21 
+          -- Turno noche/tarde: arranca a las 19:00 ART o después -> corta 23:59 ART del mismo día
+          WHEN EXTRACT(HOUR FROM local_in) >= 19 
             THEN (date_trunc('day', local_in) + TIME '23:59:00')
-          -- Turno día: arranca antes de las 21:00 ART -> corta 21:00 ART del mismo día
+          -- Turno día: arranca antes de las 19:00 ART -> corta 21:00 ART del mismo día
           ELSE (date_trunc('day', local_in) + TIME '21:00:00')
         END AT TIME ZONE 'America/Argentina/Buenos_Aires' AS cutoff_utc
       FROM TargetRecords

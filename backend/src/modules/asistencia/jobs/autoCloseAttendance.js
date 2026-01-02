@@ -4,7 +4,7 @@ import { logger } from '../../../core/logger.js';
 
 /**
  * Job que cierra automáticamente registros de asistencia abiertos
- * que deberían haberse cerrado a las 21:00 hs (hora Argentina UTC-3)
+ * que deberían haberse cerrado a las 21:00 o 23:59 hs (hora Argentina UTC-3)
  * 
  * Frecuencia: cada 15 minutos
  */
