@@ -109,6 +109,30 @@
 
           pointer-events: none;
         }
+
+        .badge {
+          position: absolute;
+          right: -6px;
+          top: -6px;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: 9px;
+          background: #ff5151;
+          color: #fff;
+          font-size: 0.65rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #0b1118;
+          line-height: 1;
+
+          &.mention {
+            background: #ffc14d;
+            color: #1a1a2e;
+          }
+        }
       }
 
       .meta {

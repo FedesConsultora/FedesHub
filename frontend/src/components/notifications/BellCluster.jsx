@@ -7,6 +7,12 @@ import ChatBellPanel from './ChatBellPanel.jsx'
 import { useRealtime } from '../../realtime/RealtimeProvider'
 import './BellCluster.scss'
 
+// Helper para limpiar HTML de descripciones de tareas
+function stripHtml(html) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
 const ICONS = {
   chat: <FiMessageSquare />,
   tareas: <FiCheckSquare />,
@@ -71,8 +77,8 @@ export default function BellCluster({ onAnyOpen }) {
     {
       key: 'chat',
       label: 'Chat',
-      count: counts?.chat ?? 0,
-      dot: (counts?.chat ?? 0) === 0 && localChatUnreadCount > 0,    // 👈 si el backend dice 0 pero local hay unread, mostramos dot
+      count: (counts?.chat ?? 0) || localChatUnreadCount,  // Preferir backend, fallback a local
+      dot: (counts?.chat ?? 0) === 0 && localChatUnreadCount > 0,
       mention: localChatHasMention
     },
     { key: 'tareas', label: 'Tareas', count: counts?.tareas ?? 0 },
@@ -217,7 +223,7 @@ function NotifItem({ row }) {
     <div className={`item ${row.read_at ? 'read' : ''}`}>
       <div className="main">
         <div className="ttl">{title}</div>
-        {n.mensaje && <div className="msg">{n.mensaje}</div>}
+        {n.mensaje && <div className="msg">{stripHtml(n.mensaje)}</div>}
       </div>
       <div className="act">
         {n.link_url && (

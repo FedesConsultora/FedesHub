@@ -1,5 +1,6 @@
 // /src/components/chat/desktop/ChatDesktop.jsx
 import { useMemo, useEffect, useRef, useState } from 'react'
+import { FiMessageSquare } from 'react-icons/fi'
 import ChannelList from '../shared/ChannelList'
 import DMList from '../shared/DMList'
 import Timeline from '../shared/Timeline'
@@ -22,7 +23,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   const myId = user?.id
   const { unreadByCanal, mentionByCanal, clearUnreadFor, setCurrentCanal } = useRealtime()
 
-  const [cid, setCid] = useState(currentId || channels?.[0]?.id || null)
+  const [cid, setCid] = useState(currentId || null)
   const [view, setView] = useState(() => localStorage.getItem('fh:chat:view') || 'channels')
 
   // Modal de creación unificado (también lo usa el header)
@@ -42,7 +43,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   const composerRef = useRef(null)
   const setViewPersist = (v) => { setView(v); localStorage.setItem('fh:chat:view', v) }
 
-  useEffect(() => setCid(currentId || channels?.[0]?.id || null), [currentId, channels])
+  useEffect(() => setCid(currentId || null), [currentId])
 
   // ordenar canales por updated_at desc
   const sortedChannels = useMemo(() => {
@@ -96,15 +97,16 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
 
   // ---- Badges por pestaña
   const anyUnread = (ids = []) => ids.some(id => (unreadByCanal?.[id] | 0) > 0 || (mentionByCanal?.[id] | 0) > 0)
+  const sumUnread = (ids = []) => ids.reduce((acc, id) => acc + (unreadByCanal?.[id] | 0), 0)
 
   const groupIds = useMemo(() => sortedChannels.filter(c => c?.tipo?.codigo === 'grupo').map(c => c.id), [sortedChannels])
   const canalIds = useMemo(() => sortedChannels.filter(c => c?.tipo?.codigo !== 'grupo' && c?.tipo?.codigo !== 'dm').map(c => c.id), [sortedChannels])
   const dmIds = useMemo(() => (dmItems || []).map(u => u.dm_canal_id).filter(Boolean), [dmItems])
 
   const tabs = [
-    { key: 'channels', label: 'Canales', badge: anyUnread(canalIds) },
-    { key: 'groups', label: 'Grupos', badge: anyUnread(groupIds) },
-    { key: 'dms', label: 'Chat', badge: anyUnread(dmIds) }
+    { key: 'channels', label: 'Canales', badgeCount: sumUnread(canalIds), badge: anyUnread(canalIds) },
+    { key: 'groups', label: 'Grupos', badgeCount: sumUnread(groupIds), badge: anyUnread(groupIds) },
+    { key: 'dms', label: 'Chat', badgeCount: sumUnread(dmIds), badge: anyUnread(dmIds) }
   ]
 
   const listChannels = useMemo(() => {
@@ -181,6 +183,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
             onOpen={(id) => { setCid(id); onOpen?.(id) }}
             unreadLookup={unreadLookup}
             mentionLookup={mentionLookup}
+            emptyMsg={view === 'groups' ? 'No se encontraron grupos.' : 'No se encontraron canales.'}
           />
         )}
         {view === 'dms' && (
@@ -195,36 +198,48 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
       </aside>
 
       <section className="panel">
-        <ChannelHeader
-          canal={sel}
-          onOpenChannel={(id) => { setCid(id); onOpen?.(id) }}
-          setView={setViewPersist}
-          onStartCreateGroup={(cfg) => openCreate(cfg)}  // ← crear grupo desde header (DM)
-        />
-        <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
-          <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
-            <Timeline
-              rows={msgs.data || []}
-              loading={msgs.isLoading}
-              canal_id={cid}
-              my_user_id={myId}
-              members={membersFull}
+        {cid && sel ? (
+          <>
+            <ChannelHeader
+              canal={sel}
+              onOpenChannel={(id) => { setCid(id); onOpen?.(id) }}
+              setView={setViewPersist}
+              onStartCreateGroup={(cfg) => openCreate(cfg)}
             />
-
-            <div className="composeArea">
-              <TypingIndicator canal_id={cid} my_user_id={myId} members={membersFull} />
-              {cid && (
-                <Composer
-                  ref={composerRef}
-                  canal={sel}
+            <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
+              <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
+                <Timeline
+                  rows={msgs.data || []}
+                  loading={msgs.isLoading}
                   canal_id={cid}
-                  disabled={!canPost}
-                  reason={sel?.only_mods_can_post ? 'Sólo moderadores pueden postear en este canal' : ''}
+                  my_user_id={myId}
+                  members={membersFull}
                 />
-              )}
+
+                <div className="composeArea">
+                  <TypingIndicator canal_id={cid} my_user_id={myId} members={membersFull} />
+                  {cid && (
+                    <Composer
+                      ref={composerRef}
+                      canal={sel}
+                      canal_id={cid}
+                      disabled={!canPost}
+                      reason={sel?.only_mods_can_post ? 'Sólo moderadores pueden postear en este canal' : ''}
+                    />
+                  )}
+                </div>
+              </ChatActionCtx.Provider>
             </div>
-          </ChatActionCtx.Provider>
-        </div>
+          </>
+        ) : (
+          <div className="chat-placeholder">
+            <div className="placeholder-content">
+              <FiMessageSquare size={52} />
+              <h3>Buenas, {user?.nombre || 'Enzo'}</h3>
+              <p>Elegí una conversación para continuar.</p>
+            </div>
+          </div>
+        )}
       </section>
 
       <ChannelCreateModal

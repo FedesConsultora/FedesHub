@@ -115,6 +115,8 @@ export default function RealtimeProvider({ children }) {
   const [windowVisible, setWindowVisible] = useState(!document.hidden)
   const [unreadByCanal, setUnreadByCanal] = useState(() => Object.create(null))
   const [mentionByCanal, setMentionByCanal] = useState(() => Object.create(null))
+  const [currentCanal, setCurrentCanalState] = useState(null)  // Canal actualmente visible
+  const [suppressedCanals, setSuppressedCanals] = useState(() => new Set())
 
   // ---- Helpers de Gestión Automática
   const checkSeenOnce = (key, ttl = 5000) => {
@@ -128,9 +130,12 @@ export default function RealtimeProvider({ children }) {
 
   const markSelfSend = (canal_id) => {
     if (!canal_id) return
-    recentSelfSendsRef.current.set(Number(canal_id), Date.now())
+    const cid = Number(canal_id)
+    recentSelfSendsRef.current.set(cid, Date.now())
+    // Suprimir inmediatamente para evitar flash del badge
+    setSuppressedCanals(prev => { if (prev.has(cid)) return prev; const n = new Set(prev); n.add(cid); return n })
   }
-  const isLikelySelfEcho = (canal_id, windowMs = 3000) => {
+  const isLikelySelfEcho = (canal_id, windowMs = 5000) => {
     const ts = recentSelfSendsRef.current.get(Number(canal_id))
     return !!(ts && (Date.now() - ts) <= windowMs)
   }
@@ -413,7 +418,19 @@ export default function RealtimeProvider({ children }) {
       const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
       const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
 
-      if (!cid || !myId || aid === myId) return
+      // Si el mensaje es propio (desde cualquier sesión), limpiar estado y salir
+      if (aid === myId && cid) {
+        // Limpiar unread local
+        setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        // Refrescar canales para que el derivedUnread también se actualice
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        // Disparar evento de limpieza para suprimir temporalmente en UnreadDmBubbles
+        window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
+        return
+      }
+
+      if (!cid || !myId) return
       if (!aid && isLikelySelfEcho(cid)) return
 
       if (currentCanalRef.current !== cid) {
@@ -456,6 +473,17 @@ export default function RealtimeProvider({ children }) {
 
     qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
     qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
+
+    // Handler para notificaciones de TAREAS
+    const looksLikeTarea = /tarea/.test(type) || !!data?.tarea_id
+    if (looksLikeTarea && !muted) {
+      playSoundFor({ ...data, buzon: 'tareas' })
+      showNotification({
+        ...data,
+        author_name: data.author_name || data.titulo || 'FedesHub',
+        fcm_body: data.mensaje || data.titulo || 'Nueva notificación de tarea'
+      }, 1)
+    }
   }
 
   // ---- Effects de Inicialización
@@ -497,17 +525,23 @@ export default function RealtimeProvider({ children }) {
   }, [unreadByCanal])
 
   const value = useMemo(() => ({
-    muted, setMuted, volume, setVolume, unreadByCanal, mentionByCanal,
+    muted, setMuted, volume, setVolume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals,
     clearUnreadFor: (cid) => {
-      setUnreadByCanal(p => { const n = { ...p }; delete n[cid]; return n })
-      setMentionByCanal(p => { const n = { ...p }; delete n[cid]; return n })
-      flushChatNotifsForCanal(cid).catch(() => { })
+      const id = Number(cid)
+      setUnreadByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
+      setMentionByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
+      setSuppressedCanals(prev => { if (prev.has(id)) return prev; const n = new Set(prev); n.add(id); return n })
+      flushChatNotifsForCanal(id).catch(() => { })
+      window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: id } }))
     },
-    setCurrentCanal: (id) => { currentCanalRef.current = id },
+    setCurrentCanal: (id) => {
+      currentCanalRef.current = id
+      setCurrentCanalState(id)
+    },
     markSelfSend,
     flushChatNotifsForCanal,
     playTest: () => onIncoming({ type: 'chat.message.created', canal_id: 1, user_id: -1 })
-  }), [muted, volume, unreadByCanal, mentionByCanal])
+  }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal])
 
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>
 }

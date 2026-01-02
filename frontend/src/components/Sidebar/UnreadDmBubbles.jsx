@@ -5,56 +5,56 @@ import { useDmCandidates, useChannels } from '../../hooks/useChat'
 import { displayName } from '../../utils/people'
 import './UnreadDmBubbles.scss'
 
-function initialsFromUser(u){
+function initialsFromUser(u) {
   const nm = (displayName(u) || '').trim()
   if (nm) {
     const parts = nm.split(/\s+/).filter(Boolean)
-    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase()
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
     return (parts[0][0] + parts[1][0]).toUpperCase()
   }
-  const email = (u?.email||'').trim()
+  const email = (u?.email || '').trim()
   if (email) {
     const head = email.split('@')[0]
-    if (head.length >= 2) return head.slice(0,2).toUpperCase()
+    if (head.length >= 2) return head.slice(0, 2).toUpperCase()
     if (head.length === 1) return head[0].toUpperCase()
   }
   return '??'
 }
 
 // Deriva unread de canales DM comparando ids de mensaje leídos vs último
-function deriveDmUnreadFromChannels(channels=[]) {
+function deriveDmUnreadFromChannels(channels = []) {
   const out = new Map() // canal_id -> count
   channels.forEach(c => {
     if (!c || c?.tipo?.codigo !== 'dm') return
     const mm = c?.miembros?.[0] || {}
     const lastRead = Number(mm.last_read_msg_id ?? 0)
-    const lastMsg  = Number(c.last_msg_id ?? c.ultimo_msg_id ?? 0)
+    const lastMsg = Number(c.last_msg_id ?? c.ultimo_msg_id ?? 0)
     if (lastMsg > lastRead) out.set(Number(c.id), Math.min(99, Math.max(1, lastMsg - lastRead)))
   })
   return out
 }
 
-export default function UnreadDmBubbles({ limit=8 }){
+export default function UnreadDmBubbles({ limit = 8 }) {
   const nav = useNavigate()
   const { pathname } = useLocation()
-  const { unreadByCanal, mentionByCanal } = useRealtime()
+  const { unreadByCanal, mentionByCanal, currentCanal } = useRealtime()
 
   // Para nombres / emails del otro extremo del DM
   const dmQ = useDmCandidates()
 
   // Para persistencia tras reload: derivamos unread desde canales
-  const chQ = useChannels({ scope:'mine', include_archivados:false })
+  const chQ = useChannels({ scope: 'mine', include_archivados: false })
   const derivedUnread = useMemo(() => deriveDmUnreadFromChannels(chQ.data || []), [chQ.data])
   const chById = useMemo(() => {
     const m = new Map()
-    ;(chQ.data || []).forEach(c => m.set(Number(c.id), c))
+      ; (chQ.data || []).forEach(c => m.set(Number(c.id), c))
     return m
   }, [chQ.data])
 
   // canal_id -> user del DM
   const dmByCanal = useMemo(() => {
     const map = new Map()
-    ;(dmQ.data || []).forEach(u => { if (u.dm_canal_id) map.set(Number(u.dm_canal_id), u) })
+      ; (dmQ.data || []).forEach(u => { if (u.dm_canal_id) map.set(Number(u.dm_canal_id), u) })
     return map
   }, [dmQ.data])
 
@@ -74,7 +74,11 @@ export default function UnreadDmBubbles({ limit=8 }){
       return () => clearTimeout(t)
     }
     window.addEventListener('fh:chat:channel:cleared', onCleared)
-    return () => window.removeEventListener('fh:chat:channel:cleared', onCleared)
+    window.addEventListener('fh:chat:sent', onCleared)
+    return () => {
+      window.removeEventListener('fh:chat:channel:cleared', onCleared)
+      window.removeEventListener('fh:chat:sent', onCleared)
+    }
   }, [])
 
   // Lista final: unión de realtime (con conteo exacto) + derivado de canales (persistencia tras reload).
@@ -84,6 +88,9 @@ export default function UnreadDmBubbles({ limit=8 }){
     const allDmIds = new Set([...dmByCanal.keys(), ...Array.from(derivedUnread.keys())])
 
     allDmIds.forEach(cid => {
+      // Si este canal es el que el usuario está viendo, no mostrar badge
+      if (currentCanal && Number(currentCanal) === cid) return
+
       const rtCount = (unreadByCanal?.[cid] | 0)
       const fallback = suppressed.has(cid) ? 0 : (derivedUnread.get(cid) || 0)
       const count = rtCount || fallback
@@ -105,7 +112,7 @@ export default function UnreadDmBubbles({ limit=8 }){
       })
     })
 
-    arr.sort((a,b) => b.last - a.last)
+    arr.sort((a, b) => b.last - a.last)
     return arr.slice(0, limit)
   }, [dmByCanal, derivedUnread, unreadByCanal, mentionByCanal, suppressed, chById, limit])
 

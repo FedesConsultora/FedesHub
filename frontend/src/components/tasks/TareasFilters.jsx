@@ -148,7 +148,8 @@ export default function TareasFilters({ value, catalog, onChange }) {
             <FaUser className="icon" />
             <span>Mis tareas</span>
           </button>
-
+          
+          {/*
           <button
             type="button"
             className={`toggleBtn ${v.include_archivadas ? 'active' : ''}`}
@@ -158,6 +159,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
             <FaArchive className="icon" />
             <span>Archivadas</span>
           </button>
+          */}
 
         </div>
 

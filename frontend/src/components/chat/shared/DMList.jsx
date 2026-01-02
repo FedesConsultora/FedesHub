@@ -16,34 +16,40 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
   return (
     <div className="chat-dms">
       <div className="list">
-        {items.map(u => {
-          const canalId = u.dm_canal_id
-          const unread = !!(canalId && unreadLookup[canalId])
-          const hasMention = !!(canalId && mentionLookup[canalId])
-          const sel = selectedId === canalId
-          const name = displayName(u)
-          return (
-            <button
-              key={u.user_id}
-              className={`row ${sel ? 'sel' : ''}`}
-              onClick={() => onOpenDm?.(u)}
-              title={u.email}
-            >
-              <span className={'avatarWrap' + (hasMention ? ' mention' : '')}>
-                <Avatar src={pickAvatar(u)} name={name} size={36} federId={u.feder_id || u.id_feder} />
-                {unread && <i className="dot" />}
-                <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
-              </span>
-              <div className="meta">
-                <div className="name">
-                  {name}
-                  {hasMention && <span className="mentionTag">@</span>}
+        {items.length === 0 ? (
+          <div className="empty-list-msg">
+            No tenés mensajes directos.
+          </div>
+        ) : (
+          items.map(u => {
+            const canalId = u.dm_canal_id
+            const unread = !!(canalId && unreadLookup[canalId])
+            const hasMention = !!(canalId && mentionLookup[canalId])
+            const sel = selectedId === canalId
+            const name = displayName(u)
+            return (
+              <button
+                key={u.user_id}
+                className={`row ${sel ? 'sel' : ''}`}
+                onClick={() => onOpenDm?.(u)}
+                title={u.email}
+              >
+                <span className={'avatarWrap' + (hasMention ? ' mention' : '')}>
+                  <Avatar src={pickAvatar(u)} name={name} size={36} federId={u.feder_id || u.id_feder} />
+                  {unread && <i className="dot" />}
+                  <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
+                </span>
+                <div className="meta">
+                  <div className="name">
+                    {name}
+                    {hasMention && <span className="mentionTag">@</span>}
+                  </div>
+                  <div className="sub">{u.email}</div>
                 </div>
-                <div className="sub">{u.email}</div>
-              </div>
-            </button>
-          )
-        })}
+              </button>
+            )
+          })
+        )}
       </div>
     </div>
   )
