@@ -1,7 +1,7 @@
 import { groupByFederAndDay, formatDuration } from './timeline.utils'
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
-import { MdSchedule } from 'react-icons/md'
+import { TbClockStop } from "react-icons/tb";
 import './timeline-week.scss'
 
 const WEEK_DAYS = [
@@ -98,9 +98,9 @@ export default function TimelineWeek({ payload, onNavigate, currentFecha }) {
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         {formatDuration(minutes)}
                         {dayEntry?.registros?.some(r => r.cierre_motivo_codigo === 'corte_automatico') && (
-                          <MdSchedule
+                          <TbClockStop
                             className="auto-close-icon"
-                            title="Cerrado automáticamente a las 21:00 hs"
+                            title="Cerrado automáticamente por el sistema"
                             style={{ cursor: 'pointer' }}
                           />
                         )}
