@@ -3,7 +3,8 @@ import { logger } from './core/logger.js';
 import { sequelize } from './core/db.js';
 import { initModels } from './models/registry.js';
 import { startRevocationCleanupJob } from './modules/auth/revocationCleanup.js';
-import { storage } from './infra/storage/index.js';   
+import { startAutoCloseAttendanceJob } from './modules/asistencia/jobs/autoCloseAttendance.js';
+import { storage } from './infra/storage/index.js';
 
 
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ const PORT = process.env.PORT || 3000;
     }
 
     startRevocationCleanupJob();
+    startAutoCloseAttendanceJob();
     app.listen(PORT, () => logger.info(`API on http://localhost:${PORT}`));
   } catch (err) {
     logger.error({ err }, 'Startup failed');

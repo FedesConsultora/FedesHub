@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { formatDuration } from './timeline.utils'
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import { MdSchedule } from 'react-icons/md'
 
 // ... (helpers)
 const minsFromMidnight = (iso) => {
@@ -137,14 +138,19 @@ export default function TimelineDay({ payload, startHour = 5 }) {
                     const s = minsFromMidnight(b.start)
                     const e = minsFromMidnight(b.end)
                     const w = Math.max(0, e - s)
+                    const isAutoClosed = b.cierre_motivo_codigo === 'corte_automatico'
+
                     return (
                       <div
                         key={b.id}
-                        className={`block ${b.abierto ? 'open' : ''}`}
+                        className={`block ${b.abierto ? 'open' : ''} ${isAutoClosed ? 'auto-closed' : ''}`}
                         style={{ left: `${pctOfDay(s)}%`, width: `${pctOfDay(w)}%` }}
-                        title={`${fmtRange(b.start, b.end)}${b.abierto ? ' · abierto' : ''}`}
+                        title={`${fmtRange(b.start, b.end)}${b.abierto ? ' · abierto' : ''}${isAutoClosed ? ' · Cerrado automáticamente a las 21:00 (olvido de pausa)' : ''}`}
                       >
-                        <span className="label">{fmtRange(b.start, b.end)}{b.abierto ? ' •' : ''}</span>
+                        <span className="label">
+                          {fmtRange(b.start, b.end)}{b.abierto ? ' •' : ''}
+                          {isAutoClosed && <MdSchedule className="auto-close-icon" />}
+                        </span>
                       </div>
                     )
                   })}

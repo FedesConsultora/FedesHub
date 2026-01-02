@@ -4,9 +4,10 @@ import {
   listRegistros, countRegistros, getRegistroById, getOpenByFeder,
   createCheckIn, updateCheckOut, adjustRegistro, forceCloseOpenForFeder,
   toggleForFeder, resumenPorPeriodo, ensureFederExists, getFederByUser,
-  getModalidadBy, getBulkOpenStatus, timelineRangoRepo
+  getModalidadBy, getBulkOpenStatus, timelineRangoRepo, getOverdueOpenRecords
 } from '../repositories/asistencia.repo.js';
 import { startOfDay, endOfDay } from 'date-fns';
+import { logger } from '../../../core/logger.js';
 
 const resolveModalidadId = async ({ modalidad_id, modalidad_codigo }) => {
   if (modalidad_id) return modalidad_id;
@@ -151,7 +152,8 @@ export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min =
         start: s.toISOString(),
         end: e.toISOString(),
         minutes,
-        abierto: !r.check_out_at
+        abierto: !r.check_out_at,
+        cierre_motivo_codigo: r.cierre_motivo_codigo
       });
     }
   }
@@ -207,4 +209,71 @@ export const svcBulkStatus = async (federIds = []) => {
     };
   }
   return result;
+};
+
+// ================== Auto-close overdue records ==================
+/**
+ * Cierra automáticamente registros que deberían haberse cerrado a las 21:00
+ * Se ejecuta periódicamente desde el job
+ */
+export const svcAutoCloseOverdueRecords = async () => {
+  try {
+    // Obtener motivo de cierre y origen automático
+    const motivo = await getCierreMotivoBy({ codigo: 'corte_automatico' });
+    const origen = await getOrigenBy({ codigo: 'auto' });
+
+    if (!motivo) {
+      logger.warn('Auto-close: motivo "corte_automatico" no encontrado en catálogo');
+      return { closed: 0, errors: 0 };
+    }
+    if (!origen) {
+      logger.warn('Auto-close: origen "auto" no encontrado en catálogo');
+      return { closed: 0, errors: 0 };
+    }
+
+    // Obtener registros que necesitan cerrarse
+    const overdueRecords = await getOverdueOpenRecords();
+
+    if (overdueRecords.length === 0) {
+      logger.debug('Auto-close: no hay registros para cerrar');
+      return { closed: 0, errors: 0 };
+    }
+
+    logger.info({ count: overdueRecords.length }, 'Auto-close: procesando registros vencidos');
+
+    let closed = 0;
+    let errors = 0;
+
+    // Cerrar cada registro a las 21:00 de su día de check-in
+    for (const record of overdueRecords) {
+      try {
+        await updateCheckOut(record.id, {
+          check_out_at: record.cutoff_time,
+          check_out_origen_id: origen.id,
+          cierre_motivo_id: motivo.id,
+          comentario: 'Cerrado automáticamente por el sistema'
+        });
+        closed++;
+        logger.debug({
+          registro_id: record.id,
+          feder_id: record.feder_id,
+          check_in_at: record.check_in_at,
+          check_out_at: record.cutoff_time
+        }, 'Auto-close: registro cerrado');
+      } catch (err) {
+        errors++;
+        logger.error({
+          err,
+          registro_id: record.id,
+          feder_id: record.feder_id
+        }, 'Auto-close: error al cerrar registro');
+      }
+    }
+
+    logger.info({ closed, errors }, 'Auto-close: proceso completado');
+    return { closed, errors };
+  } catch (err) {
+    logger.error({ err }, 'Auto-close: error general en el proceso');
+    throw err;
+  }
 };
