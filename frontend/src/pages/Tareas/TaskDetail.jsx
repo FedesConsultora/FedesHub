@@ -24,6 +24,7 @@ import { useUploadContext } from '../../context/UploadProvider.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import ContentGallery from '../../components/tasks/ContentGallery.jsx'
 import ImageFullscreen from '../../components/common/ImageFullscreen.jsx'
+import GlobalLoader from '../../components/loader/GlobalLoader.jsx'
 import './task-detail.scss'
 
 /* === helpers normalization === */
@@ -92,11 +93,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
 
-  useEffect(() => {
-    if (!task || !catalog) showLoader()
-    else hideLoader()
-    return () => { if (!task || !catalog) hideLoader() }
-  }, [task, catalog, showLoader, hideLoader])
+  const isInitialLoading = !task || !catalog;
   const [tab, setTab] = useState('desc')
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
@@ -478,7 +475,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }
 
-  if (!task) return null
+  if (isInitialLoading) {
+    return (
+      <div className="taskDetail">
+        <GlobalLoader isLoading={true} size={120} />
+      </div>
+    )
+  }
 
   // normalización
   const estadoCodigo = task?.estado?.codigo || task?.estado_codigo || 'pendiente'

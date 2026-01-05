@@ -52,11 +52,16 @@ $text: $fh-text;
 
 /* ====== Task Detail ====== */
 .taskDetail {
+  position: relative;
   color: $text;
   padding: 1rem;
-  max-width: 100%;
-  overflow-x: hidden;
+  width: 100%;
+  min-height: 100%;
+  /* Ocupa todo el alto del panel */
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
+  overflow-x: hidden;
 
   /* ===== Estados + botón Volver ===== */
   .stateRow {
