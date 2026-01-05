@@ -80,6 +80,8 @@ function CloseAsignModal({ member, onSave, close }) {
 
 // --- Main Component ---
 
+import { useLoading } from '../../context/LoadingContext'
+
 export default function CelulaDetailPage() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -87,6 +89,7 @@ export default function CelulaDetailPage() {
     const toast = useToast()
     const modal = useModal()
     const { roles, hasPerm } = useAuthCtx() || {}
+    const { showLoader, hideLoader } = useLoading()
 
     const [celula, setCelula] = useState(null)
     const [catalog, setCatalog] = useState({ estados: [], roles: [] })
@@ -94,6 +97,12 @@ export default function CelulaDetailPage() {
     const [allClientes, setAllClientes] = useState([])
     const [celulaClientes, setCelulaClientes] = useState([])
     const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (loading) showLoader()
+        else hideLoader()
+        return () => { if (loading) hideLoader() }
+    }, [loading, showLoader, hideLoader])
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -272,7 +281,7 @@ export default function CelulaDetailPage() {
         })
     }
 
-    if (loading && !celula) return <div className="loadingPage">Cargando célula...</div>
+    if (loading && !celula) return null
     if (!celula) return <div className="errorPage">No se encontró la célula</div>
 
     const activeMembers = celula.asignaciones?.filter(a => !a.hasta || a.hasta > new Date().toISOString().split('T')[0]) || []

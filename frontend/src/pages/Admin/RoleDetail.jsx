@@ -4,10 +4,13 @@ import * as A from '../../api/auth'
 import './Admin.scss'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 export default function RoleDetail() {
   document.title = 'FedesHub — Permisos de rol'
   const { id } = useParams()
   const toast = useToast()
+  const { showLoader, hideLoader } = useLoading()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -18,6 +21,12 @@ export default function RoleDetail() {
   const [roleTypes, setRoleTypes] = useState([])
 
   useEffect(() => {
+    if (loading) showLoader()
+    else hideLoader()
+    return () => { if (loading) hideLoader() }
+  }, [loading, showLoader, hideLoader])
+
+  useEffect(() => {
     const load = async () => {
       setLoading(true); setError(null)
       try {
@@ -26,7 +35,7 @@ export default function RoleDetail() {
         ] = await Promise.all([
           A.adminGetRole(id), A.adminListPermissions(), A.adminListModules(), A.adminListActions(), A.adminListRoleTypes()
         ])
-        setRole(r); setPerms(allPerms||[]); setMods(m||[]); setActs(a||[]); setRoleTypes(rt||[])
+        setRole(r); setPerms(allPerms || []); setMods(m || []); setActs(a || []); setRoleTypes(rt || [])
       } catch (e) { setError(e?.fh?.message || 'Error cargando rol') }
       finally { setLoading(false) }
     }
@@ -39,44 +48,44 @@ export default function RoleDetail() {
   }, [role, roleTypes])
   const isSystem = roleTypeCode === 'system'
 
-  const selectedById = useMemo(() => new Set((role?.permisos||[]).map(p => p.id)), [role])
-  const permByKey = useMemo(() => { const o={}; for (const p of perms) o[`${p.modulo}.${p.accion}`]=p; return o }, [perms])
+  const selectedById = useMemo(() => new Set((role?.permisos || []).map(p => p.id)), [role])
+  const permByKey = useMemo(() => { const o = {}; for (const p of perms) o[`${p.modulo}.${p.accion}`] = p; return o }, [perms])
 
-  const toggle = (m,a) => {
+  const toggle = (m, a) => {
     if (isSystem) return
     const p = permByKey[`${m}.${a}`]; if (!p) return
     const isSel = selectedById.has(p.id)
-    const next = isSel ? (role.permisos||[]).filter(x=>x.id!==p.id) : [...(role.permisos||[]), p]
+    const next = isSel ? (role.permisos || []).filter(x => x.id !== p.id) : [...(role.permisos || []), p]
     setRole(r => ({ ...r, permisos: next }))
   }
 
   const save = async () => {
     if (isSystem) return
     try {
-      const ids = (role.permisos||[]).map(p=>p.id)
+      const ids = (role.permisos || []).map(p => p.id)
       await A.adminSetRolePermissions(role.id, ids)
       toast?.success('Permisos guardados')
-    } catch(e){ toast?.error(e?.fh?.message || 'No se pudo guardar') }
+    } catch (e) { toast?.error(e?.fh?.message || 'No se pudo guardar') }
   }
 
-  if (loading) return <section className="card">Cargando…</section>
-  if (error)   return <section className="card"><div className="error">{error}</div></section>
-  if (!role)   return null
+  if (loading) return null
+  if (error) return <section className="card"><div className="error">{error}</div></section>
+  if (!role) return null
 
   return (
-    <section style={{display:'flex', flexDirection:'column', minHeight:'60dvh'}}>
-      <div className="sticky" style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 6px'}}>
+    <section style={{ display: 'flex', flexDirection: 'column', minHeight: '60dvh' }}>
+      <div className="sticky" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px' }}>
         <div>
-          <h2 style={{margin:0}}>Permisos del rol: {role.nombre}</h2>
+          <h2 style={{ margin: 0 }}>Permisos del rol: {role.nombre}</h2>
           {isSystem && <div className="hint">Rol del sistema — permisos bloqueados</div>}
         </div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{ display: 'flex', gap: 8 }}>
           <Link to="/admin/roles"><button>← Volver</button></Link>
-          <button className="primary" disabled={isSystem} onClick={save} title={isSystem?'Rol del sistema: no editable':''}>Guardar</button>
+          <button className="primary" disabled={isSystem} onClick={save} title={isSystem ? 'Rol del sistema: no editable' : ''}>Guardar</button>
         </div>
       </div>
 
-      {role.descripcion && <div className="success" style={{marginTop:8}}>{role.descripcion}</div>}
+      {role.descripcion && <div className="success" style={{ marginTop: 8 }}>{role.descripcion}</div>}
 
       <div className="permGrid" style={{ gridTemplateColumns: `160px repeat(${acts.length}, 96px)` }}>
         <div className="pgHead" />
@@ -98,8 +107,8 @@ function FragmentRow({ m, acts, selectedById, permByKey, toggle, disabled }) {
         return (
           <button
             key={a.codigo}
-            onClick={()=>!notDefined && !disabled && toggle(m.codigo, a.codigo)}
-            className={`pgCell ${on ? 'on': ''} ${notDefined ? 'disabled' : ''}`}
+            onClick={() => !notDefined && !disabled && toggle(m.codigo, a.codigo)}
+            className={`pgCell ${on ? 'on' : ''} ${notDefined ? 'disabled' : ''}`}
             title={notDefined ? 'No existe permiso definido' : `${m.codigo}.${a.codigo}`}
             disabled={notDefined || disabled}
           />

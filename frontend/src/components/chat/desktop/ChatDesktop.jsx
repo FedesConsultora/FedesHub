@@ -14,6 +14,7 @@ import { chatApi } from '../../../api/chat'
 import { ChatActionCtx } from '../shared/context'
 import { useRealtime } from '../../../realtime/RealtimeProvider'
 import TypingIndicator from '../shared/TypingIndicator'
+
 import { displayName } from '../../../utils/people'
 import '../shared/TypingIndicator.scss'
 import './ChatDesktop.scss'
@@ -208,13 +209,16 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
             />
             <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
               <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
-                <Timeline
-                  rows={msgs.data || []}
-                  loading={msgs.isLoading}
-                  canal_id={cid}
-                  my_user_id={myId}
-                  members={membersFull}
-                />
+                <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+                  <Timeline
+                    rows={msgs.data || []}
+                    loading={msgs.isLoading}
+                    canal_id={cid}
+                    my_user_id={myId}
+                    members={membersFull}
+                  />
+                </div>
 
                 <div className="composeArea">
                   <TypingIndicator canal_id={cid} my_user_id={myId} members={membersFull} />

@@ -16,16 +16,25 @@ import ClienteStatusCard from '../../components/clients/ClienteStatusCard'
 import AttendanceBadge from '../../components/common/AttendanceBadge'
 import './clienteDetail.scss'
 
+import { useLoading } from '../../context/LoadingContext'
+
 export default function ClienteDetailPage() {
     const { id } = useParams()
     const navigate = useNavigate()
     const toast = useToast()
     const modal = useModal()
     const { roles } = useAuthCtx() || {}
+    const { showLoader, hideLoader } = useLoading()
 
     const [cliente, setCliente] = useState(null)
     const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [] })
     const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (loading) showLoader()
+        else hideLoader()
+        return () => { if (loading) hideLoader() }
+    }, [loading, showLoader, hideLoader])
     const [error, setError] = useState(null)
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -140,7 +149,7 @@ export default function ClienteDetailPage() {
         }
     }
 
-    if (loading) return <div className="ClienteDetailPage"><div className="loading">Cargando cliente...</div></div>
+    if (loading && !cliente) return null
     if (error) return <div className="ClienteDetailPage"><div className="error">{error}</div></div>
     if (!cliente) return null
 

@@ -3,11 +3,19 @@ import { tareasApi } from '../../../api/tareas';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { FiStar, FiSlash } from 'react-icons/fi';
 import './favorites-view.scss';
+import { useLoading } from '../../../context/LoadingContext.jsx';
 
 export default function FavoritesView({ onRemoveFavorite }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const toast = useToast();
+    const { showLoader, hideLoader } = useLoading();
+
+    useEffect(() => {
+        if (loading) showLoader();
+        else hideLoader();
+        return () => { if (loading) hideLoader(); }
+    }, [loading, showLoader, hideLoader]);
 
     useEffect(() => {
         loadFavorites();
@@ -39,7 +47,7 @@ export default function FavoritesView({ onRemoveFavorite }) {
         }
     };
 
-    if (loading) return <div className="favorites-view-loading">Cargando destacados...</div>;
+    if (loading) return null;
 
     return (
         <div className="FavoritesView">

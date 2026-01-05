@@ -3,11 +3,19 @@ import { tareasApi } from '../../../api/tareas';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { FiRefreshCw, FiTrash2, FiClock } from 'react-icons/fi';
 import './trash-view.scss';
+import { useLoading } from '../../../context/LoadingContext.jsx';
 
 export default function TrashView({ onRestore }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const toast = useToast();
+    const { showLoader, hideLoader } = useLoading();
+
+    useEffect(() => {
+        if (loading) showLoader();
+        else hideLoader();
+        return () => { if (loading) hideLoader(); }
+    }, [loading, showLoader, hideLoader]);
 
     useEffect(() => {
         loadTrash();
@@ -50,7 +58,7 @@ export default function TrashView({ onRestore }) {
         return diffDays > 0 ? diffDays : 0;
     };
 
-    if (loading) return <div className="trash-view-loading">Cargando papelera...</div>;
+    if (loading) return null;
 
     return (
         <div className="TrashView">

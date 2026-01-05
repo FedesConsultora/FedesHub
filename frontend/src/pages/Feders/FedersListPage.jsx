@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react'
+import { useLoading } from '../../context/LoadingContext.jsx'
 import useFeders from '../../hooks/useFeders'
 import PersonTag from '../../components/PersonTag.jsx'
 import { FiSearch, FiFilter, FiRefreshCw, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -6,6 +8,16 @@ import './FedersListPage.scss'
 export default function FedersListPage() {
   document.title = 'FedesHub — Feders (Listado)'
   const { rows, total, loading, error, params, setParams, page, pages, setPage, refetch } = useFeders()
+  const { showLoader, hideLoader } = useLoading()
+
+  useEffect(() => {
+    if (loading) showLoader()
+    else hideLoader()
+
+    return () => {
+      if (loading) hideLoader()
+    }
+  }, [loading, showLoader, hideLoader])
 
   return (
     <section className="fhFedersList">
@@ -39,7 +51,6 @@ export default function FedersListPage() {
       </header>
 
       {error && <div className="error">Error cargando listado.</div>}
-      {loading && <div className="loading">Cargando…</div>}
 
       {!loading && !error && (
         <>

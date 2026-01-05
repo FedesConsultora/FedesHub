@@ -146,67 +146,87 @@ export default function AsistenciaPage() {
   )
 }
 
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 function TimelineWrapper({ fecha, scope, q = '', view, onNavigate }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { showLoader, hideLoader } = useLoading()
 
   useEffect(() => {
-    let alive = true
-    const fetch = (isFirst = false) => {
-      if (!alive) return
-      if (isFirst) setLoading(true)
-      setError(null)
+    let alive = true;
+    let loaderActive = false;
 
-      const range = view === 'day' ? null : getRange(fecha, view)
-      const fn =
-        view === 'day'
-          ? scope === 'me'
-            ? asistenciaApi.me.timelineDia
-            : asistenciaApi.timelineDia
-          : scope === 'me'
-            ? asistenciaApi.me.timelineRango
-            : asistenciaApi.timelineRango
-
-      const params =
-        view === 'day'
-          ? { fecha }
-          : { desde: range.from, hasta: range.to, q }
-
-      if (typeof fn !== 'function') {
-        alive && setError('Vista no disponible aún')
-        alive && setLoading(false)
-        return
+    const startLoading = () => {
+      if (!loaderActive) {
+        showLoader();
+        loaderActive = true;
       }
+    };
 
-      fn(params)
-        .then(d => {
-          if (!alive) return
-          if (Array.isArray(d)) {
-            setData({ items: d })
-          } else {
-            setData(d)
-          }
-        })
-        .catch(e => {
-          if (!alive) return
-          const status = e?.response?.status
-          const msg = e?.response?.data?.message || e.message
-          setError(status ? `${status} · ${msg}` : msg)
-        })
-        .finally(() => alive && setLoading(false))
-    }
+    const stopLoading = () => {
+      if (loaderActive) {
+        hideLoader();
+        loaderActive = false;
+      }
+    };
 
-    fetch(true)
-    const poll = setInterval(fetch, 30000) // Re-fetch every 30s
+    const fetch = async (isFirst = false) => {
+      if (!alive) return;
+
+      if (isFirst) {
+        setLoading(true);
+        startLoading();
+      }
+      setError(null);
+
+      try {
+        const range = view === 'day' ? null : getRange(fecha, view);
+        const fn = view === 'day'
+          ? (scope === 'me' ? asistenciaApi.me.timelineDia : asistenciaApi.timelineDia)
+          : (scope === 'me' ? asistenciaApi.me.timelineRango : asistenciaApi.timelineRango);
+
+        const params = view === 'day'
+          ? { fecha }
+          : { desde: range.from, hasta: range.to, q };
+
+        if (typeof fn !== 'function') {
+          throw new Error('Vista no disponible aún');
+        }
+
+        const d = await fn(params);
+        if (!alive) return;
+
+        if (Array.isArray(d)) {
+          setData({ items: d });
+        } else {
+          setData(d);
+        }
+      } catch (e) {
+        if (!alive) return;
+        const status = e?.response?.status;
+        const msg = e?.response?.data?.message || e.message;
+        setError(status ? `${status} · ${msg}` : msg);
+      } finally {
+        if (isFirst) {
+          if (alive) setLoading(false);
+          stopLoading();
+        }
+      }
+    };
+
+    fetch(true);
+    const poll = setInterval(() => fetch(false), 30000);
 
     return () => {
-      alive = false
-      clearInterval(poll)
-    }
-  }, [fecha, scope, q, view])
+      alive = false;
+      clearInterval(poll);
+      stopLoading();
+    };
+  }, [fecha, scope, q, view, showLoader, hideLoader]);
 
-  if (loading) return <div className="fh-skel">Cargando…</div>
+  if (loading && !data) return null
   if (error) return <div className="fh-err">{error}</div>
   if (!data?.items?.length) return <div className="fh-empty">Sin registros.</div>
 

@@ -13,6 +13,7 @@ import BancosSection from './BancosSection.jsx'
 import EmergenciasSection from './EmergenciasSection.jsx'
 import ModalidadDiaSection from './ModalidadDiaSection.jsx'
 import ProfileTabs from './ProfileTabs.jsx'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './FederProfileDrawer.scss'
 
 export default function FederProfileDrawer({
@@ -74,7 +75,7 @@ export default function FederProfileDrawer({
   }
 
   if (!open) return null
-  if (loading) return <div className="pfd-loading">Cargando...</div>
+  if (loading && !feder) return <div className={'pfWrap' + (mounted ? ' open' : '') + (closing ? ' closing' : '')}><div className="pfBackdrop" /><aside className="pfPanel" style={{ position: 'relative' }}><GlobalLoader size={120} /></aside></div>
   if (!feder) return <div className="pfd-error">No se pudo cargar la información.</div>
 
   // Definición de pestañas con filtrado por rol
@@ -128,9 +129,9 @@ export default function FederProfileDrawer({
           <button className="close" onClick={handleClose} aria-label="Cerrar"><FaXmark /></button>
         </header>
 
-        <div className="pfBody">
-          {loading || !feder ? (
-            <div className="muted" style={{ padding: '2rem' }}>Cargando datos del perfil…</div>
+        <div className="pfBody" style={{ position: 'relative', minHeight: '200px' }}>
+          {loading && !feder ? (
+            <GlobalLoader size={100} />
           ) : (
             <>
               <HeaderBasic

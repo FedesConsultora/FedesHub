@@ -24,6 +24,8 @@
     "emoji-picker-react": "^4.13.3",
     "firebase": "^10.14.1",
     "lexical": "^0.38.2",
+    "lottie-react": "^2.4.1",
+    "lottie-web": "^5.13.0",
     "react": "^19.1.1",
     "react-color": "^2.19.3",
     "react-dom": "^19.1.1",

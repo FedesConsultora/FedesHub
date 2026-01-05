@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { FiMessageSquare, FiUser, FiMail, FiPhone } from 'react-icons/fi'
 import Avatar from '../../Avatar'
 import useFederDetail from '../../../hooks/useFederDetail'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './ProfileQuickView.scss'
 
 export default function ProfileQuickView({ federId, anchorRect, onClose, onViewFull, onMessage }) {
@@ -46,11 +47,8 @@ export default function ProfileQuickView({ federId, anchorRect, onClose, onViewF
 
     if (!feder && loading) {
         return createPortal(
-            <div className="pfQuickView loading" style={{ top: pos.top, left: pos.left }}>
-                <div className="qvLoading">
-                    <div className="qvSpinner" />
-                    <span>Cargando perfil...</span>
-                </div>
+            <div className="pfQuickView loading" style={{ top: pos.top, left: pos.left, position: 'fixed', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '150px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', backdropFilter: 'blur(4px)' }}>
+                <GlobalLoader isLoading={loading} size={60} />
             </div>,
             document.body
         )

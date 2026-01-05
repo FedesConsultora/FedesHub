@@ -127,7 +127,6 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
 
   return (
     <div className="chat-timeline">
-      {loading && <div className="loading">Cargando…</div>}
       {!loading && !rows?.length && <div className="empty">No hay mensajes</div>}
 
       {groups.map(({ k, label, items }) => (

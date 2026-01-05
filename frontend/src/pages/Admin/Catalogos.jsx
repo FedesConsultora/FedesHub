@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react'
+import { useLoading } from '../../context/LoadingContext.jsx'
 import * as A from '../../api/auth'
 import './Admin.scss'
-import './catalogos.page.scss'   // ⬅️ estilos específicos
+import './catalogos.page.scss'
 
-export default function AdminCatalogos(){
+export default function AdminCatalogos() {
   document.title = 'FedesHub — Catálogos'
   const [mods, setMods] = useState([])
   const [acts, setActs] = useState([])
   const [roleTypes, setRoleTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { showLoader, hideLoader } = useLoading()
+
+  useEffect(() => {
+    if (loading) showLoader()
+    else hideLoader()
+    return () => { if (loading) hideLoader() }
+  }, [loading, showLoader, hideLoader])
 
   useEffect(() => {
     const load = async () => {
@@ -18,15 +26,15 @@ export default function AdminCatalogos(){
         const [{ data: m }, { data: a }, { data: rt }] = await Promise.all([
           A.adminListModules(), A.adminListActions(), A.adminListRoleTypes()
         ])
-        setMods(m||[]); setActs(a||[]); setRoleTypes(rt||[])
+        setMods(m || []); setActs(a || []); setRoleTypes(rt || [])
       } catch (e) { setError(e?.fh?.message || 'Error cargando catálogos') }
       finally { setLoading(false) }
     }
     load()
   }, [])
 
-  if (loading) return <section className="card adminCard">Cargando…</section>
-  if (error)   return <section className="card adminCard"><div className="error">{error}</div></section>
+  if (loading) return null
+  if (error) return <section className="card adminCard"><div className="error">{error}</div></section>
 
   return (
     <section className="catalogos-page">

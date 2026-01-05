@@ -77,17 +77,26 @@ const formatFileSize = (bytes) => {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const { id: urlId } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
   const toast = useToast()
+  const { showLoader, hideLoader } = useLoading()
 
   // Use taskId prop if provided, otherwise use id from URL params
   const id = taskId || urlId
 
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
+
+  useEffect(() => {
+    if (!task || !catalog) showLoader()
+    else hideLoader()
+    return () => { if (!task || !catalog) hideLoader() }
+  }, [task, catalog, showLoader, hideLoader])
   const [tab, setTab] = useState('desc')
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
@@ -469,7 +478,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }
 
-  if (!task) return <div className="taskDetail"><div className="card">Cargando…</div></div>
+  if (!task) return null
 
   // normalización
   const estadoCodigo = task?.estado?.codigo || task?.estado_codigo || 'pendiente'

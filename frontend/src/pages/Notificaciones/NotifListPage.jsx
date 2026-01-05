@@ -6,6 +6,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { notifApi } from '../../api/notificaciones'
 import './NotifListPage.scss'
 
+import { useEffect } from 'react'
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 export default function NotifListPage({ buzonOverride }) {
   const params = useParams()
   const buzon = buzonOverride ?? params?.buzon // undefined = todas
@@ -31,6 +34,13 @@ export default function NotifListPage({ buzonOverride }) {
     refetchOnWindowFocus: false
   })
 
+  const { showLoader, hideLoader } = useLoading()
+  useEffect(() => {
+    if (isLoading) showLoader()
+    else hideLoader()
+    return () => { if (isLoading) hideLoader() }
+  }, [isLoading, showLoader, hideLoader])
+
   const rows = data?.rows || []
   const total = data?.total || 0
   const qc = useQueryClient()
@@ -55,7 +65,7 @@ export default function NotifListPage({ buzonOverride }) {
         />
       </div>
 
-      {isLoading && <div className="fh-skel">Cargando…</div>}
+
       {isError && <div className="fh-err">Error cargando.</div>}
       {!isLoading && !isError && rows.length === 0 && <div className="fh-empty">Sin resultados.</div>}
 
