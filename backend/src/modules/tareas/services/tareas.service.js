@@ -377,7 +377,7 @@ export const getTaskById = async (id, currentUser) => {
                   ),
                   'adjuntos', (
                     SELECT COALESCE(json_agg(json_build_object(
-                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url
+                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'drive_file_id',a.drive_file_id
                     )), '[]'::json)
                     FROM "TareaAdjunto" a
                     WHERE a.comentario_id = cm.id
@@ -831,7 +831,7 @@ const listComentarios = async (tarea_id, currentUser) =>
 
       COALESCE((
         SELECT json_agg(json_build_object(
-          'id', a.id, 'nombre', a.nombre, 'mime', a.mime, 'drive_url', a.drive_url
+          'id', a.id, 'nombre', a.nombre, 'mime', a.mime, 'drive_url', a.drive_url, 'drive_file_id', a.drive_file_id
         ))
         FROM "TareaAdjunto" a
         WHERE a.comentario_id = cm.id

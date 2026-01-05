@@ -158,8 +158,8 @@ export default function TaskComments({ taskId, catalog }) {
     listRef.current.scrollTop = listRef.current.scrollHeight
   }, [sorted.length])
 
-  const handleSend = async ({ contenido, adjuntos, menciones }) => {
-    await add({ contenido, adjuntos, menciones, reply_to_id: replyTo?.id || null })
+  const handleSend = async ({ contenido, adjuntos, menciones, files }) => {
+    await add({ contenido, adjuntos, menciones, files, reply_to_id: replyTo?.id || null })
     setReplyTo(null)
   }
 

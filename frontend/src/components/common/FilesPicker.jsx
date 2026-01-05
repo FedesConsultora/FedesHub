@@ -10,7 +10,7 @@ export default function FilesPicker({
   listenGlobal = false, // ⬅️ por defecto NO escucha window.paste
   showPreviews = false,
   maxTotalMB = 25
-}){
+}) {
   const inputRef = useRef(null)
   const [over, setOver] = useState(false)
 
@@ -24,7 +24,7 @@ export default function FilesPicker({
     }
     onChange?.(next)
   }
-  const removeAt = (idx) => onChange?.(files.filter((_,i)=>i!==idx))
+  const removeAt = (idx) => onChange?.(files.filter((_, i) => i !== idx))
 
   // ⬇️ Sólo engancha "window.paste" si lo pedís explícitamente
   useEffect(() => {
@@ -35,16 +35,16 @@ export default function FilesPicker({
   }, [listenGlobal, onPaste])
 
   return (
-    <div className={`uploader ${over?'is-over':''}`}
-      onDragOver={(e)=>{ e.preventDefault(); setOver(true) }}
-      onDragLeave={()=>setOver(false)}
-      onDrop={(e)=>{ e.preventDefault(); setOver(false); add(e.dataTransfer.files) }}
+    <div className={`uploader ${over ? 'is-over' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setOver(true) }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => { e.preventDefault(); setOver(false); add(e.dataTransfer.files) }}
     >
       <div className="pickRow">
-        <MdOutlineUploadFile size={36} color={'#1A73E8'} onClick={()=>inputRef.current?.click()} style={{cursor:'pointer'}}/>
-        <input ref={inputRef} type="file" multiple hidden onChange={(e)=> add(e.target.files)} />
+        <MdOutlineUploadFile size={36} color={'#1A73E8'} onClick={() => inputRef.current?.click()} style={{ cursor: 'pointer' }} />
+        <input ref={inputRef} type="file" multiple hidden onChange={(e) => add(e.target.files)} />
         <span className="hint">Soltá aquí o elegí archivos. (Imágenes, PDF, docs…)</span>
-        {!!files.length && <span className="muted" style={{marginLeft:'auto'}}>{bytesToMB(sizeOf(files)).toFixed(1)} MB totales</span>}
+        {!!files.length && <span className="muted" style={{ marginLeft: 'auto' }}>{bytesToMB(sizeOf(files)).toFixed(1)} MB totales</span>}
       </div>
       {!!files.length && (
         <div className="list">
@@ -53,12 +53,12 @@ export default function FilesPicker({
             const url = isImg && showPreviews ? URL.createObjectURL(f) : null
             return (
               <div className="fileItem" key={`${f.name}-${i}`}>
+                <button className="rm" onClick={() => removeAt(i)} title="Quitar">✕</button>
                 {isImg && showPreviews
-                  ? <img src={url} alt="" style={{height:36, width:36, objectFit:'cover', borderRadius:6, marginRight:6}} />
+                  ? <img src={url} alt="" style={{ height: 36, width: 36, objectFit: 'cover', borderRadius: 6, marginRight: 6 }} />
                   : <span className="material-symbols-outlined" aria-hidden>description</span>}
                 <span className="name">{f.name}</span>
                 <span className="muted">{niceSize(f.size)}</span>
-                <button className="rm" onClick={()=>removeAt(i)} title="Quitar">✕</button>
               </div>
             )
           })}
@@ -68,10 +68,10 @@ export default function FilesPicker({
   )
 }
 
-const sizeOf = (arr=[]) => arr.reduce((s,f)=>s+(f.size||0),0)
-const bytesToMB = (n)=> n/(1024**2)
-const niceSize = (n=0)=> n<1024?`${n} B`: n<1024**2?`${(n/1024).toFixed(1)} KB`: n<1024**3?`${(n/1024**2).toFixed(1)} MB`:`${(n/1024**3).toFixed(1)} GB`
-const dedupe = (arr=[]) => {
+const sizeOf = (arr = []) => arr.reduce((s, f) => s + (f.size || 0), 0)
+const bytesToMB = (n) => n / (1024 ** 2)
+const niceSize = (n = 0) => n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : n < 1024 ** 3 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${(n / 1024 ** 3).toFixed(1)} GB`
+const dedupe = (arr = []) => {
   const seen = new Set()
   return arr.filter(f => { const k = `${f.name}-${f.size}-${f.lastModified}`; if (seen.has(k)) return false; seen.add(k); return true })
 }

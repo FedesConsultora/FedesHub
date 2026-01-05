@@ -1,12 +1,25 @@
 import React from 'react'
 import { iconFor } from './icons'
 
-export default function AttachList({ items=[] }){
+export default function AttachList({ items = [] }) {
   return (
     <div className="attachList">
       {items.map(a => {
-        const isImg = a.mime?.startsWith('image/') && !!a.drive_url
+        const isImg = a.mime?.startsWith('image/') && (!!a.drive_url || !!a.drive_file_id)
         const Icon = iconFor(a.mime || '', a.nombre || '')
+
+        const getFileUrl = (file) => {
+          if (!file) return null
+          if (file.drive_file_id) return `/api/tareas/drive/image/${file.drive_file_id}`
+          if (file.drive_url?.includes('drive.google.com')) {
+            const match = file.drive_url.match(/\/file\/d\/([^\/]+)/)
+            if (match && match[1]) return `/api/tareas/drive/image/${match[1]}`
+          }
+          return file.drive_url || null
+        }
+
+        const url = getFileUrl(a)
+
         return (
           <a
             key={a.id || a.nombre}
@@ -17,7 +30,7 @@ export default function AttachList({ items=[] }){
             title={a.nombre}
           >
             {isImg
-              ? <img alt={a.nombre} src={a.drive_url} loading="lazy" referrerPolicy="no-referrer" />
+              ? <img alt={a.nombre} src={url} loading="lazy" referrerPolicy="no-referrer" />
               : <Icon className="ico" aria-hidden="true" />
             }
             <span className="name">{a.nombre}</span>

@@ -54,7 +54,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
 
     const menciones = Array.from(mencionesSet).filter(n => Number.isFinite(n))
 
-    await onSend({ contenido: msg, adjuntos: adj, menciones })
+    await onSend({ contenido: msg, adjuntos: adj, menciones, files })
     setMsg(''); setFiles([])
   }
 
