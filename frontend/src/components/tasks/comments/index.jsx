@@ -79,15 +79,22 @@ export default function TaskComments({ taskId, catalog }) {
     let html = escapeHtml(texto).replace(/\n/g, '<br/>')
 
     // 2) reemplazo de menciones conocidas por id → nombre
-    //    (primero por lista de menciones, luego fallback global @(\d+))
+    //    (primero por lista de menciones, luego fallback global @(\d+) o @[Nombre](id))
     const replaceIdWithName = (_, idStr) => {
       const f = fedById.get(Number(idStr))
-      if (!f) return _
+      if (!f) return `@${idStr}`
       const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       return `<span class="mentions">@${full}</span>`
     }
 
-    // por arreglo de menciones del backend
+    const replaceTokenWithName = (_, nameStr, idStr) => {
+      // Usamos el ID como fuente de verdad por si el nombre cambió
+      const f = fedById.get(Number(idStr))
+      const full = f ? `${f.nombre || ''} ${f.apellido || ''}`.trim() : nameStr
+      return `<span class="mentions">@${full}</span>`
+    }
+
+    // por arreglo de menciones del backend (legacy support)
     for (const fidRaw of (menciones || [])) {
       const fid = toNum(fidRaw)
       if (!fid) continue
@@ -95,7 +102,11 @@ export default function TaskComments({ taskId, catalog }) {
       const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       html = html.replace(new RegExp(`@${fid}\\b`, 'g'), `<span class="mentions">@${full}</span>`)
     }
-    // fallback: cualquier @(\d+)
+
+    // New format: @[Nombre](id)
+    html = html.replace(/@\[([^\]\n]+)\]\((\d+)\)/g, replaceTokenWithName)
+
+    // Fallback: cualquier @(\d+)
     html = html.replace(/@(\d+)\b/g, replaceIdWithName)
 
     // 3) linkify (después de menciones)
@@ -106,6 +117,13 @@ export default function TaskComments({ taskId, catalog }) {
 
   const renderReplyExcerpt = (texto = '') => {
     let html = escapeHtml(texto.replace(/\s+/g, ' '))
+    // Formato nuevo: @[Nombre](id)
+    html = html.replace(/@\[([^\]\n]+)\]\((\d+)\)/g, (_, name, id) => {
+      const f = fedById.get(toNum(id))
+      const full = f ? `${f.nombre || ''} ${f.apellido || ''}`.trim() : name
+      return `<span class="mentions">@${full}</span>`
+    })
+    // Formato viejo
     html = html.replace(/@(\d+)\b/g, (_, id) => {
       const f = fedById.get(toNum(id))
       if (!f) return `@${id}`
@@ -155,15 +173,16 @@ export default function TaskComments({ taskId, catalog }) {
       .format(new Date(iso))
 
   return (
-    <div className="card comments" style={{ marginTop: 10 }}>
+    <div className="card comments">
       <div className="cardHeader">
         <div className="header-info">
-          <div className="title">Conversación</div>
-          <div className="subtitle">
-            {loading ? 'Cargando…' : (sorted?.length ? `${sorted.length}` : 'Sin comentarios')}
-          </div>
+          <span className="title">Conversación</span>
+          {!loading && (
+            <span className="count-badge">
+              {sorted?.length || 0}
+            </span>
+          )}
         </div>
-
       </div>
 
       <div className="list" ref={listRef}>
@@ -172,7 +191,7 @@ export default function TaskComments({ taskId, catalog }) {
 
         {!loading && groups.map(g => (
           <div key={g.key}>
-            <div className="daySep">{dayLabel(g.items[0].created_at)}</div>
+            <div className="daySep"><span>{dayLabel(g.items[0].created_at)}</span></div>
             {g.items.map(c => {
               const author = [c.autor_nombre, c.autor_apellido].filter(Boolean).join(' ') || 'Feder'
 

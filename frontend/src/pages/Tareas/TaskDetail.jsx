@@ -922,20 +922,20 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             showAddButton={true}
           />
 
-          {/* Comments panel */}
-          {showCommentsPopup && (
-            <div className="comments"
-              style={{
-                position: 'absolute',
-                top: 42,
-                right: 0,
-                height: 'calc(100% - 48px)',
-                zIndex: 50
-              }}
-            >
-              <TaskComments taskId={Number(taskId)} catalog={catalog} />
-            </div>
-          )}
+          {/* Comments panel (kept mounted to persist draft) */}
+          <div className="comments-popup-container"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              height: '100%',
+              zIndex: 50,
+              display: showCommentsPopup ? 'block' : 'none',
+              pointerEvents: showCommentsPopup ? 'all' : 'none'
+            }}
+          >
+            <TaskComments taskId={Number(taskId)} catalog={catalog} />
+          </div>
         </div>
 
         {/* <TaskChecklist
