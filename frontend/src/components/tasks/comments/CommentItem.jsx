@@ -5,7 +5,7 @@ import AttachList from './AttachList'
 
 export default function CommentItem({
   c, author, isMine, timeAgo, fmtDateTime, onReply, renderContenido, renderReplyExcerpt
-}){
+}) {
   // debug opcional
   // console.log({ isMine, serverFlag: c.is_mine, author, c })
 
@@ -15,13 +15,9 @@ export default function CommentItem({
         <FaReply aria-hidden="true" />
       </button>
 
-      <div className="meta" title={fmtDateTime(c.created_at)}>
-        <b className="author">{author}</b>
-        
-        <span className="fecha">
-         <span className="muted">({timeAgo(c.created_at)})</span>
-        </span>
-      
+      <div className="author-row">
+        <span className="time-ago">{timeAgo(c.created_at)}</span>
+        <b className="author-name">{author}</b>
       </div>
 
       {c.reply_to && (

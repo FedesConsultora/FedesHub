@@ -1187,7 +1187,7 @@ const listCatalogos = async (customModels = models, scope = {}) => {
 
   const feders = await customModels.Feder.findAll({
     where: { is_activo: true },
-    attributes: ['id', 'user_id', 'nombre', 'apellido', 'celula_id'],
+    attributes: ['id', 'user_id', 'nombre', 'apellido', 'celula_id', 'avatar_url'],
     order: [['nombre', 'ASC'], ['apellido', 'ASC']]
   });
 

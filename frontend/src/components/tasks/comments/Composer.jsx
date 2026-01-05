@@ -18,10 +18,14 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
   const replyHtml = useMemo(() => {
     if (!replyTo) return null
     let html = escapeHtml((replyTo.contenido || '').replace(/\s+/g, ' '))
+    // Soporte para ambos formatos en el preview del reply
+    html = html.replace(/@\[([^\]]+)\]\((\d+)\)/g, (_, name, id) => {
+      const f = feders.find(ff => Number(ff.id) === Number(id))
+      return `<span class="mentions">@${f ? `${f.nombre || ''} ${f.apellido || ''}`.trim() : name}</span>`
+    })
     html = html.replace(/@(\d+)\b/g, (_, id) => {
       const f = feders.find(ff => Number(ff.id) === Number(id))
-      if (!f) return `@${id}`
-      return `<span class="mentions">@${(f.nombre || '') + ' ' + (f.apellido || '')}</span>`
+      return `<span class="mentions">@${f ? `${f.nombre || ''} ${f.apellido || ''}`.trim() : `@${id}`}</span>`
     })
     return { __html: ` — ${html}` }
   }, [replyTo, feders])
@@ -29,9 +33,26 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
   const handleSend = async () => {
     if (!msg.trim() && files.length === 0) return
     const adj = files.map(f => ({ nombre: f.name, mime: f.type || null, tamano_bytes: f.size || 0 }))
-    const menciones = Array.from(new Set(
-      [...(msg.matchAll(/@(\d+)\b/g))].map(m => Number(m[1]))
-    )).filter(n => Number.isFinite(n))
+
+    // Resolución de menciones (Legacy + Name Matching)
+    const mencionesSet = new Set()
+
+    // 1. Formato Legacy: @[Nombre](id) o @id
+    const legacyIds = Array.from(new Set([
+      ...[...(msg.matchAll(/@(\d+)\b/g))].map(m => Number(m[1])),
+      ...[...(msg.matchAll(/@\[([^\]]+)\]\((\d+)\)/g))].map(m => Number(m[2]))
+    ]))
+    legacyIds.forEach(id => mencionesSet.add(id))
+
+    // 2. Nuevo formato legible: @Nombre Apellido
+    feders.forEach(f => {
+      const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
+      if (full && msg.includes(`@${full}`)) {
+        mencionesSet.add(Number(f.id))
+      }
+    })
+
+    const menciones = Array.from(mencionesSet).filter(n => Number.isFinite(n))
 
     await onSend({ contenido: msg, adjuntos: adj, menciones })
     setMsg(''); setFiles([])
@@ -67,8 +88,10 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
         {replyTo && (
           <div className="replyingTo">
             <FaReply className="ico" aria-hidden="true" />
-            Respondiendo a <b>{[replyTo.autor_nombre, replyTo.autor_apellido].filter(Boolean).join(' ') || 'Feder'}</b>
-            <span className="muted" style={{ marginLeft: 6 }} dangerouslySetInnerHTML={replyHtml} />
+            <div className="replyExcerpt">
+              Respondiendo a <b>{[replyTo.autor_nombre, replyTo.autor_apellido].filter(Boolean).join(' ') || 'Feder'}</b>
+              <span className="muted" style={{ marginLeft: 6 }} dangerouslySetInnerHTML={replyHtml} />
+            </div>
             <button className="ghost" onClick={onCancelReply} title="Cancelar">✕</button>
           </div>
         )}
@@ -79,6 +102,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
             feders={feders}
             disabled={!canPost}
             // ⛔️ NO pasamos onPaste acá para que no duplique
+            onSend={handleSend}
             placeholder={'Escribir un mensaje… (mencioná con @nombre)'}
             classNames={{ root: 'mentionBox', textarea: 'mentionInput', popover: 'mentionPopover', item: 'mentionItem' }}
             inputRef={inputRef}
