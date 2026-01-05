@@ -48,9 +48,9 @@ const issueSession = async (res, { user, roles, permisos }) => {
   // CSRF doble cookie
   const csrf = crypto.randomBytes(24).toString('base64url');
 
-  res.cookie(COOKIE.ACCESS, access, { ...COOKIE_OPTS.base /*, maxAge: 15*60*1000 */ });
-  res.cookie(COOKIE.REFRESH, refresh, { ...COOKIE_OPTS.base /*, maxAge: 7*24*60*60*1000 */ });
-  res.cookie(COOKIE.CSRF, csrf, { ...COOKIE_OPTS.csrf });
+  res.cookie(COOKIE.ACCESS, access, { ...COOKIE_OPTS.base, maxAge: 15 * 60 * 1000 }); // 15 min
+  res.cookie(COOKIE.REFRESH, refresh, { ...COOKIE_OPTS.base, maxAge: 30 * 24 * 60 * 60 * 1000 }); // 30 días
+  res.cookie(COOKIE.CSRF, csrf, { ...COOKIE_OPTS.csrf, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
   return { access, refresh, csrf };
 };
