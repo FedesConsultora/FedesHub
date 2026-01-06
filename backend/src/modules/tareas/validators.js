@@ -158,6 +158,7 @@ export const commentCreateSchema = z.object({
   contenido: z.string().min(1).max(10000).or(z.literal('')).transform(v => v || ''), // permitimos vacío si hay adjuntos
   menciones: z.array(intId).optional().default([]),
   adjuntos: z.array(z.object({
+    id: z.number().int().optional(),
     nombre: z.string().min(1).max(255),
     mime: z.string().max(120).nullish(),
     tamano_bytes: z.coerce.number().int().nonnegative().optional(),

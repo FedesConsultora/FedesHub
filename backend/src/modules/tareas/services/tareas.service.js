@@ -892,8 +892,26 @@ const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, cont
       await models.TareaComentarioMencion.bulkCreate(rows, { transaction: t, ignoreDuplicates: true });
     }
     if (adjuntos?.length) {
-      const rows = adjuntos.map(a => ({ ...a, tarea_id, comentario_id: cm.id, subido_por_feder_id: feder_id }));
-      await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
+      const news = [];
+      const usedIds = [];
+      for (const a of adjuntos) {
+        if (a.id) {
+          usedIds.push(a.id);
+        } else {
+          news.push({ ...a, tarea_id, comentario_id: cm.id, subido_por_feder_id: feder_id });
+        }
+      }
+
+      if (news.length) {
+        await models.TareaAdjunto.bulkCreate(news, { transaction: t });
+      }
+      if (usedIds.length) {
+        // Vinculamos los que ya existían (subidos por postAdjuntoUpload)
+        await models.TareaAdjunto.update(
+          { comentario_id: cm.id },
+          { where: { id: usedIds, tarea_id }, transaction: t }
+        );
+      }
     }
     return cm;
   });

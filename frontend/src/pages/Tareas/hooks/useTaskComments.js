@@ -49,6 +49,7 @@ export function useTaskComments(taskId, cat) {
         const res = await tareasApi.uploadAdjuntos(taskId, files);
         if (res.created) {
           finalAdjuntos = res.created.map(a => ({
+            id: a.id,
             nombre: a.nombre,
             mime: a.mime,
             tamano_bytes: a.tamano_bytes,
