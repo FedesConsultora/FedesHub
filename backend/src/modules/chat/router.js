@@ -54,6 +54,8 @@ router.post('/channels/:id/leave', requireAuth, requirePermission('chat', 'updat
 
 // Mensajes (timeline del canal)
 router.get('/channels/:id/messages', requireAuth, requirePermission('chat', 'read'), chat.getMessages);
+router.get('/channels/:id/search', requireAuth, requirePermission('chat', 'read'), chat.searchMessages);
+router.get('/channels/:id/pins', requireAuth, requirePermission('chat', 'read'), chat.getPins);
 router.post(
   '/channels/:id/messages',
   requireAuth,

@@ -525,6 +525,63 @@
       border-color: rgba(255, 255, 255, 0.3);
     }
   }
+
+  .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f6ad55;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 800;
+  }
+
+  .pinRow {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateX(2px);
+    }
+
+    .meta {
+      flex: 1;
+      min-width: 0;
+
+      .name {
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+      }
+
+      .txtBody {
+        color: #fff;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+  }
 }
 
 @keyframes fadeIn {

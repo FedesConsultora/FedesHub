@@ -1,0 +1,134 @@
+// SearchMessages.scss
+.searchToggleBtn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: transparent;
+        color: #fff;
+    }
+}
+
+.searchMessages {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+
+    .searchInput {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 2px 6px;
+
+        .searchIcon {
+            color: #9ca3af;
+            font-size: 18px;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            color: #fff;
+            font-size: 12px;
+
+            &::placeholder {
+                color: #6b7280;
+            }
+        }
+
+        .closeBtn {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            display: grid;
+            place-items: center;
+
+            &:hover {
+                color: #fff;
+            }
+        }
+    }
+
+    .searchResults {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: #1f2937;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 100;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+
+        .loading,
+        .empty {
+            padding: 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .resultsList {
+            padding: 4px;
+        }
+
+        .resultItem {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .resultMeta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 6px;
+
+                .resultAuthor {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 13px;
+                }
+
+                .resultDate {
+                    font-size: 11px;
+                    color: #9ca3af;
+                }
+            }
+
+            .resultText {
+                color: #d1d5db;
+                font-size: 14px;
+                line-height: 1.4;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                -webkit-box-orient: vertical;
+            }
+        }
+    }
+}

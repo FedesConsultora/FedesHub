@@ -1,0 +1,109 @@
+@use '../../../styles/variables' as *;
+
+.pinnedBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba($fh-bg, 0.82);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    min-height: 48px;
+    animation: slideIn 0.3s ease-out;
+
+    &:hover {
+        background: rgba($fh-bg, 0.9);
+    }
+
+    .pinIcon {
+        color: #f6ad55;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .pinContent {
+        flex: 1;
+        min-width: 0;
+
+        .pinLabel {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #f6ad55;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .pinText {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+    }
+
+    .pinActions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .pinNav {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+
+            button {
+                background: transparent;
+                border: none;
+                color: rgba(255, 255, 255, 0.6);
+                padding: 6px;
+                cursor: pointer;
+                display: flex;
+                font-size: 1rem;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #fff;
+                }
+            }
+        }
+
+        .unpinBtn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            font-size: 1rem;
+            transition: all 0.2s;
+            border-radius: 50%;
+
+            &:hover {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+        }
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

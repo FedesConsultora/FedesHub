@@ -8,12 +8,13 @@ import Composer from '../shared/Composer'
 import Tabs from '../shared/Tabs'
 import ChannelCreateModal from './ChannelCreateModal'
 import ChannelHeader from './ChannelHeader'
-import { useMessages, useDmCandidates, useChatRealtime, useChannelMembers } from '../../../hooks/useChat'
+import { useMessages, useDmCandidates, useChatRealtime, useChannelMembers, useChannelPins } from '../../../hooks/useChat'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import { chatApi } from '../../../api/chat'
 import { ChatActionCtx } from '../shared/context'
 import { useRealtime } from '../../../realtime/RealtimeProvider'
 import TypingIndicator from '../shared/TypingIndicator'
+import PinnedBar from '../shared/PinnedBar'
 import { useLoading } from '../../../context/LoadingContext.jsx'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import { displayName } from '../../../utils/people'
@@ -97,6 +98,15 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
       setViewPersist('dms')
     }
   }, [cid, sel, dmItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSelectMessage = (msg) => {
+    const el = document.getElementById(`msg-${msg.id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('hi-lite')
+      setTimeout(() => el.classList.remove('hi-lite'), 2000)
+    }
+  }
 
   // ---- Badges por pestaña
   const anyUnread = (ids = []) => ids.some(id => (unreadByCanal?.[id] | 0) > 0 || (mentionByCanal?.[id] | 0) > 0)
@@ -208,7 +218,9 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
               onOpenChannel={(id) => { setCid(id); onOpen?.(id) }}
               setView={setViewPersist}
               onStartCreateGroup={(cfg) => openCreate(cfg)}
+              onSelectMessage={handleSelectMessage}
             />
+            <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} />
             <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
               <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
                 <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>

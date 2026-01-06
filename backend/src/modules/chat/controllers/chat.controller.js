@@ -12,7 +12,7 @@ import {
 import {
   svcCatalogos, svcListCanales, svcUpsertCanal, svcArchiveCanal, svcUpdateCanalSettings, svcDeleteCanal,
   svcListMiembros, svcAddOrUpdateMiembro, svcRemoveMiembro, svcJoin, svcLeave,
-  svcListMessages, svcPostMessage, svcEditMessage, svcDeleteMessage,
+  svcListMessages, svcSearchMessages, svcListPins, svcPostMessage, svcEditMessage, svcDeleteMessage,
   svcReact, svcPin, svcSave, svcFollowThread, svcSetRead,
   svcSetPresence, svcTyping,
   svcInvite, svcAcceptInvitation, svcDeclineInvitation,
@@ -156,6 +156,25 @@ export const getMessages = async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const q = listMessagesQuery.parse(req.query);
     res.json(await svcListMessages(id, q, req.user));
+  } catch (e) { next(e); }
+};
+
+export const getPins = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json(await svcListPins(id, req.user));
+  } catch (e) { next(e); }
+};
+
+export const searchMessages = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const { q } = req.query;
+    if (!q || q.trim().length < 2) {
+      return res.json({ results: [], total: 0 });
+    }
+    const results = await svcSearchMessages(id, q.trim(), req.user);
+    res.json(results);
   } catch (e) { next(e); }
 };
 

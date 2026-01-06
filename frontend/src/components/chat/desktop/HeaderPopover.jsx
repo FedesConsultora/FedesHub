@@ -13,6 +13,7 @@ import {
   useRemoveMember,
   useAddMember,
   useDeleteChannel,
+  useChannelPins,
 } from '../../../hooks/useChat'
 import { useModal } from '../../modal/ModalProvider'
 import { adminListUsers } from '../../../api/auth'
@@ -92,6 +93,7 @@ export default function HeaderPopover({
   members = [],
   onClose,
   onCreatedGroupFromDm,
+  onSelectMessage,
 }) {
   const popRef = useRef(null)
   const fileRef = useRef(null)
@@ -126,6 +128,7 @@ export default function HeaderPopover({
   const { mutateAsync: removeMember, isLoading: removingMember } = useRemoveMember()
   const { mutateAsync: addMember, isLoading: addingMember } = useAddMember()
   const { mutateAsync: deleteChannel } = useDeleteChannel()
+  const { data: pins = [], isLoading: loadingPins } = useChannelPins(canal?.id)
 
   const isDM = canal?.tipo?.codigo === 'dm'
   const myMember = members.find(m => Number(m.user_id) === myId) || null
@@ -516,6 +519,9 @@ export default function HeaderPopover({
         {/* Tabs */}
         <div className="hdrPop_tabs">
           <button className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>Integrantes</button>
+          <button className={tab === 'pins' ? 'active' : ''} onClick={() => setTab('pins')}>
+            Fijados {pins.length > 0 && <span className="tab-count">{pins.length}</span>}
+          </button>
           <button className={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>Archivos</button>
           <button className={tab === 'images' ? 'active' : ''} onClick={() => setTab('images')}>Imágenes</button>
           {!isDM && canEditSettings && tab === 'members' && (
@@ -579,7 +585,33 @@ export default function HeaderPopover({
           </div>
         )}
 
-        {/* Files */}
+        {/* Pins */}
+        {tab === 'pins' && (
+          <div className="list pinsList">
+            {loadingPins && <div className="placeholder">Cargando fijados…</div>}
+            {!loadingPins && pins.length === 0 && <div className="placeholder">No hay mensajes fijados</div>}
+            {!loadingPins && pins.map(p => {
+              const m = p.mensaje
+              if (!m) return null
+              return (
+                <div
+                  key={p.id}
+                  className="pinRow"
+                  onClick={() => {
+                    onSelectMessage?.(m)
+                    onClose?.()
+                  }}
+                >
+                  <Avatar src={m.autor?.feder?.avatar_url} name={displayName(m.autor)} size={24} />
+                  <div className="meta">
+                    <div className="name">{displayName(m.autor)} • {new Date(m.created_at).toLocaleDateString()}</div>
+                    <div className="txtBody">{m.body_text}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
         {tab === 'files' && (
           <div className="fileList">
             {loading && <div className="placeholder">Cargando…</div>}

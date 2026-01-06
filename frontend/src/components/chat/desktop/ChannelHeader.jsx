@@ -1,18 +1,25 @@
 import { useMemo, useRef, useState } from 'react'
-import { FiChevronDown, FiChevronUp, FiInfo } from 'react-icons/fi'
-import { useChannelMembers } from '../../../hooks/useChat'
+import { useChannelMembers, useChannelPins } from '../../../hooks/useChat'
 import { displayName, pickAvatar } from '../../../utils/people'
 import HeaderPopover from './HeaderPopover'
+import SearchMessages from '../shared/SearchMessages'
+import { FiChevronDown, FiChevronUp, FiInfo } from 'react-icons/fi'
+import { VscPinned } from "react-icons/vsc";
+
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import Avatar from '../../Avatar.jsx'
 import './ChannelHeader.scss'
 
-export default function ChannelHeader({ canal, onOpenChannel, setView, onStartCreateGroup }) {
+export default function ChannelHeader({ canal, onOpenChannel, setView, onStartCreateGroup, onSelectMessage }) {
   const rootRef = useRef(null)
   const [open, setOpen] = useState(false)
+  const toggle = () => setOpen(!open)
   const { user } = useAuthCtx() || {}
   const myId = Number(user?.id || 0)
   const { data: members = [] } = useChannelMembers(canal?.id)
+
+  const { data: pins = [] } = useChannelPins(canal?.id)
+  const pinnedCount = pins.length
 
   const titlePure = useMemo(() => {
     if (!canal) return ''
@@ -37,7 +44,6 @@ export default function ChannelHeader({ canal, onOpenChannel, setView, onStartCr
     return pickAvatar(canal)
   }, [canal, members, myId])
 
-  const toggle = () => setOpen(v => !v)
 
   const handleCreateGroupFromDm = () => {
     if (!otherUserId) return
@@ -60,9 +66,16 @@ export default function ChannelHeader({ canal, onOpenChannel, setView, onStartCr
       </button>
       {!!canal?.topic && <div className="topic">{canal.topic}</div>}
       <div className="spacer" />
-      <button className={`btnGhost ${open ? 'active' : ''}`} onClick={toggle} title="Info">
-        <FiInfo />{open ? <FiChevronUp /> : <FiChevronDown />}
-      </button>
+
+      <div className="headerActions">
+        <SearchMessages canal_id={canal?.id} onSelectMessage={onSelectMessage} />
+
+        
+
+        <button className={`btnGhost ${open ? 'active' : ''}`} onClick={toggle} title="Info">
+          <FiInfo />{open ? <FiChevronUp /> : <FiChevronDown />}
+        </button>
+      </div>
 
       {open && (
         <HeaderPopover
@@ -72,6 +85,7 @@ export default function ChannelHeader({ canal, onOpenChannel, setView, onStartCr
           onClose={() => setOpen(false)}
           onCreatedGroupFromDm={handleCreateGroupFromDm}
           onOpenChannel={onOpenChannel}
+          onSelectMessage={onSelectMessage}
           setView={setView}
         />
       )}

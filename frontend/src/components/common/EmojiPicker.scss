@@ -1,18 +1,21 @@
 // src/components/common/EmojiPicker.scss
-.fh-emojiPicker-pop{
-  position:absolute;
-  top: -25rem;
-  left: 2rem;
-  z-index: 60; // sobre paneles locales
-  box-shadow: 0 12px 34px rgba(0,0,0,.35);
+.fh-emojiPicker-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .35);
   border-radius: 12px;
   overflow: hidden;
 
   // ancla example: dentro del composer (derecha)
-  &.anchor-right-bottom{
-    right: 8px; bottom: calc(100% + 8px);
+  &.anchor-right-bottom {
+    right: 8px;
+    bottom: calc(100% + 8px);
   }
-  &.anchor-left-top{
-    left: 0; top: calc(100% + 8px);
+
+  &.anchor-left-top {
+    left: 0;
+    top: calc(100% + 8px);
   }
 }

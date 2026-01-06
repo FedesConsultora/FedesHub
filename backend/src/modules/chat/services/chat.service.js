@@ -1,4 +1,5 @@
 // /backend/src/modules/chat/services/chat.service.js
+import { Op } from 'sequelize';
 import { initModels } from '../../../models/registry.js';
 import {
   catalogos as repoCatalogos, listCanales, createOrUpdateCanal,
@@ -8,7 +9,7 @@ import {
 
 import {
   listMessages, createMessage, editMessage, deleteMessage,
-  toggleReaction, togglePin, toggleSaved, followThread, setRead
+  toggleReaction, togglePin, toggleSaved, followThread, setRead, listPins
 } from '../repositories/messages.repo.js';
 
 import { setPresence, setTyping } from '../repositories/presence.repo.js';
@@ -198,6 +199,48 @@ export const svcListMessages = async (canal_id, q, user) => {
   return list;
 };
 
+export const svcSearchMessages = async (canal_id, query, user) => {
+  // Verificar que sea miembro del canal
+  const canal = await getCanalWithMiembro(canal_id, user.id);
+  if (!canal || !(canal.miembros?.length > 0)) {
+    const err = new Error('No sos miembro del canal');
+    err.status = 403;
+    throw err;
+  }
+
+  // Búsqueda simple usando ILIKE en PostgreSQL
+  const cid = Number(canal_id);
+  const qStr = String(query || '').trim();
+
+  const results = await mReg.ChatMensaje.findAll({
+    where: {
+      canal_id: cid,
+      deleted_at: { [Op.is]: null },
+      body_text: {
+        [Op.iLike]: `%${qStr}%`
+      }
+    },
+    include: [
+      {
+        model: mReg.User,
+        as: 'autor',
+        attributes: ['id', 'email'],
+        include: [
+          {
+            model: mReg.Feder,
+            as: 'feder',
+            attributes: ['id', 'nombre', 'apellido', 'avatar_url']
+          }
+        ]
+      }
+    ],
+    order: [['created_at', 'DESC']],
+    limit: 50
+  });
+
+  return { results: results.map(r => r.toJSON()), total: results.length };
+};
+
 // --- crear mensaje + adjuntos embebidos
 export const svcPostMessage = async (canal_id, payload, user, files = []) => {
   const t = await sequelize.transaction();
@@ -311,6 +354,16 @@ export const svcPin = async (canal_id, mensaje_id, on, orden, user) => {
   try { await publishPinUpdated(canal_id, mensaje_id, on, r?.pin_orden ?? orden ?? null); } catch (err) { console.error('sse pin', err); }
 
   return r;
+};
+
+export const svcListPins = async (canal_id, user) => {
+  const canal = await getCanalWithMiembro(canal_id, user.id);
+  if (!canal || !(canal.miembros?.length > 0)) {
+    const err = new Error('No sos miembro del canal');
+    err.status = 403;
+    throw err;
+  }
+  return listPins(canal_id);
 };
 
 export const svcSave = async (mensaje_id, on, user) => {

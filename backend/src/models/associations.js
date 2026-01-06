@@ -2,9 +2,9 @@
 export const setupAssociations = (m) => {
   // Activa logs verbosos si LOG_ASSOC=1 (por defecto encendido para depurar)
   const VERBOSE = (process.env.LOG_ASSOC ?? '1') === '1';
-  const ok   = (...a) => { if (VERBOSE) console.log(...a); };
+  const ok = (...a) => { if (VERBOSE) console.log(...a); };
   const skip = (...a) => { if (VERBOSE) console.warn(...a); };
-  const err  = (...a) => {              console.error(...a); };
+  const err = (...a) => { console.error(...a); };
 
   const link = (present, desc, fn) => {
     if (!present) { skip('[assoc:skip]', desc); return; }
@@ -130,21 +130,21 @@ export const setupAssociations = (m) => {
   );
 
   link(m.AusenciaCuota, 'AusenciaCuota → varias', () => {
-    if (m.Feder)               m.AusenciaCuota.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-    if (m.AusenciaTipo)        m.AusenciaCuota.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-    if (m.AusenciaUnidadTipo)  m.AusenciaCuota.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
-    if (m.User)                m.AusenciaCuota.belongsTo(m.User, { foreignKey: 'asignado_por_user_id', as: 'asignadoPor' });
+    if (m.Feder) m.AusenciaCuota.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+    if (m.AusenciaTipo) m.AusenciaCuota.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+    if (m.AusenciaUnidadTipo) m.AusenciaCuota.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
+    if (m.User) m.AusenciaCuota.belongsTo(m.User, { foreignKey: 'asignado_por_user_id', as: 'asignadoPor' });
   });
   link(m.AusenciaCuotaConsumo, 'AusenciaCuotaConsumo → (cuota, ausencia)', () => {
     if (m.AusenciaCuota) m.AusenciaCuotaConsumo.belongsTo(m.AusenciaCuota, { foreignKey: 'cuota_id', as: 'cuota' });
-    if (m.Ausencia)      m.AusenciaCuotaConsumo.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
+    if (m.Ausencia) m.AusenciaCuotaConsumo.belongsTo(m.Ausencia, { foreignKey: 'ausencia_id', as: 'ausencia' });
   });
   link(m.AusenciaAsignacionSolicitud, 'AusenciaAsignacionSolicitud → varias', () => {
-    if (m.Feder)               m.AusenciaAsignacionSolicitud.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
-    if (m.AusenciaTipo)        m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
-    if (m.AusenciaUnidadTipo)  m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
+    if (m.Feder) m.AusenciaAsignacionSolicitud.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' });
+    if (m.AusenciaTipo) m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaTipo, { foreignKey: 'tipo_id', as: 'tipo' });
+    if (m.AusenciaUnidadTipo) m.AusenciaAsignacionSolicitud.belongsTo(m.AusenciaUnidadTipo, { foreignKey: 'unidad_id', as: 'unidad' });
     if (m.AsignacionSolicitudEstado) m.AusenciaAsignacionSolicitud.belongsTo(m.AsignacionSolicitudEstado, { foreignKey: 'estado_id', as: 'estado' });
-    if (m.User)                m.AusenciaAsignacionSolicitud.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
+    if (m.User) m.AusenciaAsignacionSolicitud.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
   });
 
   // ===== Módulo 6: Células =====
@@ -232,13 +232,13 @@ export const setupAssociations = (m) => {
   );
   link(m.TareaComentarioMencion, 'TareaComentarioMencion → (comentario, feder)', () => {
     if (m.TareaComentario) m.TareaComentarioMencion.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
-    if (m.Feder)          m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
+    if (m.Feder) m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
   });
 
   link(m.TareaAdjunto, 'TareaAdjunto → (tarea, comentario, feder)', () => {
-    if (m.Tarea)           m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+    if (m.Tarea) m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
     if (m.TareaComentario) m.TareaAdjunto.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
-    if (m.Feder)           m.TareaAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' });
+    if (m.Feder) m.TareaAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' });
   });
 
   link(m.TareaEtiqueta && m.TareaEtiquetaAsig, 'Tarea ↔ TareaEtiqueta (TareaEtiquetaAsig)', () => {
@@ -574,9 +574,10 @@ export const setupAssociations = (m) => {
   link(m.ChatPin && m.ChatCanal, 'ChatPin → ChatCanal (canal_id)', () =>
     m.ChatPin.belongsTo(m.ChatCanal, { foreignKey: 'canal_id', as: 'canal' })
   );
-  link(m.ChatPin && m.ChatMensaje, 'ChatPin → ChatMensaje (mensaje_id)', () =>
-    m.ChatPin.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' })
-  );
+  link(m.ChatPin && m.ChatMensaje, 'ChatPin ↔ ChatMensaje', () => {
+    m.ChatPin.belongsTo(m.ChatMensaje, { foreignKey: 'mensaje_id', as: 'mensaje' });
+    m.ChatMensaje.hasMany(m.ChatPin, { foreignKey: 'mensaje_id', as: 'pins' });
+  });
   link(m.ChatPin && m.User, 'ChatPin → User (pinned_by_user_id)', () =>
     m.ChatPin.belongsTo(m.User, { foreignKey: 'pinned_by_user_id', as: 'pinnedBy' })
   );

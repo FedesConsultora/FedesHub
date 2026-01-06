@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Timeline from '../shared/Timeline'
 import Composer from '../shared/Composer'
+import PinnedBar from '../shared/PinnedBar'
 import { useMessages, useDmCandidates } from '../../../hooks/useChat'
 import { chatApi } from '../../../api/chat'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
@@ -30,6 +31,15 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
     setCid(targetId); setView('chat'); onOpen?.(targetId)
   }
 
+  const handleSelectMessage = (msg) => {
+    const el = document.getElementById(`msg-${msg.id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('hi-lite')
+      setTimeout(() => el.classList.remove('hi-lite'), 2000)
+    }
+  }
+
   return (
     <div className="chat-mobile">
       {view === 'list' && (
@@ -54,6 +64,7 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
             <button className="fh-btn ghost" onClick={() => setView('list')}>‹</button>
             <span className="ttl">{channels.find(x => x.id === cid)?.nombre || 'Chat'}</span>
           </div>
+          <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} />
           <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <GlobalLoader isLoading={msgs.isLoading || msgs.isPreviousData} size={60} />
             <Timeline rows={msgs.data || []} loading={msgs.isLoading} />

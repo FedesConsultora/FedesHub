@@ -33,10 +33,11 @@ export function useChannelMembers(canal_id) {
 }
 
 export function useMessages(canal_id, params = {}) {
+  const cid = Number(canal_id)
   return useQuery({
-    queryKey: ['chat', 'msgs', canal_id, params],
-    queryFn: () => chatApi.messages.list(canal_id, params),
-    enabled: !!canal_id,
+    queryKey: ['chat', 'msgs', cid, params],
+    queryFn: () => chatApi.messages.list(cid, params),
+    enabled: !!cid,
     keepPreviousData: true
   })
 }
@@ -105,6 +106,41 @@ export function useToggleReaction() {
     onSuccess: (_r, { canal_id }) => {
       if (canal_id) qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
     }
+  })
+}
+
+export function usePinMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mensaje_id, canal_id, on = true }) =>
+      chatApi.messages.pin(mensaje_id, { canal_id, on }),
+    onSuccess: (_r, { canal_id }) => {
+      const cid = Number(canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
+      }
+    }
+  })
+}
+
+export function useSearchMessages(canal_id, query) {
+  const cid = Number(canal_id)
+  return useQuery({
+    queryKey: ['chat', 'search', cid, query],
+    queryFn: () => chatApi.messages.search(cid, query),
+    enabled: !!cid && !!query && query.length >= 2,
+    staleTime: 0
+  })
+}
+
+export function useChannelPins(canal_id) {
+  const cid = Number(canal_id)
+  return useQuery({
+    queryKey: ['chat', 'pins', cid],
+    queryFn: () => chatApi.messages.pins(cid),
+    enabled: !!cid,
+    staleTime: 10_000
   })
 }
 

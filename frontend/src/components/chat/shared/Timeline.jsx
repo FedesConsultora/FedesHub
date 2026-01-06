@@ -1,7 +1,8 @@
 import { useMemo, useEffect, useRef, useState, useContext } from 'react'
 import { FaArrowDown } from 'react-icons/fa'
 import { FiEdit2, FiTrash2, FiCheck, FiX } from 'react-icons/fi'
-import { useSetRead, useEditMessage, useDeleteMessage } from '../../../hooks/useChat'
+import { VscPinned } from "react-icons/vsc";
+import { useSetRead, useEditMessage, useDeleteMessage, usePinMessage } from '../../../hooks/useChat'
 import ReactionBar from './ReactionBar'
 import MessageAttachments from './MessageAttachments'
 import ReplyPreview from './ReplyPreview'
@@ -166,6 +167,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const editMessage = useEditMessage()
   const deleteMessage = useDeleteMessage()
+  const pinMessage = usePinMessage()
 
   const memberByUserId = useMemo(() => {
     const map = new Map()
@@ -179,6 +181,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
   const isMine = (msgUserId != null && my_user_id != null && msgUserId === my_user_id)
   const isDeleted = !!m.deleted_at
   const isEdited = !!m.is_edited
+  const isPinned = m.pins && m.pins.length > 0
 
   // Check if message is older than 30 minutes (use created_at for the original send time)
   const messageTime = new Date(m.created_at).getTime()
@@ -254,19 +257,36 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
 
   const msgTs = new Date(m.created_at || m.updated_at).getTime()
 
+  const handleTogglePin = () => {
+    pinMessage.mutate({ mensaje_id: m.id, canal_id, on: !isPinned })
+  }
+
   return (
-    <div id={`msg-${m.id}`} className={'bubble' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '')}>
+    <div id={`msg-${m.id}`} className={'bubble' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '')}>
       {!isDeleted && <button className="replyIco" title="Responder" onClick={() => setReplyTo(m)}>↩</button>}
 
-      {/* Message actions menu (edit/delete) - only for own messages and within 30 minutes */}
-      {isMine && !isDeleted && !isEditing && canEditOrDelete && (
+      {/* Message actions menu (edit/delete/pin) */}
+      {!isDeleted && !isEditing && (
         <div className="msgActions">
-          <button className="actionBtn" title="Editar" onClick={handleEdit}>
-            <FiEdit2 />
+          <button
+            className={`actionBtn ${isPinned ? 'active' : ''}`}
+            title={isPinned ? 'Desfijar' : 'Fijar'}
+            onClick={handleTogglePin}
+            disabled={pinMessage.isPending}
+          >
+            <VscPinned style={{ transform: isPinned ? 'rotate(45deg)' : 'none' }} />
           </button>
-          <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
-            <FiTrash2 />
-          </button>
+
+          {isMine && canEditOrDelete && (
+            <>
+              <button className="actionBtn" title="Editar" onClick={handleEdit}>
+                <FiEdit2 />
+              </button>
+              <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
+                <FiTrash2 />
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -284,6 +304,11 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
         <span className="dot">•</span>
         <div className="fecha">{ts}</div>
         {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
+        {!isDeleted && isPinned && (
+          <span className="pinnedBadge" style={{ marginLeft: '8px' }}>
+            <VscPinned size={12} /> fijado
+          </span>
+        )}
       </div>
 
       {m.parent && !isDeleted && (

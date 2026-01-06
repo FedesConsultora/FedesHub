@@ -396,8 +396,11 @@ export default function RealtimeProvider({ children }) {
 
     // Invalidaciones de Query
     if (type.startsWith('chat.')) {
-      const cid = data?.canal_id
-      if (/chat\.message\.(created|edited|deleted)/.test(type) && cid) qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+      const cid = data?.canal_id ? Number(data.canal_id) : null
+      if (/chat\.message\.(created|edited|deleted|pin)/.test(type) && cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
+      }
       if (/chat\.channel\./.test(type) && cid) {
         qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
         qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
@@ -497,7 +500,7 @@ export default function RealtimeProvider({ children }) {
       if (!payload.type) payload.type = type
       window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }))
     }
-    const TYPES = ['message', 'ping', 'chat.typing', 'chat.message.created', 'chat.message.edited', 'chat.message.deleted', 'chat.channel.updated', 'chat.channel.read']
+    const TYPES = ['message', 'ping', 'chat.typing', 'chat.message.created', 'chat.message.edited', 'chat.message.deleted', 'chat.message.pin', 'chat.channel.updated', 'chat.channel.read']
     TYPES.forEach(t => es.addEventListener(t, forward))
     return () => { try { es.close() } catch { } }
   }, [user, booted])

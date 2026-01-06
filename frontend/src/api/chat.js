@@ -36,6 +36,8 @@ export const chatApi = {
 
   messages: {
     list: (canal_id, params = {}) => api.get(`${base}/channels/${canal_id}/messages`, { params }).then(r => r.data),
+    search: (canal_id, q) => api.get(`${base}/channels/${canal_id}/search`, { params: { q } }).then(r => r.data),
+    pins: (canal_id) => api.get(`${base}/channels/${canal_id}/pins`).then(r => r.data),
     create: (canal_id, body) => api.post(`${base}/channels/${canal_id}/messages`, body).then(r => r.data),
     createMultipart: (canal_id, formData) => api.post(`${base}/channels/${canal_id}/messages`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }

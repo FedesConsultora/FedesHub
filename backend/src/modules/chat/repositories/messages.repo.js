@@ -57,6 +57,7 @@ export async function listMessages(canal_id, params, user, t) {
       { model: m.ChatAdjunto, as: 'adjuntos' },
       { model: m.ChatReaccion, as: 'reacciones' },
       { model: m.ChatLinkPreview, as: 'linkPreviews' },
+      { model: m.ChatPin, as: 'pins' },
       // ✅ preview del parent para UI (texto y autor)
       { model: m.ChatMensaje, as: 'parent', attributes: ['id', 'body_text'], include: [{ model: m.User, as: 'autor', attributes: ['id', 'email'] }] }
     ],
@@ -213,6 +214,25 @@ export async function togglePin(canal_id, mensaje_id, user_id, on, orden, t) {
     if (prev) await prev.destroy({ transaction: t });
     return { on: false };
   }
+}
+
+export async function listPins(canal_id, t) {
+  return m.ChatPin.findAll({
+    where: { canal_id },
+    include: [
+      {
+        model: m.ChatMensaje,
+        as: 'mensaje',
+        include: [
+          { model: m.User, as: 'autor', attributes: ['id', 'email'] },
+          { model: m.Feder, as: 'feder', attributes: ['id', 'nombre', 'apellido', 'avatar_url'] },
+          { model: m.ChatAdjunto, as: 'adjuntos' }
+        ]
+      }
+    ],
+    order: [['pin_orden', 'ASC'], ['id', 'DESC']],
+    transaction: t
+  });
 }
 
 export async function toggleSaved(mensaje_id, user_id, on, t) {

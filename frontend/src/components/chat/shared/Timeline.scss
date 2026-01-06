@@ -48,8 +48,32 @@
 
     /* Add padding when message has actions to prevent overlap */
     &:hover {
-      padding-right: 90px;
-      /* Space for reply + edit + delete buttons */
+      padding-right: 120px;
+      /* Space for reply + pin + edit + delete buttons */
+    }
+
+    &.pinned {
+      border-left: 4px solid #f6ad55;
+      background: #fffdf5;
+
+      &.mine {
+        background: #fdfaf0;
+      }
+    }
+
+    .pinnedBadge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #f6ad55;
+      font-weight: 600;
+      margin-bottom: 4px;
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
     }
 
     .txt {
@@ -261,7 +285,7 @@
 .chat-timeline .bubble .msgActions {
   position: absolute;
   top: 8px;
-  right: 46px;
+  right: 42px;
   /* to the left of reply button */
   display: flex;
   gap: 2px;
