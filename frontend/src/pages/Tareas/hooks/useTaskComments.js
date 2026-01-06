@@ -46,16 +46,28 @@ export function useTaskComments(taskId, cat) {
     // Si vienen archivos reales, los subimos primero
     if (files.length > 0) {
       try {
-        const res = await tareasApi.uploadAdjuntos(taskId, files, false);
+        console.log('[useTaskComments] Uploading', files.length, 'files');
+        const res = await tareasApi.uploadAdjuntos(taskId, files);
+        console.log('[useTaskComments] Upload response:', res);
+        console.log('[useTaskComments] res.created:', res.created);
+
         if (res.created) {
-          finalAdjuntos = res.created.map(a => ({
-            id: a.id,
-            nombre: a.nombre,
-            mime: a.mime,
-            tamano_bytes: a.tamano_bytes,
-            drive_url: a.drive_url,
-            drive_file_id: a.drive_file_id
-          }));
+          finalAdjuntos = res.created.map(a => {
+            console.log('[useTaskComments] Mapping attachment:', {
+              id: a.id,
+              nombre: a.nombre,
+              has_id: !!a.id
+            });
+            return {
+              id: a.id,
+              nombre: a.nombre,
+              mime: a.mime,
+              tamano_bytes: a.tamano_bytes,
+              drive_url: a.drive_url,
+              drive_file_id: a.drive_file_id
+            };
+          });
+          console.log('[useTaskComments] finalAdjuntos:', finalAdjuntos);
         }
       } catch (err) {
         console.error('Error uploading comment attachments:', err);

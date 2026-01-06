@@ -848,9 +848,9 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             </div>
 
             {/* Lista de archivos crudos */}
-            {adjuntos.filter(a => !a.es_embebido).length > 0 && (
+            {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
               <div className="raw-files-list">
-                {adjuntos.filter(a => !a.es_embebido).map(file => {
+                {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
                   const isVideoFile = file.mime?.startsWith('video/') ||
                     file.nombre?.toLowerCase().match(/\.(mp4|webm|mov|avi)$/);
                   return (
