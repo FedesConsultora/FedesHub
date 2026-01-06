@@ -50,8 +50,11 @@ export function useSendMessage() {
       isMultipart ? chatApi.messages.createMultipart(canal_id, body)
         : chatApi.messages.create(canal_id, body),
     onSuccess: (row, vars) => {
-      qc.invalidateQueries({ queryKey: ['chat', 'msgs', vars.canal_id] })
-      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      const cid = Number(vars.canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      }
     }
   })
 }
@@ -63,7 +66,7 @@ export function useEditMessage() {
       chatApi.messages.update(mensaje_id, { body_text }),
     onSuccess: (_r, { canal_id }) => {
       if (canal_id) {
-        qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', Number(canal_id)] })
         qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
         qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
       }
@@ -78,7 +81,7 @@ export function useDeleteMessage() {
       chatApi.messages.delete(mensaje_id),
     onSuccess: (_r, { canal_id }) => {
       if (canal_id) {
-        qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', Number(canal_id)] })
         qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
         qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
       }
@@ -104,7 +107,8 @@ export function useToggleReaction() {
     mutationFn: ({ mensaje_id, emoji, on = true }) =>
       chatApi.messages.react(mensaje_id, { emoji, on }),
     onSuccess: (_r, { canal_id }) => {
-      if (canal_id) qc.invalidateQueries({ queryKey: ['chat', 'msgs', canal_id] })
+      const cid = Number(canal_id)
+      if (cid) qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
     }
   })
 }
@@ -114,7 +118,57 @@ export function usePinMessage() {
   return useMutation({
     mutationFn: ({ mensaje_id, canal_id, on = true }) =>
       chatApi.messages.pin(mensaje_id, { canal_id, on }),
-    onSuccess: (_r, { canal_id }) => {
+    onMutate: async ({ mensaje_id, canal_id, on }) => {
+      const cid = Number(canal_id)
+      if (!cid) return
+
+      // Cancel outgoing refetches
+      await qc.cancelQueries({ queryKey: ['chat', 'msgs', cid] })
+      await qc.cancelQueries({ queryKey: ['chat', 'pins', cid] })
+
+      // Snapshot previous values
+      const prevMsgs = qc.getQueryData(['chat', 'msgs', cid])
+      const prevPins = qc.getQueryData(['chat', 'pins', cid])
+
+      // Optimistically update msgs in ALL matching queries (with or without params)
+      qc.setQueriesData({ queryKey: ['chat', 'msgs', cid] }, (prev) => {
+        if (!prev) return prev
+        const updater = (m) => m.id === mensaje_id ? { ...m, isPinned: on, pins: on ? [{ id: 'temp' }] : [] } : m
+
+        if (Array.isArray(prev)) return prev.map(updater)
+        if (prev.pages) {
+          return {
+            ...prev,
+            pages: prev.pages.map(page => ({
+              ...page,
+              results: page.results ? page.results.map(updater) : (Array.isArray(page) ? page.map(updater) : page)
+            }))
+          }
+        }
+        return prev
+      })
+
+      // Optimistically update pins
+      qc.setQueryData(['chat', 'pins', cid], (prev) => {
+        if (!prev) return prev
+        if (on) {
+          // If pinning, we usually just wait for the refetch since we don't have the full message object here easily
+          return prev
+        } else {
+          return prev.filter(p => p.mensaje_id !== mensaje_id)
+        }
+      })
+
+      return { prevMsgs: qc.getQueryData(['chat', 'msgs', cid]), prevPins: qc.getQueryData(['chat', 'pins', cid]) }
+    },
+    onError: (err, { canal_id }, context) => {
+      const cid = Number(canal_id)
+      if (cid && context) {
+        qc.setQueryData(['chat', 'msgs', cid], context.prevMsgs)
+        qc.setQueryData(['chat', 'pins', cid], context.prevPins)
+      }
+    },
+    onSettled: (_r, _e, { canal_id }) => {
       const cid = Number(canal_id)
       if (cid) {
         qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
@@ -140,7 +194,7 @@ export function useChannelPins(canal_id) {
     queryKey: ['chat', 'pins', cid],
     queryFn: () => chatApi.messages.pins(cid),
     enabled: !!cid,
-    staleTime: 10_000
+    staleTime: 0
   })
 }
 
@@ -168,8 +222,9 @@ export function useUpdateChannel() {
       return chatApi.channels.settings(canal.id, patch)
     },
     onSuccess: (_r, { canal }) => {
+      const cid = Number(canal.id)
       qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
-      qc.invalidateQueries({ queryKey: ['chat', 'members', canal.id] })
+      if (cid) qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
     }
   })
 }
@@ -192,7 +247,8 @@ export function usePatchMemberRole() {
     mutationFn: ({ canal_id, user_id, rol_codigo }) =>
       chatApi.channels.members.patch(canal_id, user_id, { rol_codigo }),
     onSuccess: (_r, { canal_id }) => {
-      qc.invalidateQueries({ queryKey: ['chat', 'members', canal_id] })
+      const cid = Number(canal_id)
+      if (cid) qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
     }
   })
 }
@@ -204,8 +260,11 @@ export function useRemoveMember() {
     mutationFn: ({ canal_id, user_id }) =>
       chatApi.channels.members.remove(canal_id, user_id),
     onSuccess: (_r, { canal_id }) => {
-      qc.invalidateQueries({ queryKey: ['chat', 'members', canal_id] })
-      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      const cid = Number(canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      }
     }
   })
 }
@@ -217,8 +276,11 @@ export function useAddMember() {
     mutationFn: ({ canal_id, user_id, rol_codigo = 'member' }) =>
       chatApi.channels.members.upsert(canal_id, { user_id, rol_codigo }),
     onSuccess: (_r, { canal_id }) => {
-      qc.invalidateQueries({ queryKey: ['chat', 'members', canal_id] })
-      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      const cid = Number(canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      }
     }
   })
 }
@@ -250,10 +312,12 @@ export function useChatRealtime() {
           case 'chat.message.edited':
           case 'chat.message.deleted':
           case 'chat.message.reaction':
+          case 'chat.message.pin':
           case 'chat.channel.archived':
           case 'chat.channel.member': {
             if (cid) {
               qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+              qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
               qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
             }
             qc.invalidateQueries({ queryKey: ['chat', 'channels'] })

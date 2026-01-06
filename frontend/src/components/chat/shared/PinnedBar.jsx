@@ -5,7 +5,8 @@ import { useChannelPins, usePinMessage } from '../../../hooks/useChat'
 import './PinnedBar.scss'
 
 export default function PinnedBar({ canal_id, onSelectMessage }) {
-    const { data: pins = [], isLoading } = useChannelPins(canal_id)
+    const cid = Number(canal_id)
+    const { data: pins = [], isLoading } = useChannelPins(cid)
     const pinMutation = usePinMessage()
     const [currentIndex, setCurrentIndex] = React.useState(0)
 
@@ -29,7 +30,17 @@ export default function PinnedBar({ canal_id, onSelectMessage }) {
 
     const handleUnpin = (e) => {
         e.stopPropagation()
-        pinMutation.mutate({ mensaje_id: m.id, canal_id, on: false })
+        const targetCid = cid || m.canal_id
+        if (!targetCid) return
+        pinMutation.mutate({ mensaje_id: m.id, canal_id: targetCid, on: false }, {
+            onSuccess: () => {
+                // If we unpinned the last item, query invalidation will handle it
+                // If there are more, and we were at the last index, go back one
+                if (activePins.length > 1 && currentIndex >= activePins.length - 1) {
+                    setCurrentIndex(Math.max(0, activePins.length - 2))
+                }
+            }
+        })
     }
 
     return (

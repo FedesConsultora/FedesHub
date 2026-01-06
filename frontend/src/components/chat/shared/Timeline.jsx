@@ -258,7 +258,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
   const msgTs = new Date(m.created_at || m.updated_at).getTime()
 
   const handleTogglePin = () => {
-    pinMessage.mutate({ mensaje_id: m.id, canal_id, on: !isPinned })
+    pinMessage.mutate({ mensaje_id: m.id, canal_id: Number(canal_id), on: !isPinned })
   }
 
   return (

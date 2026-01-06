@@ -40,17 +40,13 @@
     border-radius: 14px;
     background: #ffffff;
     color: #0d1117;
-    padding: 12px 14px;
+    padding: 12px 42px 12px 14px;
     align-self: flex-start;
     box-sizing: border-box;
     overflow: visible;
-    min-width: 0;
+    min-width: 60px;
 
-    /* Add padding when message has actions to prevent overlap */
-    &:hover {
-      padding-right: 120px;
-      /* Space for reply + pin + edit + delete buttons */
-    }
+    /* Fixed padding to accommodate icons without jumping */
 
     &.pinned {
       border-left: 4px solid #f6ad55;
@@ -193,8 +189,9 @@
       transition: transform 0.06s ease;
 
       &:hover {
-        background: rgba(0, 0, 0, 0.06);
-        transform: translateY(-1px);
+        background: transparent;
+        color: v.$fh-primary;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -285,16 +282,22 @@
 .chat-timeline .bubble .msgActions {
   position: absolute;
   top: 8px;
-  right: 42px;
+  right: 40px;
   /* to the left of reply button */
   display: flex;
-  gap: 2px;
+
   opacity: 0;
-  transition: opacity 0.2s ease;
+  background: #eff9ff;
+  padding: 2px;
+  border-radius: 12px;
+
+  transition: all 0.2s ease;
+  transform: translateY(-4px);
 }
 
 .chat-timeline .bubble:hover .msgActions {
   opacity: 1;
+  transform: translateY(0);
 }
 
 .chat-timeline .bubble .msgActions .actionBtn {
@@ -312,8 +315,8 @@
   transition: all 0.15s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.06);
-    color: #0d1117;
+    background: rgba(v.$fh-primary, 0.1);
+    color: v.$fh-primary;
   }
 
   svg {
