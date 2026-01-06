@@ -1,6 +1,6 @@
 @use '../styles/variables' as *;
 
-.appShell{
+.appShell {
   min-height: 100dvh;
   background: #44718D;
   background: radial-gradient(circle, rgba(68, 113, 141, 1) 0%, rgba(2, 0, 36, 1) 100%);
@@ -9,7 +9,7 @@
 }
 
 /* Contenedor centrado, con sidebar más angosto */
-.appBody{
+.appBody {
   /* contenedor centrado y acotado */
   width: 100%;
 
@@ -24,11 +24,11 @@
 }
 
 /* El main NO se sale: margen a la derecha + recorte del overflow */
-.appMain{
+.appMain {
   min-height: calc(100vh - 120px);
   background: $fh-card;
   backdrop-filter: blur(3px);
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, .08);
   border-radius: 16px;
   padding: 16px;
   box-shadow: $shadow-soft;
@@ -36,17 +36,20 @@
   /* clave para evitar desbordes */
   max-width: 100%;
   min-width: 0;
+  position: relative;
 
   /* define un “container” para poder usar cqw en hijos (kanban, etc.) */
   container-type: inline-size;
 }
 
-@media (max-width: 980px){
-  .appBody{
+@media (max-width: 980px) {
+  .appBody {
     grid-template-columns: 1fr;
     padding: 12px 10px 0;
   }
-  .appMain{
-    margin-right: 0; /* en móvil no dejamos margen extra */
+
+  .appMain {
+    margin-right: 0;
+    /* en móvil no dejamos margen extra */
   }
 }

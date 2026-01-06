@@ -24,6 +24,7 @@ import { useUploadContext } from '../../context/UploadProvider.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import ContentGallery from '../../components/tasks/ContentGallery.jsx'
 import ImageFullscreen from '../../components/common/ImageFullscreen.jsx'
+import GlobalLoader from '../../components/loader/GlobalLoader.jsx'
 import './task-detail.scss'
 
 /* === helpers normalization === */
@@ -77,17 +78,22 @@ const formatFileSize = (bytes) => {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const { id: urlId } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
   const toast = useToast()
+  const { showLoader, hideLoader } = useLoading()
 
   // Use taskId prop if provided, otherwise use id from URL params
   const id = taskId || urlId
 
   const [task, setTask] = useState(null)
   const [catalog, setCatalog] = useState(null)
+
+  const isInitialLoading = !task || !catalog;
   const [tab, setTab] = useState('desc')
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
@@ -469,7 +475,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }
 
-  if (!task) return <div className="taskDetail"><div className="card">Cargando…</div></div>
+  if (isInitialLoading) {
+    return (
+      <div className="taskDetail">
+        <GlobalLoader isLoading={true} size={120} />
+      </div>
+    )
+  }
 
   // normalización
   const estadoCodigo = task?.estado?.codigo || task?.estado_codigo || 'pendiente'
@@ -836,9 +848,9 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             </div>
 
             {/* Lista de archivos crudos */}
-            {adjuntos.filter(a => !a.es_embebido).length > 0 && (
+            {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
               <div className="raw-files-list">
-                {adjuntos.filter(a => !a.es_embebido).map(file => {
+                {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
                   const isVideoFile = file.mime?.startsWith('video/') ||
                     file.nombre?.toLowerCase().match(/\.(mp4|webm|mov|avi)$/);
                   return (

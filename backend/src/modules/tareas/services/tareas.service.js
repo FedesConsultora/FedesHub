@@ -14,7 +14,7 @@
 // - Exporta funciones svc* consumidas por el controller
 // -------------------------------------
 
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
 import { initModels } from '../../../models/registry.js';
 
@@ -381,7 +381,7 @@ export const getTaskById = async (id, currentUser) => {
                   ),
                   'adjuntos', (
                     SELECT COALESCE(json_agg(json_build_object(
-                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url
+                        'id',a.id,'nombre',a.nombre,'mime',a.mime,'drive_url',a.drive_url,'drive_file_id',a.drive_file_id
                     )), '[]'::json)
                     FROM "TareaAdjunto" a
                     WHERE a.comentario_id = cm.id
@@ -835,7 +835,7 @@ const listComentarios = async (tarea_id, currentUser) =>
 
       COALESCE((
         SELECT json_agg(json_build_object(
-          'id', a.id, 'nombre', a.nombre, 'mime', a.mime, 'drive_url', a.drive_url
+          'id', a.id, 'nombre', a.nombre, 'mime', a.mime, 'drive_url', a.drive_url, 'drive_file_id', a.drive_file_id
         ))
         FROM "TareaAdjunto" a
         WHERE a.comentario_id = cm.id
@@ -896,8 +896,57 @@ const createComentario = async (tarea_id, feder_id, { tipo_id, tipo_codigo, cont
       await models.TareaComentarioMencion.bulkCreate(rows, { transaction: t, ignoreDuplicates: true });
     }
     if (adjuntos?.length) {
-      const rows = adjuntos.map(a => ({ ...a, tarea_id, comentario_id: cm.id, subido_por_feder_id: feder_id }));
-      await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
+      console.log('[createComentario] Processing', adjuntos.length, 'attachments');
+      console.log('[createComentario] Adjuntos:', JSON.stringify(adjuntos, null, 2));
+
+      const news = [];
+      const usedIds = [];
+      for (const a of adjuntos) {
+        if (a.id) {
+          console.log('[createComentario] Existing attachment ID:', a.id, typeof a.id);
+          usedIds.push(Number(a.id));
+        } else {
+          console.log('[createComentario] New attachment:', a.nombre);
+          news.push({ ...a, tarea_id, comentario_id: cm.id, subido_por_feder_id: feder_id });
+        }
+      }
+
+      console.log('[createComentario] Distribution:', {
+        total: adjuntos.length,
+        new: news.length,
+        existing: usedIds.length,
+        usedIds
+      });
+
+      if (news.length) {
+        const created = await models.TareaAdjunto.bulkCreate(news, { transaction: t });
+        console.log('[createComentario] Created', created.length, 'new attachment records');
+      }
+
+      if (usedIds.length) {
+        console.log('[createComentario] Attempting to link existing attachments:', usedIds);
+        console.log('[createComentario] WHERE clause:', { id: { [Op.in]: usedIds }, tarea_id });
+
+        // Vinculamos los que ya existían (subidos por postAdjuntoUpload)
+        const [updateCount] = await models.TareaAdjunto.update(
+          { comentario_id: cm.id },
+          { where: { id: { [Op.in]: usedIds }, tarea_id }, transaction: t }
+        );
+
+        console.log('[createComentario] UPDATE result:', updateCount, 'rows updated');
+
+        if (updateCount !== usedIds.length) {
+          console.warn('[createComentario] MISMATCH! Expected:', usedIds.length, 'Updated:', updateCount);
+
+          // Debug: Check which IDs actually exist
+          const existing = await models.TareaAdjunto.findAll({
+            where: { id: { [Op.in]: usedIds }, tarea_id },
+            attributes: ['id', 'comentario_id', 'nombre'],
+            transaction: t
+          });
+          console.log('[createComentario] Existing records found:', existing.map(e => ({ id: e.id, comentario_id: e.comentario_id, nombre: e.nombre })));
+        }
+      }
     }
     return cm;
   });

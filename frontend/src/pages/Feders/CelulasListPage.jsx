@@ -1,10 +1,18 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useLoading } from '../../context/LoadingContext.jsx'
 import useFedersOverview from '../../hooks/useFedersOverview'
 import CelulasGrid from '../../sections/feders/CelulasGrid'
 import './CelulasListPage.scss'
 
 export default function CelulasListPage() {
     const { data, loading, error, refresh } = useFedersOverview()
+    const { showLoader, hideLoader } = useLoading()
+
+    useEffect(() => {
+        if (loading) showLoader()
+        else hideLoader()
+        return () => { if (loading) hideLoader() }
+    }, [loading, showLoader, hideLoader])
 
     return (
         <div className="CelulasListPage">
@@ -13,7 +21,7 @@ export default function CelulasListPage() {
                 <p className="muted">Gestión de equipos y células de trabajo.</p>
             </header>
 
-            {loading && <div className="loading">Cargando células…</div>}
+            {loading && !data && null}
             {error && <div className="error">Error: {error}</div>}
 
             {!loading && !error && (

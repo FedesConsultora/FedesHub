@@ -3,15 +3,15 @@ import multer from 'multer';
 // Límites MUY altos para soportar videos de producción de agencia
 // Nota: Los archivos se suben a Google Drive, no al servidor local
 const MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024; // 50GB por archivo
-const MAX_FILES = 10;
+const MAX_FILES = 30;
 
 const mem = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES }
 });
 
-export const uploadFiles = mem.array('files', MAX_FILES); 
-export const uploadSingle = mem.single('file');           
+export const uploadFiles = mem.array('files', MAX_FILES);
+export const uploadSingle = mem.single('file');
 
 export function multerErrorHandler(err, _req, res, next) {
   if (err instanceof multer.MulterError) {

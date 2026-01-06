@@ -134,12 +134,13 @@ export const postAdjuntoUpload = async (req, res, next) => {
     // 2) Persistir como adjuntos de la tarea
     const created = [];
     for (const f of saved) {
-      // Intentamos cubrir distintos nombres de campos que pueda devolver saveUploadedFiles
-      const nombre = f.originalname || f.name || f.filename || 'archivo';
+      // Priorizar nombres de campos que devuelve el provider (GoogleDriveProvider o Local)
+      const nombre = f.name || f.originalname || f.filename || 'archivo';
       const mime = f.mime || f.mimetype || null;
-      const bytes = f.bytes || f.size || null;
-      const url = f.publicUrl || f.url || f.drive_url || null;
-      const fileId = f.fileId || f.drive_file_id || null;
+      const bytes = f.size || f.bytes || null;
+      // Para Drive, webViewLink es la URL pública/interna principal
+      const url = f.webViewLink || f.publicUrl || f.url || f.drive_url || null;
+      const fileId = f.drive_file_id || f.fileId || null;
 
       const meta = {
         nombre,

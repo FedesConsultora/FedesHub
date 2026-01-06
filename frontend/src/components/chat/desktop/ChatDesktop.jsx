@@ -14,12 +14,15 @@ import { chatApi } from '../../../api/chat'
 import { ChatActionCtx } from '../shared/context'
 import { useRealtime } from '../../../realtime/RealtimeProvider'
 import TypingIndicator from '../shared/TypingIndicator'
+import { useLoading } from '../../../context/LoadingContext.jsx'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import { displayName } from '../../../utils/people'
 import '../shared/TypingIndicator.scss'
 import './ChatDesktop.scss'
 
 export default function ChatDesktop({ channels = [], currentId = null, onOpen }) {
   const { user } = useAuthCtx()
+  const { isLoading } = useLoading()
   const myId = user?.id
   const { unreadByCanal, mentionByCanal, clearUnreadFor, setCurrentCanal } = useRealtime()
 
@@ -208,13 +211,16 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
             />
             <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
               <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
-                <Timeline
-                  rows={msgs.data || []}
-                  loading={msgs.isLoading}
-                  canal_id={cid}
-                  my_user_id={myId}
-                  members={membersFull}
-                />
+                <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <GlobalLoader isLoading={msgs.isLoading || msgs.isPreviousData} size={80} />
+                  <Timeline
+                    rows={msgs.data || []}
+                    loading={msgs.isLoading}
+                    canal_id={cid}
+                    my_user_id={myId}
+                    members={membersFull}
+                  />
+                </div>
 
                 <div className="composeArea">
                   <TypingIndicator canal_id={cid} my_user_id={myId} members={membersFull} />
@@ -237,6 +243,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
               <FiMessageSquare size={52} />
               <h3>Buenas, {user?.nombre || 'Enzo'}</h3>
               <p>Elegí una conversación para continuar.</p>
+              <GlobalLoader isLoading={isLoading} size={40} />
             </div>
           </div>
         )}

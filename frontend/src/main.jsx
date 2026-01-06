@@ -8,6 +8,8 @@ import { ToastProvider } from './components/toast/ToastProvider.jsx'
 import { ModalProvider } from './components/modal/ModalProvider.jsx'
 import UploadIndicator from './components/uploads/UploadIndicator.jsx'
 import AppRouter from './router/AppRouter.jsx'
+import { LoadingProvider } from './context/LoadingContext.jsx'
+import GlobalLoader from './components/loader/GlobalLoader.jsx'
 import './styles/global.scss'
 
 // React Query
@@ -36,10 +38,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <UploadProvider>
               <RealtimeProvider>
                 <BrowserRouter>
-                  <ProfilePreviewProvider>
-                    <AppRouter />
-                    <UploadIndicator />
-                  </ProfilePreviewProvider>
+                  <LoadingProvider>
+                    <ProfilePreviewProvider>
+                      <AppRouter />
+                      <UploadIndicator />
+                    </ProfilePreviewProvider>
+                  </LoadingProvider>
                 </BrowserRouter>
               </RealtimeProvider>
             </UploadProvider>

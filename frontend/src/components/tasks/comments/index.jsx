@@ -158,8 +158,8 @@ export default function TaskComments({ taskId, catalog }) {
     listRef.current.scrollTop = listRef.current.scrollHeight
   }, [sorted.length])
 
-  const handleSend = async ({ contenido, adjuntos, menciones }) => {
-    await add({ contenido, adjuntos, menciones, reply_to_id: replyTo?.id || null })
+  const handleSend = async ({ contenido, adjuntos, menciones, files }) => {
+    await add({ contenido, adjuntos, menciones, files, reply_to_id: replyTo?.id || null })
     setReplyTo(null)
   }
 
@@ -172,8 +172,22 @@ export default function TaskComments({ taskId, catalog }) {
     new Intl.DateTimeFormat('es-AR', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })
       .format(new Date(iso))
 
+  const [isOver, setIsOver] = useState(false)
+
   return (
-    <div className="card comments">
+    <div className={`card comments ${isOver ? 'is-over' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setIsOver(true) }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false) }}
+      onDrop={(e) => {
+        e.preventDefault()
+        setIsOver(false)
+        const files = Array.from(e.dataTransfer.files || [])
+        if (files.length > 0) {
+          // Pass files to composer
+          composerRef.current?.addFiles(files)
+        }
+      }}
+    >
       <div className="cardHeader">
         <div className="header-info">
           <span className="title">Conversación</span>

@@ -4,13 +4,14 @@ import Timeline from '../shared/Timeline'
 import Composer from '../shared/Composer'
 import { useMessages, useDmCandidates } from '../../../hooks/useChat'
 import { chatApi } from '../../../api/chat'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './ChatMobile.scss'
 
-export default function ChatMobile({ channels=[], currentId=null, onOpen }) {
+export default function ChatMobile({ channels = [], currentId = null, onOpen }) {
   const [view, setView] = useState(currentId ? 'chat' : 'list')
-  const [cid, setCid]   = useState(currentId || null)
+  const [cid, setCid] = useState(currentId || null)
 
-  useEffect(()=> {
+  useEffect(() => {
     if (currentId) { setCid(currentId); setView('chat') }
   }, [currentId])
 
@@ -31,29 +32,32 @@ export default function ChatMobile({ channels=[], currentId=null, onOpen }) {
 
   return (
     <div className="chat-mobile">
-      {view==='list' && (
+      {view === 'list' && (
         <div className="bubble-tray">
           {channels.map(c => (
-            <button key={c.id} className="bubble" onClick={()=>{ setCid(c.id); setView('chat'); onOpen?.(c.id) }}>
-              {(c.slug || c.nombre || '?').slice(0,2).toUpperCase()}
+            <button key={c.id} className="bubble" onClick={() => { setCid(c.id); setView('chat'); onOpen?.(c.id) }}>
+              {(c.slug || c.nombre || '?').slice(0, 2).toUpperCase()}
             </button>
           ))}
           {/* Burbujas de DMs */}
           {(dmQ.data || []).map(u => (
-            <button key={`dm-${u.user_id}`} className="bubble" onClick={()=> openDm(u)}>
+            <button key={`dm-${u.user_id}`} className="bubble" onClick={() => openDm(u)}>
               {(u.nombre?.[0] || u.email?.[0] || '?').toUpperCase()}
             </button>
           ))}
         </div>
       )}
 
-      {view==='chat' && (
+      {view === 'chat' && (
         <>
           <div className="top">
-            <button className="fh-btn ghost" onClick={()=> setView('list')}>‹</button>
-            <span className="ttl">{channels.find(x=>x.id===cid)?.nombre || 'Chat'}</span>
+            <button className="fh-btn ghost" onClick={() => setView('list')}>‹</button>
+            <span className="ttl">{channels.find(x => x.id === cid)?.nombre || 'Chat'}</span>
           </div>
-          <Timeline rows={msgs.data || []} loading={msgs.isLoading} />
+          <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <GlobalLoader isLoading={msgs.isLoading || msgs.isPreviousData} size={60} />
+            <Timeline rows={msgs.data || []} loading={msgs.isLoading} />
+          </div>
           {cid && <Composer canal_id={cid} />}
         </>
       )}

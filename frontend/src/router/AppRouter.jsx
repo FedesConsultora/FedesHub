@@ -38,13 +38,6 @@ import NotifListPage from '../pages/Notificaciones/NotifListPage.jsx'
 import ChatPage from '../pages/Chat/ChatPage.jsx'   // NUEVO
 import PerfilPage from '../pages/Perfil/PerfilPage.jsx'
 
-function FullPageLoader() {
-  return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
-      Cargando…
-    </div>
-  )
-}
 
 export default function AppRouter() {
   return (
@@ -58,7 +51,7 @@ export default function AppRouter() {
       <Route path="/diag" element={<Diag />} />
 
       {/* Privadas */}
-      <Route element={<PrivateRoute fallback={<FullPageLoader />} />}>
+      <Route element={<PrivateRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />
 

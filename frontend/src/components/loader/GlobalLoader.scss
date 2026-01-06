@@ -1,0 +1,78 @@
+.global-loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+    pointer-events: auto;
+
+    .loader-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* Ajuste visual: un poco más abajo */
+        transform: translateY(15%);
+
+        .loader-text {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #ffffff;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite ease-in-out;
+            margin-top: 8px;
+            /* Separación consistente */
+        }
+    }
+}
+
+/* Modo seccional: fondo transparente y sin desenfoque */
+.appMain .global-loader-overlay,
+.chat-dropzone .global-loader-overlay,
+.chat-mobile .global-loader-overlay,
+.taskDetail .global-loader-overlay,
+.panel .global-loader-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+/* Loader específico para debajo del saludo (sin overlay) */
+.placeholder-content .global-loader-overlay {
+    position: relative;
+    width: auto;
+    height: auto;
+    background: transparent;
+    backdrop-filter: none;
+    margin-top: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(0.98);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}

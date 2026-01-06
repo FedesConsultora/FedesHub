@@ -11,7 +11,19 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
   const inputRef = useRef(null)
 
   useImperativeHandle(ref, () => ({
-    focus: () => { inputRef.current?.focus() }
+    focus: () => { inputRef.current?.focus() },
+    addFiles: (newFiles) => {
+      setFiles(prev => {
+        const next = [...prev, ...newFiles]
+        const seen = new Set()
+        return next.filter(f => {
+          const k = `${f.name}-${f.size}-${f.lastModified}`
+          if (seen.has(k)) return false
+          seen.add(k)
+          return true
+        })
+      })
+    }
   }), [])
 
   const escapeHtml = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -54,7 +66,7 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
 
     const menciones = Array.from(mencionesSet).filter(n => Number.isFinite(n))
 
-    await onSend({ contenido: msg, adjuntos: adj, menciones })
+    await onSend({ contenido: msg, adjuntos: adj, menciones, files })
     setMsg(''); setFiles([])
   }
 

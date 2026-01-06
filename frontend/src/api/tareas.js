@@ -91,7 +91,8 @@ export const tareasApi = {
       fd.append('es_embebido', 'true');
     }
     return api.post(`${base}/${id}/adjuntos/upload`, fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000 // 2 minutes for uploading files to Google Drive
     }).then(r => r.data);
   },
   listChildren: (parentId, params = {}) =>

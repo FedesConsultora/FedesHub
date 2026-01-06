@@ -11,13 +11,25 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { api } from '../../api/client.js'
 import './ClientesListPage.scss'
 
+import { useLoading } from '../../context/LoadingContext.jsx'
+
 export default function ClientesListPage() {
   const { catalog, rows, total, loading, error, filters, setFilter, setPage, refetch } = useClientesList()
   const { roles } = useAuth()
+  const { showLoader, hideLoader } = useLoading()
   const isAdmin = roles.includes('NivelA')
   const [view, setView] = useViewPref('clientes.view', 'cards')
   const [showCreate, setShowCreate] = useState(false)
   const [importing, setImporting] = useState(false)
+
+  React.useEffect(() => {
+    if (loading) showLoader()
+    else hideLoader()
+
+    return () => {
+      if (loading) hideLoader()
+    }
+  }, [loading, showLoader, hideLoader])
 
   const handleExport = async () => {
     try {
@@ -159,7 +171,7 @@ export default function ClientesListPage() {
       </section>
 
       <Pagination page={filters.page || 0} pageSize={PageSize} total={total} onPage={setPage} />
-      {loading && <div className="loading">Cargando…</div>}
+
 
       {showCreate && (
         <CreateClienteModal

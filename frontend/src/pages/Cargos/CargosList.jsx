@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react'
+import { useLoading } from '../../context/LoadingContext.jsx'
 import useCargosOverview from '../../hooks/useCargosOverview'
 import CargosGrid from '../../sections/feders/CargosGrid.jsx'
 import './CargosList.scss'
@@ -5,6 +7,13 @@ import './CargosList.scss'
 export default function CargosList() {
   document.title = 'FedesHub — Cargos'
   const { data, loading, error } = useCargosOverview()
+  const { showLoader, hideLoader } = useLoading()
+
+  useEffect(() => {
+    if (loading) showLoader()
+    else hideLoader()
+    return () => { if (loading) hideLoader() }
+  }, [loading, showLoader, hideLoader])
 
   return (
     <section className="fhCargosPage">
@@ -16,7 +25,7 @@ export default function CargosList() {
       </header>
 
       {error && <div className="error">Error cargando cargos.</div>}
-      {loading && <div className="loading">Cargando…</div>}
+      {loading && !data && null}
 
       {!loading && !error && (
         <CargosGrid items={data} />

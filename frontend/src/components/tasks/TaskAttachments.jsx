@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
@@ -67,7 +68,7 @@ export default function TaskAttachments({ taskId }) {
   const onDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false) }
 
   return (
-    <div className="TaskAttachments card">
+    <div className="TaskAttachments card" style={{ position: 'relative', minHeight: '150px' }}>
       {/* <div className="cardHeader">
         <div className="subtitle">{loading ? 'Cargando…' : `(${adjuntos.length})`}</div>
       </div> */}
@@ -97,7 +98,7 @@ export default function TaskAttachments({ taskId }) {
       </div>
 
       {/* Lista */}
-      {loading && <div className="att-skeleton"><div className="skl" /><div className="skl" /></div>}
+      {loading && <GlobalLoader isLoading={loading} size={80} />}
       {!loading && adjuntos.length === 0 && <div className="empty">Sin adjuntos</div>}
 
       {!!adjuntos.length && !loading && (
