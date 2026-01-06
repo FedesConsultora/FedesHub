@@ -3,108 +3,239 @@
 .dashboardWrap {
   display: flex;
   flex-direction: column;
-  /* evita que el body tome scroll X por accidente */
-  overflow-x: hidden;
-  /* importante para que los hijos puedan encoger en grid/flex */
+  padding: 24px 32px;
+  gap: 24px;
+  background-color: $fh-bg;
+  min-height: 100vh;
   min-width: 0;
-
+  color: $fh-text;
 }
 
-.dashTop {
-  display: grid;
-  grid-template-columns: 70% 30%; // Izquierda 70%, derecha 30%
-  gap: 18px;
-  align-items: stretch; // la columna derecha se estira al alto de la izquierda
-  width: 100%;
-}
-
-/* Columna izquierda (Metrics + Kanban) */
-.dashLeftCol {
+.dashHeader {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-width: 0;
-}
-
-/* Columna derecha (Inbox) */
-.dashInboxCol {
-  display: flex;
-  flex-direction: column;
-  height: 100%; // ocupa todo el alto de dashLeftCol
-  overflow-y: auto; // scroll si hay muchas tareas
-
-}
-
-/* sección sin tarjeta contenedora */
-.dashSection {
-  background: transparent;
-  padding: 2px 0;
-
-  /* 👇 clave: que la sección no fuerce ancho */
-  min-width: 0;
-}
-
-/* encabezado flotante */
-.dashHead {
-  display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
-  padding: 2px 4px;
-  max-width: 100%;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .headerLeft {
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 950;
+      color: $fh-text;
+      letter-spacing: -0.04em;
+      margin: 0;
+      text-transform: capitalize;
+    }
+
+    p {
+      color: $fh-muted;
+      font-size: 1.1rem;
+      margin: 4px 0 0;
+    }
+  }
+
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .periodToggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+
+      button {
+        padding: 6px 16px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        font-weight: 850;
+        font-size: 0.85rem;
+        color: $fh-muted;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &.active {
+          background: rgba(255, 255, 255, 0.9);
+          color: #0f1720;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+      }
+    }
+
+    .btnCreate {
+      background: #3b82f6;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 850;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+      transition: all 0.2s;
+
+      &:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 20px -3px rgba(59, 130, 246, 0.5);
+      }
+    }
+  }
 }
 
-.dashHead .left {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
+.dashContentGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: flex-start;
+
+  .dashMainCol,
+  .dashSideCol {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 200px;
+    /* needed for dropping if empty */
+  }
+
+  .dashSideCol {
+    position: sticky;
+    top: 24px;
+  }
 }
 
-.view-tareas {
+.dropPlaceholder {
+  height: 120px;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
   margin: 0;
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: .2px;
+  transition: all 0.2s;
+  animation: dashFadeIn 0.3s ease;
+  pointer-events: none;
+  /* clave para que no bloquee el descarte */
 }
 
-/* botón crear */
-.createBtn {
-  background: #2aa8ff;
-  color: #fff;
-  border: 0;
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-weight: 800;
-  letter-spacing: .2px;
-  box-shadow: 0 6px 20px rgba(42, 168, 255, .25);
-  transition: transform .06s ease, box-shadow .18s ease, opacity .18s ease;
+@keyframes dashFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.createBtn:hover {
-  box-shadow: 0 10px 28px rgba(42, 168, 255, .35);
-  transform: translateY(-1px);
+.dashboardBlock {
+  background: $fh-card;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: $shadow-soft;
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+  margin-bottom: 0;
+
+  &.collapsed {
+    .blockHeader {
+      border-bottom: none;
+    }
+
+    .blockContent {
+      display: none;
+    }
+  }
+
+  .blockHeader {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+
+    .headerLeft {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .dragHandle {
+        color: $fh-muted;
+        cursor: grab;
+        font-size: 1.2rem;
+        opacity: 0.3;
+        transition: opacity 0.2s;
+
+        &:hover {
+          opacity: 1;
+        }
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: $fh-text;
+      }
+
+      .countBadge {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: $fh-muted;
+      }
+    }
+
+    .headerRight {
+      .toggleBtn {
+        background: transparent;
+        border: none;
+        color: $fh-muted;
+        cursor: pointer;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border-radius: 6px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: $fh-text;
+        }
+      }
+    }
+  }
+
+  .blockContent {
+    padding: 0;
+  }
+
+  &[draggable="true"]:active {
+    opacity: 0.6;
+    cursor: grabbing;
+  }
 }
 
-.createBtn:active {
-  transform: translateY(0);
-  opacity: .9;
-}
+@media (max-width: 1024px) {
+  .dashboardWrap {
+    padding: 16px;
+  }
 
-/* ===== Kanban dentro del dashboard =====
-   Aseguramos que el contenedor del board sea el que scrollea en X,
-   igual que haces en /tareas con las tablas. */
-.dashSection .fh-k-board {
-  max-width: 100%;
-  overflow-x: auto;
-  /* scroll horizontal local */
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-inline: contain;
-  /* por si algún estilo global intenta expandirlo */
-  contain: inline-size;
-}
+  .dashContentGrid {
+    grid-template-columns: 1fr;
 
-/* (opcional) un poquito de espacio para la barra de scroll superpuesta */
-.dashSection .fh-k-board {
-  padding-bottom: 2px;
+    .dashSideCol {
+      position: static;
+    }
+  }
 }

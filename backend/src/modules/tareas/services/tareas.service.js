@@ -12,7 +12,7 @@
 // - Favoritos / Seguidores
 // - Estado / Aprobación / Kanban (finalizada_at cuando corresponde)
 // - Exporta funciones svc* consumidas por el controller
-// -----------------------------------------------------------------------------
+// -------------------------------------
 
 import { QueryTypes, Op } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
@@ -94,7 +94,7 @@ const buildListSQL = (params = {}, currentUser) => {
   const {
     q,
     // unitarios
-    cliente_id, hito_id, estado_id, responsable_feder_id, colaborador_feder_id,
+    cliente_id, hito_id, estado_id, estado_codigo, responsable_feder_id, colaborador_feder_id,
     tarea_padre_id,
     etiqueta_id, impacto_id, urgencia_id, aprobacion_estado_id,
     // múltiples
@@ -127,6 +127,8 @@ const buildListSQL = (params = {}, currentUser) => {
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.nombre AS cliente_nombre,
       h.nombre AS hito_nombre,
+      fa.nombre AS autor_nombre, fa.apellido AS autor_apellido,
+      fa.avatar_url AS autor_avatar_url,
 
       -- Responsables con datos del feder
       (SELECT COALESCE(json_agg(
@@ -177,6 +179,7 @@ const buildListSQL = (params = {}, currentUser) => {
     LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "Feder" fa ON fa.id = t.creado_por_feder_id
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
   `;
   repl.uid = currentUser?.id ?? 0;
@@ -199,6 +202,7 @@ const buildListSQL = (params = {}, currentUser) => {
   if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
   if (hito_id) { where.push(`t.hito_id = :hito_id`); repl.hito_id = hito_id; }
   if (estado_id) { where.push(`t.estado_id = :estado_id`); repl.estado_id = estado_id; }
+  if (estado_codigo) { where.push(`te.codigo = :estado_codigo`); repl.estado_codigo = estado_codigo; }
   if (tarea_padre_id) { where.push(`t.tarea_padre_id = :parent_id`); repl.parent_id = tarea_padre_id; }
   if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
   if (urgencia_id) { where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
@@ -1539,81 +1543,161 @@ export const svcGetHistorial = async (tarea_id, query) => {
 };
 
 // ---------- Métricas del Dashboard ----------
-const getDashboardMetrics = async (user) => {
+const getDashboardMetrics = async (user, query = {}) => {
   const feder_id = user?.feder_id;
+  const user_id = user?.id;
   if (!feder_id) return {};
 
-  const replacements = { fid: feder_id, today: new Date().toISOString().split('T')[0] };
+  const roles = user?.roles || [];
+  const isDirectivo = roles.includes('NivelA') || roles.includes('NivelB');
+  const periodo = query.periodo === 'mes' ? 'mes' : 'semana';
+  const interval = periodo === 'mes' ? '30 days' : '7 days';
 
+  const replacements = {
+    fid: feder_id,
+    uid: user_id,
+    today: new Date().toISOString().split('T')[0]
+  };
+
+  // 1. Tareas de hoy (scoping ampliado)
   const sqlHoy = `
     SELECT COUNT(*)::int as count 
     FROM "Tarea" t
-    JOIN "TareaEstado" te ON te.id = t.estado_id
     WHERE t.is_archivada = false 
-      AND te.codigo NOT IN ('aprobada', 'cancelada')
-      AND t.vencimiento::date = :today
+      AND t.deleted_at IS NULL
       AND (
         t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
+      )
+      AND (
+        t.vencimiento = :today 
+        OR (t.fecha_inicio <= :today AND t.vencimiento >= :today)
       )
   `;
 
-  const sqlSemana = `
+  // 2. Pendientes en el período (scoping ampliado + filtro por estado + vencimiento)
+  const sqlPeriodo = `
     SELECT COUNT(*)::int as count 
     FROM "Tarea" t
     JOIN "TareaEstado" te ON te.id = t.estado_id
     WHERE t.is_archivada = false 
-      AND te.codigo NOT IN ('aprobada', 'cancelada')
-      AND t.vencimiento::date > :today 
-      AND t.vencimiento::date <= (:today::date + interval '7 days')
+      AND t.deleted_at IS NULL
       AND (
         t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
       )
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
+      AND t.vencimiento <= :today::date + INTERVAL '${interval}'
+      AND t.vencimiento >= :today::date
   `;
 
+  // 3. Tareas Prioritarias (Lógica de fallback: si no hay Crítica/Alta, cuenta Media, etc.)
   const sqlPrioritarias = `
+    WITH counts AS (
+      SELECT 
+        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) >= 300 THEN 1 END) as critical_high,
+        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) BETWEEN 100 AND 299 THEN 1 END) as medium,
+        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) < 100 THEN 1 END) as low
+      FROM "Tarea" t
+      JOIN "TareaEstado" te ON te.id = t.estado_id
+      WHERE t.is_archivada = false 
+        AND t.deleted_at IS NULL
+        AND te.codigo NOT IN ('aprobada', 'cancelada')
+        AND (
+          t.creado_por_feder_id = :fid
+          OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+          OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+          OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
+        )
+    )
+    SELECT 
+      CASE 
+        WHEN critical_high > 0 THEN critical_high 
+        WHEN medium > 0 THEN medium 
+        ELSE low 
+      END as count
+    FROM counts
+  `;
+
+  // 4. Notificaciones no leídas
+  const sqlNotif = `
     SELECT COUNT(*)::int as count 
-    FROM "Tarea" t
-    JOIN "TareaEstado" te ON te.id = t.estado_id
-    WHERE t.is_archivada = false 
-      AND te.codigo NOT IN ('aprobada', 'cancelada')
-      AND t.prioridad_num >= 300
-      AND (
-        t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
-      )
+    FROM "NotificacionDestino"
+    WHERE user_id = :uid AND read_at IS NULL
   `;
 
-  const sqlClientes = `
-    SELECT COUNT(DISTINCT t.cliente_id)::int as count 
-    FROM "Tarea" t
-    JOIN "TareaEstado" te ON te.id = t.estado_id
-    WHERE t.is_archivada = false 
-      AND te.codigo NOT IN ('aprobada', 'cancelada')
-      AND (
-        t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" tr WHERE tr.tarea_id = t.id AND tr.feder_id = :fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" tc WHERE tc.tarea_id = t.id AND tc.feder_id = :fid)
-      )
-  `;
+  const queries = {
+    hoy: sequelize.query(sqlHoy, { type: QueryTypes.SELECT, replacements }),
+    periodo: sequelize.query(sqlPeriodo, { type: QueryTypes.SELECT, replacements }),
+    prioritarias: sequelize.query(sqlPrioritarias, { type: QueryTypes.SELECT, replacements }),
+    notif: sequelize.query(sqlNotif, { type: QueryTypes.SELECT, replacements })
+  };
 
-  const [hoy, semana, prioritarias, clientes] = await Promise.all([
-    sequelize.query(sqlHoy, { type: QueryTypes.SELECT, replacements }),
-    sequelize.query(sqlSemana, { type: QueryTypes.SELECT, replacements }),
-    sequelize.query(sqlPrioritarias, { type: QueryTypes.SELECT, replacements }),
-    sequelize.query(sqlClientes, { type: QueryTypes.SELECT, replacements })
-  ]);
+  // 5. Solo si es Directivo: Tareas en Revisión (Global)
+  if (isDirectivo) {
+    const sqlRevision = `
+      SELECT COUNT(*)::int as count 
+      FROM "Tarea" t
+      JOIN "TareaEstado" te ON te.id = t.estado_id
+      WHERE t.is_archivada = false AND te.codigo = 'revision'
+    `;
+    queries.revision = sequelize.query(sqlRevision, { type: QueryTypes.SELECT });
+  }
+
+  const results = await Promise.all(Object.values(queries));
+  const keys = Object.keys(queries);
+  const data = {};
+  keys.forEach((k, i) => { data[k] = results[i][0]?.count || 0; });
 
   return {
-    tareas_hoy: hoy[0]?.count || 0,
-    tareas_semana: semana[0]?.count || 0,
-    tareas_prioritarias: prioritarias[0]?.count || 0,
-    clientes_activos: clientes[0]?.count || 0
+    tareas_hoy: data.hoy,
+    tareas_periodo: data.periodo,
+    tareas_prioritarias: data.prioritarias,
+    notif_unread: data.notif,
+    tareas_en_revision: data.revision || 0,
+    is_directivo: isDirectivo,
+    user_nombre: user.nombre || user.email.split('@')[0],
+    periodo
   };
 };
 
-export const svcGetDashboardMetrics = (user) => getDashboardMetrics(user);
+/**
+ * Obtiene las tareas más urgentes para el usuario
+ */
+export const svcGetUrgentTasks = async (user) => {
+  const fid = user?.feder_id;
+  if (!fid) return [];
+
+  const sql = `
+    SELECT 
+      t.id, t.titulo, t.vencimiento, t.prioridad_num, t.boost_manual,
+      te.nombre as estado_nombre, te.codigo as estado_codigo,
+      c.nombre as cliente_nombre, c.color as cliente_color,
+      fa.nombre as autor_nombre, fa.apellido as autor_apellido
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "Feder" fa ON fa.id = t.creado_por_feder_id
+    WHERE t.is_archivada = false 
+      AND t.deleted_at IS NULL
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
+      )
+    ORDER BY (t.prioridad_num + t.boost_manual) DESC, t.vencimiento ASC NULLS LAST
+    LIMIT 10
+  `;
+
+  return sequelize.query(sql, {
+    type: QueryTypes.SELECT,
+    replacements: { fid, uid: user.id }
+  });
+};
+
+export const svcGetDashboardMetrics = (user, query) => getDashboardMetrics(user, query);
