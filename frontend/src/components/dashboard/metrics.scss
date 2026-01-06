@@ -1,16 +1,48 @@
-// /frontend/src/components/dashboard/metrics.scss
-
 @use '../../styles/variables' as *;
 
-.metricsGrid{
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap:12px;
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
 }
 
-.metricCard{
-  background:#0f141b; border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px;
-  .mcValue{ font-size:1.6rem; font-weight:800; }
-  .mcTitle{ color:$fh-muted; margin-top:2px }
-  .mcHint{ margin-top:8px; font-size:.8rem; color:$fh-muted; opacity:.8 }
+.metricCard {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .mcValue {
+    font-size: 2.2rem;
+    font-weight: 950;
+    color: #4dd0e1; // Using secondary color for pop
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  .mcTitle {
+    color: $fh-muted;
+    font-weight: 850;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .mcHint {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+  }
 }

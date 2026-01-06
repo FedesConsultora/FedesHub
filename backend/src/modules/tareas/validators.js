@@ -22,6 +22,7 @@ export const listTasksQuerySchema = z.object({
   cliente_id: intId.optional(),
   hito_id: intId.optional(),
   estado_id: intId.optional(),
+  estado_codigo: z.string().trim().optional(),
   tarea_padre_id: z.coerce.number().int().positive().optional(),
   responsable_feder_id: intId.optional(),
   colaborador_feder_id: intId.optional(),

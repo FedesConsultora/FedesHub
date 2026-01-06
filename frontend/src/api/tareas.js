@@ -109,6 +109,8 @@ export const tareasApi = {
   // Boost manual
   setBoost: (id, enabled) =>
     api.patch(`${base}/${id}/boost`, { enabled }).then(r => r.data),
+
   // Métricas
-  getMetrics: () => api.get(`${base}/metrics`).then(r => r.data),
+  getMetrics: (params = {}) => api.get(`${base}/metrics`, { params }).then(r => r.data),
+  getUrgent: () => api.get(`${base}/urgent`).then(r => r.data),
 }

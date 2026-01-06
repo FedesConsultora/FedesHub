@@ -17,7 +17,7 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl
+  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl, getUrgentTasksCtrl
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -30,6 +30,7 @@ router.get('/catalog', requireAuth, requirePermission('tareas', 'read'), listCat
 
 router.get('/compose', requireAuth, requirePermission('tareas', 'read'), getCompose);
 router.get('/metrics', requireAuth, getDashboardMetricsCtrl);
+router.get('/urgent', requireAuth, getUrgentTasksCtrl);
 
 // Papelera
 router.get('/trash', requireAuth, listTrash);

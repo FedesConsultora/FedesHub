@@ -1,75 +1,277 @@
 import { useState, useMemo, useEffect } from 'react'
-import useTasksBoard from '../../hooks/useTasksBoard'
-import TaskSummary from '../../components/dashboard/TaskSummary'
+import { useNavigate } from 'react-router-dom'
 import MetricsGrid from '../../components/dashboard/MetricsGrid'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import ModalPanel from '../Tareas/components/ModalPanel'
 import TaskDetail from '../Tareas/TaskDetail'
-import './Dashboard.scss'
-import InboxColumn from '../../components/dashboard/InboxColumn'
+import UrgentTasks from '../../components/dashboard/UrgentTasks'
+import RevisionTasks from '../../components/dashboard/RevisionTasks'
+import DashboardUnread from '../../components/dashboard/DashboardUnread'
+import DashboardBlock from '../../components/dashboard/DashboardBlock'
 import { tareasApi } from '../../api/tareas'
+import { notifApi } from '../../api/notificaciones'
+import './Dashboard.scss'
+
+const DEFAULT_LEFT_COL = ['metrics', 'urgent', 'revision']
+const DEFAULT_RIGHT_COL = ['unread']
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
   const [openTaskId, setOpenTaskId] = useState(null)
   const [metrics, setMetrics] = useState(null)
-  const { board } = useTasksBoard()
+  const [periodo, setPeriodo] = useState('semana')
+  const [urgentTasks, setUrgentTasks] = useState([])
+  const [revisionTasks, setRevisionTasks] = useState([])
+  const [unreadNotifs, setUnreadNotifs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [dragOverInfo, setDragOverInfo] = useState({ col: null, index: null })
+
+  // Layout State (Multi-column)
+  const [leftCol, setLeftCol] = useState(() => {
+    const saved = localStorage.getItem('fh:dashboard:leftCol')
+    return saved ? JSON.parse(saved) : DEFAULT_LEFT_COL
+  })
+  const [rightCol, setRightCol] = useState(() => {
+    const saved = localStorage.getItem('fh:dashboard:rightCol')
+    return saved ? JSON.parse(saved) : DEFAULT_RIGHT_COL
+  })
+  const [collapsedBlocks, setCollapsedBlocks] = useState(() => {
+    const saved = localStorage.getItem('fh:dashboard:collapsed')
+    return saved ? JSON.parse(saved) : []
+  })
 
   useEffect(() => {
-    tareasApi.getMetrics().then(setMetrics).catch(console.error)
+    localStorage.setItem('fh:dashboard:leftCol', JSON.stringify(leftCol))
+    localStorage.setItem('fh:dashboard:rightCol', JSON.stringify(rightCol))
+  }, [leftCol, rightCol])
+
+  useEffect(() => {
+    localStorage.setItem('fh:dashboard:collapsed', JSON.stringify(collapsedBlocks))
+  }, [collapsedBlocks])
+
+  const fetchData = async (p = periodo) => {
+    setLoading(true)
+    try {
+      const [m, u, n] = await Promise.all([
+        tareasApi.getMetrics({ periodo: p }),
+        tareasApi.getUrgent(),
+        notifApi.inbox({ only_unread: true, limit: 10 })
+      ])
+
+      setMetrics(m)
+      setUrgentTasks(u)
+      setUnreadNotifs(n.rows || n)
+
+      if (m.is_directivo) {
+        const rev = await tareasApi.list({ estado_codigo: 'revision' })
+        setRevisionTasks(rev.rows || rev)
+      }
+    } catch (e) {
+      console.error('Error fetching dashboard data:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+    const handlePush = (ev) => {
+      const type = ev?.detail?.type || ''
+      if (type.includes('tarea') || type.includes('notif') || type.includes('chat')) {
+        fetchData()
+      }
+    }
+    window.addEventListener('fh:push', handlePush)
+    return () => window.removeEventListener('fh:push', handlePush)
   }, [])
 
-  const inboxItems = useMemo(() => {
-    return board.columns?.inbox || []
-  }, [board])
+  const handlePeriodChange = (newP) => {
+    setPeriodo(newP)
+    fetchData(newP)
+  }
 
+  const toggleCollapse = (id) => {
+    setCollapsedBlocks(prev =>
+      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+    )
+  }
 
+  // Drag & Drop
+  const handleDragStart = (e, id, sourceCol) => {
+    e.dataTransfer.setData('blockId', id)
+    e.dataTransfer.setData('sourceCol', sourceCol)
+  }
+
+  const handleDragOver = (e, col, index = null) => {
+    e.preventDefault()
+    setDragOverInfo({ col, index })
+  }
+
+  const handleDragLeave = (e) => {
+    // Solo si salimos del contenedor principal de columnas
+    if (e.relatedTarget === null || !e.currentTarget.contains(e.relatedTarget)) {
+      setDragOverInfo({ col: null, index: null })
+    }
+  }
+
+  const handleDrop = (e, targetId, targetCol, targetIndex = null) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOverInfo({ col: null, index: null })
+
+    const draggedId = e.dataTransfer.getData('blockId')
+    const sourceCol = e.dataTransfer.getData('sourceCol')
+
+    if (!draggedId) return
+    if (draggedId === targetId && sourceCol === targetCol) return
+
+    let newLeft = [...leftCol]
+    let newRight = [...rightCol]
+
+    // Remove from source
+    if (sourceCol === 'left') newLeft = newLeft.filter(id => id !== draggedId)
+    else newRight = newRight.filter(id => id !== draggedId)
+
+    // Insert into target
+    const targetArr = targetCol === 'left' ? newLeft : newRight
+
+    let finalIdx = targetIndex
+    if (finalIdx === null) {
+      if (targetId) {
+        finalIdx = targetArr.indexOf(targetId)
+      } else {
+        finalIdx = targetArr.length
+      }
+    }
+
+    // Asegurarnos de que no insertamos duplicados por error
+    const cleanTargetArr = targetArr.filter(id => id !== draggedId)
+    cleanTargetArr.splice(finalIdx, 0, draggedId)
+
+    if (targetCol === 'left') {
+      setLeftCol(cleanTargetArr)
+      if (sourceCol === 'right') setRightCol(newRight)
+    } else {
+      setRightCol(cleanTargetArr)
+      if (sourceCol === 'left') setLeftCol(newLeft)
+    }
+  }
+
+  const renderBlock = (id, col, index) => {
+    const isCollapsed = collapsedBlocks.includes(id)
+    switch (id) {
+      case 'metrics':
+        return (
+          <DashboardBlock
+            key={id} id={id} title="Resumen"
+            isCollapsed={isCollapsed} onToggle={toggleCollapse}
+            onDragStart={(e) => handleDragStart(e, id, col)}
+            onDragOver={(e) => handleDragOver(e, col, index)}
+            onDrop={(e) => handleDrop(e, id, col, index)}
+          >
+            <MetricsGrid data={metrics} />
+          </DashboardBlock>
+        )
+      case 'urgent':
+        return (
+          <DashboardBlock
+            key={id} id={id} title="🚀 Tareas más urgentes" count={urgentTasks.length}
+            isCollapsed={isCollapsed} onToggle={toggleCollapse}
+            onDragStart={(e) => handleDragStart(e, id, col)}
+            onDragOver={(e) => handleDragOver(e, col, index)}
+            onDrop={(e) => handleDrop(e, id, col, index)}
+          >
+            <UrgentTasks tasks={urgentTasks} onOpenTask={setOpenTaskId} />
+          </DashboardBlock>
+        )
+      case 'revision':
+        if (!metrics?.is_directivo) return null
+        return (
+          <DashboardBlock
+            key={id} id={id} title="📋 Tareas en revisión" count={revisionTasks.length}
+            isCollapsed={isCollapsed} onToggle={toggleCollapse}
+            onDragStart={(e) => handleDragStart(e, id, col)}
+            onDragOver={(e) => handleDragOver(e, col, index)}
+            onDrop={(e) => handleDrop(e, id, col, index)}
+          >
+            <RevisionTasks tasks={revisionTasks} onOpenTask={setOpenTaskId} />
+          </DashboardBlock>
+        )
+      case 'unread':
+        return (
+          <DashboardBlock
+            key={id} id={id} title="💬 Mensajes sin leer" count={unreadNotifs.length}
+            isCollapsed={isCollapsed} onToggle={toggleCollapse}
+            onDragStart={(e) => handleDragStart(e, id, col)}
+            onDragOver={(e) => handleDragOver(e, col, index)}
+            onDrop={(e) => handleDrop(e, id, col, index)}
+          >
+            <DashboardUnread notifications={unreadNotifs} onOpenTask={setOpenTaskId} onRefresh={() => fetchData()} />
+          </DashboardBlock>
+        )
+      default:
+        return null
+    }
+  }
+
+  const renderPlaceholder = () => <div className="dropPlaceholder" />
+
+  const renderColContent = (ids, colName) => {
+    const content = []
+    ids.forEach((id, idx) => {
+      if (dragOverInfo.col === colName && dragOverInfo.index === idx) {
+        content.push(renderPlaceholder())
+      }
+      content.push(renderBlock(id, colName, idx))
+    })
+    if (dragOverInfo.col === colName && dragOverInfo.index === ids.length) {
+      content.push(renderPlaceholder())
+    }
+    return content
+  }
 
   document.title = 'FedesHub — Inicio'
 
   return (
-
     <div className="dashboardWrap">
-      <div className="dashTop">
-        {/* Columna izquierda: Metrics + Kanban */}
-        <div className="dashLeftCol">
-          <div className='dashMetrics'>
-            <MetricsGrid data={metrics} />
-          </div>
-          <div className="dashCols">
-            <TaskSummary
-              onCreate={() => setShowCreate(true)}
-              onOpenTask={setOpenTaskId}
-            />
-          </div>
+      <div className="dashHeader">
+        <div className="headerLeft">
+          <h1>Hola, {metrics?.user_nombre || 'Bienvenido'}</h1>
+          <p>Este es el resumen de tu actividad para hoy.</p>
         </div>
-
-        {/* Columna derecha: Bandeja de entrada */}
-        <div className="dashInboxCol">
-          <InboxColumn
-            items={inboxItems}
-            onOpenTask={setOpenTaskId}
-          />
+        <div className="headerRight">
+          <div className="periodToggle">
+            <button className={periodo === 'semana' ? 'active' : ''} onClick={() => handlePeriodChange('semana')}>Semana</button>
+            <button className={periodo === 'mes' ? 'active' : ''} onClick={() => handlePeriodChange('mes')}>Mes</button>
+          </div>
+          <button className="btnCreate" onClick={() => navigate('/tareas')}>Ver Tareas</button>
         </div>
       </div>
 
-      {showCreate && (
-        <CreateTaskModal
-          onClose={() => setShowCreate(false)}
-          onCreated={() => setShowCreate(false)}
-        />
-      )}
+      <div className="dashContentGrid" onDragLeave={handleDragLeave}>
+        <div
+          className="dashMainCol"
+          onDragOver={(e) => handleDragOver(e, 'left', leftCol.length)}
+          onDrop={(e) => handleDrop(e, null, 'left', leftCol.length)}
+        >
+          {renderColContent(leftCol, 'left')}
+        </div>
+        <div
+          className="dashSideCol"
+          onDragOver={(e) => handleDragOver(e, 'right', rightCol.length)}
+          onDrop={(e) => handleDrop(e, null, 'right', rightCol.length)}
+        >
+          {renderColContent(rightCol, 'right')}
+        </div>
+      </div>
 
+      {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={() => fetchData()} />}
       {openTaskId && (
-        <ModalPanel open={!!openTaskId} onClose={() => setOpenTaskId(null)}>
-          <TaskDetail
-            taskId={openTaskId}
-            onUpdated={() => { }}
-            onClose={() => setOpenTaskId(null)}
-          />
+        <ModalPanel onClose={() => setOpenTaskId(null)}>
+          <TaskDetail id={openTaskId} onUpdate={() => fetchData()} />
         </ModalPanel>
       )}
     </div>
-
   )
 }
