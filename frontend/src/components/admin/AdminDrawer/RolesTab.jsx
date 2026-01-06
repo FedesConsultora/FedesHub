@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import * as A from '../../../api/auth'
 import { useToast } from '../../toast/ToastProvider'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 
 export default function RolesTab() {
     const toast = useToast()
@@ -61,7 +62,9 @@ export default function RolesTab() {
             </div>
 
             {loading ? (
-                <div className="loading">Cargando...</div>
+                <div style={{ position: 'relative', minHeight: 200 }}>
+                    <GlobalLoader size={80} />
+                </div>
             ) : roles.length === 0 ? (
                 <div className="empty">No hay roles</div>
             ) : (
@@ -125,7 +128,9 @@ export default function RolesTab() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div style={{ color: 'var(--fh-muted)' }}>Cargando permisos...</div>
+                                                <div style={{ position: 'relative', minHeight: 60 }}>
+                                                    <GlobalLoader size={40} />
+                                                </div>
                                             )}
                                         </td>
                                     </tr>

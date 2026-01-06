@@ -5,6 +5,7 @@ import * as C from '../../../api/cargos'
 import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider'
 import { useModal } from '../../modal/ModalProvider'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 
 export default function UsersTab() {
     const toast = useToast()
@@ -449,7 +450,9 @@ export default function UsersTab() {
 
             {/* Users Table */}
             {loading ? (
-                <div className="loading">Cargando...</div>
+                <div style={{ position: 'relative', minHeight: 200 }}>
+                    <GlobalLoader size={80} />
+                </div>
             ) : users.length === 0 ? (
                 <div className="empty">No hay usuarios</div>
             ) : (

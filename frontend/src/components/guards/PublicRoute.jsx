@@ -1,12 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
+import GlobalLoader from '../loader/GlobalLoader.jsx'
 
 export default function PublicRoute({ fallback = null }) {
   const { user, booted } = useAuthCtx()
   const loc = useLocation()
 
   // Mientras bootea mostramos un mini loader (evita pantalla en blanco)
-  if (!booted) return fallback ?? <div style={{padding:24}}>Preparando…</div>
+  if (!booted) return fallback ?? <GlobalLoader isLoading={true} />
 
   // Si ya hay sesión, mandamos a donde venía o a "/"
   if (user) {

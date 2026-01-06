@@ -3,6 +3,7 @@ import { FiPlus, FiEdit2, FiPower } from 'react-icons/fi'
 import * as C from '../../../api/cargos'
 import { useToast } from '../../toast/ToastProvider'
 import { useModal } from '../../modal/ModalProvider'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 
 export default function CargosTab() {
     const toast = useToast()
@@ -196,7 +197,9 @@ export default function CargosTab() {
 
             {/* Table */}
             {loading ? (
-                <div className="loading">Cargando...</div>
+                <div style={{ position: 'relative', minHeight: 200 }}>
+                    <GlobalLoader size={80} />
+                </div>
             ) : cargos.length === 0 ? (
                 <div className="empty">No hay cargos</div>
             ) : (

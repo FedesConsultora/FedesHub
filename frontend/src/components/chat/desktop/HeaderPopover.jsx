@@ -20,6 +20,7 @@ import './HeaderPopover.scss'
 import { resolveMediaUrl } from '../../../utils/media'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 
 const PRES_COL = { online: '#31c48d', away: '#f6ad55', dnd: '#ef4444', offline: '#6b7280' }
 const ROL_ES = { owner: 'propietario', admin: 'administrador', mod: 'moderador', member: 'miembro', guest: 'invitado' }
@@ -581,8 +582,8 @@ export default function HeaderPopover({
 
         {/* Files */}
         {tab === 'files' && (
-          <div className="fileList">
-            {loading && <div className="placeholder">Cargando…</div>}
+          <div className="fileList" style={{ position: 'relative', minHeight: 150 }}>
+            {loading && <GlobalLoader size={60} />}
             {!loading && files.length === 0 && <div className="placeholder">No hay archivos</div>}
             {!loading && files.map(a => (
               <a key={`f-${a.id}`} className="fileRow" href={a.file_url} target="_blank" rel="noreferrer">
@@ -596,8 +597,8 @@ export default function HeaderPopover({
 
         {/* Images */}
         {tab === 'images' && (
-          <div className="imgGrid">
-            {loading && <div className="placeholder">Cargando…</div>}
+          <div className="imgGrid" style={{ position: 'relative', minHeight: 150 }}>
+            {loading && <GlobalLoader size={60} />}
             {!loading && images.length === 0 && <div className="placeholder">No hay imágenes</div>}
             {!loading && images.map(a => (
               <a key={`i-${a.id}`} className="imgCell" href={a.file_url} target="_blank" rel="noreferrer">
@@ -630,7 +631,11 @@ export default function HeaderPopover({
                 />
               </div>
               <div className="usersList">
-                {loadingUsers && <div className="placeholder">Cargando usuarios...</div>}
+                {loadingUsers && (
+                  <div style={{ position: 'relative', minHeight: 100 }}>
+                    <GlobalLoader size={60} />
+                  </div>
+                )}
                 {!loadingUsers && availableUsers.length === 0 && (
                   <div className="placeholder">No se encontraron usuarios disponibles.</div>
                 )}

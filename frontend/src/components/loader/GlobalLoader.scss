@@ -4,7 +4,8 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: transparent;
+    background: #0b1118;
+    background: linear-gradient(180deg, #0b1118, #0f1720);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,18 +17,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        /* Ajuste visual: un poco más abajo */
-        transform: translateY(15%);
+        /* Perfectamente centrado */
+        transform: none;
 
         .loader-text {
             font-family: 'Outfit', 'Inter', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #64748b;
+            /* Gris azulado para mejor visibilidad en claros/oscuros */
             letter-spacing: 1px;
             animation: pulse 1.5s infinite ease-in-out;
-            margin-top: 8px;
-            /* Separación consistente */
+            margin-top: 4px;
         }
     }
 }
@@ -41,6 +42,8 @@
     position: absolute;
     width: 100%;
     height: 100%;
+    background: transparent;
+    backdrop-filter: none;
 }
 
 /* Loader específico para debajo del saludo (sin overlay) */
