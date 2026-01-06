@@ -1,0 +1,283 @@
+@use "../../styles/variables" as v;
+
+.TaskMonthlyView {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    animation: fadeIn 0.3s ease;
+
+    .calendarHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: v.$fh-bg;
+        padding: 16px 24px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: capitalize;
+        }
+
+        .navButtons {
+            display: flex;
+            gap: 12px;
+
+            button {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #fff;
+                padding: 8px 16px;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.12);
+                    border-color: rgba(255, 255, 255, 0.2);
+                    transform: translateY(-1px);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+
+                &.todayBtn {
+                    background: rgba(v.$fh-primary, 0.15);
+                    border-color: rgba(v.$fh-primary, 0.3);
+                    color: lighten(v.$fh-primary, 10%);
+
+                    &:hover {
+                        background: rgba(v.$fh-primary, 0.25);
+                    }
+                }
+
+                .modeToggle {
+                    margin-right: 12px;
+                    background: rgba(255, 255, 255, 0.08);
+                    border-color: rgba(255, 255, 255, 0.15);
+                    color: v.$fh-accent;
+                    font-size: 0.85rem;
+
+                    &:hover {
+                        background: rgba(v.$fh-accent, 0.15);
+                        border-color: rgba(v.$fh-accent, 0.3);
+                    }
+                }
+            }
+        }
+    }
+
+    .calendarGrid {
+        position: relative;
+
+        &.loadingOpacity {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .calendarLoader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(v.$fh-bg, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+        }
+
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-template-rows: 36px;
+        /* Row for weekdays */
+        grid-auto-rows: 100px;
+        /* Rows for days */
+        gap: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+
+        &.mode-week {
+            grid-auto-rows: 250px;
+
+            .dayCell {
+                height: 250px;
+
+                .dayNumber {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 1.1rem;
+                }
+
+                .taskItem {
+                    padding: 8px 12px;
+                    font-size: 0.85rem;
+                }
+            }
+        }
+
+        .weekday {
+            background: v.$fh-bg;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 800;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 36px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dayCell {
+            background: rgba(v.$fh-bg, 0.8);
+            height: 100px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: background 0.2s;
+            position: relative;
+            overflow: hidden;
+            /* Prevent content from expanding cell */
+
+            &.notCurrentMonth {
+                background: rgba(0, 0, 0, 0.15);
+                color: rgba(255, 255, 255, 0.15);
+
+                .taskList {
+                    opacity: 0.3;
+                }
+            }
+
+            &.isToday {
+                &::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: v.$fh-primary;
+                }
+
+                .dayNumber {
+                    background: v.$fh-primary;
+                    color: #fff;
+                    box-shadow: 0 0 10px rgba(v.$fh-primary, 0.4);
+                }
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.03);
+            }
+
+            .dayNumber {
+                width: 22px;
+                height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                font-size: 0.8rem;
+                font-weight: 700;
+                margin-bottom: 2px;
+                transition: all 0.2s;
+                flex-shrink: 0;
+            }
+
+            .taskList {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                overflow-y: auto;
+                flex: 1;
+                scrollbar-width: none;
+
+                &::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .taskItem {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 6px;
+                    padding: 4px 6px;
+                    font-size: 0.7rem;
+                    color: #eee;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    transition: all 0.2s;
+                    border-left-width: 3px;
+                    flex-shrink: 0;
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                        transform: translateX(2px);
+                    }
+
+                    &.status-nueva {
+                        border-left-color: #3b82f6;
+                    }
+
+                    &.status-en_progreso {
+                        border-left-color: #f59e0b;
+                    }
+
+                    &.status-pendiente {
+                        border-left-color: #ef4444;
+                    }
+
+                    &.status-revisar {
+                        border-left-color: #8b5cf6;
+                    }
+
+                    &.status-aprobada {
+                        border-left-color: #10b981;
+                    }
+                }
+
+                .moreTasks {
+                    font-size: 0.7rem;
+                    color: v.$fh-muted;
+                    padding-left: 4px;
+                    font-weight: 600;
+                }
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

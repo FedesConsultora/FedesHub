@@ -34,7 +34,7 @@ export default function useTasksBoard(
       const { rows: r } = await tareasApi.list(params)
 
       // Filtro frontend: excluir aprobadas y canceladas por defecto (a menos que se filtre explícitamente por estado)
-      const filteredRows = params.estado_id ? r : r.filter(t => t.estado_codigo !== 'aprobada' && t.estado_codigo !== 'cancelada');
+      const filteredRows = r;
 
       tasksRef.current = new Map(filteredRows.map(t => [t.id, t]))
       setRows(filteredRows)
