@@ -46,7 +46,7 @@ export function useTaskComments(taskId, cat) {
     // Si vienen archivos reales, los subimos primero
     if (files.length > 0) {
       try {
-        const res = await tareasApi.uploadAdjuntos(taskId, files);
+        const res = await tareasApi.uploadAdjuntos(taskId, files, false);
         if (res.created) {
           finalAdjuntos = res.created.map(a => ({
             id: a.id,
