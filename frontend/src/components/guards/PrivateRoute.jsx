@@ -24,7 +24,7 @@ export default function PrivateRoute({ fallback = null }) {
         </div>
       )
     }
-    return <GlobalLoader />
+    return <GlobalLoader isLoading={true} />
   }
 
   if (!user) return <Navigate to="/login" replace state={{ from: loc }} />

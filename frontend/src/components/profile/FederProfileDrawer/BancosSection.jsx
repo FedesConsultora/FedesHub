@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FaTrash, FaPlus, FaPenToSquare, FaStar, FaRegFloppyDisk, FaXmark } from 'react-icons/fa6'
 import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './BancosSection.scss'
 
 const INITIAL_BANK = {
@@ -152,7 +153,9 @@ export default function BancosSection({ federId, isSelf = false, readOnly = fals
       </div>
 
       {loading && !rows.length ? (
-        <div className="muted" style={{ marginTop: 20 }}>Cargando datos bancarios…</div>
+        <div style={{ position: 'relative', minHeight: 120 }}>
+          <GlobalLoader size={60} />
+        </div>
       ) : (
         <>
           {/* Formulario de Alta/Edición */}

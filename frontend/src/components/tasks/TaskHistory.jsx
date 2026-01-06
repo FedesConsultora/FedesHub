@@ -1,6 +1,6 @@
-// frontend/src/components/tasks/TaskHistory.jsx
 import React, { useState, useEffect } from 'react'
 import { tareasApi } from '../../api/tareas'
+import GlobalLoader from '../loader/GlobalLoader.jsx'
 import './task-history.scss'
 
 const TIPO_CAMBIO_LABELS = {
@@ -89,7 +89,9 @@ export default function TaskHistory({ taskId }) {
             </div>
 
             {loading ? (
-                <div className="loading">Cargando historial...</div>
+                <div style={{ position: 'relative', minHeight: 150 }}>
+                    <GlobalLoader size={80} />
+                </div>
             ) : history.length === 0 ? (
                 <div className="empty">No hay cambios registrados</div>
             ) : (

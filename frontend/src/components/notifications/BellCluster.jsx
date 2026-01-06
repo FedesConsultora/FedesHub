@@ -5,6 +5,7 @@ import { FiMessageSquare, FiCheckSquare, FiCalendar, FiExternalLink, FiEye, FiEy
 import { notifApi } from '../../api/notificaciones'
 import ChatBellPanel from './ChatBellPanel.jsx'
 import { useRealtime } from '../../realtime/RealtimeProvider'
+import GlobalLoader from '../loader/GlobalLoader.jsx'
 import './BellCluster.scss'
 
 // Helper para limpiar HTML de descripciones de tareas
@@ -149,8 +150,8 @@ function BellButton({ buzon, label, count, dot = false, active, onToggle, closeA
           {buzon === 'chat' ? (
             <ChatBellPanel closeAll={closeAll} />
           ) : (
-            <div className="list">
-              {isLoading && <div className="fh-skel">Cargando…</div>}
+            <div className="list" style={{ position: 'relative', minHeight: 100 }}>
+              {isLoading && <GlobalLoader size={60} />}
               {isError && <div className="fh-err">Error cargando.</div>}
               {!isLoading && !isError && !list.length && <div className="fh-empty">Sin notificaciones.</div>}
               {list.map(row => <NotifItem key={row.id} row={row} />)}

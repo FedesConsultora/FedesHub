@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FaTrash, FaPlus, FaPenToSquare, FaRegFloppyDisk, FaXmark } from 'react-icons/fa6'
 import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './EmergenciasSection.scss'
 
 const INITIAL_CONTACT = {
@@ -138,7 +139,9 @@ export default function EmergenciasSection({ federId, isSelf = false, readOnly =
       </div>
 
       {loading && !rows.length ? (
-        <div className="muted" style={{ marginTop: 20 }}>Cargando contactos…</div>
+        <div style={{ position: 'relative', minHeight: 120 }}>
+          <GlobalLoader size={60} />
+        </div>
       ) : (
         <>
           {/* Formulario de Alta/Edición */}

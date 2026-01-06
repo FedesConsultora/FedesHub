@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FaCheck, FaSpinner, FaRegFloppyDisk } from 'react-icons/fa6'
 import { federsApi } from '../../../api/feders'
 import { useToast } from '../../toast/ToastProvider.jsx'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './FirmaPerfilSection.scss'
 
 const norm = (s = '') => s.replace(/\s+/g, ' ').trim()
@@ -161,8 +162,11 @@ export default function FirmaPerfilSection({ federId, federNombre, federApellido
       <div className="headRow">
         <h3>Firma de perfil</h3>
       </div>
-
-      {loading ? <div className="muted" style={{ marginTop: 20 }}>Cargando…</div> : (
+      {loading ? (
+        <div style={{ position: 'relative', minHeight: 120 }}>
+          <GlobalLoader size={60} />
+        </div>
+      ) : (
         <>
           {/* Nombre completo */}
           <div className="field" style={{ marginTop: 16 }}>

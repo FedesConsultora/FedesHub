@@ -76,7 +76,7 @@ $fh-card: if(meta.global-variable-exists(fh-card), $fh-card, rgba(12, 16, 23, .9
     display: grid;
     place-items: center;
     cursor: pointer;
-
+    padding: 0 ;
     &:hover {
       background: rgba(255, 255, 255, .06)
     }

@@ -5,6 +5,7 @@ import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceS
 import { useTaskComments } from '../../../pages/Tareas/hooks/useTaskComments'
 import CommentItem from './CommentItem'
 import Composer from './Composer'
+import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './comments.scss'
 
 // ---- Utils ----
@@ -199,8 +200,8 @@ export default function TaskComments({ taskId, catalog }) {
         </div>
       </div>
 
-      <div className="list" ref={listRef}>
-        {loading && <div className="empty">Cargando…</div>}
+      <div className="list" ref={listRef} style={{ position: 'relative', minHeight: sorted.length ? 0 : 200 }}>
+        {loading && <GlobalLoader size={80} />}
         {!loading && (!sorted || sorted.length === 0) && <div className="empty">—</div>}
 
         {!loading && groups.map(g => (
