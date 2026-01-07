@@ -10,6 +10,15 @@ import TitleTooltip from './TitleTooltip.jsx'
 
 import './CreateTask.scss'
 
+/* === helpers fecha === */
+const fromInputDate = (val) => {
+  if (!val) return null
+  const [y, m, d] = val.split('-').map(Number)
+  // Usar UTC 23:59:59 para ser consistente con el storage y evitar problemas de TZ
+  const dt = new Date(Date.UTC(y, m - 1, d, 23, 59, 59))
+  return dt.toISOString()
+}
+
 /* ================= util: click afuera ================= */
 function useClickOutside(ref, onOutside) {
   useEffect(() => {
@@ -290,7 +299,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
       impacto_id: parseNumOrNull(impactoId) || undefined,
       urgencia_id: parseNumOrNull(urgenciaId) || undefined,
       fecha_inicio: new Date().toISOString() || undefined,
-      vencimiento: vencimiento || undefined,
+      vencimiento: fromInputDate(vencimiento) || undefined,
       requiere_aprobacion: !!requiereAprob,
       etiquetas: etiquetas.map(id => Number(id)),
       responsables: respsPayload,

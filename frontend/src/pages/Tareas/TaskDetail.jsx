@@ -36,16 +36,16 @@ const toInputDate = (iso) => {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
+  const yyyy = d.getUTCFullYear()
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd}`
 }
 const fromInputDate = (val) => {
   if (!val) return null
-  // set local a 23:59:59 para evitar TZ raras si mostramos solo fecha
   const [y, m, d] = val.split('-').map(Number)
-  const dt = new Date(y, m - 1, d, 23, 59, 59)
+  // Usar UTC 23:59:59 para ser consistente con el storage y evitar problemas de TZ
+  const dt = new Date(Date.UTC(y, m - 1, d, 23, 59, 59))
   return dt.toISOString()
 }
 
@@ -630,7 +630,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               <InlineDue
                 value={toInputDate(vencimientoISO)}
                 onChange={handleDueChange}
-                disabled={!isResponsible}
+                disabled={!isResponsible && !isDirectivo}
               />
             </span>
             <TaskStatusCard
@@ -645,7 +645,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               onPick={handleEstado}
               isResponsible={isResponsible}
               isCollaborator={isCollaborator}
-              isNivelB={isNivelB}
+              isNivelB={isDirectivo}
             />
             <span className="inlineClient">
 
@@ -1047,7 +1047,7 @@ function InlineDue({ value, onChange, disabled = false }) {
   if (disabled) {
     return (
       <span className="dueChip disabled" title="Solo los responsables pueden cambiar la fecha">
-        {value ? new Date(value).toLocaleDateString() : 'Sin fecha'}
+        {value ? new Date(value + 'T00:00:00').toLocaleDateString() : 'Sin fecha'}
       </span>
     )
   }
@@ -1055,7 +1055,7 @@ function InlineDue({ value, onChange, disabled = false }) {
   if (!editing) {
     return (
       <button className="dueChip" type="button" onClick={() => setEditing(true)} title="Editar fecha de vencimiento">
-        {value ? new Date(value).toLocaleDateString() : 'Sin fecha'}
+        {value ? new Date(value + 'T00:00:00').toLocaleDateString() : 'Sin fecha'}
       </button>
     )
   }
