@@ -6,12 +6,11 @@ const id = z.coerce.number().int().positive();
 
 export const listQuerySchema = z.object({
   feder_id: id.optional(),
-  celula_id: id.optional(),
   desde: z.string().datetime().optional(),
   hasta: z.string().datetime().optional(),
   abiertos: z.preprocess(v => (v === 'true' ? true : v === 'false' ? false : undefined), z.boolean().optional()),
   q: z.string().min(1).max(200).optional(),
-  order: z.enum(['asc','desc']).optional().default('desc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0)
 });
@@ -64,14 +63,12 @@ export const adjustBodySchema = z.object({
 export const resumenQuerySchema = z.object({
   desde: z.string().datetime(),
   hasta: z.string().datetime(),
-  celula_id: id.optional(),
   feder_id: id.optional()
 });
 export const timelineQuerySchema = z.object({
   fecha: z.string().date(),      // ISO-8601 'YYYY-MM-DD'
-  celula_id: id.optional(),
   feder_id: id.optional(),
-  jornada_min: z.coerce.number().int().min(60).max(24*60).optional() 
+  jornada_min: z.coerce.number().int().min(60).max(24 * 60).optional()
 });
 
 export const timelineRangeQuerySchema = z.object({

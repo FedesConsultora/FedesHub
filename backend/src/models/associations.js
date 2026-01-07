@@ -63,9 +63,7 @@ export const setupAssociations = (m) => {
   link(m.User && m.Feder, 'User → Feder (user_id)', () =>
     m.User.hasOne(m.Feder, { foreignKey: 'user_id', as: 'feder' })
   );
-  link(m.Feder && m.Celula, 'Feder → Celula (celula_id)', () =>
-    m.Feder.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
+  /* celula association removed */
   link(m.Feder && m.FederEstadoTipo, 'Feder → FederEstadoTipo (estado_id)', () =>
     m.Feder.belongsTo(m.FederEstadoTipo, { foreignKey: 'estado_id', as: 'estado' })
   );
@@ -147,24 +145,10 @@ export const setupAssociations = (m) => {
     if (m.User) m.AusenciaAsignacionSolicitud.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
   });
 
-  // ===== Módulo 6: Células =====
-  link(m.Celula && m.CelulaEstado, 'Celula → CelulaEstado (estado_id)', () =>
-    m.Celula.belongsTo(m.CelulaEstado, { foreignKey: 'estado_id', as: 'estado' })
-  );
-  link(m.CelulaRolAsignacion && m.Celula, 'CelulaRolAsignacion → Celula (celula_id)', () =>
-    m.CelulaRolAsignacion.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
-  link(m.CelulaRolAsignacion && m.Feder, 'CelulaRolAsignacion → Feder (feder_id)', () =>
-    m.CelulaRolAsignacion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
-  );
-  link(m.CelulaRolAsignacion && m.CelulaRolTipo, 'CelulaRolAsignacion → CelulaRolTipo (rol_tipo_id)', () =>
-    m.CelulaRolAsignacion.belongsTo(m.CelulaRolTipo, { foreignKey: 'rol_tipo_id', as: 'rolTipo' })
-  );
+  /* celula associations removed */
 
   // ===== Módulo 7: Clientes =====
-  link(m.Cliente && m.Celula, 'Cliente → Celula (celula_id)', () =>
-    m.Cliente.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
+  /* celula association removed */
   link(m.Cliente && m.ClienteTipo, 'Cliente → ClienteTipo (tipo_id)', () =>
     m.Cliente.belongsTo(m.ClienteTipo, { foreignKey: 'tipo_id', as: 'tipo' })
   );
@@ -297,9 +281,7 @@ export const setupAssociations = (m) => {
   link(m.CalendarioLocal && m.Feder, 'CalendarioLocal → Feder (feder_id)', () =>
     m.CalendarioLocal.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
   );
-  link(m.CalendarioLocal && m.Celula, 'CalendarioLocal → Celula (celula_id)', () =>
-    m.CalendarioLocal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
+  /* celula association removed */
   link(m.CalendarioLocal && m.Cliente, 'CalendarioLocal → Cliente (cliente_id)', () =>
     m.CalendarioLocal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
   );
@@ -454,9 +436,7 @@ export const setupAssociations = (m) => {
   );
 
   // ChatCanal ↔ otras entidades
-  link(m.ChatCanal && m.Celula, 'ChatCanal → Celula (celula_id)', () =>
-    m.ChatCanal.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
+  /* celula association removed */
   link(m.ChatCanal && m.Cliente, 'ChatCanal → Cliente (cliente_id)', () =>
     m.ChatCanal.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
   );
@@ -537,9 +517,7 @@ export const setupAssociations = (m) => {
   link(m.ChatMensajeRef && m.Cliente, 'ChatMensajeRef → Cliente (cliente_id)', () =>
     m.ChatMensajeRef.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
   );
-  link(m.ChatMensajeRef && m.Celula, 'ChatMensajeRef → Celula (celula_id)', () =>
-    m.ChatMensajeRef.belongsTo(m.Celula, { foreignKey: 'celula_id', as: 'celula' })
-  );
+  /* celula association removed */
   link(m.ChatMensajeRef && m.Feder, 'ChatMensajeRef → Feder (feder_id)', () =>
     m.ChatMensajeRef.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
   );

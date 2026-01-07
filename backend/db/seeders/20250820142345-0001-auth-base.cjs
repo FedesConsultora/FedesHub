@@ -80,7 +80,7 @@ module.exports = {
     await bulkInsertIfNotExists('Rol', roles, 'nombre');
 
     // ---- Dominios de email permitidos
-    const dominios = [{ dominio: 'fedes.ai', is_activo: true, created_at: now, updated_at: now }];
+    const dominios = [{ dominio: 'fedesconsultora.com', is_activo: true, created_at: now, updated_at: now }];
     await bulkInsertIfNotExists('AuthEmailDominio', dominios, 'dominio');
   },
 

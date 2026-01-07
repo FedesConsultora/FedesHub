@@ -13,7 +13,6 @@ export default function CLevelGrid({ items = [] }) {
               subtitle={[r.cargo_nombre, r.ambito_nombre].filter(Boolean).join(' · ') || '—'}
             />
             {r.user_email && <div className="userEmail">{r.user_email}</div>}
-            {r.celula_nombre && <div className="celulaTag">{r.celula_nombre}</div>}
           </div>
         ))}
         {items.length === 0 && <div className="empty">No hay C-level configurados</div>}

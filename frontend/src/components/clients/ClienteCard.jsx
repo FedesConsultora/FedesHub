@@ -53,12 +53,7 @@ export default function ClienteCard({ c }) {
             <div className="line muted">
               {c.email || '—'}{c.telefono ? ` · ${c.telefono}` : ''}
             </div>
-            <div className="line">
-              Célula:{' '}
-              <Link to={`/celulas/${c.celula_id}`} onClick={(e) => e.stopPropagation()}>
-                {c.celula_nombre}
-              </Link>
-            </div>
+            {/* Célula removed */}
           </div>
 
           <div className="row kpis">

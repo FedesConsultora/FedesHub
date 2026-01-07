@@ -10,7 +10,7 @@ const compactParams = (obj = {}) =>
   )
 
 export const clientesApi = {
-  // Catálogo (tipos, estados, células, ponderaciones)
+  // Catálogo (tipos, estados, ponderaciones)
   catalog: () => api.get(`${base}/catalog`).then(r => r.data),
 
   // Listado/CRUD
@@ -18,7 +18,7 @@ export const clientesApi = {
     api.get(base, { params: compactParams(params) })
       .then(r => ({ total: r.data.total ?? 0, rows: r.data.rows ?? [] })),
 
-  
+
   detail: (id, params = {}) =>
     api.get(`${base}/${id}`, { params: compactParams(params) }).then(r => r.data),
 
@@ -28,9 +28,7 @@ export const clientesApi = {
   remove: (id, { force = false } = {}) =>
     api.delete(`${base}/${id}`, { params: { force } }).then(r => r.data),
 
-  // Asignación de célula
-  assignCelula: (id, celula_id) =>
-    api.patch(`${base}/${id}/assign-celula`, { celula_id }).then(r => r.data),
+  /* assignCelula removed */
 
   // Contactos
   listContactos: (id, params = {}) => api.get(`${base}/${id}/contactos`, { params }).then(r => r.data),
@@ -39,8 +37,9 @@ export const clientesApi = {
   deleteContacto: (id, contactoId) => api.delete(`${base}/${id}/contactos/${contactoId}`).then(r => r.data),
 
   // Resúmenes (opcionales para dashboard)
-  resumenEstado:      () => api.get(`${base}/resumen/estado`).then(r => r.data),
+  resumenEstado: () => api.get(`${base}/resumen/estado`).then(r => r.data),
   resumenPonderacion: () => api.get(`${base}/resumen/ponderacion`).then(r => r.data),
-  resumenCelula:      () => api.get(`${base}/resumen/celula`).then(r => r.data),
-  
+  resumenPonderacion: () => api.get(`${base}/resumen/ponderacion`).then(r => r.data),
+  /* resumenCelula removed */
+
 }

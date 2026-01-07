@@ -28,20 +28,16 @@ export const ensureUserExists = async (user_id) => {
   const u = await models.User.findByPk(user_id, { attributes: ['id'] });
   if (!u) throw Object.assign(new Error('User no encontrado'), { status: 404 });
 };
-export const ensureCelulaExists = async (celula_id) => {
-  if (!celula_id) return;
-  const c = await models.Celula.findByPk(celula_id, { attributes: ['id'] });
-  if (!c) throw Object.assign(new Error('Célula no encontrada'), { status: 404 });
-};
+/* ensureCelulaExists removed */
 export const ensureEstadoExists = async (estado_id) => {
   const e = await models.FederEstadoTipo.findByPk(estado_id, { attributes: ['id'] });
   if (!e) throw Object.assign(new Error('Estado no encontrado'), { status: 404 });
 };
 
 // --------- Listado / conteo
-export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_id, is_activo } = {}) => {
+export const listFeders = async ({ limit = 50, offset = 0, q, estado_id, is_activo } = {}) => {
   const repl = { limit, offset };
-  const where = ["f.nombre NOT ILIKE 'Admin%'", "u.email NOT IN ('sistemas@fedes.ai', 'admin@fedes.ai')"];
+  const where = ["f.nombre NOT ILIKE 'Admin%'", "u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')"];
 
   // coerción robusta para is_activo
   const toBool = (v) => (v === true || v === 'true' || v === 1 || v === '1') ? true
@@ -56,7 +52,6 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
       f.fecha_ingreso, f.fecha_egreso, f.is_activo,
       f.dni_numero_enc AS dni_numero, f.cuil_cuit_enc AS cuil_cuit,
       u.id AS user_id, u.email AS user_email,
-      ce.id AS celula_id, ce.nombre AS celula_nombre,
       est.id AS estado_id, est.codigo AS estado_codigo, est.nombre AS estado_nombre,
 
       -- cargo principal como en overview (con ámbito)
@@ -78,7 +73,6 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
     FROM "Feder" f
     JOIN "FederEstadoTipo" est ON est.id = f.estado_id
     LEFT JOIN "User" u ON u.id = f.user_id
-    LEFT JOIN "Celula" ce ON ce.id = f.celula_id
     LEFT JOIN LATERAL (
       SELECT
         c2.id      AS cargo_id,
@@ -96,11 +90,6 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
     ) AS c ON TRUE
   `;
 
-  if (q) {
-    where.push(`(CONCAT_WS(' ', f.nombre, f.apellido) ILIKE :q OR CONCAT_WS(' ', f.apellido, f.nombre) ILIKE :q OR f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
-    repl.q = `%${q}%`;
-  }
-  if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
   if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
 
@@ -112,9 +101,9 @@ export const listFeders = async ({ limit = 50, offset = 0, q, celula_id, estado_
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
 };
 
-export const countFeders = async ({ q, celula_id, estado_id, is_activo } = {}) => {
+export const countFeders = async ({ q, estado_id, is_activo } = {}) => {
   const repl = {};
-  const where = ["f.nombre NOT ILIKE 'Admin%'", "u.email NOT IN ('sistemas@fedes.ai', 'admin@fedes.ai')"];
+  const where = ["f.nombre NOT ILIKE 'Admin%'", "u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')"];
   const toBool = (v) => (v === true || v === 'true' || v === 1 || v === '1') ? true
     : (v === false || v === 'false' || v === 0 || v === '0') ? false
       : undefined;
@@ -125,11 +114,6 @@ export const countFeders = async ({ q, celula_id, estado_id, is_activo } = {}) =
     FROM "Feder" f
     LEFT JOIN "User" u ON u.id = f.user_id
   `;
-  if (q) {
-    where.push(`(CONCAT_WS(' ', f.nombre, f.apellido) ILIKE :q OR CONCAT_WS(' ', f.apellido, f.nombre) ILIKE :q OR f.nombre ILIKE :q OR f.apellido ILIKE :q OR COALESCE(f.telefono,'') ILIKE :q OR COALESCE(u.email,'') ILIKE :q)`);
-    repl.q = `%${q}%`;
-  }
-  if (celula_id) { where.push(`f.celula_id = :celula_id`); repl.celula_id = celula_id; }
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
   if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
 
@@ -145,7 +129,6 @@ export const getFederById = async (id) => {
       f.dni_numero_enc AS dni_numero,
       f.cuil_cuit_enc AS cuil_cuit,
       u.email AS user_email,
-      ce.nombre AS celula_nombre,
       est.codigo AS estado_codigo, est.nombre AS estado_nombre,
       (
         SELECT c.nombre
@@ -160,7 +143,6 @@ export const getFederById = async (id) => {
     FROM "Feder" f
     JOIN "FederEstadoTipo" est ON est.id = f.estado_id
     LEFT JOIN "User" u ON u.id = f.user_id
-    LEFT JOIN "Celula" ce ON ce.id = f.celula_id
     WHERE f.id = :id
     LIMIT 1
   `, { type: QueryTypes.SELECT, replacements: { id } });
@@ -170,7 +152,7 @@ export const getFederById = async (id) => {
 export const createFeder = async (payload) => {
   await ensureEstadoExists(payload.estado_id);
   await ensureUserExists(payload.user_id);
-  await ensureCelulaExists(payload.celula_id);
+  await ensureUserExists(payload.user_id);
 
   const data = { ...payload };
   if (data.dni_numero !== undefined) {
@@ -189,7 +171,7 @@ export const createFeder = async (payload) => {
 export const updateFeder = async (id, payload) => {
   if (payload.estado_id) await ensureEstadoExists(payload.estado_id);
   if (payload.user_id !== undefined) await ensureUserExists(payload.user_id);
-  if (payload.celula_id !== undefined) await ensureCelulaExists(payload.celula_id);
+  if (payload.user_id !== undefined) await ensureUserExists(payload.user_id);
 
   const data = { ...payload };
   if (data.dni_numero !== undefined) {
@@ -280,10 +262,7 @@ export const removeFederModalidad = async (feder_id, dia_semana_id) => {
 
 // ———— /feders/overview ————
 export const repoOverview = async ({
-  // prioAmbitos queda para compat, ya no se usa para C-level
-  prioAmbitos = ['c_level', 'direccion'],
-  celulasEstado = 'activa',
-  limitCelulas = 200
+  prioAmbitos = ['c_level', 'direccion']
 } = {}) => {
   // 1) C-LEVEL por RBAC (rol NivelA) + cargo principal vigente
   const cLevel = await sequelize.query(`
@@ -291,8 +270,6 @@ export const repoOverview = async ({
       f.id     AS feder_id,
       f.nombre, f.apellido, f.avatar_url,
       u.email  AS user_email,
-      ce.id    AS celula_id,
-      ce.nombre AS celula_nombre,
       c.cargo_id,
       c.cargo_nombre,
       c.ambito_codigo,
@@ -301,7 +278,6 @@ export const repoOverview = async ({
     JOIN "Rol"   r   ON r.id = ur.rol_id AND r.nombre = 'NivelA'
     JOIN "User"  u   ON u.id = ur.user_id
     JOIN "Feder" f   ON f.user_id = u.id
-    LEFT JOIN "Celula" ce ON ce.id = f.celula_id
     LEFT JOIN LATERAL (
       SELECT
         c2.id      AS cargo_id,
@@ -319,7 +295,7 @@ export const repoOverview = async ({
     ) AS c ON TRUE
     WHERE f.nombre NOT ILIKE 'Admin%'
       AND f.is_activo = true
-      AND u.email NOT IN ('sistemas@fedes.ai', 'admin@fedes.ai')
+      AND u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')
     ORDER BY f.apellido ASC, f.nombre ASC
   `, { type: QueryTypes.SELECT });
 
@@ -361,7 +337,7 @@ export const repoOverview = async ({
     WHERE c.area_codigo NOT IN ('cliente', 'organico')
       AND f.is_activo = true
       AND f.nombre NOT ILIKE 'Admin%'
-      AND u.email NOT IN ('sistemas@fedes.ai', 'admin@fedes.ai')
+      AND u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')
       AND NOT EXISTS (
         SELECT 1 FROM "UserRol" urx
         JOIN "Rol" rx ON rx.id = urx.rol_id
@@ -370,7 +346,7 @@ export const repoOverview = async ({
     ORDER BY 
       CASE 
         WHEN c.area_codigo = 'fedes-cloud' THEN 1
-        WHEN c.area_codigo = 'ventas'      THEN 2
+        WHEN c.area_codigo = 'comercial'      THEN 2
         WHEN c.area_codigo = 'creativo'    THEN 3
         WHEN c.area_codigo = 'operaciones' THEN 4
         ELSE 99
@@ -401,7 +377,7 @@ export const repoOverview = async ({
 
   // Convertimos a array para el front preservando el orden del SQL
   const areasArray = Object.values(areas).sort((a, b) => {
-    const weights = { 'fedes-cloud': 1, 'ventas': 2, 'creativo': 3, 'operaciones': 4 };
+    const weights = { 'fedes-cloud': 1, 'comercial': 2, 'creativo': 3, 'operaciones': 4 };
     return (weights[a.codigo] || 99) - (weights[b.codigo] || 99);
   });
 
@@ -411,55 +387,7 @@ export const repoOverview = async ({
   // TriGlobalPanel.jsx línea 27: const areaList = Object.values(areas)
   // Si areas es un array, Object.values(areas) sigue funcionando (devuelve el mismo array).
 
-  // 3) CÉLULAS (miembros activos; sin tridente por célula)
-  const celulas = await sequelize.query(`
-    SELECT c.id, c.nombre, c.avatar_url, c.cover_url,
-           ce.codigo AS estado_codigo, ce.nombre AS estado_nombre,
-           COALESCE((
-             SELECT jsonb_agg(s.obj ORDER BY s.es_principal DESC, s.apellido ASC, s.nombre ASC)
-             FROM (
-               SELECT
-                 jsonb_build_object(
-                   'feder_id', f.id,
-                   'nombre', f.nombre,
-                   'apellido', f.apellido,
-                   'avatar_url', f.avatar_url,
-                   'es_principal', a.es_principal,
-                   'desde', a.desde,
-                   'hasta', a.hasta,
-                   'cargo_nombre',
-                     (SELECT c3.nombre
-                      FROM "FederCargo" fc3
-                      JOIN "Cargo" c3 ON c3.id = fc3.cargo_id
-                      WHERE fc3.feder_id = f.id
-                        AND fc3.es_principal = true
-                        AND (fc3.hasta IS NULL OR fc3.hasta > CURRENT_DATE)
-                      ORDER BY fc3.desde DESC, fc3.id DESC
-                      LIMIT 1)
-                 ) AS obj,
-                 a.es_principal,
-                 f.apellido,
-                 f.nombre
-               FROM "CelulaRolAsignacion" a
-               JOIN "CelulaRolTipo" rt ON rt.id = a.rol_tipo_id
-               JOIN "Feder" f ON f.id = a.feder_id
-                WHERE a.celula_id = c.id
-                  AND f.is_activo = true
-                  AND a.desde <= CURRENT_DATE
-                  AND (a.hasta IS NULL OR a.hasta > CURRENT_DATE)
-               GROUP BY
-                 f.id, f.nombre, f.apellido, f.avatar_url,
-                 a.es_principal, a.desde, a.hasta
-             ) s
-           ), '[]'::jsonb) AS miembros
-    FROM "Celula" c
-    JOIN "CelulaEstado" ce ON ce.id = c.estado_id
-    WHERE ce.codigo = :celulasEstado
-    ORDER BY c.nombre ASC
-    LIMIT :limitCelulas
-  `, { type: QueryTypes.SELECT, replacements: { celulasEstado, limitCelulas } });
-
-  return { c_level: cLevel, areas: areasArray, celulas };
+  return { c_level: cLevel, areas: areasArray, celulas: [] };
 };
 
 // ========== Firma de perfil ==========

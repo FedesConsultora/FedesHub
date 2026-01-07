@@ -14,35 +14,26 @@ const path = require('path');
 
 const PEOPLE = [
   // NivelA: Directivos / C-Level
-  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedes.ai', nivel: 'NivelA' },
-  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedes.ai', nivel: 'NivelA' },
-  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedes.ai', nivel: 'NivelA' },
-  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedes.ai', nivel: 'NivelB' },
-  { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedes.ai', nivel: 'NivelB' },
+  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedesconsultora.com', nivel: 'NivelA' },
+  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedesconsultora.com', nivel: 'NivelA' },
+  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedesconsultora.com', nivel: 'NivelA' },
+  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedesconsultora.com', nivel: 'NivelB' },
+  { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedesconsultora.com', nivel: 'NivelB' },
 
-  // NivelC: Colaboradores
-  { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedes.ai', nivel: 'NivelC' },
-  { nombre: 'Mateo', apellido: 'Germano', cargo: 'Analista Audiovisual', email: 'mgermano@fedes.ai' },
-  { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Analista de Diseño', email: 'fmarchesotti@fedes.ai' },
-  { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Analista de Cuentas', email: 'gcanibano@fedes.ai' },
-  { nombre: 'Victoria', apellido: 'Pellegrino', cargo: 'Analista de Cuentas', email: 'vpellegrino@fedes.ai' },
-  { nombre: 'Juan', apellido: 'Perozo', cargo: 'Analista de Diseño', email: 'jperozo@fedes.ai' },
-  { nombre: 'Matias', apellido: 'Lazcano', cargo: 'Analista Audiovisual', email: 'mlazcano@fedes.ai' },
-  { nombre: 'Belen', apellido: 'Espilman', cargo: 'Desarrolladora Web', email: 'bespilman@fedes.ai' },
+  // NivelC / NivelB (Florencia): Colaboradores
+  { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedesconsultora.com', nivel: 'NivelC' },
+  { nombre: 'Mateo', apellido: 'Germano', cargo: 'Editor de Contenido Audiovisual', email: 'mgermano@fedesconsultora.com' },
+  { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Coordinadora de proyectos', email: 'fmarchesotti@fedesconsultora.com', nivel: 'NivelB' },
+  { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Ejecutivo de Cuentas', email: 'gcanibano@fedesconsultora.com' },
+  { nombre: 'Victoria', apellido: 'Pellegrino', cargo: 'Analista de Cuentas', email: 'vpellegrino@fedesconsultora.com', nivel: 'NivelB' },
+  { nombre: 'Juan', apellido: 'Perozo', cargo: 'Diseñador UX/UI', email: 'jperozo@fedesconsultora.com' },
+  { nombre: 'Matias', apellido: 'Lazcano', cargo: 'Editor de Proyectos', email: 'mlazcano@fedesconsultora.com' },
+  { nombre: 'Belen', apellido: 'Espilman', cargo: 'Desarrolladora Web', email: 'bespilman@fedesconsultora.com' },
 ];
 
 // Función para determinar nivel de rol: nivel explícito > NivelC por defecto
 const getNivel = (p) => p.nivel || 'NivelC';
 
-// Sólo estos se asignan/aseguran explícitamente de célula
-const CEL_ASSIGN = {
-  'Mateo|Germano': 'celula-1',
-  'Victoria|Pellegrino': 'celula-1',
-  'Florencia|Marchesotti': 'celula-1',
-  'Matias|Lazcano': 'celula-2',
-  'Gonzalo|Canibano': 'celula-2',
-  'Juan|Perozo': 'celula-2',
-};
 
 // ===== Helpers comunes (password, fechas) =====
 const strip = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -110,40 +101,17 @@ module.exports = {
         (await qi.sequelize.query(sql, { transaction: t, replacements: repl }))[0][0] || null;
 
       // === Requisitos base ===
-      let dom = await one(`SELECT id FROM "AuthEmailDominio" WHERE dominio='fedes.ai' LIMIT 1`);
+      let dom = await one(`SELECT id FROM "AuthEmailDominio" WHERE dominio='fedesconsultora.com' LIMIT 1`);
       if (!dom) {
         await qi.bulkInsert('AuthEmailDominio', [
-          { dominio: 'fedes.ai', is_activo: true, created_at: now, updated_at: now }
+          { dominio: 'fedesconsultora.com', is_activo: true, created_at: now, updated_at: now }
         ], { transaction: t });
-        dom = await one(`SELECT id FROM "AuthEmailDominio" WHERE dominio='fedes.ai' LIMIT 1`);
+        dom = await one(`SELECT id FROM "AuthEmailDominio" WHERE dominio='fedesconsultora.com' LIMIT 1`);
       }
 
       const estFed = await one(`SELECT id FROM "FederEstadoTipo" WHERE codigo='activo' LIMIT 1`);
       if (!estFed) throw new Error('Falta FederEstadoTipo.activo (0003)');
 
-      // === Asegurar Células 1 y 2 ===
-      const [[estCelAct]] = await qi.sequelize.query(
-        `SELECT id FROM "CelulaEstado" WHERE codigo='activa' LIMIT 1`, { transaction: t }
-      );
-      const ensureCelula = async (nombre, slug) => {
-        const row = await one(`SELECT id FROM "Celula" WHERE slug=:slug OR nombre=:nombre LIMIT 1`,
-          { slug, nombre });
-        if (row) return row.id;
-        await qi.bulkInsert('Celula', [{
-          nombre, slug, estado_id: estCelAct.id,
-          descripcion: null, avatar_url: null, cover_url: null, perfil_md: null,
-          created_at: now, updated_at: now
-        }], { transaction: t });
-        const created = await one(`SELECT id FROM "Celula" WHERE slug=:slug LIMIT 1`, { slug });
-        return created?.id;
-      };
-      const cel1Id = await ensureCelula('Célula 1', 'celula-1');
-      const cel2Id = await ensureCelula('Célula 2', 'celula-2');
-      const celBySlug = { 'celula-1': cel1Id, 'celula-2': cel2Id };
-
-      // RolTipo miembro (para CRA)
-      const crtMiembro = await one(`SELECT id FROM "CelulaRolTipo" WHERE codigo='miembro' LIMIT 1`);
-      if (!crtMiembro) throw new Error('Falta CelulaRolTipo.miembro (0007)');
 
       // === Clientes Especiales ===
       const [[cliTipoA]] = await qi.sequelize.query(`SELECT id FROM "ClienteTipo" WHERE codigo='A' LIMIT 1`, { transaction: t });
@@ -153,7 +121,7 @@ module.exports = {
         const row = await one(`SELECT id FROM "Cliente" WHERE nombre=:nombre LIMIT 1`, { nombre });
         if (row) return row.id;
         await qi.bulkInsert('Cliente', [{
-          nombre, alias, celula_id: cel1Id, tipo_id: cliTipoA.id, estado_id: cliEstAct.id,
+          nombre, alias, tipo_id: cliTipoA.id, estado_id: cliEstAct.id,
           descripcion: 'Fedes Cloud - Infraestructura y Sistemas',
           color: '#1e88e5',
           created_at: now, updated_at: now
@@ -182,7 +150,7 @@ module.exports = {
       }
 
       // === Users: crear o resetear "Nombre123!" ===
-      const baseEmails = ['sistemas@fedes.ai']; // owner de canales y mensajes seed
+      const baseEmails = ['sistemas@fedesconsultora.com']; // owner de canales y mensajes seed
       const emails = Array.from(new Set([...baseEmails, ...PEOPLE.map(p => p.email)]));
       const [existingUsers] = await qi.sequelize.query(
         `SELECT id, email FROM "User" WHERE email IN (:e)`, { transaction: t, replacements: { e: emails } }
@@ -204,7 +172,7 @@ module.exports = {
       }
       // resetear pass a todos: Nombre123!
       for (const email of emails) {
-        const nombre = email === 'sistemas@fedes.ai'
+        const nombre = email === 'sistemas@fedesconsultora.com'
           ? 'Sistemas'
           : (PEOPLE.find(p => p.email === email)?.nombre || email.split('@')[0]);
         const hash = await argon2.hash(passFor(nombre), {
@@ -222,11 +190,11 @@ module.exports = {
         { transaction: t, replacements: { e: emails } }
       );
       const uid = Object.fromEntries(users.map(u => [u.email, u.id]));
-      const sistemasUserId = uid['sistemas@fedes.ai'];
+      const sistemasUserId = uid['sistemas@fedesconsultora.com'];
 
       // === Feders: re-vincular por NOMBRE y desduplicar (con avatar) ===
       const [fRows] = await qi.sequelize.query(
-        `SELECT id, user_id, nombre, apellido, celula_id
+        `SELECT id, user_id, nombre, apellido
            FROM "Feder"`,
         { transaction: t }
       );
@@ -237,8 +205,6 @@ module.exports = {
         const user_id = uid[p.email];
         if (!user_id) continue;
 
-        const wantSlug = CEL_ASSIGN[`${p.nombre}|${p.apellido}`];
-        const desiredCelId = wantSlug ? celBySlug[wantSlug] : null;
         const avatar_url = resolveFederAvatar(p);
 
         // A) Todos los feders que tengan ese nombre/apellido → CONSOLIDAR
@@ -254,13 +220,12 @@ module.exports = {
           await qi.sequelize.query(`
             UPDATE "Feder"
                SET user_id   = :u,
-                   celula_id = :cel,
                    estado_id = :est,
                    avatar_url = COALESCE(:avatar, avatar_url),
                    is_activo = true,
                    updated_at = :now
              WHERE id = :id
-          `, { transaction: t, replacements: { id: keep.id, u: user_id, cel: desiredCelId, est: estFed.id, avatar: avatar_url, now } });
+          `, { transaction: t, replacements: { id: keep.id, u: user_id, est: estFed.id, avatar: avatar_url, now } });
 
           // borrar duplicados (dejar el primero)
           const idsToDelete = sameNameRows.slice(1).map(r => r.id);
@@ -278,24 +243,23 @@ module.exports = {
           continue;
         }
 
-        // B) Si ya existe por user → sincronizar célula y backfill de avatar (sin pisar si ya hay)
+        // B) Si ya existe por user → backfill de avatar (sin pisar si ya hay)
         if (byUser.has(user_id)) {
           const f = byUser.get(user_id);
           fedIdByUser[user_id] = f.id;
           await qi.sequelize.query(
             `UPDATE "Feder"
-                SET celula_id = :cel,
-                    avatar_url = COALESCE(:avatar, avatar_url),
+                SET avatar_url = COALESCE(:avatar, avatar_url),
                     updated_at = :now
               WHERE id = :id`,
-            { transaction: t, replacements: { id: f.id, cel: desiredCelId, avatar: avatar_url, now } }
+            { transaction: t, replacements: { id: f.id, avatar: avatar_url, now } }
           );
           continue;
         }
 
-        // C) Crear feder nuevo (célula si corresponde, si no → NULL) con avatar
+        // C) Crear feder nuevo con avatar
         const [ins] = await qi.bulkInsert('Feder', [{
-          user_id, celula_id: desiredCelId, estado_id: estFed.id,
+          user_id, estado_id: estFed.id,
           nombre: p.nombre || '—', apellido: p.apellido || '—',
           avatar_url,
           is_activo: true, fecha_ingreso: today, created_at: now, updated_at: now
@@ -365,74 +329,12 @@ module.exports = {
       }
       if (toFC.length) await qi.bulkInsert('FederCargo', toFC, { transaction: t });
 
-      // === Miembros por célula (CRA) SOLO para los 6 mapeados ===
-      for (const p of PEOPLE) {
-        const wantSlug = CEL_ASSIGN[`${p.nombre}|${p.apellido}`];
-        if (!wantSlug) continue;
-        const u = uid[p.email]; const [[fidRow]] = await qi.sequelize.query(
-          `SELECT id FROM "Feder" WHERE user_id=:u LIMIT 1`,
-          { transaction: t, replacements: { u } }
-        );
-        const fid = fidRow?.id;
-        if (!fid) continue;
-        const celId = celBySlug[wantSlug];
-
-        await qi.sequelize.query(`
-          UPDATE "CelulaRolAsignacion"
-             SET hasta = :today, updated_at = :now
-           WHERE feder_id = :fid
-             AND rol_tipo_id = :rt
-             AND (hasta IS NULL OR hasta > :today)
-             AND celula_id <> :cel
-        `, { transaction: t, replacements: { fid, rt: crtMiembro.id, today, now, cel: celId } });
-
-        const [[exists]] = await qi.sequelize.query(`
-          SELECT id FROM "CelulaRolAsignacion"
-          WHERE feder_id = :fid AND rol_tipo_id = :rt AND celula_id = :cel
-            AND (hasta IS NULL OR hasta >= :today)
-          ORDER BY desde DESC, id DESC
-          LIMIT 1
-        `, { transaction: t, replacements: { fid, rt: crtMiembro.id, cel: celId, today } });
-
-        if (exists?.id) {
-          await qi.sequelize.query(`
-            UPDATE "CelulaRolAsignacion"
-               SET es_principal = true, updated_at = :now
-             WHERE id = :id
-          `, { transaction: t, replacements: { id: exists.id, now } });
-        } else {
-          await qi.bulkInsert('CelulaRolAsignacion', [{
-            celula_id: celId, feder_id: fid, rol_tipo_id: crtMiembro.id,
-            desde: today, hasta: null, es_principal: true, observacion: null,
-            created_at: now, updated_at: now
-          }], { transaction: t });
-        }
-      }
-
-      // === Cerrar CRAs de miembro para NO mapeados (ej: Enzo, Romina)
-      for (const p of PEOPLE) {
-        if (CEL_ASSIGN[`${p.nombre}|${p.apellido}`]) continue;
-        const u = uid[p.email]; const [[fidRow]] = await qi.sequelize.query(
-          `SELECT id FROM "Feder" WHERE user_id=:u LIMIT 1`,
-          { transaction: t, replacements: { u } }
-        );
-        const fid = fidRow?.id;
-        if (!fid) continue;
-        await qi.sequelize.query(`
-          UPDATE "CelulaRolAsignacion"
-             SET hasta = :today, updated_at = :now
-           WHERE feder_id = :fid
-             AND rol_tipo_id = :rt
-             AND (hasta IS NULL OR hasta > :today)
-        `, { transaction: t, replacements: { fid, rt: crtMiembro.id, today, now } });
-      }
 
       // ==================================================================================
       // === CHAT: canales y bienvenida ===================================================
       // ==================================================================================
       // Requisitos
       const [[ctCanal]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='canal'  LIMIT 1`, { transaction: t });
-      const [[ctCelula]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='celula' LIMIT 1`, { transaction: t });
       const [[ctCliente]] = await qi.sequelize.query(`SELECT id FROM "ChatCanalTipo" WHERE codigo='cliente' LIMIT 1`, { transaction: t });
       const [[rtOwner]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='owner'  LIMIT 1`, { transaction: t });
       const [[rtAdmin]] = await qi.sequelize.query(`SELECT id FROM "ChatRolTipo"   WHERE codigo='admin'  LIMIT 1`, { transaction: t });
@@ -441,7 +343,7 @@ module.exports = {
       if (!ctCanal?.id || !rtOwner?.id || !rtMember?.id) {
         throw new Error('Faltan catálogos de chat (0013-chat-catalogs).');
       }
-      if (!sistemasUserId) throw new Error('Falta usuario sistemas@fedes.ai (0005).');
+      if (!sistemasUserId) throw new Error('Falta usuario sistemas@fedesconsultora.com (0005).');
 
       async function ensureChannel({ tipo_id, slug, nombre, topic = null, is_privado = false, only_mods_can_post = false, slowmode_seconds = 0, celula_id = null, cliente_id = null }) {
         const [[exists]] = await qi.sequelize.query(
@@ -461,7 +363,7 @@ module.exports = {
           descripcion: null,
           is_privado, is_archivado: false,
           only_mods_can_post, slowmode_seconds,
-          celula_id, cliente_id,
+          cliente_id,
           created_by_user_id: sistemasUserId,
           created_at: now, updated_at: now
         }], { transaction: t });
@@ -545,15 +447,6 @@ module.exports = {
         canalIds[c.slug] = await ensureChannel(c);
       }
 
-      // Canales por célula (si existen cel1/cel2)
-      if (cel1Id) canalIds['celula-1'] = await ensureChannel({
-        slug: 'celula-1', nombre: '#celula-1', tipo_id: ctCelula.id,
-        topic: 'Canal de la Célula 1', is_privado: false, only_mods_can_post: false, celula_id: cel1Id
-      });
-      if (cel2Id) canalIds['celula-2'] = await ensureChannel({
-        slug: 'celula-2', nombre: '#celula-2', tipo_id: ctCelula.id,
-        topic: 'Canal de la Célula 2', is_privado: false, only_mods_can_post: false, celula_id: cel2Id
-      });
 
       // ---- Miembros ----
       // Owner: Sistemas
@@ -575,53 +468,11 @@ module.exports = {
         }
       }
 
-      // Miembros por célula
-      // Tomamos primero CRA principal; fallback por Feder.celula_id
-      async function federUserIdsByCelula(celulaId) {
-        const [cra] = await qi.sequelize.query(`
-          SELECT f.user_id
-          FROM "CelulaRolAsignacion" cra
-          JOIN "Feder" f ON f.id = cra.feder_id
-          WHERE cra.celula_id=:cel AND cra.es_principal=true AND (cra.hasta IS NULL OR cra.hasta >= :today)
-        `, { transaction: t, replacements: { cel: celulaId, today } });
-        let ids = cra.map(r => r.user_id).filter(Boolean);
-        if (!ids.length) {
-          const [ff] = await qi.sequelize.query(`
-            SELECT user_id FROM "Feder" WHERE celula_id=:cel
-          `, { transaction: t, replacements: { cel: celulaId } });
-          ids = ff.map(r => r.user_id).filter(Boolean);
-        }
-        return Array.from(new Set(ids));
-      }
-
-      if (canalIds['celula-1'] && cel1Id) {
-        for (const u of await federUserIdsByCelula(cel1Id)) {
-          await ensureMember(canalIds['celula-1'], u, rtMember.id);
-        }
-      }
-      if (canalIds['celula-2'] && cel2Id) {
-        for (const u of await federUserIdsByCelula(cel2Id)) {
-          await ensureMember(canalIds['celula-2'], u, rtMember.id);
-        }
-      }
-
-      // Cliente Demo: invitar miembros de Célula 1 (si canal existe)
-      if (canalIds['cliente-demo'] && cel1Id) {
-        for (const u of await federUserIdsByCelula(cel1Id)) {
-          await ensureMember(canalIds['cliente-demo'], u, rtMember.id);
-        }
-      }
 
       // ---- Mensajes de bienvenida (pinned) ----
       await ensureWelcomeMessage(canalIds['general'], '👋 ¡Bienvenidos a #general! Usen este canal para discusiones transversales.');
       if (canalIds['anuncios']) {
         await ensureWelcomeMessage(canalIds['anuncios'], '📣 Canal de anuncios internos. Sólo el staff puede publicar aquí.');
-      }
-      if (canalIds['celula-1']) {
-        await ensureWelcomeMessage(canalIds['celula-1'], '👥 Bienvenidos a #celula-1. Canal operativo de la célula.');
-      }
-      if (canalIds['celula-2']) {
-        await ensureWelcomeMessage(canalIds['celula-2'], '👥 Bienvenidos a #celula-2. Canal operativo de la célula.');
       }
 
       // ==================================================================================

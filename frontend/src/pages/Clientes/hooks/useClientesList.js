@@ -4,7 +4,7 @@ import { clientesApi } from '../../../api/clientes'
 export const PageSize = 25
 
 export function useClientesList() {
-  const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [], ponderaciones: [1, 2, 3, 4, 5] })
+  const [catalog, setCatalog] = useState({ tipos: [], estados: [], ponderaciones: [1, 2, 3, 4, 5] })
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -12,7 +12,7 @@ export function useClientesList() {
 
   // Filtros (incluye fechas)
   const [filters, setFilters] = useState({
-    q: '', celula_id: '', tipo_id: '', estado_id: '',
+    q: '', tipo_id: '', estado_id: '',
     ponderacion_min: '', ponderacion_max: '',
     created_from: '', created_to: '',
     order_by: 'nombre', order: 'asc', page: 0
@@ -20,7 +20,7 @@ export function useClientesList() {
 
   const params = useMemo(() => ({
     q: filters.q || undefined,
-    celula_id: filters.celula_id || undefined,
+    // celula_id removed
     tipo_id: filters.tipo_id || undefined,
     estado_id: filters.estado_id || undefined,
     ponderacion_min: filters.ponderacion_min || undefined,

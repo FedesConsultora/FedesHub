@@ -88,8 +88,8 @@ export default function UsersTab() {
             toast?.warn('Email y contraseña son requeridos')
             return
         }
-        if (!/@fedes\.ai$/i.test(form.email)) {
-            toast?.warn('Solo emails @fedes.ai')
+        if (!/@fedesconsultora\.com$/i.test(form.email)) {
+            toast?.warn('Solo emails @fedesconsultora.com')
             return
         }
         if (form.password.length < 10) {
@@ -305,7 +305,7 @@ export default function UsersTab() {
                                     <label>Email</label>
                                     <input
                                         type="email"
-                                        placeholder="usuario@fedes.ai"
+                                        placeholder="usuario@fedesconsultora.com"
                                         value={form.email}
                                         onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
                                     />

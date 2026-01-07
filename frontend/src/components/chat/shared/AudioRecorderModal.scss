@@ -1,0 +1,229 @@
+.audio-recorder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    animation: fadeIn 0.2s ease-out;
+
+    .audio-recorder-modal {
+        background: #1e293b;
+        width: 400px;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05);
+                color: #f8fafc;
+            }
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+
+            h3 {
+                margin: 0;
+                font-size: 1.2rem;
+                color: #f8fafc;
+                font-weight: 500;
+            }
+        }
+
+        .waveform-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .timer {
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            color: #f8fafc;
+
+            .active {
+                color: #ef4444;
+                animation: pulseRecording 1s infinite alternate;
+            }
+
+            .limit {
+                color: #64748b;
+                font-size: 1rem;
+                margin-left: 5px;
+            }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+
+            button {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }
+
+            .record-btn {
+                width: 64px;
+                height: 64px;
+                border-radius: 50%;
+                background: rgba(239, 68, 68, 0.1);
+                border: 2px solid #ef4444;
+
+                .circle-red {
+                    width: 24px;
+                    height: 24px;
+                    background: #ef4444;
+                    border-radius: 50%;
+                    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+                }
+
+                .square-black {
+                    width: 20px;
+                    height: 20px;
+                    background: #ef4444;
+                    border-radius: 4px;
+                }
+
+                &.pause,
+                &.resume {
+                    color: #ef4444;
+                    font-size: 1.5rem;
+                }
+
+                &:hover {
+                    transform: scale(1.05);
+                    background: rgba(239, 68, 68, 0.2);
+                }
+            }
+
+            .reset-btn {
+                width: 44px;
+                height: 44px;
+                color: #94a3b8;
+                font-size: 1.2rem;
+                margin-right: 20px;
+                border-radius: 50%;
+
+                &:hover {
+                    color: #f8fafc;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+            }
+
+            .stop-btn {
+                width: 44px;
+                height: 44px;
+                color: #ef4444;
+                font-size: 1.2rem;
+                margin-left: 20px;
+                border-radius: 50%;
+                border: 1px solid rgba(239, 68, 68, 0.3);
+
+                .square-black {
+                    width: 14px;
+                    height: 14px;
+                    background: #ef4444;
+                    border-radius: 2px;
+                }
+
+                &:hover {
+                    background: rgba(239, 68, 68, 0.1);
+                }
+            }
+
+            .recording-actions,
+            .after-recording {
+                display: flex;
+                align-items: center;
+            }
+
+            .after-recording {
+                gap: 15px;
+
+                .send-btn {
+                    background: #3b82f6;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 30px;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    gap: 8px;
+
+                    &:hover {
+                        background: #2563eb;
+                        transform: translateY(-1px);
+                    }
+                }
+
+                .preview-btn {
+                    color: #f8fafc;
+                    font-size: 1.1rem;
+                    width: 80px;
+                    justify-content: space-between;
+                }
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulseRecording {
+    from {
+        opacity: 0.7;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

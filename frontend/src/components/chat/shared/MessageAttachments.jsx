@@ -1,5 +1,6 @@
 import './MessageAttachments.scss'
 import AttachmentIcon from './AttachmentIcon'
+import AudioPlayer from './AudioPlayer'
 import { resolveMediaUrl } from '../../../utils/media'
 import { useLightbox } from '../../common/useLightbox'
 import useShare from '../share/useShare'
@@ -8,12 +9,13 @@ export default function MessageAttachments({ items = [] }) {
   if (!items?.length) return null
 
   const images = items.filter(a => (a.mime_type || '').startsWith('image/'))
-  const files  = items.filter(a => !(a.mime_type || '').startsWith('image/'))
+  const audios = items.filter(a => (a.mime_type || '').startsWith('audio/'))
+  const files = items.filter(a => !(a.mime_type || '').startsWith('image/') && !(a.mime_type || '').startsWith('audio/'))
 
   // Prep media para lightbox/share
   const media = images.map(a => ({
-    url: resolveMediaUrl(a.file_url),     
-    srcUrl: a.file_url,                   
+    url: resolveMediaUrl(a.file_url),
+    srcUrl: a.file_url,
     name: a.file_name || 'imagen',
     mime: a.mime_type || 'image/*'
   }))
@@ -41,6 +43,14 @@ export default function MessageAttachments({ items = [] }) {
           <Lightbox />
           <ShareModal />
         </>
+      )}
+
+      {!!audios.length && (
+        <div className="audioList">
+          {audios.map((a, idx) => (
+            <AudioPlayer key={`audio-${a.id || idx}`} url={resolveMediaUrl(a.file_url)} />
+          ))}
+        </div>
       )}
 
       {!!files.length && (

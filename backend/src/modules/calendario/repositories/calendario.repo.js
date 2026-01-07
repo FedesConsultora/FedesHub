@@ -16,11 +16,13 @@ async function _federIdByUser(user_id, t) {
 function _visibilityWhere(userFederId) {
   return {
     [Op.or]: [
-      { '$visibilidad.codigo$': { [Op.in]: ['equipo','organizacion'] } },
-      { [Op.and]: [
-        { '$visibilidad.codigo$': 'privado' },
-        { feder_id: userFederId ?? -1 }
-      ]}
+      { '$visibilidad.codigo$': { [Op.in]: ['equipo', 'organizacion'] } },
+      {
+        [Op.and]: [
+          { '$visibilidad.codigo$': 'privado' },
+          { feder_id: userFederId ?? -1 }
+        ]
+      }
     ]
   };
 }
@@ -43,9 +45,6 @@ export async function listCalendarsForQuery(q, user, t) {
     case 'feder':
       where.feder_id = q.feder_id;
       break;
-    case 'celula':
-      where.celula_id = q.celula_id;
-      break;
     case 'cliente':
       where.cliente_id = q.cliente_id;
       break;
@@ -53,14 +52,14 @@ export async function listCalendarsForQuery(q, user, t) {
       where.tipo_id = await idByCodigo(m.CalendarioTipo, 'global', t);
       break;
     case 'all':
-    // sin filtro extra → devuelve todos los visibles según visibilidad
-    break;
+      // sin filtro extra → devuelve todos los visibles según visibilidad
+      break;
   }
 
   return m.CalendarioLocal.findAll({
     where: { ...where, ...visWhere },
     include,
-    order: [['tipo_id','ASC'],['nombre','ASC']],
+    order: [['tipo_id', 'ASC'], ['nombre', 'ASC']],
     transaction: t
   });
 }
@@ -75,7 +74,7 @@ export async function upsertCalendar(payload, user, t) {
 
   const values = {
     tipo_id, nombre: payload.nombre, visibilidad_id,
-    feder_id, celula_id: payload.celula_id ?? null, cliente_id: payload.cliente_id ?? null,
+    feder_id, cliente_id: payload.cliente_id ?? null,
     time_zone: payload.time_zone ?? 'UTC', color: payload.color ?? null,
     is_activo: payload.is_activo ?? true
   };

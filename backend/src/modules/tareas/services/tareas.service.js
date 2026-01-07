@@ -76,13 +76,13 @@ const calcPrioridad = (ponderacion, puntosImpacto, puntosUrgencia) =>
 
 // --- Contexto de usuario para compose (roles y celula) ---
 const getUserContext = async (user) => {
-  if (!user) return { roles: new Set(), feder_id: null, celula_id: null };
+  if (!user) return { roles: new Set(), feder_id: null };
   const u = await models.User.findByPk(user.id, {
     include: [{ model: models.Rol, as: 'roles', attributes: ['nombre'] }]
   });
   const roles = new Set((u?.roles || []).map(r => r.nombre));
-  const feder = await models.Feder.findOne({ where: { user_id: user.id }, attributes: ['id', 'celula_id'] });
-  return { roles, feder_id: feder?.id ?? null, celula_id: feder?.celula_id ?? null };
+  const feder = await models.Feder.findOne({ where: { user_id: user.id }, attributes: ['id'] });
+  return { roles, feder_id: feder?.id ?? null };
 };
 
 // Helper para verificar nivel de acceso (3 niveles jerárquicos)
@@ -1227,7 +1227,7 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     customModels.TareaEtiqueta.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
     customModels.ComentarioTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
     customModels.TareaRelacionTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
-    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'celula_id', 'color'], order: [['nombre', 'ASC']] })
+    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'color'], order: [['nombre', 'ASC']] })
   ]);
 
   const clienteIds = clientes.map(c => c.id);
@@ -1240,7 +1240,7 @@ const listCatalogos = async (customModels = models, scope = {}) => {
 
   const feders = await customModels.Feder.findAll({
     where: { is_activo: true },
-    attributes: ['id', 'user_id', 'nombre', 'apellido', 'celula_id', 'avatar_url'],
+    attributes: ['id', 'user_id', 'nombre', 'apellido', 'avatar_url'],
     order: [['nombre', 'ASC'], ['apellido', 'ASC']]
   });
 
@@ -1260,7 +1260,7 @@ const listCatalogos = async (customModels = models, scope = {}) => {
 
 const getCompose = async (idOrNull, user, customModels = models) => {
   const ctx = await getUserContext(user);
-  const scopeClientes = (isAdmin(ctx.roles) || isCLevel(ctx.roles)) ? {} : { celula_id: ctx.celula_id };
+  const scopeClientes = {};
   const [catalog, tarea] = await Promise.all([
     listCatalogos(customModels, scopeClientes),
     idOrNull ? getTaskById(idOrNull, user) : Promise.resolve(null)

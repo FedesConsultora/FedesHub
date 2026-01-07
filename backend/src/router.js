@@ -11,6 +11,7 @@ const router = Router();
 const modulesDir = path.join(__dirname, 'modules');
 
 for (const mod of fs.readdirSync(modulesDir)) {
+  if (mod === 'celulas') continue; // Células module disabled
   const candidate = path.join(modulesDir, mod, 'router.js');
   if (fs.existsSync(candidate)) {
     const m = await import(path.join(modulesDir, mod, 'router.js'));

@@ -3,13 +3,13 @@
 // Express controllers + validación Zod + manejo de errores consistente.
 import {
   listQuerySchema, idParamSchema, clienteCreateSchema, clienteUpdateSchema,
-  assignCelulaBodySchema, listContactosQuery, contactoCreateSchema, contactoUpdateSchema
+  listContactosQuery, contactoCreateSchema, contactoUpdateSchema
 } from '../validators.js';
 
 import {
-  svcList, svcDetail, svcCreate, svcUpdate, svcDelete, svcAssignCelula,
+  svcList, svcDetail, svcCreate, svcUpdate, svcDelete,
   svcListContactos, svcCreateContacto, svcUpdateContacto, svcDeleteContacto,
-  svcResumenEstado, svcResumenPonderacion, svcResumenCelula, svcCatalog,
+  svcResumenEstado, svcResumenPonderacion, svcCatalog,
   svcExportExcel, svcImportExcel
 } from '../services/clientes.service.js';
 
@@ -62,14 +62,7 @@ export const del = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// Asignaciones
-export const assignCelula = async (req, res, next) => {
-  try {
-    const { id } = idParamSchema.parse(req.params);
-    const { celula_id } = assignCelulaBodySchema.parse(req.body);
-    res.json(await svcAssignCelula(id, celula_id));
-  } catch (e) { next(e); }
-};
+// Asignaciones removed
 
 // Contactos
 export const listContactosCtrl = async (req, res, next) => {
@@ -107,4 +100,4 @@ export const deleteContactoCtrl = async (req, res, next) => {
 // Resúmenes para “tableros”
 export const resumenEstado = async (_req, res, next) => { try { res.json(await svcResumenEstado()); } catch (e) { next(e); } };
 export const resumenPonderacion = async (_req, res, next) => { try { res.json(await svcResumenPonderacion()); } catch (e) { next(e); } };
-export const resumenCelula = async (_req, res, next) => { try { res.json(await svcResumenCelula()); } catch (e) { next(e); } };
+// resumenCelula removed

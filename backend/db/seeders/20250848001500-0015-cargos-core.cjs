@@ -9,7 +9,7 @@ async function ensureAmbitos(queryInterface, t) {
   const departmentRows = [
     { codigo: 'organico', nombre: 'Orgánico', descripcion: 'General' },
     { codigo: 'fedes-cloud', nombre: 'Fedes Cloud', descripcion: 'IT / Tecnología' },
-    { codigo: 'ventas', nombre: 'Ventas', descripcion: 'Área Comercial' },
+    { codigo: 'comercial', nombre: 'Comercial', descripcion: 'Área Comercial' },
     { codigo: 'operaciones', nombre: 'Operaciones', descripcion: 'Coordinación Operativa' },
     { codigo: 'creativo', nombre: 'Creativo', descripcion: 'Células y Producción' },
     { codigo: 'cliente', nombre: 'Cliente', descripcion: 'Ámbito Externo' }
@@ -64,7 +64,11 @@ module.exports = {
 
         { nombre: 'Analista de Cuentas', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Analista de Diseño', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Diseñador UX/UI', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Analista Audiovisual', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Editor de Contenido Audiovisual', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Coordinadora de proyectos', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Editor de Proyectos', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Analista de Marketing', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Analista de Sistemas', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Responsable de Comunicación', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
@@ -75,7 +79,8 @@ module.exports = {
         { nombre: 'Desarrollador Frontend', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Desarrollador Backend', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
         { nombre: 'Desarrolladora Web', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
-        { nombre: 'Asesora Comercial', descripcion: null, ambito_id: amb.ventas, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Asesora Comercial', descripcion: null, ambito_id: amb.comercial, is_activo: true, created_at: now, updated_at: now },
+        { nombre: 'Ejecutivo de Cuentas', descripcion: null, ambito_id: amb.creativo, is_activo: true, created_at: now, updated_at: now },
         { nombre: 'QA / Testing', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
         { nombre: 'DevOps / SRE', descripcion: null, ambito_id: amb['fedes-cloud'], is_activo: true, created_at: now, updated_at: now },
 

@@ -2,7 +2,6 @@
 export default (sequelize, DataTypes) => {
   const Cliente = sequelize.define('Cliente', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    celula_id: { type: DataTypes.INTEGER, allowNull: true },
     tipo_id: { type: DataTypes.INTEGER, allowNull: false },
     estado_id: { type: DataTypes.INTEGER, allowNull: false },
     nombre: { type: DataTypes.STRING(160), allowNull: false, unique: true },
@@ -17,7 +16,7 @@ export default (sequelize, DataTypes) => {
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
   }, {
     tableName: 'Cliente', underscored: true, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at',
-    indexes: [{ fields: ['celula_id'] }, { fields: ['tipo_id'] }, { fields: ['estado_id'] }, { fields: ['ponderacion'] }]
+    indexes: [{ fields: ['tipo_id'] }, { fields: ['estado_id'] }, { fields: ['ponderacion'] }]
   });
   return Cliente;
 };

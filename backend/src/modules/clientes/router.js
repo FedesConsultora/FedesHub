@@ -6,17 +6,15 @@ import { requireAuth } from '../auth/middlewares/requireAuth.js';
 import { requirePermission } from '../auth/middlewares/requirePermission.js';
 
 import {
-  health, catalog, list, detail, create, update, del, assignCelula,
+  list, detail, create, update, del, catalog,
   listContactosCtrl, createContactoCtrl, updateContactoCtrl, deleteContactoCtrl,
-  resumenEstado, resumenPonderacion, resumenCelula,
+  resumenEstado, resumenPonderacion,
   exportExcel, importExcel
 } from './controllers/clientes.controller.js';
 import multer from 'multer';
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
-
-router.get('/health', health);
 
 // EXPORT / IMPORT (Solo Admin)
 router.get('/export', requireAuth, requirePermission('clientes', 'read'), exportExcel);
@@ -25,7 +23,7 @@ router.post('/import', requireAuth, requirePermission('clientes', 'create'), upl
 // Resúmenes para tablero/kanban/lista
 router.get('/resumen/estado', requireAuth, requirePermission('clientes', 'read'), resumenEstado);
 router.get('/resumen/ponderacion', requireAuth, requirePermission('clientes', 'read'), resumenPonderacion);
-router.get('/resumen/celula', requireAuth, requirePermission('clientes', 'read'), resumenCelula);
+/* resumenCelula route removed */
 
 router.get('/catalog', requireAuth, requirePermission('clientes', 'read'), catalog);
 // CRUD Clientes
@@ -35,8 +33,7 @@ router.post('/', requireAuth, requirePermission('clientes', 'create'), create);
 router.patch('/:id', requireAuth, requirePermission('clientes', 'update'), update);
 router.delete('/:id', requireAuth, requirePermission('clientes', 'delete'), del);
 
-// Asignación de célula responsable
-router.patch('/:id/assign-celula', requireAuth, requirePermission('clientes', 'update'), assignCelula);
+/* assignCelula route removed */
 
 // Contactos (subrecurso)
 router.get('/:id/contactos', requireAuth, requirePermission('clientes', 'read'), listContactosCtrl);
@@ -58,7 +55,6 @@ const url = z.string().url().max(255).optional().or(z.literal('').transform(() =
 
 export const listQuerySchema = z.object({
   q: z.string().min(1).max(200).optional(),
-  celula_id: id.optional(),
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(1).max(50).optional(),
   estado_id: id.optional(),
@@ -75,7 +71,6 @@ export const listQuerySchema = z.object({
 export const idParamSchema = z.object({ id });
 
 export const clienteCreateSchema = z.object({
-  celula_id: id,
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(1).max(50).optional(),
   estado_id: id.optional(),
@@ -94,9 +89,7 @@ export const clienteUpdateSchema = clienteCreateSchema.partial().refine(
   { message: 'Sin cambios' }
 );
 
-export const assignCelulaBodySchema = z.object({
-  celula_id: id
-});
+export const assignCelulaBodySchema = z.object({}); // removed
 
 export const listContactosQuery = z.object({
   principal: z.preprocess(v => (v === 'true' ? true : v === 'false' ? false : undefined), z.boolean().optional())

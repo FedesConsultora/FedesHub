@@ -23,8 +23,8 @@ import ResetPassword from '../pages/passwordRecovery/ResetPassword.jsx'
 import AdminTabs from '../pages/Admin/AdminTabs.jsx'
 import FedersTabs from '../pages/Feders/FedersTabs.jsx'
 import FedersOverviewPage from '../pages/Feders/FedersOverviewPage.jsx'
-import CelulasListPage from '../pages/Feders/CelulasListPage.jsx'
-import CelulaDetailPage from '../pages/Feders/CelulaDetailPage.jsx'
+// import CelulasListPage from '../pages/Feders/CelulasListPage.jsx'
+// import CelulaDetailPage from '../pages/Feders/CelulaDetailPage.jsx'
 import FederDetailPage from '../pages/Feders/FederDetailPage.jsx'
 import ClientesListPage from '../pages/Clientes/ClientesListPage.jsx'
 import ClienteDetailPage from '../pages/Clientes/ClienteDetailPage.jsx'
@@ -61,8 +61,8 @@ export default function AppRouter() {
           >
             <Route index element={<FedersOverviewPage />} />
             <Route path="listado" element={<FedersList />} />
-            <Route path="celulas" element={<CelulasListPage />} />
-            <Route path="celulas/:id" element={<CelulaDetailPage />} />
+            {/* <Route path="celulas" element={<CelulasListPage />} />
+            <Route path="celulas/:id" element={<CelulaDetailPage />} /> */}
             <Route path="view/:id" element={<FederDetailPage />} />
             <Route
               path="cargos"

@@ -215,18 +215,16 @@ export default function Dashboard() {
     }
   }
 
-  const renderPlaceholder = () => <div className="dropPlaceholder" />
-
   const renderColContent = (ids, colName) => {
     const content = []
     ids.forEach((id, idx) => {
       if (dragOverInfo.col === colName && dragOverInfo.index === idx) {
-        content.push(renderPlaceholder())
+        content.push(<div key={`placeholder-${colName}-${idx}`} className="dropPlaceholder" />)
       }
       content.push(renderBlock(id, colName, idx))
     })
     if (dragOverInfo.col === colName && dragOverInfo.index === ids.length) {
-      content.push(renderPlaceholder())
+      content.push(<div key={`placeholder-${colName}-last`} className="dropPlaceholder" />)
     }
     return content
   }

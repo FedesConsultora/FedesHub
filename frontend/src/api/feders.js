@@ -11,13 +11,12 @@ const patch = (url, body) => api.patch(url, body).then(r => r.data)
 export const federsApi = {
   // ---------- Catálogo
   async catalog() {
-    const [estados, modalidades, dias, celulas] = await Promise.all([
+    const [estados, modalidades, dias] = await Promise.all([
       get('/feders/catalog/estados'),
       get('/feders/catalog/modalidades'),
-      get('/feders/catalog/dias-semana'),
-      get('/celulas', { limit: 200 })
+      get('/feders/catalog/dias-semana')
     ])
-    return { estados, modalidades, dias, celulas }
+    return { estados, modalidades, dias }
   },
 
   // ---------- Feders (lectura/admin)

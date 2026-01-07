@@ -3,7 +3,6 @@ export default (sequelize, DataTypes) => {
   const Feder = sequelize.define('Feder', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     user_id: { type: DataTypes.INTEGER },
-    celula_id: { type: DataTypes.INTEGER },
     estado_id: { type: DataTypes.INTEGER, allowNull: false },
     nombre: { type: DataTypes.STRING(120), allowNull: false },
     apellido: { type: DataTypes.STRING(120), allowNull: false },
@@ -14,12 +13,12 @@ export default (sequelize, DataTypes) => {
     is_activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
     // 👇 NUEVO — datos de identidad/ERP (encriptados donde corresponde)
-    nombre_legal:     { type: DataTypes.STRING(180) },
-    dni_tipo:         { type: DataTypes.STRING(20) },  // 'DNI','PAS','CI', etc.
-    dni_numero_enc:   { type: DataTypes.TEXT },        // JSON AES-GCM
-    cuil_cuit_enc:    { type: DataTypes.TEXT },        // JSON AES-GCM
+    nombre_legal: { type: DataTypes.STRING(180) },
+    dni_tipo: { type: DataTypes.STRING(20) },  // 'DNI','PAS','CI', etc.
+    dni_numero_enc: { type: DataTypes.TEXT },        // JSON AES-GCM
+    cuil_cuit_enc: { type: DataTypes.TEXT },        // JSON AES-GCM
     fecha_nacimiento: { type: DataTypes.DATEONLY },
-    domicilio_json:   { type: DataTypes.JSONB },       // { calle, nro, piso, cp, ciudad, provincia, pais }
+    domicilio_json: { type: DataTypes.JSONB },       // { calle, nro, piso, cp, ciudad, provincia, pais }
 
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }

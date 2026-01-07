@@ -92,12 +92,11 @@ const baseSelect = `
   LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
 `;
 
-export const listRegistros = async ({ feder_id, celula_id, desde, hasta, abiertos, q, limit = 50, offset = 0, order = 'desc' }) => {
+export const listRegistros = async ({ feder_id, desde, hasta, abiertos, q, limit = 50, offset = 0, order = 'desc' }) => {
   const repl = { limit, offset };
   let sql = baseSelect;
   const where = [];
   if (feder_id) { where.push('ar.feder_id = :feder_id'); repl.feder_id = feder_id; }
-  if (celula_id) { where.push('f.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (desde) { where.push('ar.check_in_at >= :desde'); repl.desde = desde; }
   if (hasta) { where.push('ar.check_in_at <= :hasta'); repl.hasta = hasta; }
   if (typeof abiertos === 'boolean') where.push(abiertos ? 'ar.check_out_at IS NULL' : 'ar.check_out_at IS NOT NULL');
@@ -107,7 +106,7 @@ export const listRegistros = async ({ feder_id, celula_id, desde, hasta, abierto
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
 };
 
-export const countRegistros = async ({ feder_id, celula_id, desde, hasta, abiertos, q }) => {
+export const countRegistros = async ({ feder_id, desde, hasta, abiertos, q }) => {
   const repl = {};
   let sql = `
     SELECT COUNT(*)::int AS cnt
@@ -116,7 +115,6 @@ export const countRegistros = async ({ feder_id, celula_id, desde, hasta, abiert
   `;
   const where = [];
   if (feder_id) { where.push('ar.feder_id = :feder_id'); repl.feder_id = feder_id; }
-  if (celula_id) { where.push('f.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (desde) { where.push('ar.check_in_at >= :desde'); repl.desde = desde; }
   if (hasta) { where.push('ar.check_in_at <= :hasta'); repl.hasta = hasta; }
   if (typeof abiertos === 'boolean') where.push(abiertos ? 'ar.check_out_at IS NULL' : 'ar.check_out_at IS NOT NULL');
@@ -267,10 +265,9 @@ export const toggleForFeder = async ({ feder_id, at, origen_id, modalidad_id }) 
 };
 
 // ================== Reporte simple por periodo ==================
-export const resumenPorPeriodo = async ({ desde, hasta, celula_id, feder_id }) => {
+export const resumenPorPeriodo = async ({ desde, hasta, feder_id }) => {
   const repl = { desde, hasta };
   const where = ['ar.check_in_at >= :desde', 'ar.check_in_at <= :hasta'];
-  if (celula_id) { where.push('f.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (feder_id) { where.push('ar.feder_id = :feder_id'); repl.feder_id = feder_id; }
   const sql = `
     SELECT
@@ -285,7 +282,7 @@ export const resumenPorPeriodo = async ({ desde, hasta, celula_id, feder_id }) =
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
 };
-export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
+export const timelineDiaRepo = async ({ fecha, feder_id }) => {
   // día en límites [00:00, 24:00) del servidor
   const sql = `
     WITH bounds AS (
@@ -328,17 +325,16 @@ export const timelineDiaRepo = async ({ fecha, feder_id, celula_id }) => {
       AND COALESCE(ar.check_out_at, NOW()) > (SELECT day_start FROM bounds)
       -- filtros opcionales
       AND (:feder_id::int IS NULL OR ar.feder_id = :feder_id)
-      AND (:celula_id::int IS NULL OR f.celula_id = :celula_id)
     ORDER BY f.apellido ASC, f.nombre ASC, seg_start_at ASC
   `;
   return sequelize.query(sql, {
     type: QueryTypes.SELECT,
-    replacements: { fecha, feder_id: feder_id ?? null, celula_id: celula_id ?? null }
+    replacements: { fecha, feder_id: feder_id ?? null }
   });
 };
 
 
-export const timelineRangoRepo = async ({ desde, hasta, feder_id, celula_id, q }) => {
+export const timelineRangoRepo = async ({ desde, hasta, feder_id, q }) => {
   const repl = { desde, hasta }
   const where = [
     'ar.check_in_at >= :desde',
@@ -348,11 +344,6 @@ export const timelineRangoRepo = async ({ desde, hasta, feder_id, celula_id, q }
   if (feder_id) {
     where.push('ar.feder_id = :feder_id')
     repl.feder_id = feder_id
-  }
-
-  if (celula_id) {
-    where.push('f.celula_id = :celula_id')
-    repl.celula_id = celula_id
   }
 
   if (q) {

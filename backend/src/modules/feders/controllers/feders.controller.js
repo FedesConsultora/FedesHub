@@ -172,15 +172,13 @@ export const uploadAvatar = async (req, res, next) => {
 const overviewQuery = z.object({
   // priorizar ámbitos que consideramos “C-level” (coma-separado)
   prio_ambitos: z.string().optional(),              // ej: "c_level,direccion"
-  celulas_estado: z.enum(['activa', 'pausada', 'cerrada']).optional().default('activa'),
-  limit_celulas: z.coerce.number().int().min(1).max(500).optional().default(200)
 });
 
 export const overview = async (req, res, next) => {
   try {
-    const { prio_ambitos, celulas_estado, limit_celulas } = overviewQuery.parse(req.query);
-    const prio = prio_ambitos ? prio_ambitos.split(',').map(s => s.trim()).filter(Boolean) : undefined;
-    res.json(await svcOverview({ prioAmbitos: prio, celulasEstado: celulas_estado, limitCelulas: limit_celulas }));
+    const { prio_ambitos } = overviewQuery.parse(req.query);
+    const prio = prio_ambitos ? prio_ambitos.split(',') : undefined;
+    res.json(await svcOverview({ prioAmbitos: prio }));
   } catch (e) { next(e); }
 };
 

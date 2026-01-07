@@ -118,13 +118,13 @@ export const svcGetMyFeder = async (user_id) => {
 // Reportes
 export const svcResumenPeriodo = (q) => resumenPorPeriodo(q);
 
-export const svcTimelineDia = async ({ fecha, celula_id, feder_id, jornada_min = 480 }) => {
+export const svcTimelineDia = async ({ fecha, feder_id, jornada_min = 480 }) => {
   // día completo (UTC o zona de tu DB):
   const desde = new Date(`${fecha}T00:00:00.000Z`).toISOString();
   const hasta = new Date(`${fecha}T23:59:59.999Z`).toISOString();
 
   // traemos registros del periodo (ya tenés listRegistros)
-  const rows = await listRegistros({ desde, hasta, celula_id, feder_id, order: 'asc', limit: 2000 });
+  const rows = await listRegistros({ desde, hasta, feder_id, order: 'asc', limit: 2000 });
 
   // Agrupar por feder
   const byFeder = new Map();

@@ -9,7 +9,6 @@ export default (sequelize, DataTypes) => {
     ausencia_id: { type: DataTypes.INTEGER },
     asistencia_registro_id: { type: DataTypes.INTEGER },
     cliente_id: { type: DataTypes.INTEGER },
-    celula_id: { type: DataTypes.INTEGER },
     feder_id: { type: DataTypes.INTEGER }
   }, {
     tableName: 'ChatMensajeRef',

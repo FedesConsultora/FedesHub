@@ -3,7 +3,7 @@ import AvatarUpload from './AvatarUpload'
 import { resolveMediaUrl } from '../../../utils/media'
 import './HeaderBasic.scss'
 
-export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefresh, readOnly = false }) {
+export default function HeaderBasic({ feder, onToggleActivo, onRefresh, readOnly = false }) {
   const federName = `${feder?.nombre || ''} ${feder?.apellido || ''}`.trim()
 
   return (
@@ -22,7 +22,6 @@ export default function HeaderBasic({ feder, celulaName, onToggleActivo, onRefre
         <div className="nm" title="Nombre y apellido">{feder?.nombre || '—'} {feder?.apellido || ''}</div>
         <div className="sub" title="Cargo principal">{feder?.cargo_principal || '—'}</div>
         <div className="sub" title="Correo electrónico">{feder?.user_email || '—'}</div>
-        {celulaName && <div className="pill" title="Célula asignada">Célula: {celulaName}</div>}
       </div>
 
       <div className="pfActions">

@@ -1,11 +1,11 @@
 // /backend/src/modules/chat/validators.js
 import { z } from 'zod';
 
-export const scopeEnum = z.enum(['mine','canal','celula','cliente','dm','all']);
+export const scopeEnum = z.enum(['mine', 'canal', 'cliente', 'dm', 'all']);
 
 const asArrayOfInts = (v) => {
   if (Array.isArray(v)) return v.map(Number).filter(Number.isFinite);
-  if (typeof v === 'string') return v.split(',').map(n => parseInt(n,10)).filter(Number.isFinite);
+  if (typeof v === 'string') return v.split(',').map(n => parseInt(n, 10)).filter(Number.isFinite);
   return undefined;
 };
 
@@ -18,20 +18,18 @@ export const listCatalogQuery = z.object({});
 export const listCanalesQuery = z.object({
   scope: scopeEnum.default('mine'),
   canal_id: z.coerce.number().int().positive().optional(),
-  celula_id: z.coerce.number().int().positive().optional(),
   cliente_id: z.coerce.number().int().positive().optional(),
   include_archivados: z.coerce.boolean().optional().default(false),
   q: z.string().trim().max(160).optional()
 }).refine(v => {
-  if (v.scope === 'canal')  return !!v.canal_id;
-  if (v.scope === 'celula') return !!v.celula_id;
-  if (v.scope === 'cliente')return !!v.cliente_id;
+  if (v.scope === 'canal') return !!v.canal_id;
+  if (v.scope === 'cliente') return !!v.cliente_id;
   return true;
-}, { message: 'falta canal_id/celula_id/cliente_id según scope' });
+}, { message: 'falta canal_id/cliente_id según scope' });
 
 export const upsertCanalSchema = z.object({
   id: z.number().int().optional(),
-  tipo_codigo: z.enum(['dm','grupo','canal','celula','cliente']),
+  tipo_codigo: z.enum(['dm', 'grupo', 'canal', 'cliente']),
   nombre: z.string().max(120).optional(),
   slug: z.string().max(120).optional(),
   topic: z.string().max(240).optional(),
@@ -39,15 +37,13 @@ export const upsertCanalSchema = z.object({
   is_privado: z.boolean().optional(),
   only_mods_can_post: z.boolean().optional(),
   slowmode_seconds: z.number().int().min(0).max(86400).optional(),
-  celula_id: z.number().int().optional(),
   cliente_id: z.number().int().optional(),
   invited_user_ids: z.array(z.number().int().positive()).optional().default([]) // miembros iniciales
 }).refine(v => {
-  if (v.tipo_codigo === 'celula')  return !!v.celula_id;
   if (v.tipo_codigo === 'cliente') return !!v.cliente_id;
-  if (v.tipo_codigo === 'dm')      return (v.invited_user_ids?.length ?? 0) === 1;
+  if (v.tipo_codigo === 'dm') return (v.invited_user_ids?.length ?? 0) === 1;
   return true;
-}, { message: 'Para tipo celula/cliente se requiere id; para DM un (1) invitado' });
+}, { message: 'Para tipo cliente se requiere id; para DM un (1) invitado' });
 
 export const updateCanalSettingsSchema = z.object({
   only_mods_can_post: z.boolean().optional(),
@@ -59,15 +55,15 @@ export const updateCanalSettingsSchema = z.object({
 
 export const memberUpsertSchema = z.object({
   user_id: z.number().int().positive(),
-  rol_codigo: z.enum(['owner','admin','mod','member','guest']).default('member'),
+  rol_codigo: z.enum(['owner', 'admin', 'mod', 'member', 'guest']).default('member'),
   is_mute: z.boolean().optional(),
-  notif_level: z.enum(['all','mentions','none']).optional()
+  notif_level: z.enum(['all', 'mentions', 'none']).optional()
 });
 
 export const memberPatchSchema = z.object({
-  rol_codigo: z.enum(['owner','admin','mod','member','guest']).optional(),
+  rol_codigo: z.enum(['owner', 'admin', 'mod', 'member', 'guest']).optional(),
   is_mute: z.boolean().optional(),
-  notif_level: z.enum(['all','mentions','none']).optional()
+  notif_level: z.enum(['all', 'mentions', 'none']).optional()
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para actualizar' });
 
 export const listMessagesQuery = z.object({
@@ -98,7 +94,7 @@ export const postMessageSchema = z.object({
   || !!v.body_json
   || (v.attachments?.length ?? 0) > 0
   || v.__has_files === true
-, { message: 'mensaje vacío' });
+  , { message: 'mensaje vacío' });
 
 
 export const editMessageSchema = z.object({
@@ -118,7 +114,7 @@ export const pinSchema = z.object({ on: z.boolean(), orden: z.number().int().nul
 export const typingSchema = z.object({ on: z.boolean(), ttl_seconds: z.number().int().min(1).max(15).default(5) });
 
 export const presenceSchema = z.object({
-  status: z.enum(['online','away','dnd','offline']).default('online'),
+  status: z.enum(['online', 'away', 'dnd', 'offline']).default('online'),
   device: z.string().max(60).optional()
 });
 

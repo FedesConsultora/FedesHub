@@ -2,7 +2,7 @@
 'use strict';
 
 module.exports = {
-  async up (q, S) {
+  async up(q, S) {
     // 1) Agregar slug como NULL y SIN unique (para evitar conflictos)
     const desc = await q.describeTable('Celula');
     if (!desc.slug) {
@@ -30,16 +30,20 @@ module.exports = {
     `);
 
     // 4) Otras columnas
-    if (!desc.perfil_md)  await q.addColumn('Celula','perfil_md',  { type: S.TEXT });
-    if (!desc.avatar_url) await q.addColumn('Celula','avatar_url', { type: S.STRING(512) });
-    if (!desc.cover_url)  await q.addColumn('Celula','cover_url',  { type: S.STRING(512) });
+    if (!desc.perfil_md) await q.addColumn('Celula', 'perfil_md', { type: S.TEXT });
+    if (!desc.avatar_url) await q.addColumn('Celula', 'avatar_url', { type: S.STRING(512) });
+    if (!desc.cover_url) await q.addColumn('Celula', 'cover_url', { type: S.STRING(512) });
   },
 
-  async down (q) {
-    await q.sequelize.query(`ALTER TABLE "Celula" DROP CONSTRAINT IF EXISTS "UQ_Celula_slug"`);
-    await q.removeColumn('Celula','cover_url').catch(()=>{});
-    await q.removeColumn('Celula','avatar_url').catch(()=>{});
-    await q.removeColumn('Celula','perfil_md').catch(()=>{});
-    await q.removeColumn('Celula','slug').catch(()=>{});
+  async down(q) {
+    try {
+      await q.sequelize.query(`ALTER TABLE "Celula" DROP CONSTRAINT IF EXISTS "UQ_Celula_slug"`);
+      await q.removeColumn('Celula', 'cover_url').catch(() => { });
+      await q.removeColumn('Celula', 'avatar_url').catch(() => { });
+      await q.removeColumn('Celula', 'perfil_md').catch(() => { });
+      await q.removeColumn('Celula', 'slug').catch(() => { });
+    } catch (e) {
+      // Ignore errors if table doesn't exist
+    }
   }
 };

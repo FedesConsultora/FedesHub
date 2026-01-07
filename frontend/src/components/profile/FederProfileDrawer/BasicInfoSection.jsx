@@ -59,7 +59,7 @@ function parsePhone(raw = '') {
 
 const pretty = (d = '') => digitsOnly(d).replace(/(\d{3})(?=\d)/g, '$1 ').trim()
 
-export default function BasicInfoSection({ feder, celulaName, canEditCargo = false, isSelf = false, readOnly = false }) {
+export default function BasicInfoSection({ feder, canEditCargo = false, isSelf = false, readOnly = false }) {
   // baseline para detectar cambios reales
   const baseRef = useRef({
     nombre: feder?.nombre || '',
@@ -229,11 +229,6 @@ export default function BasicInfoSection({ feder, celulaName, canEditCargo = fal
           <small className="help">Se guardará como: <code>{telFlat || '—'}</code></small>
         </div>
 
-        {/* Célula (solo lectura) */}
-        <div className="pfInput pfCelula">
-          <label className="lbl" htmlFor="feder-celula-ro">Célula</label>
-          <input id="feder-celula-ro" className="control control--ro" value={celulaName || '(Sin célula)'} readOnly disabled />
-        </div>
       </div>
     </section>
   )

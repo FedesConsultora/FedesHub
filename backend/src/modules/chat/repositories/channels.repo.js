@@ -165,9 +165,6 @@ export async function listCanales(params, user, t) {
     case 'canal':
       where.id = params.canal_id
       break
-    case 'celula':
-      where.celula_id = params.celula_id
-      break
     case 'cliente':
       where.cliente_id = params.cliente_id
       break
@@ -229,7 +226,6 @@ export async function createOrUpdateCanal(payload, user, t) {
     is_archivado: false,
     only_mods_can_post: payload.only_mods_can_post ?? false,
     slowmode_seconds: payload.slowmode_seconds ?? 0,
-    celula_id: payload.celula_id ?? null,
     cliente_id: payload.cliente_id ?? null,
     created_by_user_id: user.id
   };

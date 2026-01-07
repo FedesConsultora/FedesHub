@@ -13,7 +13,6 @@ export default (sequelize, DataTypes) => {
     is_archivado: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     only_mods_can_post: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     slowmode_seconds: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    celula_id: { type: DataTypes.INTEGER },
     cliente_id: { type: DataTypes.INTEGER },
     created_by_user_id: { type: DataTypes.INTEGER },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
@@ -26,7 +25,6 @@ export default (sequelize, DataTypes) => {
     indexes: [
       { name: 'IX_ChatCanal_archivado', fields: ['is_archivado'] },
       { name: 'IX_ChatCanal_tipo_id', fields: ['tipo_id'] },
-      { name: 'IX_ChatCanal_celula', fields: ['celula_id'] },
       { name: 'IX_ChatCanal_cliente', fields: ['cliente_id'] },
     ]
   });

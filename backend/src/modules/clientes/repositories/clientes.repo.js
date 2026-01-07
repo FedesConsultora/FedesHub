@@ -17,24 +17,18 @@ export const getClienteEstadoBy = async ({ id, codigo }) => {
   if (codigo) return models.ClienteEstado.findOne({ where: { codigo } });
   return null;
 };
-export const ensureCelulaExists = async (celula_id) => {
-  const c = await models.Celula.findByPk(celula_id, { attributes: ['id'] });
-  if (!c) throw Object.assign(new Error('Célula no encontrada'), { status: 404 });
-  return c;
-};
+// Celula helpers removed
 
 // === Consultas enriquecidas ===
 const baseSelect = `
   SELECT
     c.id, c.nombre, c.alias, c.email, c.telefono, c.sitio_web, c.descripcion, c.color,
-    c.celula_id, ce.nombre AS celula_nombre,
     c.tipo_id, ct.codigo AS tipo_codigo, ct.nombre AS tipo_nombre,
     c.estado_id, es.codigo AS estado_codigo, es.nombre AS estado_nombre,
     c.ponderacion, c.created_at, c.updated_at
   FROM "Cliente" c
   JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
   JOIN "ClienteEstado" es ON es.id = c.estado_id
-  LEFT JOIN "Celula" ce ON ce.id = c.celula_id
 `;
 
 const metricsCTE = `
@@ -68,23 +62,17 @@ export const listClienteEstados = async () =>
     order: [['nombre', 'ASC']]
   });
 
-export const listCelulasLite = async () =>
-  models.Celula.findAll({
-    attributes: ['id', 'nombre', 'slug'],
-    order: [['nombre', 'ASC']]
-  });
 
 // Listado con filtros + métricas opcionales
 export const listClientes = async (q) => {
   const {
-    q: search, celula_id, tipo_id, tipo_codigo, estado_id, estado_codigo,
+    q: search, tipo_id, tipo_codigo, estado_id, estado_codigo,
     ponderacion_min, ponderacion_max, limit = 50, offset = 0, order_by, order, with_metrics
   } = q;
 
   const repl = { limit, offset };
   let sql = baseSelect;
   const where = [];
-  if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
   if (estado_id === 'all') {
     // No agregamos filtro, muestra todo
@@ -135,7 +123,7 @@ export const listClientes = async (q) => {
 };
 
 export const countClientes = async (q) => {
-  const { q: search, celula_id, tipo_id, tipo_codigo, estado_id, estado_codigo, ponderacion_min, ponderacion_max } = q;
+  const { q: search, tipo_id, tipo_codigo, estado_id, estado_codigo, ponderacion_min, ponderacion_max } = q;
   const repl = {};
   let sql = `
     SELECT COUNT(*)::int AS cnt
@@ -144,7 +132,6 @@ export const countClientes = async (q) => {
     JOIN "ClienteEstado" es ON es.id = c.estado_id
   `;
   const where = [];
-  if (celula_id) { where.push('c.celula_id = :celula_id'); repl.celula_id = celula_id; }
   if (tipo_id) { where.push('c.tipo_id = :tipo_id'); repl.tipo_id = tipo_id; }
   if (estado_id === 'all') {
     // No filter
@@ -175,13 +162,11 @@ export const getClienteById = async (id) => {
     ${metricsCTE}
     SELECT c.*, ct.codigo AS tipo_codigo, ct.nombre AS tipo_nombre,
            es.codigo AS estado_codigo, es.nombre AS estado_nombre,
-           ce.nombre AS celula_nombre,
            COALESCE(mx.total_tareas,0)::int    AS total_tareas,
            COALESCE(mx.tareas_abiertas,0)::int AS tareas_abiertas
     FROM "Cliente" c
     JOIN "ClienteTipo" ct ON ct.id = c.tipo_id
     JOIN "ClienteEstado" es ON es.id = c.estado_id
-    LEFT JOIN "Celula" ce ON ce.id = c.celula_id
     LEFT JOIN mx ON mx.cliente_id = c.id
     WHERE c.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });
@@ -193,30 +178,16 @@ export const getClienteById = async (id) => {
     where: { cliente_id: id }, order: [['es_principal', 'DESC'], ['nombre', 'ASC']]
   });
 
-  // Gerentes de la célula: asignaciones activas (hasta null o >= hoy) + su asistencia actual
-  const mgrs = await sequelize.query(`
-    SELECT a.id, a.feder_id, a.rol_tipo_id, a.es_principal,
-           f.nombre, f.apellido, f.avatar_url,
-           crt.codigo AS rol_codigo, crt.nombre AS rol_nombre,
-           mtt.codigo AS modalidad_codigo
-    FROM "CelulaRolAsignacion" a
-    JOIN "Feder" f ON f.id = a.feder_id
-    JOIN "CelulaRolTipo" crt ON crt.id = a.rol_tipo_id
-    LEFT JOIN "AsistenciaRegistro" ar ON ar.feder_id = f.id AND ar.check_out_at IS NULL
-    LEFT JOIN "ModalidadTrabajoTipo" mtt ON mtt.id = ar.modalidad_id
-    WHERE a.celula_id = :celula_id
-      AND a.desde <= CURRENT_DATE
-      AND (a.hasta IS NULL OR a.hasta >= CURRENT_DATE)
-    ORDER BY a.es_principal DESC, crt.nombre ASC, f.apellido ASC, f.nombre ASC
-  `, { type: QueryTypes.SELECT, replacements: { celula_id: cliente.celula_id } });
+  // Gerentes removed
+  const mgrs = [];
 
   return { ...cliente, contactos, gerentes: mgrs };
 };
 
 // === Mutaciones ===
 export const createCliente = async (payload) => {
-  const { nombre, celula_id } = payload;
-  await ensureCelulaExists(celula_id);
+  const { nombre } = payload;
+  // celula check removed
   const exists = await models.Cliente.findOne({ where: { nombre } });
   if (exists) throw Object.assign(new Error('Ya existe un cliente con ese nombre'), { status: 409 });
   const row = await models.Cliente.create(payload);
@@ -229,7 +200,7 @@ export const updateCliente = async (id, patch) => {
     const clash = await models.Cliente.findOne({ where: { nombre: patch.nombre } });
     if (clash) throw Object.assign(new Error('Ya existe un cliente con ese nombre'), { status: 409 });
   }
-  if (patch.celula_id) await ensureCelulaExists(patch.celula_id);
+  // celula check removed
   await row.update(patch);
   return getClienteById(row.id);
 };
@@ -289,10 +260,4 @@ export const resumenPorEstado = async () => sequelize.query(`
 export const resumenPorPonderacion = async () => sequelize.query(`
   SELECT c.ponderacion, COUNT(*)::int AS cantidad
   FROM "Cliente" c GROUP BY c.ponderacion ORDER BY c.ponderacion DESC
-`, { type: QueryTypes.SELECT });
-
-export const resumenPorCelula = async () => sequelize.query(`
-  SELECT ce.id AS celula_id, ce.nombre AS celula_nombre, COUNT(*)::int AS cantidad
-  FROM "Cliente" c JOIN "Celula" ce ON ce.id = c.celula_id
-  GROUP BY ce.id, ce.nombre ORDER BY ce.nombre ASC
 `, { type: QueryTypes.SELECT });

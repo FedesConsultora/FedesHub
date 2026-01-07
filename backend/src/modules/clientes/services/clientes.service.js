@@ -5,15 +5,15 @@ import {
   getClienteTipoBy, getClienteEstadoBy, listClientes, countClientes, getClienteById,
   createCliente, updateCliente, softDeleteCliente, hardDeleteCliente,
   listContactos, createContacto, updateContacto, deleteContacto,
-  resumenPorEstado, resumenPorPonderacion, resumenPorCelula, listClienteTipos, listClienteEstados, listCelulasLite
+  resumenPorEstado, resumenPorPonderacion, listClienteTipos, listClienteEstados
 } from '../repositories/clientes.repo.js';
 import * as XLSX from 'xlsx';
 
 export const svcCatalog = async () => {
-  const [tipos, estados, celulas] = await Promise.all([
-    listClienteTipos(), listClienteEstados(), listCelulasLite()
+  const [tipos, estados] = await Promise.all([
+    listClienteTipos(), listClienteEstados()
   ]);
-  return { tipos, estados, celulas, ponderaciones: [1, 2, 3, 4, 5] };
+  return { tipos, estados, celulas: [], ponderaciones: [1, 2, 3, 4, 5] };
 };
 
 const resolveTipoId = async ({ tipo_id, tipo_codigo }) => {
@@ -69,7 +69,7 @@ export const svcUpdate = async (id, body) => {
 export const svcDelete = async (id, { force = false } = {}) => {
   return force ? hardDeleteCliente(id) : softDeleteCliente(id);
 };
-export const svcAssignCelula = async (id, celula_id) => updateCliente(id, { celula_id });
+/* svcAssignCelula removed */
 
 // Contactos
 export const svcListContactos = (cliente_id, q) => listContactos(cliente_id, q);
@@ -80,7 +80,7 @@ export const svcDeleteContacto = (cliente_id, id) => deleteContacto(cliente_id, 
 // Resúmenes (para tableros/listas front estilo Odoo)
 export const svcResumenEstado = () => resumenPorEstado();
 export const svcResumenPonderacion = () => resumenPorPonderacion();
-export const svcResumenCelula = () => resumenPorCelula();
+/* svcResumenCelula removed */
 
 // EXPORT / IMPORT EXCEL
 export const svcExportExcel = async () => {
@@ -94,7 +94,6 @@ export const svcExportExcel = async () => {
     Teléfono: r.telefono || '',
     'Sitio Web': r.sitio_web || '',
     Descripción: r.descripcion || '',
-    'Célula': r.celula_nombre,
     Tipo: r.tipo_nombre,
     Estado: r.estado_nombre,
     Ponderación: r.ponderacion
@@ -127,12 +126,7 @@ export const svcImportExcel = async (buffer) => {
         ponderacion: Number(row.Ponderación || row.ponderacion || 3)
       };
 
-      // Resolver ids por nombre/código
-      const celulaName = row.Célula || row.celula;
-      if (celulaName) {
-        const c = catalog.celulas.find(c => c.nombre.toLowerCase() === celulaName.toLowerCase());
-        if (c) payload.celula_id = c.id;
-      }
+      // Célula removed
 
       const tipoName = row.Tipo || row.tipo;
       if (tipoName) {

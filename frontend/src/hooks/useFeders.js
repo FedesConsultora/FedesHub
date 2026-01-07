@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { federsApi } from '../api/feders'
 
-const DEFAULT_PARAMS = { limit: 50, offset: 0, q: '', celula_id: '', estado_id: '', is_activo: 'true' }
+const DEFAULT_PARAMS = { limit: 50, offset: 0, q: '', estado_id: '', is_activo: 'true' }
 
 export default function useFeders(initial = {}) {
   const [params, setParams] = useState({ ...DEFAULT_PARAMS, ...initial })
@@ -10,7 +10,7 @@ export default function useFeders(initial = {}) {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [catalog, setCatalog] = useState({ estados: [], modalidades: [], dias: [], celulas: [] })
+  const [catalog, setCatalog] = useState({ estados: [], modalidades: [], dias: [] })
 
   // catálogos
   useEffect(() => {
@@ -32,7 +32,6 @@ export default function useFeders(initial = {}) {
     try {
       const { rows, total } = await federsApi.list({
         ...params,
-        celula_id: params.celula_id || undefined,
         estado_id: params.estado_id || undefined,
         is_activo: params.is_activo === '' ? undefined : (params.is_activo === 'true')
       })
@@ -51,7 +50,7 @@ export default function useFeders(initial = {}) {
       fetchList()
     }, 400) // 400ms debounce
     return () => clearTimeout(timer)
-  }, [params.q, params.celula_id, params.estado_id, params.is_activo, fetchList])
+  }, [params.q, params.estado_id, params.is_activo, fetchList])
 
   const page = useMemo(() => Math.floor((params.offset || 0) / (params.limit || 50)) + 1, [params])
   const pages = useMemo(() => Math.max(1, Math.ceil(total / (params.limit || 50))), [total, params.limit])

@@ -27,7 +27,7 @@ export default function ClienteDetailPage() {
     const { showLoader, hideLoader } = useLoading()
 
     const [cliente, setCliente] = useState(null)
-    const [catalog, setCatalog] = useState({ tipos: [], estados: [], celulas: [] })
+    const [catalog, setCatalog] = useState({ tipos: [], estados: [] })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -46,7 +46,6 @@ export default function ClienteDetailPage() {
         telefono: '',
         sitio_web: '',
         descripcion: '',
-        celula_id: '',
         tipo_id: '',
         ponderacion: 3,
         color: '#3B82F6'
@@ -70,7 +69,6 @@ export default function ClienteDetailPage() {
                 telefono: data.telefono || '',
                 sitio_web: data.sitio_web || '',
                 descripcion: data.descripcion || '',
-                celula_id: data.celula_id || '',
                 tipo_id: data.tipo_id || '',
                 ponderacion: data.ponderacion || 3,
                 color: data.color || '#3B82F6'
@@ -95,7 +93,6 @@ export default function ClienteDetailPage() {
             telefono: cliente.telefono || '',
             sitio_web: cliente.sitio_web || '',
             descripcion: cliente.descripcion || '',
-            celula_id: cliente.celula_id || '',
             tipo_id: cliente.tipo_id || '',
             ponderacion: cliente.ponderacion || 3,
             color: cliente.color || '#3B82F6'
@@ -254,7 +251,7 @@ export default function ClienteDetailPage() {
                                 {!editing ? (
                                     <>
                                         <span className="badge type">{cliente.tipo_nombre}</span>
-                                        <span className="badge celula">{cliente.celula_nombre}</span>
+                                        {/* <span className="badge celula">{cliente.celula_nombre}</span> */}
                                         <span className="badge ponderacion">
                                             <FiStar className="icon" /> Pond. {cliente.ponderacion}
                                         </span>
@@ -264,10 +261,6 @@ export default function ClienteDetailPage() {
                                         <select value={form.tipo_id} onChange={e => setForm({ ...form, tipo_id: e.target.value })}>
                                             <option value="">Tipo de Cliente</option>
                                             {catalog.tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                                        </select>
-                                        <select value={form.celula_id} onChange={e => setForm({ ...form, celula_id: e.target.value })}>
-                                            <option value="">Célula Asignada</option>
-                                            {catalog.celulas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                         </select>
                                         <select value={form.ponderacion} onChange={e => setForm({ ...form, ponderacion: Number(e.target.value) })}>
                                             {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad: {v}</option>)}
@@ -358,35 +351,7 @@ export default function ClienteDetailPage() {
                 </main>
 
                 <aside className="sideCol">
-                    <section className="sidePanel">
-                        <div className="sidePanelHeader">
-                            <h4><FiUsers /> Célula Asignada</h4>
-                        </div>
-                        <div className="teamList">
-                            {cliente.gerentes?.map(mgr => (
-                                <div className="memberRow" key={mgr.id}>
-                                    <div className="avatarSide">
-                                        <Avatar
-                                            src={resolveMediaUrl(mgr.avatar_url)}
-                                            name={`${mgr.nombre} ${mgr.apellido || ''}`}
-                                            size={40}
-                                            rounded="md"
-                                        />
-                                        <div className="statusIndicator">
-                                            <AttendanceBadge modalidad={mgr.asistencia_tipo} size={16} />
-                                        </div>
-                                    </div>
-                                    <div className="memberInfo">
-                                        <div className="memberName">{mgr.nombre} {mgr.apellido}</div>
-                                        <div className="memberRole">{mgr.rol_nombre || 'Integrante'}</div>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!cliente.gerentes || cliente.gerentes.length === 0) && (
-                                <p className="empty">No hay equipo asignado a esta célula.</p>
-                            )}
-                        </div>
-                    </section>
+                    {/* Célula panel removed */}
 
                     <section className="sidePanel">
                         <div className="sidePanelHeader">

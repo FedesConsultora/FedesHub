@@ -22,7 +22,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
   const [sitioWeb, setSitioWeb] = useState('')
   const [descripcion, setDescripcion] = useState('')
 
-  const [celulaId, setCelulaId] = useState('')
+  // const [celulaId, setCelulaId] = useState('')
   const [tipoId, setTipoId] = useState('')
   const [estadoId, setEstadoId] = useState('')
   const [ponderacion, setPonderacion] = useState('3') // default UI
@@ -37,9 +37,9 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     return null
   }, [nombre])
 
-  const celulaError = useMemo(() => (!celulaId ? 'Requerido' : null), [celulaId])
+  // const celulaError = useMemo(() => (!celulaId ? 'Requerido' : null), [celulaId])
 
-  const canSubmit = !!nombre.trim() && !!celulaId && !nombreError && !loading
+  const canSubmit = !!nombre.trim() && !nombreError && !loading
 
   // Enter para enviar
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     console.log('[buildPayload] strOrUndef(color):', strOrUndef(color))
     const body = {
       nombre: nombre.trim(),
-      celula_id: Number(celulaId),
+      // celula_id: Number(celulaId),
       alias: strOrUndef(alias),
       email: strOrUndef(email),
       telefono: strOrUndef(telefono),
@@ -121,7 +121,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
         <header className="ccHeader">
           <div className="brand">
             <div className="logo">Nuevo cliente</div>
-            <div className="subtitle">Campos mínimos: Célula y Nombre</div>
+            <div className="subtitle">Campos mínimos: Nombre</div>
           </div>
           <button type="button" className="close" onClick={onClose} aria-label="Cerrar">
             <FiX />
@@ -133,28 +133,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
           <div className="ccGrid">
             {/* Columna izquierda */}
             <div className="col">
-              {/* Célula */}
-              <label className="lbl" htmlFor="celula">Célula <span className="req">*</span></label>
-              <div className={'field ' + (celulaError ? 'is-error' : '')}>
-                <FiUsers className="ico" aria-hidden />
-                <select
-                  id="celula"
-                  ref={firstFieldRef}
-                  name="celula_id"
-                  value={celulaId}
-                  onChange={(e) => setCelulaId(e.target.value)}
-                  aria-invalid={!!celulaError}
-                  aria-describedby={celulaError ? 'err-celula' : undefined}
-                  disabled={loading || submitting}
-                >
-                  <option value="">— Seleccionar —</option>
-                  {(cat.celulas || []).map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-                <div className="addon" aria-hidden />
-              </div>
-              {celulaError && <div id="err-celula" className="help error-inline">{celulaError}</div>}
+              {/* Célula removed */}
 
               {/* Tipo */}
               {(cat.tipos || []).length > 0 && (

@@ -2,10 +2,11 @@ import React, { forwardRef, useContext, useImperativeHandle, useRef, useState } 
 import { useSendMessage, useChannelMembers } from '../../../hooks/useChat'
 import { useTypingEmitter } from '../../../hooks/useTypingEmitter'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
-import { FiSend, FiSmile, FiX } from 'react-icons/fi'
+import { FiSend, FiSmile, FiX, FiMic } from 'react-icons/fi'
 import { FaRegFile } from 'react-icons/fa'
 import EmojiPicker from '../../common/EmojiPicker'
 import AttachmentIcon from './AttachmentIcon'
+import AudioRecorderModal from './AudioRecorderModal'
 import { ChatActionCtx } from './context'
 import MentionInput from './MentionInput'
 import { displayName } from '../../../utils/people'
@@ -40,6 +41,7 @@ function normalizeMentions(plainText = '', feders = []) {
 const Composer = forwardRef(function Composer({ canal_id, canal, disabled = false, reason = '' }, ref) {
   const [text, setText] = useState('')
   const [openEmoji, setOpenEmoji] = useState(false)
+  const [openAudio, setOpenAudio] = useState(false)
   const [files, setFiles] = useState([])
   const send = useSendMessage()
   const fileRef = useRef(null)
@@ -183,17 +185,8 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
           feders={feders}
           disabled={disabled}
           placeholder="Escribí un mensaje… (@ para mencionar)"
-          onPaste={addClipboardImages} /* si el componente lo forwardea, mejor */
+          onPaste={addClipboardImages}
         />
-
-        <div className="emojiIn">
-          <button type="button" className="emojiBtn" disabled={disabled} onClick={() => setOpenEmoji(v => !v)} title="Emojis">
-            <FiSmile />
-          </button>
-          {openEmoji && !disabled && (
-            <EmojiPicker onSelect={(em) => { addEmoji(em); setOpenEmoji(false) }} onClickOutside={() => setOpenEmoji(false)} />
-          )}
-        </div>
 
         {!!files.length && (
           <div className="attachPreview">
@@ -208,19 +201,38 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
         )}
       </div>
 
-      <button
-        className="sendBtn"
-        disabled={disabled || (send.isPending && (Date.now() - lastSubmitAt.current < 10000)) || (!text.trim() && files.length === 0)}
-        title="Enviar"
-      >
-        <FiSend />
-      </button>
+      <div className="controlsRight">
+        <button
+          type="button"
+          className="emojiBtn"
+          disabled={disabled}
+          title="Grabar audio"
+          onClick={() => setOpenAudio(true)}
+        >
+          <FiMic />
+        </button>
+
+        <button
+          type="submit"
+          className="sendBtn"
+          disabled={disabled || (send.isPending && (Date.now() - lastSubmitAt.current < 10000)) || (!text.trim() && files.length === 0)}
+          title="Enviar"
+        >
+          <FiSend />
+        </button>
+      </div>
 
       {disabled && (
         <div className="disabledOverlay">
           <div className="msg">{reason || 'No tenés permisos para publicar en este canal'}</div>
         </div>
       )}
+
+      <AudioRecorderModal
+        open={openAudio}
+        onClose={() => setOpenAudio(false)}
+        onSend={(file) => setFiles(prev => [...prev, file])}
+      />
     </form>
   )
 })

@@ -4,7 +4,7 @@ import useFedersOverview from '../../hooks/useFedersOverview'
 import FedersHeader from '../../sections/feders/FedersHeader.jsx'
 import CLevelGrid from '../../sections/feders/CLevelGrid.jsx'
 import TriGlobalPanel from '../../sections/feders/TriGlobalPanel.jsx'
-import CelulasGrid from '../../sections/feders/CelulasGrid.jsx'
+// import CelulasGrid from '../../sections/feders/CelulasGrid.jsx'
 import './FedersOverviewPage.scss'
 
 export default function FedersOverviewPage() {
@@ -27,9 +27,7 @@ export default function FedersOverviewPage() {
         <>
           <CLevelGrid items={data.c_level} />
           <TriGlobalPanel areas={data.areas} />
-          {data.celulas.length > 0 && (
-            <CelulasGrid items={data.celulas} onRefresh={refresh} />
-          )}
+          {/* CelulasGrid removed */}
         </>
       )}
     </section>

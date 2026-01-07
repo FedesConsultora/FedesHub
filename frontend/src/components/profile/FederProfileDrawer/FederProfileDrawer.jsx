@@ -85,7 +85,6 @@ export default function FederProfileDrawer({
       content: (
         <BasicInfoSection
           feder={feder}
-          celulaName={feder?.celula_nombre || null}
           canEditCargo={canEditCargo && !readOnly}
           isSelf={isSelf}
           readOnly={readOnly}
@@ -136,7 +135,6 @@ export default function FederProfileDrawer({
             <>
               <HeaderBasic
                 feder={feder}
-                celulaName={feder.celula_nombre || null}
                 onToggleActivo={toggleActive}
                 onRefresh={refetch}
                 readOnly={readOnly}

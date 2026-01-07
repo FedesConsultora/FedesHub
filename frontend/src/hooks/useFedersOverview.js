@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { federsApi } from '../api/feders'
 
-const EMPTY = { c_level: [], areas: {}, celulas: [] }
+const EMPTY = { c_level: [], areas: {} }
 
-export default function useFedersOverview(initial = { celulas_estado: 'activa', limit_celulas: 200 }) {
+export default function useFedersOverview(initial = {}) {
   const [data, setData] = useState(EMPTY)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

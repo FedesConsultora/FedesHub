@@ -11,7 +11,7 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const isFedes = (e) => /@fedes\.ai$/i.test(String(e || '').trim())
+  const isFedes = (e) => /@fedesconsultora\.com$/i.test(String(e || '').trim())
   const valid = !!email && isFedes(email)
 
   const onSubmit = async (e) => {
@@ -46,8 +46,8 @@ export default function ForgotPassword() {
                 name="email"
                 type="email"
                 value={email}
-                onChange={e=>setEmail(e.target.value)}
-                placeholder="tuusuario@fedes.ai"
+                onChange={e => setEmail(e.target.value)}
+                placeholder="tuusuario@fedesconsultora.com"
                 inputMode="email"
                 autoComplete="username"
                 autoFocus
@@ -57,7 +57,7 @@ export default function ForgotPassword() {
               />
               <div className="addon" aria-hidden />
               {!valid && email && (
-                <div id="err-fp-email" className="hint">Sólo correos @fedes.ai</div>
+                <div id="err-fp-email" className="hint">Sólo correos @fedesconsultora.com</div>
               )}
             </div>
 
@@ -67,7 +67,7 @@ export default function ForgotPassword() {
               Enviar enlace
             </button>
 
-            <div className="linksRow" style={{marginTop:12}}>
+            <div className="linksRow" style={{ marginTop: 12 }}>
               <Link to="/login">Volver a iniciar sesión</Link>
             </div>
           </>
@@ -76,7 +76,7 @@ export default function ForgotPassword() {
             <div className="success" role="status" aria-live="polite">
               Te enviamos un enlace para restablecer tu contraseña si el correo existe en el sistema.
             </div>
-            <div className="linksRow" style={{marginTop:12}}>
+            <div className="linksRow" style={{ marginTop: 12 }}>
               <Link to="/login">Volver a iniciar sesión</Link>
             </div>
           </>

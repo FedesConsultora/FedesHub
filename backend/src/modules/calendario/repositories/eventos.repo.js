@@ -7,13 +7,15 @@ const m = await initModels();
 
 const SELECT_BASE = {
   include: [
-    { model: m.CalendarioLocal, as: 'calendarioLocal',
-      include: [{ model: m.VisibilidadTipo, as: 'visibilidad', attributes: ['codigo'] }] },
+    {
+      model: m.CalendarioLocal, as: 'calendarioLocal',
+      include: [{ model: m.VisibilidadTipo, as: 'visibilidad', attributes: ['codigo'] }]
+    },
     { model: m.EventoTipo, as: 'tipo' },
     { model: m.VisibilidadTipo, as: 'visibilidad' },
     { model: m.EventoAsistente, as: 'asistentes' }
   ],
-  order: [['starts_at','ASC'], ['id','ASC']]
+  order: [['starts_at', 'ASC'], ['id', 'ASC']]
 };
 
 async function _federIdByUser(user_id, t) {
@@ -25,15 +27,15 @@ function _overlapWhere(start, end) {
   return {
     [Op.or]: [
       { starts_at: { [Op.between]: [start, end] } },
-      { ends_at:   { [Op.between]: [start, end] } },
+      { ends_at: { [Op.between]: [start, end] } },
       { [Op.and]: [{ starts_at: { [Op.lte]: start } }, { ends_at: { [Op.gte]: end } }] }
     ]
   };
 }
 
 export async function listEventsRange(params, user, t) {
-  const { start, end, calendario_ids, scope, feder_id, celula_id, cliente_id,
-          include_overlays, expand_recurrences, q } = params;
+  const { start, end, calendario_ids, scope, feder_id, cliente_id,
+    include_overlays, expand_recurrences, q } = params;
 
   let calWhere = {};
   if (Array.isArray(calendario_ids) && calendario_ids.length) {
@@ -45,9 +47,6 @@ export async function listEventsRange(params, user, t) {
         break;
       case 'feder':
         calWhere.feder_id = feder_id;
-        break;
-      case 'celula':
-        calWhere.celula_id = celula_id;
         break;
       case 'cliente':
         calWhere.cliente_id = cliente_id;
@@ -89,7 +88,7 @@ export async function listEventsRange(params, user, t) {
   let overlays = [];
   if (include_overlays) {
     overlays = expanded.filter(e =>
-      ['asistencia','ausencia','tarea_vencimiento'].includes(e.tipo?.codigo));
+      ['asistencia', 'ausencia', 'tarea_vencimiento'].includes(e.tipo?.codigo));
   }
 
   return { events: expanded, overlays };
@@ -120,7 +119,7 @@ async function _expandRecurrences(rows, start, end) {
 
 export async function upsertEvent(payload, user, t) {
   const tipo = await m.EventoTipo.findOne({ where: { codigo: payload.tipo_codigo }, transaction: t });
-  const vis  = await m.VisibilidadTipo.findOne({ where: { codigo: payload.visibilidad_codigo }, transaction: t });
+  const vis = await m.VisibilidadTipo.findOne({ where: { codigo: payload.visibilidad_codigo }, transaction: t });
   if (!tipo || !vis) throw Object.assign(new Error('tipo/visibilidad inválidos'), { status: 400 });
 
   const base = {

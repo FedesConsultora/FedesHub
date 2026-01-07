@@ -64,7 +64,7 @@ export default function FedersListPage() {
                 avatar_url: r.avatar_url,
                 roles: r.roles || []
               }
-              const subtitle = `${r.cargo_nombre || r.cargo_principal || 'Sin cargo'}${r.celula_nombre ? ` · ${r.celula_nombre}` : ''}`
+              const subtitle = `${r.cargo_nombre || r.cargo_principal || 'Sin cargo'}`
               return (
                 <li key={r.id} className="card">
                   <div className="row">

@@ -17,10 +17,10 @@ module.exports = {
 
       // Password por persona (argon2id)
       const DEFAULT_PASS_BY_EMAIL = {
-        'sistemas@fedes.ai': 'Sistemas123!',
-        'ralbanesi@fedes.ai': 'Romina123!',
-        'epinotti@fedes.ai': 'Enzo123!',
-        'gcanibano@fedes.ai': 'Gonzalo123!'
+        'sistemas@fedesconsultora.com': 'Sistemas123!',
+        'ralbanesi@fedesconsultora.com': 'Romina123!',
+        'epinotti@fedesconsultora.com': 'Enzo123!',
+        'gcanibano@fedesconsultora.com': 'Gonzalo123!'
       };
       const passHashByEmail = {};
       for (const [email, plain] of Object.entries(DEFAULT_PASS_BY_EMAIL)) {
@@ -31,21 +31,21 @@ module.exports = {
 
       // === 1) Dominio ===
       let [[dom]] = await queryInterface.sequelize.query(
-        `SELECT id FROM "AuthEmailDominio" WHERE dominio='fedes.ai' LIMIT 1`, { transaction: t }
+        `SELECT id FROM "AuthEmailDominio" WHERE dominio='fedesconsultora.com' LIMIT 1`, { transaction: t }
       );
       if (!dom) {
         await queryInterface.bulkInsert('AuthEmailDominio', [
-          { dominio: 'fedes.ai', is_activo: true, created_at: now, updated_at: now }
+          { dominio: 'fedesconsultora.com', is_activo: true, created_at: now, updated_at: now }
         ], { transaction: t });
         [[dom]] = await queryInterface.sequelize.query(
-          `SELECT id FROM "AuthEmailDominio" WHERE dominio='fedes.ai' LIMIT 1`, { transaction: t }
+          `SELECT id FROM "AuthEmailDominio" WHERE dominio='fedesconsultora.com' LIMIT 1`, { transaction: t }
         );
       }
       const emailDomId = dom.id;
 
       // === 2) Usuarios base ===
       const baseEmails = [
-        'sistemas@fedes.ai', 'ralbanesi@fedes.ai', 'epinotti@fedes.ai', 'gcanibano@fedes.ai'
+        'sistemas@fedesconsultora.com', 'ralbanesi@fedesconsultora.com', 'epinotti@fedesconsultora.com', 'gcanibano@fedesconsultora.com'
       ];
 
       const [existingUsers] = await queryInterface.sequelize.query(
@@ -89,41 +89,6 @@ module.exports = {
       );
       const uid = Object.fromEntries(users.map(u => [u.email, u.id]));
 
-      // === 3) Célula 1 (con slug y perfil_md) ===
-      const [[celulaEstadoActiva]] = await queryInterface.sequelize.query(
-        `SELECT id FROM "CelulaEstado" WHERE codigo='activa' LIMIT 1`,
-        { transaction: t }
-      );
-
-      const coreName = 'Célula 1';
-      const coreSlug = 'celula-1';
-
-      const [[celExist]] = await queryInterface.sequelize.query(
-        `SELECT id FROM "Celula" WHERE slug = :slug OR nombre = :name LIMIT 1`,
-        { transaction: t, replacements: { slug: coreSlug, name: coreName } }
-      );
-
-      let celulaCoreId;
-      if (!celExist) {
-        await queryInterface.bulkInsert('Celula', [{
-          nombre: coreName,
-          descripcion: 'Célula principal',
-          estado_id: celulaEstadoActiva.id,
-          slug: coreSlug,
-          avatar_url: null,
-          cover_url: null,
-          perfil_md: null,
-          created_at: now,
-          updated_at: now
-        }], { transaction: t });
-        const [[cel]] = await queryInterface.sequelize.query(
-          `SELECT id FROM "Celula" WHERE slug = :slug LIMIT 1`,
-          { transaction: t, replacements: { slug: coreSlug } }
-        );
-        celulaCoreId = cel.id;
-      } else {
-        celulaCoreId = celExist.id;
-      }
 
       // === 4) Feders (idempotente) ===
       const [[federActivo]] = await queryInterface.sequelize.query(
@@ -136,10 +101,10 @@ module.exports = {
       );
       const fedSet = new Set(existingFeders.map(f => f.user_id));
       const fedRows = [
-        { user_id: uid['sistemas@fedes.ai'], nombre: 'Sistemas', apellido: 'Fedes', celula_id: celulaCoreId },
-        { user_id: uid['ralbanesi@fedes.ai'], nombre: 'Romina', apellido: 'Albanesi', celula_id: celulaCoreId },
-        { user_id: uid['epinotti@fedes.ai'], nombre: 'Enzo', apellido: 'Pinotti', celula_id: null }, // <— SIN célula
-        { user_id: uid['gcanibano@fedes.ai'], nombre: 'Gonzalo', apellido: 'Canibano', celula_id: celulaCoreId },
+        { user_id: uid['sistemas@fedesconsultora.com'], nombre: 'Sistemas', apellido: 'Fedes' },
+        { user_id: uid['ralbanesi@fedesconsultora.com'], nombre: 'Romina', apellido: 'Albanesi' },
+        { user_id: uid['epinotti@fedesconsultora.com'], nombre: 'Enzo', apellido: 'Pinotti' },
+        { user_id: uid['gcanibano@fedesconsultora.com'], nombre: 'Gonzalo', apellido: 'Canibano' },
       ].filter(r => r.user_id && !fedSet.has(r.user_id))
         .map(r => ({
           ...r,
@@ -164,10 +129,10 @@ module.exports = {
         `SELECT id FROM "VisibilidadTipo" WHERE codigo='privado' LIMIT 1`, { transaction: t }
       );
       const calToEnsure = [
-        { name: 'Calendario de Sistemas', user: 'sistemas@fedes.ai', color: '#1e88e5' },
-        { name: 'Calendario de Romina', user: 'ralbanesi@fedes.ai', color: '#8e24aa' },
-        { name: 'Calendario de Enzo', user: 'epinotti@fedes.ai', color: '#43a047' },
-        { name: 'Calendario de Gonzalo', user: 'gcanibano@fedes.ai', color: '#f4511e' },
+        { name: 'Calendario de Sistemas', user: 'sistemas@fedesconsultora.com', color: '#1e88e5' },
+        { name: 'Calendario de Romina', user: 'ralbanesi@fedesconsultora.com', color: '#8e24aa' },
+        { name: 'Calendario de Enzo', user: 'epinotti@fedesconsultora.com', color: '#43a047' },
+        { name: 'Calendario de Gonzalo', user: 'gcanibano@fedesconsultora.com', color: '#f4511e' },
       ];
       for (const c of calToEnsure) {
         const federId = federByUserId[uid[c.user]];
@@ -183,7 +148,6 @@ module.exports = {
             nombre: c.name,
             visibilidad_id: visPriv.id,
             feder_id: federId,
-            celula_id: null,
             cliente_id: null,
             time_zone: 'America/Argentina/Buenos_Aires',
             color: c.color,
@@ -206,7 +170,7 @@ module.exports = {
       );
       if (!clienteDemoExists) {
         await queryInterface.bulkInsert('Cliente', [{
-          celula_id: celulaCoreId, tipo_id: cliTipoA.id, estado_id: cliEstadoAct.id,
+          tipo_id: cliTipoA.id, estado_id: cliEstadoAct.id,
           nombre: 'Cliente Demo', alias: 'Demo', email: 'contacto@demo.com',
           telefono: '+54 11 1234-5678', sitio_web: 'https://demo.com',
           descripcion: 'Cliente semilla', ponderacion: cliTipoA.ponderacion,
@@ -221,10 +185,10 @@ module.exports = {
       );
       const rid = Object.fromEntries(roles.map(r => [r.nombre, r.id]));
       const toAssign = [
-        ['sistemas@fedes.ai', 'NivelA'],    // Admin
-        ['ralbanesi@fedes.ai', 'NivelB'],    // Líder
-        ['gcanibano@fedes.ai', 'NivelC'],    // Colaborador
-        ['epinotti@fedes.ai', 'NivelC'],    // Colaborador
+        ['sistemas@fedesconsultora.com', 'NivelA'],    // Admin
+        ['ralbanesi@fedesconsultora.com', 'NivelB'],    // Líder
+        ['gcanibano@fedesconsultora.com', 'NivelC'],    // Colaborador
+        ['epinotti@fedesconsultora.com', 'NivelC'],    // Colaborador
       ].map(([email, rol]) => ({ user_id: uid[email], rol_id: rid[rol] }))
         .filter(r => r.user_id && r.rol_id);
       if (toAssign.length) {
@@ -256,9 +220,8 @@ module.exports = {
       await queryInterface.bulkDelete('CalendarioLocal', null, { transaction: t });
       await queryInterface.bulkDelete('Cliente', { nombre: 'Cliente Demo' }, { transaction: t });
       await queryInterface.bulkDelete('Feder', null, { transaction: t });
-      await queryInterface.bulkDelete('Celula', { slug: 'celula-1' }, { transaction: t });
       await queryInterface.bulkDelete('User', {
-        email: ['sistemas@fedes.ai', 'ralbanesi@fedes.ai', 'epinotti@fedes.ai', 'gcanibano@fedes.ai']
+        email: ['sistemas@fedesconsultora.com', 'ralbanesi@fedesconsultora.com', 'epinotti@fedesconsultora.com', 'gcanibano@fedesconsultora.com']
       }, { transaction: t });
 
       await t.commit();

@@ -1224,7 +1224,9 @@ module.exports = {
     await drop('FederModalidadDia');
 
     // Remove FK constraint before dropping Feder
-    await queryInterface.removeConstraint('CelulaRolAsignacion', 'FK_CelulaRolAsignacion_Feder');
+    try {
+      await queryInterface.removeConstraint('CelulaRolAsignacion', 'FK_CelulaRolAsignacion_Feder');
+    } catch (e) { }
 
     await drop('Feder');
     await drop('DiaSemana');

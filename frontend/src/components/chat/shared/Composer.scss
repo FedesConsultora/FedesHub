@@ -165,7 +165,11 @@
       }
     }
   }
-
+  .controlsRight{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .sendBtn {
     width: 42px;
     height: 42px;

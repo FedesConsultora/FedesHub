@@ -42,7 +42,7 @@ export default function ClientesFilters({ value, catalog, onChange }) {
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const clear = () => {
     onChange?.({
-      q: '', celula_id: '', tipo_id: '', estado_id: '',
+      q: '', tipo_id: '', estado_id: '',
       ponderacion_min: '', ponderacion_max: '',
       created_from: '', created_to: '',
       order_by: 'nombre', order: 'asc', page: 0
@@ -98,12 +98,7 @@ export default function ClientesFilters({ value, catalog, onChange }) {
             </div>
 
             <div className="grid">
-              <Field id="clientes-celula" label="Célula">
-                <select id="clientes-celula" name="celula_id" value={v.celula_id ?? ''} onChange={e => upd({ celula_id: e.target.value })}>
-                  <option value="">Todas las células</option>
-                  {catalog.celulas?.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
-              </Field>
+              {/* Célula filter removed */}
 
               <Field id="clientes-tipo" label="Tipo">
                 <select id="clientes-tipo" name="tipo_id" value={v.tipo_id ?? ''} onChange={e => upd({ tipo_id: e.target.value })}>

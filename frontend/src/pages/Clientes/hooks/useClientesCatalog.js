@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { clientesApi } from '../../../api/clientes'
 
 export default function useClientesCatalog() {
-  const [data, setData] = useState({ tipos: [], estados: [], celulas: [], ponderaciones: [1,2,3,4,5] })
+  const [data, setData] = useState({ tipos: [], estados: [], ponderaciones: [1, 2, 3, 4, 5] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 

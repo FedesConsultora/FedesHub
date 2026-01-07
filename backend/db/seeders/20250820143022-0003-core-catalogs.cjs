@@ -51,19 +51,6 @@ module.exports = {
     ].filter(d => !diaIds.has(d.id));
     if (dias.length > 0) await queryInterface.bulkInsert('DiaSemana', dias, {});
 
-    // ===== CÉLULAS
-    await bulkInsertIfNotExists('CelulaEstado', [
-      { codigo: 'activa', nombre: 'Activa', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'pausada', nombre: 'Pausada', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'cerrada', nombre: 'Cerrada', descripcion: null, created_at: now, updated_at: now },
-    ]);
-
-    await bulkInsertIfNotExists('CelulaRolTipo', [
-      { codigo: 'producto', nombre: 'Producto', descripcion: 'Tridente de valor', created_at: now, updated_at: now },
-      { codigo: 'tecnologia', nombre: 'Tecnología', descripcion: 'Tridente de valor', created_at: now, updated_at: now },
-      { codigo: 'operaciones', nombre: 'Operaciones', descripcion: 'Tridente de valor', created_at: now, updated_at: now },
-      { codigo: 'miembro', nombre: 'Miembro', descripcion: null, created_at: now, updated_at: now },
-    ]);
 
     // ===== CLIENTES
     await bulkInsertIfNotExists('ClienteTipo', [
@@ -130,7 +117,6 @@ module.exports = {
     // ===== CALENDARIO
     await bulkInsertIfNotExists('CalendarioTipo', [
       { codigo: 'personal', nombre: 'Personal', descripcion: null, created_at: now, updated_at: now },
-      { codigo: 'celula', nombre: 'Célula', descripcion: null, created_at: now, updated_at: now },
       { codigo: 'cliente', nombre: 'Cliente', descripcion: null, created_at: now, updated_at: now },
     ]);
 
@@ -211,9 +197,6 @@ module.exports = {
 
     await queryInterface.bulkDelete('ClienteEstado', null, {});
     await queryInterface.bulkDelete('ClienteTipo', null, {});
-
-    await queryInterface.bulkDelete('CelulaRolTipo', null, {});
-    await queryInterface.bulkDelete('CelulaEstado', null, {});
 
     await queryInterface.bulkDelete('DiaSemana', null, {});
     await queryInterface.bulkDelete('ModalidadTrabajoTipo', null, {});

@@ -8,15 +8,6 @@ async function idByCodigo(model, codigo, t) {
 }
 
 async function resolveCalendarioForCanal(canal, t) {
-  // Busca un calendario local apropiado según cliente/célula, si no Global
-  if (canal.celula_id) {
-    const tipo_id = await idByCodigo(m.CalendarioTipo, 'celula', t);
-    const cal = await m.CalendarioLocal.findOne({
-      where: { tipo_id, celula_id: canal.celula_id, is_activo: true },
-      transaction: t
-    });
-    if (cal) return cal;
-  }
   if (canal.cliente_id) {
     const tipo_id = await idByCodigo(m.CalendarioTipo, 'cliente', t);
     const cal = await m.CalendarioLocal.findOne({

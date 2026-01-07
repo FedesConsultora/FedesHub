@@ -16,12 +16,12 @@ export default function Login() {
   const loc = useLocation()
   const formRef = useRef(null)
 
-  const isFedes = (e) => /@fedes\.ai$/i.test(String(e || '').trim())
+  const isFedes = (e) => /@fedesconsultora\.com$/i.test(String(e || '').trim())
 
   const emailError = useMemo(() => {
     if (!email) return null
     if (!/^\S+@\S+\.\S+$/.test(email)) return 'Formato inválido'
-    if (!isFedes(email)) return 'Sólo correos @fedes.ai'
+    if (!isFedes(email)) return 'Sólo correos @fedesconsultora.com'
     return null
   }, [email])
 
@@ -71,8 +71,8 @@ export default function Login() {
             name="email"
             type="email"
             value={email}
-            onChange={e=>setEmail(e.target.value)}
-            placeholder="tuusuario@fedes.ai"
+            onChange={e => setEmail(e.target.value)}
+            placeholder="tuusuario@fedesconsultora.com"
             autoFocus
             inputMode="email"
             autoComplete="username"
@@ -91,7 +91,7 @@ export default function Login() {
             name="password"
             type={showPwd ? 'text' : 'password'}
             value={password}
-            onChange={e=>setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             placeholder="••••••••"
             autoComplete="current-password"
             aria-invalid={!!passwordError}

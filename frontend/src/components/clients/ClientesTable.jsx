@@ -9,7 +9,7 @@ export default function ClientesTable({ rows, loading }) {
         <caption id="clientes-table-caption" className="srOnly">Resultados de clientes</caption>
         <thead>
           <tr>
-            <th>Cliente</th><th>Célula</th><th>Tipo</th><th>Estado</th>
+            <th>Cliente</th><th>Tipo</th><th>Estado</th>
             <th className="num">Pond.</th><th className="num">Tareas (abiertas / total)</th>
           </tr>
         </thead>
@@ -22,7 +22,7 @@ export default function ClientesTable({ rows, loading }) {
                 </Link>
                 <div className="muted small">{r.email || '—'} {r.telefono ? ` · ${r.telefono}` : ''}</div>
               </td>
-              <td>{r.celula_nombre}</td>
+              {/* <td>{r.celula_nombre}</td> */}
               <td>{r.tipo_nombre}</td>
               <td>{r.estado_nombre}</td>
               <td className="num">{r.ponderacion}</td>

@@ -28,7 +28,6 @@ const telefono = z.string().max(40).optional()
 
 export const listQuerySchema = z.object({
   q: z.string().min(1).max(200).optional(),
-  celula_id: id.optional(),
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(1).max(50).optional(),
   estado_id: z.union([id, z.literal('all')]).optional(),
@@ -45,7 +44,6 @@ export const listQuerySchema = z.object({
 export const idParamSchema = z.object({ id });
 
 export const clienteCreateSchema = z.object({
-  celula_id: id,
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(1).max(50).optional(),
   estado_id: id.optional(),
@@ -65,9 +63,7 @@ export const clienteUpdateSchema = clienteCreateSchema.partial().refine(
   { message: 'Sin cambios' }
 );
 
-export const assignCelulaBodySchema = z.object({
-  celula_id: id
-});
+/* assignCelulaBodySchema removed */
 
 export const listContactosQuery = z.object({
   principal: z.preprocess(v => (v === 'true' ? true : v === 'false' ? false : undefined), z.boolean().optional())

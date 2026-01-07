@@ -9,7 +9,7 @@ function yearRange(d = new Date()) {
 }
 
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     const now = new Date();
     const { desde, hasta } = yearRange(now);
 
@@ -24,50 +24,62 @@ module.exports = {
     // === 2) Usuarios/Feders de destino (ralbanesi, epinotti) ===
     const [users] = await queryInterface.sequelize.query(`
       SELECT id, email FROM "User"
-      WHERE email IN ('ralbanesi@fedes.ai','epinotti@fedes.ai','sistemas@fedes.ai')
+      WHERE email IN ('ralbanesi@fedesconsultora.com','epinotti@fedesconsultora.com','sistemas@fedesconsultora.com')
     `);
     const uid = Object.fromEntries(users.map(u => [u.email, u.id]));
 
     const [feders] = await queryInterface.sequelize.query(`
       SELECT id, user_id FROM "Feder"
-      WHERE user_id IN (${uid['ralbanesi@fedes.ai'] || -1}, ${uid['epinotti@fedes.ai'] || -1})
+      WHERE user_id IN (${uid['ralbanesi@fedesconsultora.com'] || -1}, ${uid['epinotti@fedesconsultora.com'] || -1})
     `);
     const federByUserId = Object.fromEntries(feders.map(f => [f.user_id, f.id]));
 
     // Asignador por defecto (RRHH: ralbanesi), fallback sistemas
-    const asignadoPorUserId = uid['ralbanesi@fedes.ai'] || uid['sistemas@fedes.ai'];
+    const asignadoPorUserId = uid['ralbanesi@fedesconsultora.com'] || uid['sistemas@fedesconsultora.com'];
 
     const cuotas = [];
 
     // Para Romina (RRHH)
-    if (federByUserId[uid['ralbanesi@fedes.ai']]) {
-      const fid = federByUserId[uid['ralbanesi@fedes.ai']];
+    if (federByUserId[uid['ralbanesi@fedesconsultora.com']]) {
+      const fid = federByUserId[uid['ralbanesi@fedesconsultora.com']];
       cuotas.push(
-        { feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
+        {
+          feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Cuota anual inicial', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now },
-        { feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
+          is_activo: true, created_at: now, updated_at: now
+        },
+        {
+          feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Beneficio interno', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now },
-        { feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
+          is_activo: true, created_at: now, updated_at: now
+        },
+        {
+          feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Horas para examen', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now }
+          is_activo: true, created_at: now, updated_at: now
+        }
       );
     }
 
     // Para Enzo
-    if (federByUserId[uid['epinotti@fedes.ai']]) {
-      const fid = federByUserId[uid['epinotti@fedes.ai']];
+    if (federByUserId[uid['epinotti@fedesconsultora.com']]) {
+      const fid = federByUserId[uid['epinotti@fedesconsultora.com']];
       cuotas.push(
-        { feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
+        {
+          feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Cuota anual inicial', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now },
-        { feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
+          is_activo: true, created_at: now, updated_at: now
+        },
+        {
+          feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Beneficio interno', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now },
-        { feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
+          is_activo: true, created_at: now, updated_at: now
+        },
+        {
+          feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
           vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Horas para examen', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now }
+          is_activo: true, created_at: now, updated_at: now
+        }
       );
     }
 
@@ -76,7 +88,7 @@ module.exports = {
     }
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     // borra solo las cuotas asignadas por estos usuarios/periodo (simple)
     await queryInterface.sequelize.query(`
       DELETE FROM "AusenciaCuota"

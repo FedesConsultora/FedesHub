@@ -73,7 +73,6 @@ export default function ProfileQuickView({ federId, anchorRect, onClose, onViewF
                 <div className="qMainInfo">
                     <div className="qName">{fullName}</div>
                     <div className="qRole">{feder.cargo_principal || 'Sin cargo'}</div>
-                    {feder.celula_nombre && <div className="qCell">{feder.celula_nombre}</div>}
                 </div>
             </div>
 

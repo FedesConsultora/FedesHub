@@ -21,7 +21,6 @@ export const listFedersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
   q: z.string().trim().max(120).optional(),
-  celula_id: z.coerce.number().int().positive().optional(),
   estado_id: z.coerce.number().int().positive().optional(),
   is_activo: z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean().optional())
 });
@@ -33,7 +32,6 @@ export const federIdParamSchema = z.object({
 
 export const createFederSchema = z.object({
   user_id: z.number().int().positive().optional().nullable(),
-  celula_id: z.number().int().positive().optional().nullable(),
   estado_id: z.number().int().positive(),
   nombre: z.string().min(2).max(120),
   apellido: z.string().min(2).max(120),
@@ -46,7 +44,6 @@ export const createFederSchema = z.object({
 
 export const updateFederSchema = z.object({
   user_id: z.number().int().positive().nullable().optional(),
-  celula_id: z.number().int().positive().nullable().optional(),
   estado_id: z.number().int().positive().optional(),
   nombre: z.string().min(2).max(120).optional(),
   apellido: z.string().min(2).max(120).optional(),

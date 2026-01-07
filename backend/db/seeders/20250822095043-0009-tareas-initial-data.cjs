@@ -105,15 +105,15 @@ module.exports = {
         `SELECT u.id, u.email, f.id AS feder_id
          FROM "User" u
          LEFT JOIN "Feder" f ON f.user_id = u.id
-         WHERE u.email IN ('sistemas@fedes.ai','ralbanesi@fedes.ai','epinotti@fedes.ai','gcanibano@fedes.ai')`,
+         WHERE u.email IN ('sistemas@fedesconsultora.com','ralbanesi@fedesconsultora.com','epinotti@fedesconsultora.com','gcanibano@fedesconsultora.com')`,
         { transaction: t }
       );
       const byEmail = Object.fromEntries(users.map(u => [u.email, u]));
       const FEDS = {
-        sistemas: byEmail['sistemas@fedes.ai']?.feder_id,
-        romina: byEmail['ralbanesi@fedes.ai']?.feder_id,
-        enzo: byEmail['epinotti@fedes.ai']?.feder_id,
-        gonzalo: byEmail['gcanibano@fedes.ai']?.feder_id,
+        sistemas: byEmail['sistemas@fedesconsultora.com']?.feder_id,
+        romina: byEmail['ralbanesi@fedesconsultora.com']?.feder_id,
+        enzo: byEmail['epinotti@fedesconsultora.com']?.feder_id,
+        gonzalo: byEmail['gcanibano@fedesconsultora.com']?.feder_id,
       };
 
       // Etiquetas ids (si existen)
@@ -274,8 +274,8 @@ module.exports = {
       const favTable = await hasTable(queryInterface, 'TareaFavorito');
       const segTable = await hasTable(queryInterface, 'TareaSeguidor');
 
-      const userEnzo = byEmail['epinotti@fedes.ai']?.id;
-      const userRom = byEmail['ralbanesi@fedes.ai']?.id;
+      const userEnzo = byEmail['epinotti@fedesconsultora.com']?.id;
+      const userRom = byEmail['ralbanesi@fedesconsultora.com']?.id;
 
       if (createdIds[0]) {
         if (favTable && userEnzo) {
