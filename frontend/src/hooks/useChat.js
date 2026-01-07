@@ -149,10 +149,37 @@ export function usePinMessage() {
       })
 
       // Optimistically update pins
-      qc.setQueryData(['chat', 'pins', cid], (prev) => {
-        if (!prev) return prev
+      qc.setQueryData(['chat', 'pins', cid], (prev = []) => {
         if (on) {
-          // If pinning, we usually just wait for the refetch since we don't have the full message object here easily
+          // Si ya está, no duplicar
+          if (prev.some(p => p.mensaje_id === mensaje_id)) return prev
+
+          // Buscar el mensaje en el caché de mensajes para construir el pin optimista
+          const msgsQueries = qc.getQueriesData({ queryKey: ['chat', 'msgs', cid] })
+          let message = null
+          for (const [, data] of msgsQueries) {
+            if (Array.isArray(data)) {
+              message = data.find(m => m.id === mensaje_id)
+            } else if (data?.pages) {
+              for (const page of data.pages) {
+                const results = page.results || (Array.isArray(page) ? page : [])
+                message = results.find(m => m.id === mensaje_id)
+                if (message) break
+              }
+            }
+            if (message) break
+          }
+
+          if (message) {
+            const newPin = {
+              id: `temp-${Date.now()}`,
+              mensaje_id,
+              canal_id: cid,
+              created_at: new Date().toISOString(),
+              mensaje: { ...message, isPinned: true }
+            }
+            return [newPin, ...prev]
+          }
           return prev
         } else {
           return prev.filter(p => p.mensaje_id !== mensaje_id)
