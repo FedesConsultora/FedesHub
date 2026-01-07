@@ -41,15 +41,19 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
         const start = format(viewMode === "month" ? startOfMonth(currentDate) : startOfWeek(currentDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
         const end = format(viewMode === "month" ? endOfMonth(currentDate) : endOfWeek(currentDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-        if (filters.vencimiento_from !== start || filters.vencimiento_to !== end || filters.limit !== 1000) {
-            setFilters(prev => ({
+        setFilters(prev => {
+            // Solo actualizar si los valores realmente cambiaron
+            if (prev.vencimiento_from === start && prev.vencimiento_to === end && prev.limit === 1000) {
+                return prev;
+            }
+            return {
                 ...prev,
                 vencimiento_from: start,
                 vencimiento_to: end,
                 limit: 1000
-            }));
-        }
-    }, [currentDate, viewMode, filters.vencimiento_from, filters.vencimiento_to, filters.limit, setFilters]);
+            };
+        });
+    }, [currentDate, viewMode, setFilters]);
 
     // Al desmontar, restaurar el limit original
     useEffect(() => {
@@ -114,7 +118,7 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
                         className="modeToggle"
                         onClick={() => setViewMode(viewMode === "month" ? "week" : "month")}
                     >
-                        {viewMode === "month" ? "Vista Semanal" : "Vista Mensual"}
+                        {viewMode === "month" ? "Ir a vista semanal" : "Ir a vista mensual"}
                     </button>
 
                     <button onClick={handlePrev} title="Anterior">
