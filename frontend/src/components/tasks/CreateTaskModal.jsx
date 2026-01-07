@@ -6,6 +6,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import AttendanceBadge from '../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
 import RichTextEditor from '../common/RichTextEditor.jsx'
+import TitleTooltip from './TitleTooltip.jsx'
 
 import './CreateTask.scss'
 
@@ -498,6 +499,7 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                   value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={220}
                   disabled={loading} style={S.control} aria-invalid={!!tituloError}
                 />
+                <TitleTooltip />
               </div>
 
 
