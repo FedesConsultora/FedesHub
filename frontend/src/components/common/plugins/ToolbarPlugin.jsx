@@ -278,14 +278,15 @@ export default function ToolbarPlugin() {
     return (
         <>
             <div className="toolbar">
-                <button onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')} className={`tb ${isBold ? 'active' : ''}`} title="Negrita"><MdFormatBold /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')} className={`tb ${isItalic ? 'active' : ''}`} title="Cursiva"><MdFormatItalic /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')} className={`tb ${isUnderline ? 'active' : ''}`} title="Subrayado"><MdFormatUnderlined /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')} className={`tb ${isStrikethrough ? 'active' : ''}`} title="Tachado"><MdFormatStrikethrough /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')} className={`tb ${isBold ? 'active' : ''}`} title="Negrita"><MdFormatBold /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')} className={`tb ${isItalic ? 'active' : ''}`} title="Cursiva"><MdFormatItalic /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')} className={`tb ${isUnderline ? 'active' : ''}`} title="Subrayado"><MdFormatUnderlined /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')} className={`tb ${isStrikethrough ? 'active' : ''}`} title="Tachado"><MdFormatStrikethrough /></button>
 
                 <div className="divider" />
 
                 <button
+                    type="button"
                     ref={colorBtnRef}
                     onClick={() => setShowColorPicker(!showColorPicker)}
                     className="tb"
@@ -296,6 +297,7 @@ export default function ToolbarPlugin() {
                 </button>
 
                 <button
+                    type="button"
                     ref={fontSizeBtnRef}
                     onClick={() => setShowFontSizePicker(!showFontSizePicker)}
                     className="tb"
@@ -306,24 +308,25 @@ export default function ToolbarPlugin() {
 
                 <div className="divider" />
 
-                <button onClick={() => toggleList('bullet')} className={`tb ${isBulletList ? 'active' : ''}`} title="Lista"><MdFormatListBulleted /></button>
-                <button onClick={() => toggleList('number')} className={`tb ${isNumberList ? 'active' : ''}`} title="Numerada"><MdFormatListNumbered /></button>
+                <button type="button" onClick={() => toggleList('bullet')} className={`tb ${isBulletList ? 'active' : ''}`} title="Lista"><MdFormatListBulleted /></button>
+                <button type="button" onClick={() => toggleList('number')} className={`tb ${isNumberList ? 'active' : ''}`} title="Numerada"><MdFormatListNumbered /></button>
 
                 <div className="divider" />
 
-                <button onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')} className="tb" title="Izquierda"><MdFormatAlignLeft /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')} className="tb" title="Centro"><MdFormatAlignCenter /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')} className="tb" title="Derecha"><MdFormatAlignRight /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')} className="tb" title="Justificado"><MdFormatAlignJustify /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')} className="tb" title="Izquierda"><MdFormatAlignLeft /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')} className="tb" title="Centro"><MdFormatAlignCenter /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')} className="tb" title="Derecha"><MdFormatAlignRight /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')} className="tb" title="Justificado"><MdFormatAlignJustify /></button>
 
                 <div className="divider" />
 
-                <button onClick={() => isLink ? editor.dispatchCommand(TOGGLE_LINK_COMMAND, null) : setShowLinkModal(true)} className={`tb ${isLink ? 'active' : ''}`} title={isLink ? 'Quitar link' : 'Insertar link'}><MdLink /></button>
-                <button onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')} className={`tb ${isCode ? 'active' : ''}`} title="Código"><MdCode /></button>
+                <button type="button" onClick={() => isLink ? editor.dispatchCommand(TOGGLE_LINK_COMMAND, null) : setShowLinkModal(true)} className={`tb ${isLink ? 'active' : ''}`} title={isLink ? 'Quitar link' : 'Insertar link'}><MdLink /></button>
+                <button type="button" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')} className={`tb ${isCode ? 'active' : ''}`} title="Código"><MdCode /></button>
 
                 <div className="divider" />
 
                 <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="tb"
                     title="Adjuntar archivo"
@@ -398,6 +401,7 @@ export default function ToolbarPlugin() {
                     >
                         {FONT_SIZES.map(size => (
                             <button
+                                type="button"
                                 key={size}
                                 onClick={() => applyFontSize(size)}
                                 className={`size-option ${currentFontSize === size ? 'active' : ''}`}
@@ -432,8 +436,8 @@ export default function ToolbarPlugin() {
                             autoFocus
                         />
                         <div className="modal-actions">
-                            <button onClick={() => setShowLinkModal(false)} className="btn-cancel">Cancelar</button>
-                            <button onClick={handleInsertLink} className="btn-insert">Insertar</button>
+                            <button type="button" onClick={() => setShowLinkModal(false)} className="btn-cancel">Cancelar</button>
+                            <button type="button" onClick={handleInsertLink} className="btn-insert">Insertar</button>
                         </div>
                     </div>
                 </>,

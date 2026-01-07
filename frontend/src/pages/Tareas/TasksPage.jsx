@@ -6,6 +6,7 @@ import { tareasApi } from "../../api/tareas";
 import TareasFilters from "../../components/tasks/TareasFilters";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import TaskList from "../../components/tasks/TaskList";
+import TaskMonthlyView from "../../components/tasks/TaskMonthlyView";
 import CreateTaskModal from "../../components/tasks/CreateTaskModal";
 import ModalPanel from "./components/ModalPanel";
 import TaskDetail from "./TaskDetail";
@@ -254,6 +255,16 @@ export default function TasksPage() {
             <button
               type="button"
               role="tab"
+              aria-selected={view === "month"}
+              className={view === "month" ? "active" : ""}
+              onClick={() => handleSetView("month")}
+              title="Ver por mes"
+            >
+              Mes
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={view === "starred"}
               className={view === "starred" ? "active" : ""}
               onClick={() => handleSetView("starred")}
@@ -312,6 +323,14 @@ export default function TasksPage() {
             loading={loading}
             onRowClick={(t) => setOpenTaskId(t.id)}
             attendanceStatuses={attendanceStatuses}
+          />
+        ) : view === "month" ? (
+          <TaskMonthlyView
+            rows={rows}
+            onOpenTask={setOpenTaskId}
+            filters={filters}
+            setFilters={setFilters}
+            loading={loading}
           />
         ) : view === "starred" ? (
           <FavoritesView onRemoveFavorite={refetch} />

@@ -103,11 +103,18 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   }
 }
 
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; // Unified gap for all elements in the column
+}
+
 .lbl {
   display: block;
-  margin: 10px 0 6px;
+  margin: 0 0 4px; // Small bottom margin for the label
   font-weight: 700;
-  font-size: 13px
+  font-size: 13px;
+  color: $fh-muted;
 }
 
 .req {
@@ -117,11 +124,10 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
 .tcEditorLabel {
   display: block;
-  margin: 20px 0 8px;
+  margin: 8px 0 4px;
   font-weight: 700;
   font-size: 13px;
-  color: $fh-text;
-  opacity: 0.9;
+  color: $fh-muted;
 }
 
 .muted {
@@ -134,7 +140,8 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 0 14px;
+  min-height: 46px; // Fixed height for alignment, but allows growth
   background: #0f141b;
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: 12px;
@@ -143,9 +150,12 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   cursor: text;
   transition: all .2s ease;
 
+
+
   input,
   select,
   textarea {
+    flex: 1;
     background: none !important;
     color: $fh-text;
     border: 0;
@@ -154,11 +164,18 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     font-size: 1rem;
     line-height: 1.2;
     min-height: 24px;
+    height: 100%; // Fill the .field (except textarea will override)
     cursor: pointer;
 
     &::placeholder {
       color: rgba(255, 255, 255, .45);
     }
+  }
+
+  input[type="date"] {
+    min-width: 0;
+    display: flex;
+    align-items: center;
   }
 
 

@@ -10,10 +10,12 @@ export default function AvatarStack({ people = [], size = 22, titlePrefix = '', 
         const avatarUrl = pickAvatar(p)
         const fullName = getFullName(p)
         const federId = p.id || p.feder_id || p.feder?.id
+        // Create a unique key by combining multiple identifiers
+        const uniqueKey = `${p.id || ''}-${p.feder_id || ''}-${p.email || ''}-${i}`
 
         return (
           <div
-            key={p.id || p.email || i}
+            key={uniqueKey}
             className="fh-avatar"
             title={`${titlePrefix}${fullName}`}
             style={{ zIndex: 10 - i, position: 'relative' }}

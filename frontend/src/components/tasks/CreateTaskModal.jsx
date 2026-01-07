@@ -354,9 +354,30 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   const lblRespsId = 'lbl-resps'
   const lblColabsId = 'lbl-colabs'
 
+  const handleOverlayClick = (e) => {
+    // No cerrar si el click es en elementos del editor (portales de color picker, font size, etc)
+    const targetEl = e.target;
+
+    // Verificar si el click es en un portal del toolbar (color picker, font size, link modal)
+    const isToolbarPortal = targetEl.closest('.modal-overlay') ||
+      targetEl.closest('.color-picker-simple') ||
+      targetEl.closest('.font-size-picker') ||
+      targetEl.closest('.link-modal');
+
+    if (isToolbarPortal) {
+      // No cerrar el modal si estamos interactuando con portales del toolbar
+      return;
+    }
+
+    // Solo cerrar si el click fue directamente en el overlay, no en sus hijos
+    if (targetEl.classList.contains('taskModalWrap')) {
+      onClose?.()
+    }
+  }
+
   return (
-    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea">
-      <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate>
+    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea" onClick={handleOverlayClick}>
+      <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="tcHeader">
           <div className="brand">
             <div className="logo">Nueva tarea</div>
@@ -387,8 +408,6 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 multi={false}
               />
 
-              <div className="addon" style={S.addon} />
-
 
 
 
@@ -408,23 +427,22 @@ export default function CreateTaskModal({ onClose, onCreated }) {
 
 
               {(cat.feders || []).length > 0 && (
-                <div style={{
-                  display: 'flex', flexDirection: 'row', gap: '0.5rem', maxWidth: '100%'
-                }}>
-                  <div className={'field ' + (fechaError ? 'is-error' : '')} style={{ width: '50%' }}>
-                    <div style={S.control}>
-                      <div style={S.datesRow}>
-
-                        <div style={S.dateCell}>
-                          <span style={{ fontFamily: 'inherit', color: '#FFFFFF8C' }}>Deadline</span>
-                          <input type="date" value={vencimiento} label='Deadline'
-                            onChange={(e) => setVencimiento(e.target.value)} disabled={loading} style={{ flex: 0.9, minWidth: 0 }} />
-                        </div>
-                      </div>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', width: '100%' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className={'field ' + (fechaError ? 'is-error' : '')}>
+                      <span style={{ fontSize: '0.85rem', color: '#FFFFFF8C', whiteSpace: 'nowrap' }}>Deadline</span>
+                      <input
+                        type="date"
+                        value={vencimiento}
+                        onChange={(e) => setVencimiento(e.target.value)}
+                        disabled={loading}
+                        style={{ flex: 1, minWidth: 0, fontSize: '0.9rem' }}
+                      />
                     </div>
+                    {fechaError && <div className="help error-inline">{fechaError}</div>}
                   </div>
-                  {fechaError && <div className="help error-inline">{fechaError}</div>}
-                  <div style={{ width: '50%' }}>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <CustomSelect
                       id="responsable"
                       labelId={lblRespsId}
@@ -432,41 +450,28 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                       options={federsOpts}
                       value={responsables}
                       onChange={setResponsables}
-                      placeholder="Seleccionar responsable"
+                      placeholder="Responsable"
                       disabled={loading}
                       multi={false}
                       renderLabel={renderFederLabel}
                     />
                   </div>
-
-
                 </div>
-
               )}
-              {/* Colaboradores */}
               {(cat.feders || []).length > 0 && (
-                <div style={{
-                  display: 'flex', flexDirection: 'row', maxWidth: '100%',
-                }}>
-
-                  <div style={{ width: '100%' }}>
-                    <CustomSelect
-                      id="ms-colabs"
-                      labelId={lblColabsId}
-                      leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
-                      options={federsOpts}
-                      value={colaboradores}
-                      onChange={setColaboradores}
-                      placeholder="Asignar a"
-                      disabled={loading}
-                      multi={true}
-                      renderLabel={renderFederLabel}
-                      isOptionDisabled={(opt) => responsables.includes(String(opt.value))}
-                    />
-                  </div>
-
-                </div>
-
+                <CustomSelect
+                  id="ms-colabs"
+                  labelId={lblColabsId}
+                  leftIcon={<FiUsers className="ico" aria-hidden style={S.ico} />}
+                  options={federsOpts}
+                  value={colaboradores}
+                  onChange={setColaboradores}
+                  placeholder="Asignar a"
+                  disabled={loading}
+                  multi={true}
+                  renderLabel={renderFederLabel}
+                  isOptionDisabled={(opt) => responsables.includes(String(opt.value))}
+                />
               )}
 
 
@@ -496,7 +501,6 @@ export default function CreateTaskModal({ onClose, onCreated }) {
               </div>
 
 
-              <div className="tcEditorLabel">Descripción</div>
               <RichTextEditor
                 value={descripcion}
                 onChange={setDescripcion}

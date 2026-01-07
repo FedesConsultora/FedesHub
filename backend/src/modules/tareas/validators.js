@@ -2,7 +2,10 @@
 import { z } from 'zod';
 
 const boolish = z.preprocess(v => (v === 'true' ? true : v === 'false' ? false : v), z.boolean().optional());
-const dateOpt = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional()
+// Date validator for queries - allows any date (past, present, future)
+const dateOpt = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional());
+// Date validator for create/update - must be today or future
+const dateOptFuture = z.preprocess(v => (v ? new Date(v) : null), z.date().nullable().optional()
   .refine(d => !d || d >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "La fecha debe ser igual o posterior a hoy" }));
 const intId = z.coerce.number().int().positive();
 
@@ -80,8 +83,8 @@ export const createTaskSchema = z.object({
   requiere_aprobacion: z.boolean().optional().default(false),
   impacto_id: intId.optional(),
   urgencia_id: intId.optional(),
-  fecha_inicio: dateOpt,
-  vencimiento: dateOpt,
+  fecha_inicio: dateOptFuture,
+  vencimiento: dateOptFuture,
   etiquetas: z.array(intId).optional().default([]),
   responsables: z.array(z.object({ feder_id: intId, es_lider: z.boolean().optional().default(false) })).optional().default([]),
   colaboradores: z.array(z.object({ feder_id: intId, rol: z.string().max(100).nullish() })).optional().default([]),
