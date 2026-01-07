@@ -354,9 +354,30 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   const lblRespsId = 'lbl-resps'
   const lblColabsId = 'lbl-colabs'
 
+  const handleOverlayClick = (e) => {
+    // No cerrar si el click es en elementos del editor (portales de color picker, font size, etc)
+    const targetEl = e.target;
+
+    // Verificar si el click es en un portal del toolbar (color picker, font size, link modal)
+    const isToolbarPortal = targetEl.closest('.modal-overlay') ||
+      targetEl.closest('.color-picker-simple') ||
+      targetEl.closest('.font-size-picker') ||
+      targetEl.closest('.link-modal');
+
+    if (isToolbarPortal) {
+      // No cerrar el modal si estamos interactuando con portales del toolbar
+      return;
+    }
+
+    // Solo cerrar si el click fue directamente en el overlay, no en sus hijos
+    if (targetEl.classList.contains('taskModalWrap')) {
+      onClose?.()
+    }
+  }
+
   return (
-    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea">
-      <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate>
+    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea" onClick={handleOverlayClick}>
+      <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="tcHeader">
           <div className="brand">
             <div className="logo">Nueva tarea</div>
