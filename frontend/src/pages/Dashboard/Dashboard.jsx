@@ -266,8 +266,12 @@ export default function Dashboard() {
 
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={() => fetchData()} />}
       {openTaskId && (
-        <ModalPanel onClose={() => setOpenTaskId(null)}>
-          <TaskDetail id={openTaskId} onUpdate={() => fetchData()} />
+        <ModalPanel open={!!openTaskId} onClose={() => setOpenTaskId(null)}>
+          <TaskDetail
+            taskId={openTaskId}
+            onUpdated={() => fetchData()}
+            onClose={() => setOpenTaskId(null)}
+          />
         </ModalPanel>
       )}
     </div>
