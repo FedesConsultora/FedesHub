@@ -206,7 +206,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
       {open && (
         <div className="filterPopover" ref={popRef}>
           <div className="popHead">
-            <strong>Filtros Avanzados</strong>
+            <strong>Filtros avanzados</strong>
             <button type="button" className="btnX" onClick={() => setOpen(false)}>×</button>
           </div>
 
