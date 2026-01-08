@@ -52,7 +52,7 @@ export default function Header() {
               size={28}
               federId={user?.feder_id}
             />
-            <span className="email">{user?.email}</span>
+            <span className="user-name">{`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || user?.email}</span>
             <span className="caret">▾</span>
           </button>
           {open && (
