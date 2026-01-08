@@ -5,7 +5,7 @@ import { initModels } from '../../../models/registry.js';
 const models = await initModels();
 
 // ---------- Helpers de existencia / reglas ----------
-export const ensureExists = async (model, id, msg='No encontrado') => {
+export const ensureExists = async (model, id, msg = 'No encontrado') => {
   if (id == null) return null;
   const row = await model.findByPk(id, { attributes: ['id'] });
   if (!row) throw Object.assign(new Error(msg), { status: 404 });
@@ -59,13 +59,13 @@ export const buildListSQL = (params = {}, currentUser) => {
     // prioridad
     prioridad_min, prioridad_max,
     // orden/paginación
-    orden_by='prioridad', sort='desc', limit=50, offset=0
+    orden_by = 'prioridad', sort = 'desc', limit = 50, offset = 0
   } = params;
 
   const repl = { limit, offset };
   const where = [];
 
-    let sql = `
+  let sql = `
     SELECT
       t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id, t.tarea_padre_id,
       t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
@@ -137,16 +137,16 @@ export const buildListSQL = (params = {}, currentUser) => {
 
   // Filtros simples
   if (cliente_id) { where.push(`t.cliente_id = :cliente_id`); repl.cliente_id = cliente_id; }
-  if (hito_id)    { where.push(`t.hito_id = :hito_id`);       repl.hito_id    = hito_id; }
-  if (estado_id)  { where.push(`t.estado_id = :estado_id`);   repl.estado_id  = estado_id; }
+  if (hito_id) { where.push(`t.hito_id = :hito_id`); repl.hito_id = hito_id; }
+  if (estado_id) { where.push(`t.estado_id = :estado_id`); repl.estado_id = estado_id; }
   if (tarea_padre_id) { where.push(`t.tarea_padre_id = :parent_id`); repl.parent_id = tarea_padre_id; }
   if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
-  if (urgencia_id){ where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
+  if (urgencia_id) { where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
   if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
 
   // Filtros múltiples
   addIn('t.cliente_id', cliente_ids, 'cids_');
-  addIn('t.estado_id',  estado_ids,  'eids_');
+  addIn('t.estado_id', estado_ids, 'eids_');
 
   if (etiqueta_ids?.length) {
     const keys = etiqueta_ids.map((_, i) => `et${i}`);
@@ -161,6 +161,7 @@ export const buildListSQL = (params = {}, currentUser) => {
 
   // Flags
   if (include_archivadas !== true) where.push(`t.is_archivada = false`);
+  where.push(`t.deleted_at IS NULL`);
   if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);
   if (is_seguidor === true) where.push(`EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid)`);
 
@@ -188,15 +189,15 @@ export const buildListSQL = (params = {}, currentUser) => {
 
   // Rangos de fechas
   if (vencimiento_from) { where.push(`t.vencimiento >= :vfrom`); repl.vfrom = vencimiento_from; }
-  if (vencimiento_to)   { where.push(`t.vencimiento <= :vto`);   repl.vto   = vencimiento_to; }
-  if (inicio_from)      { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
-  if (inicio_to)        { where.push(`t.fecha_inicio <= :ito`);   repl.ito   = inicio_to; }
-  if (created_from)     { where.push(`t.created_at >= :cfrom`);   repl.cfrom = created_from; }
-  if (created_to)       { where.push(`t.created_at <= :cto`);     repl.cto   = created_to; }
-  if (updated_from)     { where.push(`t.updated_at >= :ufrom`);   repl.ufrom = updated_from; }
-  if (updated_to)       { where.push(`t.updated_at <= :uto`);     repl.uto   = updated_to; }
-  if (finalizada_from)  { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
-  if (finalizada_to)    { where.push(`t.finalizada_at <= :fto`);   repl.fto   = finalizada_to; }
+  if (vencimiento_to) { where.push(`t.vencimiento <= :vto`); repl.vto = vencimiento_to; }
+  if (inicio_from) { where.push(`t.fecha_inicio >= :ifrom`); repl.ifrom = inicio_from; }
+  if (inicio_to) { where.push(`t.fecha_inicio <= :ito`); repl.ito = inicio_to; }
+  if (created_from) { where.push(`t.created_at >= :cfrom`); repl.cfrom = created_from; }
+  if (created_to) { where.push(`t.created_at <= :cto`); repl.cto = created_to; }
+  if (updated_from) { where.push(`t.updated_at >= :ufrom`); repl.ufrom = updated_from; }
+  if (updated_to) { where.push(`t.updated_at <= :uto`); repl.uto = updated_to; }
+  if (finalizada_from) { where.push(`t.finalizada_at >= :ffrom`); repl.ffrom = finalizada_from; }
+  if (finalizada_to) { where.push(`t.finalizada_at <= :fto`); repl.fto = finalizada_to; }
 
   // Prioridad
   if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
@@ -206,13 +207,13 @@ export const buildListSQL = (params = {}, currentUser) => {
 
   // Orden
   const orderCol =
-      orden_by === 'vencimiento'   ? 't.vencimiento'
-    : orden_by === 'fecha_inicio'  ? 't.fecha_inicio'
-    : orden_by === 'created_at'    ? 't.created_at'
-    : orden_by === 'updated_at'    ? 't.updated_at'
-    : orden_by === 'cliente'       ? 'cliente_nombre'
-    : orden_by === 'titulo'        ? 't.titulo'
-    : 't.prioridad_num'; // default
+    orden_by === 'vencimiento' ? 't.vencimiento'
+      : orden_by === 'fecha_inicio' ? 't.fecha_inicio'
+        : orden_by === 'created_at' ? 't.created_at'
+          : orden_by === 'updated_at' ? 't.updated_at'
+            : orden_by === 'cliente' ? 'cliente_nombre'
+              : orden_by === 'titulo' ? 't.titulo'
+                : 't.prioridad_num'; // default
 
   sql += ` ORDER BY ${orderCol} ${sort.toUpperCase()} NULLS LAST, t.id DESC LIMIT :limit OFFSET :offset`;
 
@@ -227,7 +228,7 @@ export const listTasks = async (params, currentUser) => {
 
 export const countTasks = async (params, currentUser) => {
   const { sql, repl } = buildListSQL({ ...params, limit: 1, offset: 0 }, currentUser);
-  const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/,'')}) q`;
+  const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/, '')}) q`;
   const rows = await sequelize.query(countSql, { type: QueryTypes.SELECT, replacements: repl });
   return rows[0]?.cnt ?? 0;
 };
@@ -345,8 +346,8 @@ export const createTask = async (payload, currentFederId) => {
   return sequelize.transaction(async (t) => {
     const {
       cliente_id, hito_id, tarea_padre_id, titulo, descripcion,
-      estado_id, requiere_aprobacion=false, impacto_id=2, urgencia_id=4,
-      fecha_inicio=null, vencimiento=null
+      estado_id, requiere_aprobacion = false, impacto_id = 2, urgencia_id = 4,
+      fecha_inicio = null, vencimiento = null
     } = payload;
 
     await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
@@ -360,7 +361,7 @@ export const createTask = async (payload, currentFederId) => {
     const prioridad_num = calcPrioridad(ponderacion, puntos.impacto, puntos.urgencia);
 
     // Estado default si no vino: 'pendiente'
-    const estado = estado_id || (await models.TareaEstado.findOne({ where: { codigo:'pendiente' }, transaction: t }))?.id;
+    const estado = estado_id || (await models.TareaEstado.findOne({ where: { codigo: 'pendiente' }, transaction: t }))?.id;
 
     const tarea = await models.Tarea.create({
       cliente_id, hito_id, tarea_padre_id, titulo, descripcion,
@@ -401,13 +402,13 @@ export const updateTask = async (id, payload) => {
   });
 };
 
-export const archiveTask = async (id, archive=true) => {
+export const archiveTask = async (id, archive = true) => {
   await models.Tarea.update({ is_archivada: !!archive }, { where: { id } });
   return { ok: true };
 };
 
 // ---------- Responsables / Colaboradores ----------
-export const addResponsable = async (tarea_id, feder_id, es_lider=false) => {
+export const addResponsable = async (tarea_id, feder_id, es_lider = false) => {
   await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
   await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
   const row = await models.TareaResponsable.findOrCreate({
@@ -425,7 +426,7 @@ export const removeResponsable = async (tarea_id, feder_id) => {
   return { ok: true };
 };
 
-export const addColaborador = async (tarea_id, feder_id, rol=null) => {
+export const addColaborador = async (tarea_id, feder_id, rol = null) => {
   await ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada');
   await ensureExists(models.Feder, feder_id, 'Feder no encontrado');
   const [row, created] = await models.TareaColaborador.findOrCreate({
@@ -458,7 +459,7 @@ export const unassignEtiqueta = async (tarea_id, etiqueta_id) => {
 
 // ---------- Checklist ----------
 export const listChecklist = (tarea_id) =>
-  models.TareaChecklistItem.findAll({ where: { tarea_id }, order: [['orden','ASC'],['id','ASC']] });
+  models.TareaChecklistItem.findAll({ where: { tarea_id }, order: [['orden', 'ASC'], ['id', 'ASC']] });
 
 export const createChecklistItem = async (tarea_id, titulo) => {
   const max = await models.TareaChecklistItem.max('orden', { where: { tarea_id } });
@@ -475,7 +476,7 @@ export const deleteChecklistItem = async (id) => {
   return { ok: true };
 };
 
-export const reorderChecklist = async (tarea_id, ordenPairs=[]) =>
+export const reorderChecklist = async (tarea_id, ordenPairs = []) =>
   sequelize.transaction(async (t) => {
     for (const { id, orden } of ordenPairs) {
       await models.TareaChecklistItem.update({ orden }, { where: { id, tarea_id }, transaction: t });
@@ -510,7 +511,7 @@ export const listComentarios = async (tarea_id) =>
     ORDER BY cm.created_at ASC
   `, { type: QueryTypes.SELECT, replacements: { id: tarea_id } });
 
-export const createComentario = async (tarea_id, feder_id, { tipo_id, contenido, menciones=[], adjuntos=[] }) =>
+export const createComentario = async (tarea_id, feder_id, { tipo_id, contenido, menciones = [], adjuntos = [] }) =>
   sequelize.transaction(async (t) => {
     await Promise.all([
       ensureExists(models.Tarea, tarea_id, 'Tarea no encontrada'),
@@ -548,7 +549,7 @@ export const createRelacion = async (tarea_id, relacionada_id, tipo_id) => {
     ensureExists(models.Tarea, relacionada_id, 'Tarea relacionada no encontrada'),
     ensureExists(models.TareaRelacionTipo, tipo_id, 'Tipo de relación no encontrado')
   ]);
-  const [row] = await models.TareaRelacion.findOrCreate({ where: { tarea_id, relacionada_id, tipo_id }, defaults: { tarea_id, relacionada_id, tipo_id }});
+  const [row] = await models.TareaRelacion.findOrCreate({ where: { tarea_id, relacionada_id, tipo_id }, defaults: { tarea_id, relacionada_id, tipo_id } });
   return row;
 };
 
@@ -559,13 +560,13 @@ export const deleteRelacion = async (tarea_id, relId) => {
 
 // ---------- Favoritos / Seguidores ----------
 export const setFavorito = async (tarea_id, user_id, on) => {
-  if (on) await models.TareaFavorito.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
+  if (on) await models.TareaFavorito.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id } });
   else await models.TareaFavorito.destroy({ where: { tarea_id, user_id } });
   return { ok: true };
 };
 
 export const setSeguidor = async (tarea_id, user_id, on) => {
-  if (on) await models.TareaSeguidor.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id }});
+  if (on) await models.TareaSeguidor.findOrCreate({ where: { tarea_id, user_id }, defaults: { tarea_id, user_id } });
   else await models.TareaSeguidor.destroy({ where: { tarea_id, user_id } });
   return { ok: true };
 };
@@ -577,7 +578,7 @@ export const setEstado = async (id, estado_id) => {
   return { ok: true };
 };
 
-export const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_motivo=null) => {
+export const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_motivo = null) => {
   await ensureExists(models.TareaAprobacionEstado, aprobacion_estado_id, 'Estado de aprobación inválido');
   const patch = { aprobacion_estado_id, rechazo_motivo: rechazo_motivo ?? null };
   if (aprobacion_estado_id === 3) { patch.aprobado_por_user_id = user_id; patch.aprobado_at = new Date(); }
@@ -586,7 +587,7 @@ export const setAprobacion = async (id, aprobacion_estado_id, user_id, rechazo_m
   return { ok: true };
 };
 
-export const moveKanban = async (tarea_id, user_id, { stage, orden=0 }) => {
+export const moveKanban = async (tarea_id, user_id, { stage, orden = 0 }) => {
   if (!user_id) {
     throw Object.assign(new Error('Usuario no autenticado'), { status: 401 });
   }
