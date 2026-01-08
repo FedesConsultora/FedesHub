@@ -1643,7 +1643,7 @@ const getDashboardMetrics = async (user, query = {}) => {
       SELECT COUNT(*)::int as count 
       FROM "Tarea" t
       JOIN "TareaEstado" te ON te.id = t.estado_id
-      WHERE t.is_archivada = false AND te.codigo = 'revision'
+      WHERE t.is_archivada = false AND t.deleted_at IS NULL AND te.codigo = 'revision'
     `;
     queries.revision = sequelize.query(sqlRevision, { type: QueryTypes.SELECT });
   }

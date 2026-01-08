@@ -91,7 +91,14 @@ export const listFeders = async ({ limit = 50, offset = 0, q, estado_id, is_acti
   `;
 
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
-  if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
+
+  if (is_activo_bool !== undefined) {
+    where.push(`f.is_activo = :is_activo`);
+    repl.is_activo = is_activo_bool;
+  } else {
+    // Por defecto solo activos
+    where.push(`f.is_activo = true`);
+  }
 
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
 
@@ -115,7 +122,14 @@ export const countFeders = async ({ q, estado_id, is_activo } = {}) => {
     LEFT JOIN "User" u ON u.id = f.user_id
   `;
   if (estado_id) { where.push(`f.estado_id = :estado_id`); repl.estado_id = estado_id; }
-  if (is_activo_bool !== undefined) { where.push(`f.is_activo = :is_activo`); repl.is_activo = is_activo_bool; }
+
+  if (is_activo_bool !== undefined) {
+    where.push(`f.is_activo = :is_activo`);
+    repl.is_activo = is_activo_bool;
+  } else {
+    // Por defecto solo activos
+    where.push(`f.is_activo = true`);
+  }
 
   if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
   const rows = await sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });

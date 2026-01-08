@@ -136,7 +136,6 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: $shadow-soft;
   transition: transform 0.2s, box-shadow 0.2s;
-  user-select: none;
   margin-bottom: 0;
 
   &.collapsed {
@@ -155,6 +154,11 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
 
     .headerLeft {
       display: flex;
@@ -163,7 +167,6 @@
 
       .dragHandle {
         color: $fh-muted;
-        cursor: grab;
         font-size: 1.2rem;
         opacity: 0.3;
         transition: opacity 0.2s;

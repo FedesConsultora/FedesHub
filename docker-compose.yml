@@ -24,6 +24,8 @@ services:
         condition: service_healthy
     networks:
       - fedes-net
+    volumes:
+      - ./backend/public/avatars:/usr/src/app/public/avatars
 
   frontend:
     build: ./frontend

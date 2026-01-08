@@ -37,7 +37,6 @@ export default function FedersListPage() {
           <div className="selectWrapper">
             <FiFilter className="filterIcon" />
             <select value={params.is_activo} onChange={(e) => setParams({ is_activo: e.target.value })}>
-              <option value="">Todos los estados</option>
               <option value="true">Activos</option>
               <option value="false">Inactivos</option>
             </select>

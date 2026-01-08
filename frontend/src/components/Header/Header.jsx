@@ -10,7 +10,7 @@ import Avatar from '../Avatar.jsx'
 import { useProfilePreview } from '../../context/ProfilePreviewProvider.jsx'
 import './Header.scss'
 
-const SUPPORT_URL = 'https://miro.com/welcomeonboard/RXZKMUp0aFBBcDhiYU5pV0ZOMmtvcWh1Y3BOWWxJaHhqYm9FZkZWRXRObFZMVjIyK3hrRklHaVc5cW1lVnNhVlM5OGhyVDBqcC9vM013d01JbXJza3l6MisyQllpVmkzcVFZeW11N3lVYjhxQ1NRaks5d0NsZmJ2b2pwZGNzQUNNakdSWkpBejJWRjJhRnhhb1UwcS9BPT0hdjE=?share_link_id=915613671673'
+const SUPPORT_URL = 'https://miro.com/app/board/uXjVGf1enLk=/'
 
 export default function Header() {
   const { user, hasPerm, logout } = useAuthCtx()
