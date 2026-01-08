@@ -1,66 +1,213 @@
 /* src/components/ausencias/YearCalendar.scss */
 @use '../../styles/variables' as v;
 
+.aus-year-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0; // Eliminamos aire lateral para aprovechar ancho
+
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 14, 19, 0.8);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    &.prev {
+      left: -10px;
+    }
+
+    &.next {
+      right: -10px;
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+  }
+}
+
 .aus-year {
-  display: grid;
-  gap: 18px;
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 10px 0;
+  flex: 1;
+
+  // Ocultar scrollbar
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .aus-month {
-  background: rgba(10,14,19,0.7);
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: v.$radius-2xl;
-  padding: 10px 12px 12px;
-  box-shadow: v.$shadow-soft;
+  flex: 0 0 calc(33.333% - 14px); // Un poco más de margen para que respire
+  min-width: 300px;
+  scroll-snap-align: start;
 
-  .hdr { color: v.$fh-text; font-weight: 700; margin: 4px 2px 8px; text-transform: capitalize; }
-  .dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin: 0 2px 6px; color: v.$fh-muted; font-size: 12px; }
-  .grid{ display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  background: rgba(10, 14, 19, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(10, 14, 19, 0.5);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .hdr {
+    color: #fff;
+    font-weight: 800;
+    margin: 0 0 14px;
+    text-transform: capitalize;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  .dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    color: v.$fh-muted;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    width: 100%; // Asegura que use todo el ancho del card
+  }
 
   .day {
     position: relative;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 30px;
-    border-radius: 10px;
+    aspect-ratio: 1/1; // Mantiene los días perfectamente cuadrados
+    min-width: 0; // Permite que encoja si es necesario
+    border-radius: 8px;
     color: v.$fh-text;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-    &.empty { background: transparent; border: none; }
+    &:hover:not(.empty) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
 
-    &.wknd { opacity: .8; }
+    &.empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
 
-    .num { font-size: 12px; line-height: 1; }
+    &.wknd {
+      opacity: .6;
+      background: transparent;
+    }
 
     .dots {
       position: absolute;
-      bottom: 4px; right: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: v.$fh-primary; // default
-      color: #0b1118;
-      border: 1px solid rgba(0,0,0,.25);
+      bottom: 2px;
+      padding: 0 4px;
+      font-size: 0.6rem;
+      border-radius: 10px;
+      background: v.$fh-primary;
+      color: #000;
+      font-weight: 800;
+      transform: scale(0.8);
     }
 
-    &.busy { border-color: rgba(255,255,255,0.14); }
+    &.st-pendiente {
+      border-color: rgba(245, 158, 11, 0.4);
 
-    /* Prioridad: pendiente > denegada > cancelada > aprobada */
-    &.st-pendiente  .dots { background: #f59e0b; } // amber-500
-    &.st-denegada   .dots { background: #ef4444; } // red-500
-    &.st-cancelada  .dots { background: #94a3b8; } // slate-400
-    &.st-aprobada   .dots { background: #22c55e; } // green-500
+      .dots {
+        background: #f59e0b;
+      }
+    }
 
-    /* borde amarillo cuando hay pendiente */
-    &.has-pending { box-shadow: inset 0 0 0 2px rgba(245,158,11,.35); }
+    &.st-denegada {
+      .dots {
+        background: #ef4444;
+      }
+    }
 
-    /* hoy: mantiene borde/acento primario y fuerza el dot celeste */
+    &.st-cancelada {
+      .dots {
+        background: #94a3b8;
+      }
+    }
+
+    &.st-aprobada {
+      .dots {
+        background: #22c55e;
+      }
+    }
+
     &.today {
-      box-shadow: inset 0 0 0 2px rgba(77,208,225,.35);
-      .dots { background: v.$fh-accent; }
+      background: rgba(77, 208, 225, 0.1);
+      border-color: v.$fh-accent;
+      font-weight: 800;
+      color: v.$fh-accent;
     }
+  }
+}
+
+@media (max-width: 1100px) {
+  .aus-month {
+    flex: 0 0 calc(50% - 10px);
+  }
+}
+
+@media (max-width: 700px) {
+  .aus-month {
+    flex: 0 0 100%;
+  }
+
+  .aus-year-container {
+    .nav-btn {
+      display: none;
+    }
+  }
+
+  .aus-year {
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
 }

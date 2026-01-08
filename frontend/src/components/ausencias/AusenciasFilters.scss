@@ -1,40 +1,164 @@
 /* src/components/ausencias/AusenciasFilters.scss */
 @use '../../styles/variables' as *;
 
-.aus-filters{
-  display:flex; align-items:center; gap:14px; padding:10px 12px;
-  border:1px solid $border; border-radius:14px; background:$fh-card;
+.aus-filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 20px;
+  background: rgba(10, 14, 19, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  margin-top: 4px;
 
-  .group{ display:grid; gap:6px; min-width: 220px; }
-  label{ color:$fh-muted; font-size:.9rem; }
-
-  .segmented{
-    display:inline-flex; gap:6px;
-    .seg{
-      padding:.42rem .62rem; border:1px solid $border; background:$fh-card; color:$fh-text;
-      border-radius:10px; cursor:pointer; user-select:none;
-      &.active{ font-weight:800; background:rgba($fh-primary,.18); border-color:rgba($fh-primary,.45); }
-      &.aprobada  { }
-      &.pendiente { }
-      &.denegada  { }
-      &.cancelada { }
-    }
-    &.small .seg{ padding:.36rem .5rem; }
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 100px;
   }
 
-  .switch{
-    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
-    input{ appearance:none; width:36px; height:20px; border-radius:999px; position:relative; outline:none;
-      border:1px solid $border; background:rgba(255,255,255,.06);
-    }
-    input::after{
-      content:''; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:999px;
-      background:#fff; transition: transform .18s ease;
-    }
-    input:checked{ background:rgba($fh-accent,.35); border-color:rgba($fh-accent,.6) }
-    input:checked::after{ transform: translateX(16px); }
-    span{ color:$fh-text }
+  label {
+    color: $fh-muted;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+
+
   }
 
-  .spacer{ flex:1 1 auto }
+  .segmented {
+    display: inline-flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .seg {
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $fh-muted;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+
+      &.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        color: $fh-text;
+      }
+
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+
+        &.aprobada {
+          background: #22c55e;
+          box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+
+        &.pendiente {
+          background: #eab308;
+          box-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+        }
+
+        &.denegada {
+          background: #ef4444;
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        &.cancelada {
+          background: #94a3b8;
+          box-shadow: 0 0 8px rgba(148, 163, 184, 0.4);
+        }
+      }
+    }
+
+    &.small .seg {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: $fh-text;
+
+    input {
+      appearance: none;
+      width: 40px;
+      height: 22px;
+      border-radius: 999px;
+      position: relative;
+      outline: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    input::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    input:checked {
+      background: rgba($fh-accent, 0.3);
+      border-color: rgba($fh-accent, 0.5);
+    }
+
+    input:checked::after {
+      transform: translateX(18px);
+      background: $fh-accent;
+    }
+  }
+
+  .spacer {
+    flex: 1 1 auto
+  }
+}
+
+@media (max-width: 900px) {
+  .aus-filters {
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .group {
+      min-width: 100%;
+    }
+
+    .spacer {
+      display: none;
+    }
+  }
 }

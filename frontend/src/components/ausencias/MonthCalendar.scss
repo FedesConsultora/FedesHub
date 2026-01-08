@@ -1,45 +1,239 @@
 /* src/components/ausencias/MonthCalendar.scss */
 @use '../../styles/variables' as *;
 
-.aus-month-view{
-  background:$fh-card; border:1px solid $border; border-radius:14px; padding:12px;
+.aus-month-container {
+  position: relative;
+  display: flex;
+  align-items: center;
 
-  .title{ font-weight:800; margin-bottom:8px; text-transform:capitalize; letter-spacing:.2px; }
-  .dow{
-    display:grid; grid-template-columns: repeat(7,1fr); gap:2px; margin-bottom:4px;
-    span{ text-align:center; font-size:.82rem; color:$fh-muted; }
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 14, 19, 0.85);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    font-size: 1.2rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    &.prev {
+      left: -22px;
+    }
+
+    &.next {
+      right: -22px;
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+  }
+}
+
+.aus-month-view {
+  flex: 1;
+  background: $fh-card;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 30px; // Espacio para la leyenda
+
+  .title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    text-transform: capitalize;
+    letter-spacing: .5px;
+    text-align: center;
+    color: #fff;
   }
 
-  .grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:2px; }
+  .dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
 
-  .day{
-    text-align:left; min-height:92px;
-    background:$fh-card; border:1px solid $border; border-radius:12px; padding:6px; position:relative;
+    span {
+      text-align: center;
+      font-size: .82rem;
+      color: $fh-muted;
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .day {
+    text-align: left;
+    min-height: 92px;
+    background: $fh-card;
+    border: 1px solid $border;
+    border-radius: 12px;
+    padding: 6px;
+    position: relative;
     transition: background .18s ease, filter .18s ease, border-color .18s ease;
-    &:hover{ background:rgba(255,255,255,.06); }
-    &.wknd{ background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 45%), $fh-card; }
-    &.today{ box-shadow:0 0 0 2px rgba($fh-accent,.55) inset; }
-    &.has-pending{ border-color: rgba(234,179,8,.45); }
-    .num{ font-size:.82rem; opacity:.85; }
-    .tags{ position:absolute; right:6px; top:6px; display:flex; gap:4px; }
-    .tag{
-      font-size:.72rem; padding:2px 6px; border-radius:999px; border:1px solid transparent; font-weight:800;
-      &.ok    { background: rgba( 34,197, 94,.18);  border-color: rgba( 34,197, 94,.4);  color:#0c1117; }
-      &.warn  { background: rgba(234,179,  8,.18);  border-color: rgba(234,179,  8,.4);  color:#0c1117; }
-      &.err   { background: rgba(239, 68, 68,.18);  border-color: rgba(239, 68, 68,.4);  color:#0c1117; }
-      &.cancel{ background: rgba(255,255,255,.10);  border-color: rgba(255,255,255,.24); color:#0c1117; }
+
+    &:hover {
+      background: rgba(255, 255, 255, .06);
     }
 
-    .chip{
-      margin-top:4px; font-size:.86rem; padding:2px 6px; border-radius:8px; width:100%;
-      &.aprobada  { background: rgba( 34,197, 94,.10); border:1px solid rgba( 34,197, 94,.28); }
-      &.pendiente { background: rgba(234,179,  8,.08); border:1px solid rgba(234,179,  8,.26); }
-      &.denegada  { background: rgba(239, 68, 68,.08); border:1px solid rgba(239, 68, 68,.26); text-decoration:line-through; opacity:.7; }
-      &.cancelada { opacity:.55; text-decoration:line-through; border:1px dashed rgba(255,255,255,.25) }
+    &.wknd {
+      background: linear-gradient(180deg, rgba(255, 255, 255, .02), transparent 45%), $fh-card;
     }
 
-    .more{ margin-top:4px; font-size:.82rem; color:$fh-muted; }
+    &.today {
+      box-shadow: 0 0 0 2px rgba($fh-accent, .55) inset;
+    }
+
+    &.has-pending {
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+
+    .num {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $fh-muted;
+    }
+
+    .tags {
+      position: absolute;
+      right: 6px;
+      top: 6px;
+      display: flex;
+      gap: 3px;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 700;
+
+      &.ok {
+        background: #22c55e;
+        color: #fff;
+      }
+
+      &.warn {
+        background: #f59e0b;
+        color: #fff;
+      }
+
+      &.err {
+        background: #ef4444;
+        color: #fff;
+      }
+
+      &.cancel {
+        background: #64748b;
+        color: #fff;
+      }
+    }
+
+    .chip {
+      margin-top: 4px;
+      font-size: 0.75rem;
+      padding: 3px 6px 3px 8px;
+      border-radius: 6px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: $fh-text;
+      font-weight: 500;
+      transition: transform 0.1s ease;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 3px 0 0 3px;
+      }
+
+      &:hover {
+        transform: translateX(2px);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &.aprobada {
+        &::before {
+          background: #22c55e;
+        }
+
+        background: rgba(34, 197, 94, 0.08);
+        border-color: rgba(34, 197, 94, 0.15);
+      }
+
+      &.pendiente {
+        &::before {
+          background: #f59e0b;
+        }
+
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+      }
+
+      &.denegada {
+        &::before {
+          background: #ef4444;
+        }
+
+        background: rgba(239, 68, 68, 0.05);
+        border-color: rgba(239, 68, 68, 0.1);
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      &.cancelada {
+        opacity: 0.55;
+        text-decoration: line-through;
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+
+        &::before {
+          background: #64748b;
+        }
+      }
+    }
+
+    .more {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: $fh-muted;
+      font-weight: 600;
+      text-align: right;
+    }
   }
 
-  .empty{ background:transparent; border:none; }
+  .empty {
+    background: transparent;
+    border: none;
+  }
 }
