@@ -1,7 +1,9 @@
-import { useAuthCtx } from '../../context/AuthContext.jsx'
+import usePermission from '../../hooks/usePermissions'
+
 export default function RequirePerm({ modulo, accion, children }) {
-  const { hasPerm } = useAuthCtx()
-  if (!hasPerm(modulo, accion)) {
+  const { can } = usePermission()
+
+  if (!can(modulo, accion)) {
     return <div style={{ padding: 24 }}>No tenés permiso para ver esta sección.</div>
   }
   return children

@@ -7,6 +7,8 @@ import { FaHourglassHalf } from 'react-icons/fa'
 import UnreadDmBubbles from './UnreadDmBubbles.jsx'
 import './Sidebar.scss'
 
+const IS_DEV = import.meta.env.DEV
+
 const APPS = [
   { code: 'home', name: 'Inicio', to: '/' },
   { code: 'feders', name: 'Feders', to: '/feders' },
@@ -90,8 +92,8 @@ export default function Sidebar() {
           const isChat = app.code === 'chat'
           const extraCls = isChat && chatHasUnread ? ' with-badge' : ''
 
-          // Si está en desarrollo, usar botón en lugar de NavLink
-          if (app.inDev) {
+          // Si está en desarrollo, usar botón en lugar de NavLink (solo en producción)
+          if (app.inDev && !IS_DEV) {
             return (
               <button
                 key={app.code}
@@ -104,6 +106,7 @@ export default function Sidebar() {
               </button>
             )
           }
+
 
           return (
             <NavLink
