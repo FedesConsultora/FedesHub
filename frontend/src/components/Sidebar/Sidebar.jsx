@@ -21,7 +21,6 @@ const APPS = [
 ]
 
 export default function Sidebar() {
-  console.log('-------------------Entorno de Desarrollo:-------------', IS_DEV)
   const { hasPerm, roles } = useAuthCtx()
   const uploadCtx = useUploadContext()
   const toast = useToast()

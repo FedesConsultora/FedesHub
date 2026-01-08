@@ -48,7 +48,13 @@ export default function TasksPage() {
     urgencias: [],
   });
   useEffect(() => {
-    tareasApi.catalog().then(setCatalog).catch(console.error);
+    tareasApi.catalog().then(c => {
+      // Mapear nombre de estado "Revisión" -> "En Revisión" solo en el front
+      if (c.estados) {
+        c.estados = c.estados.map(s => s.nombre === 'Revisión' ? { ...s, nombre: 'En Revisión' } : s);
+      }
+      setCatalog(c);
+    }).catch(console.error);
   }, []);
 
   // filtros (compat con backend)
@@ -164,7 +170,7 @@ export default function TasksPage() {
         id: t.id,
         titulo: t.titulo,
         cliente_nombre: t.cliente_nombre,
-        estado_nombre: t.estado_nombre,
+        estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
         estado_id: t.estado_id,
         estado_codigo: t.estado_codigo,
         vencimiento: t.vencimiento,
