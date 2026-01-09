@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import useTasksBoard from "../../hooks/useTasksBoard";
 import { tareasApi } from "../../api/tareas";
-import TareasFilters from "../../components/tasks/TareasFilters";
+import TareasFilters, { TareasActiveChips } from "../../components/tasks/TareasFilters";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import TaskList from "../../components/tasks/TaskList";
 import TaskMonthlyView from "../../components/tasks/TaskMonthlyView";
@@ -228,18 +228,22 @@ export default function TasksPage() {
 
   return (
     <div className="TareasListPage">
-      {/* Toolbar (igual a Clientes) */}
       <header className="toolbar card">
         <div className="left">
           <h1>Tareas</h1>
           <div className="counter">{countTxt}</div>
         </div>
 
-        <div
-          className="right"
-          style={{ display: "flex", gap: 10, alignItems: "center" }}
-        >
+        <div className="center">
+          <TareasFilters
+            value={filters}
+            catalog={catalog}
+            onChange={setFilters}
+            hideChips={true}
+          />
+        </div>
 
+        <div className="right">
           <div className="segmented" role="tablist" aria-label="Vista">
             <button
               type="button"
@@ -269,7 +273,7 @@ export default function TasksPage() {
               onClick={() => handleSetView("month")}
               title="Ver por mes"
             >
-              Mes
+              Calendario
             </button>
             <button
               type="button"
@@ -305,16 +309,12 @@ export default function TasksPage() {
         </div>
       </header>
 
-      {/* Filtros (igual a Clientes, sin tarjeta) */}
-      <section className="filters card">
-        <TareasFilters
-          value={filters}
-          catalog={catalog}
-          onChange={setFilters}
-        />
-      </section>
+      <TareasActiveChips
+        value={filters}
+        catalog={catalog}
+        onChange={setFilters}
+      />
 
-      {/* Resultados */}
       <section className="results" data-view={view}>
         {view === "kanban" ? (
           <KanbanBoard
@@ -367,7 +367,6 @@ export default function TasksPage() {
           />
         </ModalPanel>
       )}
-
     </div>
   );
 }

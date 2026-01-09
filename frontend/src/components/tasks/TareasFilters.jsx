@@ -16,14 +16,10 @@ const DateInput = ({ id, ...props }) => (
   </div>
 )
 
-export default function TareasFilters({ value, catalog, onChange }) {
-  const v = value || {}
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef(null), popRef = useRef(null)
-
-  // Generar lista de filtros activos para mostrar como chips
-  const activeChips = useMemo(() => {
+export function useActiveChips(v, catalog) {
+  return useMemo(() => {
     const chips = [];
+    if (!v || !catalog) return chips;
 
     if (v.cliente_id) {
       const clienteId = Number(v.cliente_id);
@@ -74,13 +70,13 @@ export default function TareasFilters({ value, catalog, onChange }) {
 
     return chips;
   }, [v, catalog]);
+}
 
-  // Calcular cuántos filtros avanzados hay activos
-  const activeFiltersCount = activeChips.length;
+export function TareasActiveChips({ value, catalog, onChange }) {
+  const v = value || {};
+  const chips = useActiveChips(v, catalog);
 
-  const upd = (patch) => {
-    onChange?.({ ...v, ...patch });
-  }
+  const upd = (patch) => onChange?.({ ...v, ...patch });
 
   const removeChip = (key) => {
     if (key === 'vencimiento') {
@@ -90,6 +86,63 @@ export default function TareasFilters({ value, catalog, onChange }) {
     } else {
       upd({ [key]: undefined });
     }
+  }
+
+  const clear = () => onChange?.({
+    q: '',
+    cliente_id: undefined,
+    estado_id: undefined,
+    estado_codigo: undefined,
+    impacto_id: undefined,
+    urgencia_id: undefined,
+    vencimiento_from: '',
+    vencimiento_to: '',
+    orden_by: 'prioridad',
+    sort: 'desc',
+    solo_mias: v.solo_mias,
+    include_archivadas: v.include_archivadas,
+  })
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="activeFiltersChips">
+      {chips.map(chip => (
+        <div
+          key={chip.key}
+          className="chip"
+          style={chip.color ? { '--chip-color': chip.color } : undefined}
+        >
+          <span className="chipLabel">{chip.label}</span>
+          <button
+            type="button"
+            className="chipRemove"
+            onClick={() => removeChip(chip.key)}
+            title="Quitar filtro"
+          >
+            <FaTimes />
+          </button>
+        </div>
+      ))}
+      {chips.length > 1 && (
+        <button type="button" className="clearAllChips" onClick={clear}>
+          Limpiar todos
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function TareasFilters({ value, catalog, onChange, hideChips = false }) {
+  const v = value || {}
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null), popRef = useRef(null)
+
+  const activeChips = useActiveChips(v, catalog);
+  const activeFiltersCount = activeChips.length;
+
+  const upd = (patch) => {
+    onChange?.({ ...v, ...patch });
   }
 
   const clear = () => onChange?.({
@@ -168,32 +221,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
       </div>
 
       {/* CHIPS DE FILTROS ACTIVOS */}
-      {activeChips.length > 0 && (
-        <div className="activeFiltersChips">
-          {activeChips.map(chip => (
-            <div
-              key={chip.key}
-              className="chip"
-              style={chip.color ? { '--chip-color': chip.color } : undefined}
-            >
-              <span className="chipLabel">{chip.label}</span>
-              <button
-                type="button"
-                className="chipRemove"
-                onClick={() => removeChip(chip.key)}
-                title="Quitar filtro"
-              >
-                <FaTimes />
-              </button>
-            </div>
-          ))}
-          {activeChips.length > 1 && (
-            <button type="button" className="clearAllChips" onClick={clear}>
-              Limpiar todos
-            </button>
-          )}
-        </div>
-      )}
+      {!hideChips && <TareasActiveChips value={v} catalog={catalog} onChange={onChange} />}
 
       {/* POPOVER AVANZADO */}
       {open && (

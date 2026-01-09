@@ -1,27 +1,101 @@
 @use '../../styles/variables' as v;
 
+.activeFiltersChips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0; // Agregado margen para cuando se usa fuera
+  align-items: center;
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 10px;
+    background: rgba(68, 113, 141, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+
+    .chipLabel {
+      white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chipRemove {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      margin-left: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 8px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      padding: 0 !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.35);
+        transform: scale(1.1);
+      }
+    }
+
+    &:hover {
+      background: rgba(68, 113, 141, 0.4);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .clearAllChips {
+    background: transparent;
+    border: none;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: v.$fh-muted;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: lighten(v.$fh-muted, 20%);
+    }
+  }
+}
+
 .TareasFiltersContainer {
   position: relative;
-  margin: 1rem 0 2rem 0;
+  margin: 0;
   z-index: 20;
 
   .FilterToolbar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
 
     .searchWrapper {
-      flex: 1;
-      min-width: 280px;
+      flex: 1 1 auto;
+      min-width: 120px;
+      max-width: 280px;
       position: relative;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      height: 46px;
+      padding: 0 10px;
+      height: 38px;
       transition: all 0.2s ease;
 
       &:focus-within {
@@ -33,11 +107,13 @@
       .searchIcon {
         color: v.$fh-muted;
         font-size: 14px;
-        margin-right: 10px;
+        margin-right: 8px;
+        flex-shrink: 0;
       }
 
       input {
         flex: 1;
+        min-width: 0;
         background: transparent;
         border: none;
         color: v.$fh-text;
@@ -53,14 +129,15 @@
         background: rgba(255, 255, 255, 0.1);
         border: none;
         color: v.$fh-text;
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 9px;
         cursor: pointer;
+        flex-shrink: 0;
 
         &:hover {
           background: rgba(255, 255, 255, 0.2);
@@ -70,27 +147,30 @@
 
     .quickToggles {
       display: flex;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .toggleBtn {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 0 16px;
-      height: 46px;
+      gap: 6px;
+      padding: 0 12px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
+      border-radius: 12px;
       color: v.$fh-muted;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
 
       .icon {
-        font-size: 14px;
+        font-size: 13px;
         opacity: 0.7;
+        flex-shrink: 0;
       }
 
       &:hover {
@@ -113,18 +193,20 @@
     .advancedBtn {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 0 16px;
-      height: 46px;
+      gap: 6px;
+      padding: 0 12px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
+      border-radius: 12px;
       color: v.$fh-text;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       position: relative;
       transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
 
       &:hover {
         background: rgba(255, 255, 255, 0.06);
@@ -143,87 +225,20 @@
       .badge {
         background: v.$fh-primary;
         color: white;
-        font-size: 10px;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: 4px;
-      }
-    }
-  }
-
-  .activeFiltersChips {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-    align-items: center;
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px 4px 10px;
-      background: rgba(68, 113, 141, 0.2);
-      border: none;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-
-      .chipLabel {
-        white-space: nowrap;
-        max-width: 180px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .chipRemove {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 13px;
-        height: 16px;
-        margin-left: 2px;
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        border-radius: 50%;
-        color: white;
         font-size: 9px;
-        cursor: pointer;
-        transition: all 0.12s ease;
-        padding: 0 !important;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.35);
-          transform: scale(1.1);
-        }
-      }
-
-      &:hover {
-        background: rgba(68, 113, 141, 0.35);
-      }
-    }
-
-    .clearAllChips {
-      background: transparent;
-      border: none;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      color: v.$fh-muted;
-      cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-
-      &:hover {
-        color: v.$fh-text;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 2px;
+        flex-shrink: 0;
       }
     }
   }
+
+  // Se eliminó .activeFiltersChips de aquí
 
   .filterPopover {
     position: absolute;
@@ -510,6 +525,83 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 1024px) {
+  .TareasFiltersContainer {
+    .FilterToolbar {
+      .searchWrapper {
+        min-width: 100px;
+      }
+
+      .toggleBtn span {
+        display: none;
+      }
+
+      .toggleBtn {
+        padding: 0 10px;
+        justify-content: center;
+      }
+
+      .advancedBtn span:not(.badge) {
+        display: none;
+      }
+
+      .advancedBtn {
+        padding: 0 10px;
+        min-width: 38px;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .TareasFiltersContainer {
+    .FilterToolbar {
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .searchWrapper {
+        flex: 1 1 100%;
+        min-width: 100%;
+        order: 1;
+      }
+
+      .quickToggles {
+        order: 2;
+        flex: 1;
+      }
+
+      .advancedBtn {
+        order: 3;
+      }
+
+      .toggleBtn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
+    .filterPopover {
+      position: fixed;
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      border-radius: 24px 24px 0 0;
+      max-height: 80vh;
+
+      .filterGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .dateRange {
+        grid-column: span 1;
+      }
+    }
   }
 }
 
