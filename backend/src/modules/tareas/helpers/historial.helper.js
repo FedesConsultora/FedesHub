@@ -29,7 +29,10 @@ export const TIPO_CAMBIO = {
     ARCHIVADO: 'archivado',
     PRIORIDAD: 'prioridad',
     ADJUNTO: 'adjunto',
-    RELACION: 'relacion'
+    RELACION: 'relacion',
+    TC_DETALLE: 'tc_detalle',
+    TC_REDES: 'tc_redes',
+    TC_FORMATOS: 'tc_formatos'
 };
 
 /**

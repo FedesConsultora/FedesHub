@@ -271,6 +271,33 @@ export const setupAssociations = (m) => {
   link(m.User && m.TareaKanbanPos, 'User ↔ TareaKanbanPos', () => {
     m.User.hasMany(m.TareaKanbanPos, { foreignKey: 'user_id', as: 'tareasKanban' });
   });
+
+  // ===== Extensiones por Tipo (TC) =====
+  link(m.Tarea && m.TareaTC, 'Tarea ↔ TareaTC (1:1)', () => {
+    m.Tarea.hasOne(m.TareaTC, { foreignKey: 'tarea_id', as: 'datosTC' });
+    m.TareaTC.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+  });
+
+  link(m.TareaTC && m.TCObjetivoNegocio, 'TareaTC → TCObjetivoNegocio', () =>
+    m.TareaTC.belongsTo(m.TCObjetivoNegocio, { foreignKey: 'objetivo_negocio_id', as: 'objetivoNegocio' })
+  );
+  link(m.TareaTC && m.TCObjetivoMarketing, 'TareaTC → TCObjetivoMarketing', () =>
+    m.TareaTC.belongsTo(m.TCObjetivoMarketing, { foreignKey: 'objetivo_marketing_id', as: 'objetivoMarketing' })
+  );
+  link(m.TareaTC && m.TCEstadoPublicacion, 'TareaTC → TCEstadoPublicacion', () =>
+    m.TareaTC.belongsTo(m.TCEstadoPublicacion, { foreignKey: 'estado_publicacion_id', as: 'estadoPublicacion' })
+  );
+
+  link(m.TareaTC && m.TCRedSocial && m.TareaTCRedSocial, 'TareaTC ↔ TCRedSocial (Pivot)', () => {
+    m.TareaTC.belongsToMany(m.TCRedSocial, { through: m.TareaTCRedSocial, foreignKey: 'tarea_id', otherKey: 'red_social_id', as: 'redes' });
+    m.TCRedSocial.belongsToMany(m.TareaTC, { through: m.TareaTCRedSocial, foreignKey: 'red_social_id', otherKey: 'tarea_id', as: 'tareasTC' });
+  });
+
+  link(m.TareaTC && m.TCFormato && m.TareaTCFormato, 'TareaTC ↔ TCFormato (Pivot)', () => {
+    m.TareaTC.belongsToMany(m.TCFormato, { through: m.TareaTCFormato, foreignKey: 'tarea_id', otherKey: 'formato_id', as: 'formatos' });
+    m.TCFormato.belongsToMany(m.TareaTC, { through: m.TareaTCFormato, foreignKey: 'formato_id', otherKey: 'tarea_id', as: 'tareasTC' });
+  });
+
   // ===== Módulo 9: Calendario =====
   link(m.CalendarioLocal && m.CalendarioTipo, 'CalendarioLocal → CalendarioTipo (tipo_id)', () =>
     m.CalendarioLocal.belongsTo(m.CalendarioTipo, { foreignKey: 'tipo_id', as: 'tipo' })

@@ -16,6 +16,7 @@ import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
+import { FiLock, FiCheckCircle, FiClock } from "react-icons/fi";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -573,7 +574,9 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       <div className="taskHeader">
         <div className="titleWrap">
           {/* Título con truncamiento visual */}
-          <div className="titleSection">
+          <div className="titleSection" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {task?.tipo === 'TC' && <span className="fh-chip primary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>TC</span>}
+            {task?.tipo === 'IT' && <span className="fh-chip secondary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>IT</span>}
             <div
               className="ttl editable"
               data-placeholder="Escribí un título…"
@@ -627,11 +630,17 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           {/* Meta info - ahora puede hacer wrap */}
           <div className="meta">
             <span className="inlineDue">
-              <InlineDue
-                value={toInputDate(vencimientoISO)}
-                onChange={handleDueChange}
-                disabled={!isResponsible && !isDirectivo}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '2px' }}>
+                  {task?.tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
+                </span>
+                <InlineDue
+                  value={toInputDate(vencimientoISO)}
+                  onChange={handleDueChange}
+                  disabled={(!isResponsible && !isDirectivo) || !!task?.datos_tc?.inamovible}
+                  inamovible={!!task?.datos_tc?.inamovible}
+                />
+              </div>
             </span>
             <TaskStatusCard
               estadoCodigo={estadoCodigo}
@@ -688,6 +697,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           </div>
         </div>
 
+
       </div>
 
       <div className="grid">
@@ -721,6 +731,80 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               />
             )}
           </div>
+
+          {/* Metadata de TC (si aplica) */}
+          {task?.tipo === 'TC' && task?.datos_tc && (
+            <div className="card" style={{ marginTop: '1rem', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h3 style={{ fontSize: '1rem', color: '#fff', margin: 0 }}>Detalles de Publicación</h3>
+                  <span className="fh-chip primary" style={{ fontSize: '0.65rem', padding: '1px 8px' }}>TC</span>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#fff' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!task.datos_tc.inamovible}
+                      onChange={(e) => performSave({ tc: { inamovible: e.target.checked } }, 'manual')}
+                    />
+                    <FiLock size={14} /> Inamovible
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#fff' }}>
+                    <input
+                      type="checkbox"
+                      checked={task.datos_tc.estado_publicacion_id === 2}
+                      onChange={(e) => performSave({ tc: { estado_publicacion_id: e.target.checked ? 2 : 1 } }, 'manual')}
+                    />
+                    <FiCheckCircle size={14} /> Publicado
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#fff' }}>
+                    <input
+                      type="checkbox"
+                      checked={task.datos_tc.estado_publicacion_id === 3}
+                      onChange={(e) => performSave({ tc: { estado_publicacion_id: e.target.checked ? 3 : 1 } }, 'manual')}
+                    />
+                    <FiClock size={14} /> Postergado
+                  </label>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
+                <div>
+                  <h4 style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '0.6rem' }}>Redes Sociales</h4>
+                  <InlineTCMultiSelect
+                    values={task.datos_tc.redes || []}
+                    options={catalog?.tc_redes || []}
+                    onChange={(ids) => performSave({ tc: { red_social_ids: ids } }, 'manual')}
+                  />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '0.6rem' }}>Formatos</h4>
+                  <InlineTCMultiSelect
+                    values={task.datos_tc.formatos || []}
+                    options={catalog?.tc_formatos || []}
+                    onChange={(ids) => performSave({ tc: { formato_ids: ids } }, 'manual')}
+                  />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '0.6rem' }}>Objetivo Negocio</h4>
+                  <InlineTCSelect
+                    valueId={task.datos_tc.objetivo_negocio_id}
+                    options={catalog?.tc_obj_negocio || []}
+                    placeholder="Sin objetivo"
+                    onChange={(id) => performSave({ tc: { objetivo_negocio_id: id } }, 'manual')}
+                  />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '0.6rem' }}>Objetivo Marketing</h4>
+                  <InlineTCSelect
+                    valueId={task.datos_tc.objetivo_marketing_id}
+                    options={catalog?.tc_obj_marketing || []}
+                    placeholder="Sin objetivo"
+                    onChange={(id) => performSave({ tc: { objetivo_marketing_id: id } }, 'manual')}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Contenido Crudo - Material en bruto */}
           <div className={`content-section raw-content ${(rawUploading || hasRawActiveUploads) ? 'uploading' : ''}`}>
@@ -1002,7 +1086,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 }
 
 /* === componente inline para fecha === */
-function InlineDue({ value, onChange, disabled = false }) {
+function InlineDue({ value, onChange, disabled = false, inamovible = false }) {
   const [editing, setEditing] = useState(false)
   const [local, setLocal] = useState(value || '')
   const modal = useModal()
@@ -1046,8 +1130,9 @@ function InlineDue({ value, onChange, disabled = false }) {
 
   if (disabled) {
     return (
-      <span className="dueChip disabled" title="Solo los responsables pueden cambiar la fecha">
+      <span className="dueChip disabled" title={inamovible ? "Esta fecha es inamovible por política de TC" : "Solo los responsables pueden cambiar la fecha"}>
         {value ? new Date(value + 'T00:00:00').toLocaleDateString() : 'Sin fecha'}
+        {inamovible && <span style={{ marginLeft: '4px' }}>🔒</span>}
       </span>
     )
   }
@@ -1145,4 +1230,93 @@ function InlineClient({ valueId = null, valueName = '', valueColor = null, optio
       ))}
     </select>
   )
+}
+function InlineTCSelect({ valueId, options = [], onChange, placeholder = '—' }) {
+  const [editing, setEditing] = useState(false);
+  const label = options.find(o => o.id === valueId)?.nombre || placeholder;
+
+  if (!editing) {
+    return (
+      <button className="inline-tc-trigger" onClick={() => setEditing(true)}>
+        {label} <MdKeyboardArrowDown />
+      </button>
+    );
+  }
+
+  return (
+    <select
+      className="inline-tc-select"
+      autoFocus
+      value={valueId || ''}
+      onBlur={() => setEditing(false)}
+      onChange={(e) => {
+        onChange(e.target.value ? Number(e.target.value) : null);
+        setEditing(false);
+      }}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+    </select>
+  );
+}
+
+function InlineTCMultiSelect({ values = [], options = [], onChange }) {
+  const [editing, setEditing] = useState(false);
+  const [localIds, setLocalIds] = useState([]);
+
+  // Sincronizar local al abrir
+  useEffect(() => {
+    if (editing) {
+      setLocalIds(values.map(v => v.id));
+    }
+  }, [editing, values]);
+
+  if (!editing) {
+    return (
+      <div className="inline-tc-multi-trigger" onClick={() => setEditing(true)}>
+        {values.length ? values.map(v => (
+          <span key={v.id} className="fh-chip small">{v.nombre}</span>
+        )) : <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Sin seleccionar...</span>}
+        <button className="add-btn"><MdAdd /></button>
+      </div>
+    );
+  }
+
+  const toggle = (id) => {
+    if (localIds.includes(id)) {
+      setLocalIds(localIds.filter(i => i !== id));
+    } else {
+      setLocalIds([...localIds, id]);
+    }
+  };
+
+  const handleDone = () => {
+    setEditing(false);
+    onChange(localIds);
+  };
+
+  return (
+    <div className="inline-tc-multi-popover">
+      <div className="pop-header">
+        <span>Seleccionar opciones</span>
+        <div className="header-actions">
+          <button className="cancel-btn-text" onClick={() => setEditing(false)}>Cancelar</button>
+          <button className="done-btn" onClick={handleDone}>Listo</button>
+        </div>
+      </div>
+      <div className="pop-options">
+        {options.map(o => (
+          <label key={o.id} className={`pop-option ${localIds.includes(o.id) ? 'active' : ''}`}>
+            <input
+              type="checkbox"
+              checked={localIds.includes(o.id)}
+              onChange={() => toggle(o.id)}
+            />
+            {o.nombre}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }

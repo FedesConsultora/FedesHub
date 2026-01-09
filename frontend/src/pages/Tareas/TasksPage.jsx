@@ -26,6 +26,7 @@ export default function TasksPage() {
   const [view, setView] = useState(() => localStorage.getItem('tasks_view') || "kanban");
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+  const [initialData, setInitialData] = useState({});
 
   const handleSetView = (v) => {
     setView(v);
@@ -46,6 +47,12 @@ export default function TasksPage() {
     estados: [],
     impactos: [],
     urgencias: [],
+    // TC
+    tc_redes: [],
+    tc_formatos: [],
+    tc_obj_negocio: [],
+    tc_obj_marketing: [],
+    tc_estados_pub: []
   });
   useEffect(() => {
     tareasApi.catalog().then(setCatalog).catch(console.error);
@@ -62,9 +69,16 @@ export default function TasksPage() {
     vencimiento_to: undefined,
     solo_mias: true,
     include_archivadas: false,
+    include_finalizadas: false,
+    sort: "desc",
+    // TC
+    tipo: undefined,
+    tc_red_social_id: undefined,
+    tc_formato_id: undefined,
+    tc_objetivo_negocio_id: undefined,
+    inamovible: undefined,
     limit: 500,
     orden_by: "prioridad",
-    sort: "desc",
   });
 
   // URL -> filtros (solo al montar)
@@ -82,13 +96,18 @@ export default function TasksPage() {
       "sort",
       "solo_mias",
       "include_archivadas",
-      "include_archivadas",
+      "include_finalizadas",
+      "tipo",
+      "tc_red_social_id",
+      "tc_formato_id",
+      "tc_objetivo_negocio_id",
+      "inamovible"
     ];
     keys.forEach((k) => {
       const v = searchParams.get(k);
       if (v !== null)
         patch[k] =
-          k === "solo_mias" || k === "include_archivadas" ? v === "true" : v;
+          k === "solo_mias" || k === "include_archivadas" || k === "include_finalizadas" ? v === "true" : v;
     });
     if (Object.keys(patch).length) setFilters((f) => ({ ...f, ...patch }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +129,21 @@ export default function TasksPage() {
     }
   }, [searchParams, setSearchParams]);
 
+  // Listener para creación rápida desde calendario
+  useEffect(() => {
+    const handleQuickAdd = (e) => {
+      const { date, tipo, cliente_id } = e.detail;
+      setInitialData({
+        vencimiento: date ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : '',
+        tipo: tipo || filters.tipo || 'STD',
+        cliente_id: cliente_id || filters.cliente_id
+      });
+      setShowCreate(true);
+    };
+    window.addEventListener('calendar:quickAdd', handleQuickAdd);
+    return () => window.removeEventListener('calendar:quickAdd', handleQuickAdd);
+  }, [filters.tipo]);
+
   useEffect(() => {
     const sp = new URLSearchParams();
     const urlKeys = [
@@ -124,7 +158,12 @@ export default function TasksPage() {
       "sort",
       "solo_mias",
       "include_archivadas",
-      "include_archivadas",
+      "include_finalizadas",
+      "tipo",
+      "tc_red_social_id",
+      "tc_formato_id",
+      "tc_objetivo_negocio_id",
+      "inamovible"
     ];
     urlKeys.forEach((k) => {
       const v = filters[k];
@@ -260,7 +299,7 @@ export default function TasksPage() {
               onClick={() => handleSetView("month")}
               title="Ver por mes"
             >
-              Mes
+              Calendario
             </button>
             <button
               type="button"
@@ -330,6 +369,7 @@ export default function TasksPage() {
             onOpenTask={setOpenTaskId}
             filters={filters}
             setFilters={setFilters}
+            catalog={catalog}
             loading={loading}
           />
         ) : view === "starred" ? (
@@ -341,9 +381,14 @@ export default function TasksPage() {
 
       {showCreate && (
         <CreateTaskModal
-          onClose={() => setShowCreate(false)}
+          initialData={initialData}
+          onClose={() => {
+            setShowCreate(false);
+            setInitialData({});
+          }}
           onCreated={() => {
             setShowCreate(false);
+            setInitialData({});
             refetch();
           }}
         />

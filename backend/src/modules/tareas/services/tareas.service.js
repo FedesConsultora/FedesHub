@@ -97,8 +97,13 @@ const buildListSQL = (params = {}, currentUser) => {
     cliente_id, hito_id, estado_id, estado_codigo, responsable_feder_id, colaborador_feder_id,
     tarea_padre_id,
     etiqueta_id, impacto_id, urgencia_id, aprobacion_estado_id,
+    tipo, // STD, TC, IT
+    // TC specific single
+    tc_objetivo_negocio_id, tc_objetivo_marketing_id, tc_estado_publicacion_id, tc_inamovible,
     // múltiples
     cliente_ids = [], estado_ids = [], etiqueta_ids = [],
+    // TC specific multi
+    tc_red_social_ids = [], tc_formato_ids = [],
     // flags
     solo_mias, include_archivadas, is_favorita, is_seguidor,
     // fechas
@@ -121,7 +126,7 @@ const buildListSQL = (params = {}, currentUser) => {
       t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id, t.tarea_padre_id,
       t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       t.impacto_id, it.puntos AS impacto_puntos, t.urgencia_id, ut.puntos AS urgencia_puntos,
-      t.aprobacion_estado_id,
+      t.aprobacion_estado_id, t.tipo,
       t.prioridad_num, t.boost_manual, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
       t.progreso_pct, t.created_at, t.updated_at,
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
@@ -129,6 +134,18 @@ const buildListSQL = (params = {}, currentUser) => {
       h.nombre AS hito_nombre,
       fa.nombre AS autor_nombre, fa.apellido AS autor_apellido,
       fa.avatar_url AS autor_avatar_url,
+
+      -- Datos específicos de TC (si existen)
+      (SELECT json_build_object(
+                'objetivo_negocio_id', ttc.objetivo_negocio_id,
+                'objetivo_marketing_id', ttc.objetivo_marketing_id,
+                'estado_publicacion_id', ttc.estado_publicacion_id,
+                'inamovible', ttc.inamovible,
+                'redes', COALESCE((SELECT json_agg(json_build_object('id', tr.red_social_id, 'nombre', rs.nombre)) FROM "TareaTCRedSocial" tr JOIN "TCRedSocial" rs ON rs.id = tr.red_social_id WHERE tr.tarea_id = t.id), '[]'::json),
+                'formatos', COALESCE((SELECT json_agg(json_build_object('id', tf.formato_id, 'nombre', f.nombre)) FROM "TareaTCFormato" tf JOIN "TCFormato" f ON f.id = tf.formato_id WHERE tf.tarea_id = t.id), '[]'::json)
+              )
+         FROM "TareaTC" ttc
+        WHERE ttc.tarea_id = t.id) AS datos_tc,
 
       -- Responsables con datos del feder
       (SELECT COALESCE(json_agg(
@@ -207,6 +224,13 @@ const buildListSQL = (params = {}, currentUser) => {
   if (impacto_id) { where.push(`t.impacto_id = :impacto_id`); repl.impacto_id = impacto_id; }
   if (urgencia_id) { where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
   if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
+  if (tipo) { where.push(`t.tipo = :tipo`); repl.tipo = tipo; }
+
+  // Filtros TC específicos
+  if (tc_objetivo_negocio_id) { where.push(`EXISTS(SELECT 1 FROM "TareaTC" ttc WHERE ttc.tarea_id=t.id AND ttc.objetivo_negocio_id = :ton_id)`); repl.ton_id = tc_objetivo_negocio_id; }
+  if (tc_objetivo_marketing_id) { where.push(`EXISTS(SELECT 1 FROM "TareaTC" ttc WHERE ttc.tarea_id=t.id AND ttc.objetivo_marketing_id = :tom_id)`); repl.tom_id = tc_objetivo_marketing_id; }
+  if (tc_estado_publicacion_id) { where.push(`EXISTS(SELECT 1 FROM "TareaTC" ttc WHERE ttc.tarea_id=t.id AND ttc.estado_publicacion_id = :tep_id)`); repl.tep_id = tc_estado_publicacion_id; }
+  if (tc_inamovible !== undefined) { where.push(`EXISTS(SELECT 1 FROM "TareaTC" ttc WHERE ttc.tarea_id=t.id AND ttc.inamovible = :inam)`); repl.inam = !!tc_inamovible; }
 
   // Filtros múltiples
   addIn('t.cliente_id', cliente_ids, 'cids_');
@@ -221,6 +245,18 @@ const buildListSQL = (params = {}, currentUser) => {
   if (etiqueta_id) {
     where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id=:et)`);
     repl.et = etiqueta_id;
+  }
+
+  // TC Multi
+  if (tc_red_social_ids?.length) {
+    const keys = tc_red_social_ids.map((_, i) => `tcrs${i}`);
+    where.push(`EXISTS (SELECT 1 FROM "TareaTCRedSocial" xrs WHERE xrs.tarea_id=t.id AND xrs.red_social_id IN (${keys.map(k => ':' + k).join(',')}))`);
+    keys.forEach((k, i) => { repl[k] = tc_red_social_ids[i]; });
+  }
+  if (tc_formato_ids?.length) {
+    const keys = tc_formato_ids.map((_, i) => `tcf${i}`);
+    where.push(`EXISTS (SELECT 1 FROM "TareaTCFormato" xf WHERE xf.tarea_id=t.id AND xf.formato_id IN (${keys.map(k => ':' + k).join(',')}))`);
+    keys.forEach((k, i) => { repl[k] = tc_formato_ids[i]; });
   }
 
   // Flags
@@ -286,7 +322,6 @@ const buildListSQL = (params = {}, currentUser) => {
   return { sql, repl };
 };
 
-
 const listTasks = async (params, currentUser) => {
   const { sql, repl } = buildListSQL(params, currentUser);
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
@@ -295,12 +330,19 @@ const listTasks = async (params, currentUser) => {
 const countTasks = async (params, currentUser) => {
   const { sql, repl } = buildListSQL({ ...params, limit: 1, offset: 0 }, currentUser);
   const countSql = `SELECT COUNT(*)::int AS cnt FROM (${sql.replace(/LIMIT :limit OFFSET :offset/, '')}) q`;
-  const rows = await sequelize.query(countSql, { type: QueryTypes.SELECT, replacements: repl });
+  const rows = await sequelize.query(countSql, {
+    replacements: repl,
+    type: QueryTypes.SELECT,
+    // The 'transaction' variable is not defined in this scope.
+    // If a transaction is intended, it needs to be passed as a parameter to countTasks.
+    // For now, it's commented out to avoid a ReferenceError.
+    // transaction
+  });
   return rows[0]?.cnt ?? 0;
 };
 
-export const getTaskById = async (id, currentUser) => {
-  const rows = await sequelize.query(`
+export const getTaskById = async (id, currentUser, transaction = null) => {
+  const sql = `
     SELECT
       t.*,
       te.codigo AS estado_codigo, te.nombre AS estado_nombre,
@@ -308,6 +350,18 @@ export const getTaskById = async (id, currentUser) => {
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.id AS cliente_id, c.nombre AS cliente_nombre, c.color AS cliente_color,
       h.id AS hito_id, h.nombre AS hito_nombre,
+
+      -- Datos específicos de TC (si existen)
+      (SELECT json_build_object(
+                'objetivo_negocio_id', ttc.objetivo_negocio_id,
+                'objetivo_marketing_id', ttc.objetivo_marketing_id,
+                'estado_publicacion_id', ttc.estado_publicacion_id,
+                'inamovible', ttc.inamovible,
+                'redes', COALESCE((SELECT json_agg(json_build_object('id', tr.red_social_id, 'nombre', rs.nombre)) FROM "TareaTCRedSocial" tr JOIN "TCRedSocial" rs ON rs.id = tr.red_social_id WHERE tr.tarea_id = t.id), '[]'::json),
+                'formatos', COALESCE((SELECT json_agg(json_build_object('id', tf.formato_id, 'nombre', f.nombre)) FROM "TareaTCFormato" tf JOIN "TCFormato" f ON f.id = tf.formato_id WHERE tf.tarea_id = t.id), '[]'::json)
+              )
+         FROM "TareaTC" ttc
+        WHERE ttc.tarea_id = t.id) AS datos_tc,
 
       /* ===== Responsables (con datos del Feder) ===== */
       (SELECT COALESCE(json_agg(
@@ -440,7 +494,14 @@ export const getTaskById = async (id, currentUser) => {
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
     WHERE t.id = :id AND t.deleted_at IS NULL
     LIMIT 1
-  `, { type: QueryTypes.SELECT, replacements: { id, uid: currentUser?.id ?? 0 } });
+  `;
+
+  const replacements = { id: Number(id), uid: currentUser?.id || 0 };
+  const rows = await sequelize.query(sql, {
+    replacements,
+    type: QueryTypes.SELECT,
+    transaction
+  });
 
   return rows[0] || null;
 };
@@ -463,6 +524,8 @@ const createTask = async (payload, currentFederId) => {
       urgencia_id = 4,
       fecha_inicio = null,
       vencimiento = null,
+      tipo = 'STD',
+      tc = null,
       responsables = [],
       colaboradores = [],
       adjuntos = []
@@ -497,8 +560,29 @@ const createTask = async (payload, currentFederId) => {
       requiere_aprobacion, aprobacion_estado_id,
       impacto_id, urgencia_id, prioridad_num,
       cliente_ponderacion: ponderacion,
-      fecha_inicio, vencimiento
+      fecha_inicio, vencimiento,
+      tipo // STD, TC, IT
     }, { transaction: t });
+
+    // ===== Datos específicos de TC =====
+    if (tipo === 'TC' && tc) {
+      const { red_social_ids = [], formato_ids = [], objetivo_negocio_id, objetivo_marketing_id, estado_publicacion_id = 1, inamovible = false } = tc;
+
+      await models.TareaTC.create({
+        tarea_id: tarea.id,
+        objetivo_negocio_id,
+        objetivo_marketing_id,
+        estado_publicacion_id,
+        inamovible
+      }, { transaction: t });
+
+      if (red_social_ids.length) {
+        await models.TareaTCRedSocial.bulkCreate(red_social_ids.map(rsid => ({ tarea_id: tarea.id, red_social_id: rsid })), { transaction: t });
+      }
+      if (formato_ids.length) {
+        await models.TareaTCFormato.bulkCreate(formato_ids.map(fid => ({ tarea_id: tarea.id, formato_id: fid })), { transaction: t });
+      }
+    }
 
     // ===== Responsables (soporta ids u objetos) =====
     if (Array.isArray(responsables) && responsables.length) {
@@ -557,10 +641,24 @@ const createTask = async (payload, currentFederId) => {
 };
 
 
-const updateTask = async (id, payload, feder_id = null) => {
+const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
   return sequelize.transaction(async (t) => {
-    const cur = await models.Tarea.findByPk(id, { transaction: t });
+    const cur = await models.Tarea.findByPk(id, {
+      include: [{ model: models.TareaTC, as: 'datosTC' }],
+      transaction: t
+    });
     if (!cur) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+
+    // REGLA DE NEGOCIO: inamovible
+    if (cur.datosTC?.inamovible && payload.vencimiento !== undefined) {
+      // Si la tarea es inamovible, comparamos fechas (solo el día)
+      const oldD = cur.vencimiento ? new Date(cur.vencimiento).toISOString().split('T')[0] : null;
+      const newD = payload.vencimiento ? new Date(payload.vencimiento).toISOString().split('T')[0] : null;
+
+      if (oldD !== newD) {
+        throw Object.assign(new Error('Esta tarea es inamovible y no permite cambiar su fecha de publicación.'), { status: 400 });
+      }
+    }
 
     if (payload.cliente_id) await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
     if (payload.hito_id) await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
@@ -581,41 +679,132 @@ const updateTask = async (id, payload, feder_id = null) => {
     // DETECTAR Y REGISTRAR CAMBIOS EN HISTORIAL
     const cambios = [];
 
+    // Separar tc para que no se pase al update de Tarea base
+    const { tc, ...basePayload } = payload;
+
     // Deadline (vencimiento)
-    if (payload.vencimiento !== undefined && payload.vencimiento !== cur.vencimiento) {
+    if (basePayload.vencimiento !== undefined && basePayload.vencimiento !== cur.vencimiento) {
       const { formatearFecha } = await import('../helpers/historial.helper.js');
       cambios.push({
         tipo_cambio: TIPO_CAMBIO.DEADLINE,
         accion: ACCION.UPDATED,
         valor_anterior: cur.vencimiento,
-        valor_nuevo: payload.vencimiento,
+        valor_nuevo: basePayload.vencimiento,
         campo: 'vencimiento',
-        descripcion: `Cambió el vencimiento de ${formatearFecha(cur.vencimiento)} a ${formatearFecha(payload.vencimiento)}`
+        descripcion: `Cambió el vencimiento de ${formatearFecha(cur.vencimiento)} a ${formatearFecha(basePayload.vencimiento)}`
       });
     }
 
-
-
-
-
     // Cliente
-    if (payload.cliente_id !== undefined && payload.cliente_id !== cur.cliente_id) {
+    if (basePayload.cliente_id !== undefined && basePayload.cliente_id !== cur.cliente_id) {
       const clienteAnterior = await models.Cliente.findByPk(cur.cliente_id, { attributes: ['nombre'], transaction: t });
-      const clienteNuevo = await models.Cliente.findByPk(payload.cliente_id, { attributes: ['nombre'], transaction: t });
+      const clienteNuevo = await models.Cliente.findByPk(basePayload.cliente_id, { attributes: ['nombre'], transaction: t });
       cambios.push({
         tipo_cambio: TIPO_CAMBIO.CLIENTE,
         accion: ACCION.UPDATED,
         valor_anterior: { id: cur.cliente_id, nombre: clienteAnterior?.nombre },
-        valor_nuevo: { id: payload.cliente_id, nombre: clienteNuevo?.nombre },
+        valor_nuevo: { id: basePayload.cliente_id, nombre: clienteNuevo?.nombre },
         campo: 'cliente_id',
         descripcion: `Cambió el cliente de "${clienteAnterior?.nombre}" a "${clienteNuevo?.nombre}"`
       });
     }
 
+    // Actualizar tarea base
+    await models.Tarea.update({ ...basePayload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
 
+    // Actualizar datos de TC
+    if (tc) {
+      console.log('[updateTask] Actualizando TC con:', JSON.stringify(tc));
+      const { red_social_ids, formato_ids, ...tcFields } = tc;
 
-    // Actualizar tarea
-    await models.Tarea.update({ ...payload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
+      const tcData = await models.TareaTC.findByPk(id, { transaction: t }) ||
+        await models.TareaTC.create({ tarea_id: id }, { transaction: t });
+
+      // Historial de cambios en campos de TareaTC
+      for (const key of Object.keys(tcFields)) {
+        const newVal = tcFields[key];
+        const oldVal = tcData[key];
+
+        // Comparación flexible (ignora tipos string vs number, maneja nulls)
+        if (newVal !== undefined && newVal != oldVal) {
+          let desc = `Actualizó ${key.replace(/_/g, ' ')}`;
+
+          if (key === 'estado_publicacion_id') {
+            const st = await models.TCEstadoPublicacion.findByPk(newVal, { transaction: t });
+            desc = `Cambió el estado de publicación a "${st?.nombre || 'Pendiente'}"`;
+          } else if (key === 'objetivo_negocio_id') {
+            if (newVal == null) {
+              desc = 'Quitó el objetivo de negocio';
+            } else {
+              const obj = await models.TCObjetivoNegocio.findByPk(newVal, { transaction: t });
+              desc = `Cambió el objetivo de negocio a "${obj?.nombre || 'Nuevo objetivo'}"`;
+            }
+          } else if (key === 'objetivo_marketing_id') {
+            if (newVal == null) {
+              desc = 'Quitó el objetivo de marketing';
+            } else {
+              const obj = await models.TCObjetivoMarketing.findByPk(newVal, { transaction: t });
+              desc = `Cambió el objetivo de marketing a "${obj?.nombre || 'Nuevo objetivo'}"`;
+            }
+          } else if (key === 'inamovible') {
+            desc = newVal ? 'Marcó la publicación como inamovible (🔒)' : 'Quitó restricción de inamovible';
+          }
+
+          cambios.push({
+            tipo_cambio: TIPO_CAMBIO.TC_DETALLE,
+            accion: ACCION.UPDATED,
+            campo: key,
+            valor_anterior: oldVal,
+            valor_nuevo: newVal,
+            descripcion: desc
+          });
+        }
+      }
+
+      if (Object.keys(tcFields).length > 0) {
+        await tcData.update(tcFields, { transaction: t });
+      }
+
+      // Pivotes - Solo si se pasaron explícitamente y son diferentes
+      if (red_social_ids !== undefined) {
+        const current = await models.TareaTCRedSocial.findAll({ where: { tarea_id: id }, transaction: t });
+        const curIds = current.map(c => Number(c.red_social_id)).sort();
+        const newIds = red_social_ids ? red_social_ids.map(id => Number(id)).sort() : [];
+
+        if (JSON.stringify(curIds) !== JSON.stringify(newIds)) {
+          console.log('[updateTask] Recreando Redes:', newIds);
+          await models.TareaTCRedSocial.destroy({ where: { tarea_id: id }, transaction: t });
+          if (newIds.length) {
+            await models.TareaTCRedSocial.bulkCreate(newIds.map(rsid => ({ tarea_id: id, red_social_id: rsid })), { transaction: t });
+          }
+          cambios.push({
+            tipo_cambio: TIPO_CAMBIO.TC_REDES,
+            accion: ACCION.UPDATED,
+            valor_nuevo: newIds,
+            descripcion: 'Actualizó las redes sociales de la publicación'
+          });
+        }
+      }
+      if (formato_ids !== undefined) {
+        const current = await models.TareaTCFormato.findAll({ where: { tarea_id: id }, transaction: t });
+        const curIds = current.map(c => Number(c.formato_id)).sort();
+        const newIds = formato_ids ? formato_ids.map(id => Number(id)).sort() : [];
+
+        if (JSON.stringify(curIds) !== JSON.stringify(newIds)) {
+          console.log('[updateTask] Recreando Formatos:', newIds);
+          await models.TareaTCFormato.destroy({ where: { tarea_id: id }, transaction: t });
+          if (newIds.length) {
+            await models.TareaTCFormato.bulkCreate(newIds.map(fid => ({ tarea_id: id, formato_id: fid })), { transaction: t });
+          }
+          cambios.push({
+            tipo_cambio: TIPO_CAMBIO.TC_FORMATOS,
+            accion: ACCION.UPDATED,
+            valor_nuevo: newIds,
+            descripcion: 'Actualizó los formatos de la publicación'
+          });
+        }
+      }
+    }
 
     // REGISTRAR TODOS LOS CAMBIOS
     if (feder_id && cambios.length > 0) {
@@ -629,7 +818,7 @@ const updateTask = async (id, payload, feder_id = null) => {
       }
     }
 
-    return models.Tarea.findByPk(id, { transaction: t });
+    return getTaskById(id, currentUser, t);
   });
 };
 
@@ -1218,7 +1407,13 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     etiquetas,
     comentario_tipos,
     relacion_tipos,
-    clientes
+    clientes,
+    // TC Catalogs
+    tc_redes,
+    tc_formatos,
+    tc_obj_negocio,
+    tc_obj_marketing,
+    tc_estados_pub
   ] = await Promise.all([
     customModels.TareaEstado.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
     customModels.TareaAprobacionEstado.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
@@ -1227,7 +1422,13 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     customModels.TareaEtiqueta.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
     customModels.ComentarioTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
     customModels.TareaRelacionTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
-    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'color'], order: [['nombre', 'ASC']] })
+    customModels.Cliente.findAll({ where: scope, attributes: ['id', 'nombre', 'color'], order: [['nombre', 'ASC']] }),
+    // TC
+    customModels.TCRedSocial.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
+    customModels.TCFormato.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
+    customModels.TCObjetivoNegocio.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
+    customModels.TCObjetivoMarketing.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['nombre', 'ASC']] }),
+    customModels.TCEstadoPublicacion.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] })
   ]);
 
   const clienteIds = clientes.map(c => c.id);
@@ -1254,7 +1455,13 @@ const listCatalogos = async (customModels = models, scope = {}) => {
     relacion_tipos,
     clientes,
     hitos,
-    feders
+    feders,
+    // TC
+    tc_redes,
+    tc_formatos,
+    tc_obj_negocio,
+    tc_obj_marketing,
+    tc_estados_pub
   };
 };
 
@@ -1317,8 +1524,7 @@ export const svcUpdateTask = async (id, body, user) => {
   }
 
   console.log('[svcUpdateTask] Procediendo con updateTask...');
-  await updateTask(id, body, user?.feder_id);
-  return getTaskById(id, user);
+  return updateTask(id, body, feder_id, user);
 };
 
 // ---------- ELIMINAR TAREA (Soft Delete) ---------- //

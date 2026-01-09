@@ -42,6 +42,7 @@ export const listTasksQuerySchema = z.object({
   // flags
   solo_mias: boolish,
   include_archivadas: boolish,
+  include_finalizadas: boolish,
   is_favorita: boolish,
   is_seguidor: boolish,
 
@@ -61,6 +62,17 @@ export const listTasksQuerySchema = z.object({
   prioridad_min: z.coerce.number().int().min(0).optional(),
   prioridad_max: z.coerce.number().int().min(0).optional(),
 
+  // tipo
+  tipo: z.enum(['STD', 'TC', 'IT']).optional(),
+
+  // filtros TC (solo si tipo=TC, pero permitimos opcionales en root para simplicidad)
+  tc_red_social_ids: z.array(intId).optional(),
+  tc_formato_ids: z.array(intId).optional(),
+  tc_objetivo_negocio_id: intId.optional(),
+  tc_objetivo_marketing_id: intId.optional(),
+  tc_estado_publicacion_id: intId.optional(),
+  tc_inamovible: boolish,
+
   // orden
   orden_by: z.enum(['prioridad', 'vencimiento', 'fecha_inicio', 'created_at', 'updated_at', 'cliente', 'titulo'])
     .optional().default('prioridad'),
@@ -73,7 +85,28 @@ export const setLeaderBodySchema = z.object({
 
 export const taskIdParamSchema = z.object({ id: intId });
 
+// Schema para los datos específicos de TC (Creación - con defaults)
+const tcCreateDataSchema = z.object({
+  red_social_ids: z.array(intId).optional().default([]),
+  formato_ids: z.array(intId).optional().default([]),
+  objetivo_negocio_id: intId.nullish(),
+  objetivo_marketing_id: intId.nullish(),
+  estado_publicacion_id: intId.optional().default(1),
+  inamovible: z.boolean().optional().default(false)
+});
+
+// Schema para los datos específicos de TC (Update - sin defaults para evitar sobrescritura accidental)
+const tcUpdateDataSchema = z.object({
+  red_social_ids: z.array(intId).optional(),
+  formato_ids: z.array(intId).optional(),
+  objetivo_negocio_id: intId.nullish(),
+  objetivo_marketing_id: intId.nullish(),
+  estado_publicacion_id: intId.optional(),
+  inamovible: z.boolean().optional()
+});
+
 export const createTaskSchema = z.object({
+  tipo: z.enum(['STD', 'TC', 'IT']).optional().default('STD'),
   cliente_id: intId,
   hito_id: intId.nullish(),
   tarea_padre_id: intId.nullish(),
@@ -89,7 +122,15 @@ export const createTaskSchema = z.object({
   responsables: z.array(z.object({ feder_id: intId, es_lider: z.boolean().optional().default(false) })).optional().default([]),
   colaboradores: z.array(z.object({ feder_id: intId, rol: z.string().max(100).nullish() })).optional().default([]),
   checklist: z.array(z.object({ titulo: z.string().min(1).max(200), is_done: z.boolean().optional().default(false) }))
-    .optional().default([])
+    .optional().default([]),
+  adjuntos: z.array(z.object({
+    nombre: z.string().min(1).max(255),
+    mime: z.string().max(120).nullish(),
+    tamano_bytes: z.coerce.number().int().nonnegative().optional(),
+    drive_file_id: z.string().max(255).nullish(),
+    drive_url: z.string().max(512).url().nullish()
+  })).optional().default([]),
+  tc: tcCreateDataSchema.optional() // datos específicos para TC
 });
 
 export const updateTaskSchema = z.object({
@@ -107,7 +148,8 @@ export const updateTaskSchema = z.object({
   vencimiento: z.unknown().optional(),
   progreso_pct: z.coerce.number().min(0).max(100).optional(),
   orden_kanban: z.coerce.number().int().optional(),
-  is_archivada: z.boolean().optional()
+  is_archivada: z.boolean().optional(),
+  tc: tcUpdateDataSchema.optional()
 }).transform((data) => {
   const result = { ...data };
 

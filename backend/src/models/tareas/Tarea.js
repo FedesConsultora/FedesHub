@@ -25,6 +25,7 @@ export default (sequelize, DataTypes) => {
     cliente_ponderacion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
     progreso_pct: { type: DataTypes.DECIMAL(5, 2), allowNull: false, defaultValue: 0.00 },
     orden_kanban: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    tipo: { type: DataTypes.STRING(10), allowNull: false, defaultValue: 'STD' },
     is_archivada: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     finalizada_at: { type: DataTypes.DATE },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
@@ -35,8 +36,11 @@ export default (sequelize, DataTypes) => {
     tableName: 'Tarea', underscored: true, timestamps: true,
     paranoid: true, // Enables soft delete
     createdAt: 'created_at', updatedAt: 'updated_at', deletedAt: 'deleted_at',
-    indexes: [{ fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
-    { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] }, { fields: ['deleted_at'] }]
+    indexes: [
+      { fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
+      { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] },
+      { fields: ['deleted_at'] }, { fields: ['tipo'] }
+    ]
   });
   return Tarea;
 };

@@ -3,7 +3,7 @@
 .TareasFiltersContainer {
   position: relative;
   margin: 1rem 0 2rem 0;
-  z-index: 20;
+  z-index: 100;
 
   .FilterToolbar {
     display: flex;
@@ -181,6 +181,13 @@
         text-overflow: ellipsis;
       }
 
+      .chipIcon {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        opacity: 0.8;
+      }
+
       .chipRemove {
         display: flex;
         align-items: center;
@@ -229,15 +236,16 @@
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
-    width: 640px;
-    max-height: 85vh;
-    background: #0e151d;
+    width: min(520px, calc(100vw - 32px));
+    max-height: 80vh;
+    background: rgba(10, 15, 22, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
     overflow: hidden;
     animation: popIn 0.25s cubic-bezier(0, 0, 0.2, 1);
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(30px);
+    z-index: 1000;
 
     .popHead {
       padding: 18px 24px;

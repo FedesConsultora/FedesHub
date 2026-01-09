@@ -1292,3 +1292,251 @@ $text: $fh-text;
   }
 
 }
+
+/* ===== Inline TC Selects ===== */
+.inline-tc-trigger {
+  @extend .fh-chip;
+  padding: .42rem .85rem;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid $border;
+  color: $text;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: auto;
+  min-width: 140px;
+  text-align: left;
+  justify-content: space-between;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: $fh-primary;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    opacity: 0.6;
+    font-size: 1.1rem;
+  }
+}
+
+.inline-tc-select {
+  @extend .clientSelect;
+  min-width: 140px;
+  width: auto;
+}
+
+.inline-tc-multi-trigger {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 6px;
+  min-height: 42px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-items: center;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .fh-chip.small {
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    background: rgba($fh-primary, 0.15);
+    border-color: rgba($fh-primary, 0.3);
+    color: lighten($fh-primary, 20%);
+    font-weight: 600;
+  }
+
+  .add-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      border-color: $fh-primary;
+      color: $fh-primary;
+    }
+  }
+}
+
+.inline-tc-multi-popover {
+  position: absolute;
+  z-index: 100;
+  background: #1c2229;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  width: 300px; // Increased width to avoid clipping
+  padding: 0;
+  animation: popDown 0.2s ease;
+  overflow: hidden;
+
+  .pop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px; // Tightened horizontal padding
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    span {
+      font-size: 0.65rem;
+      font-weight: 800;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1; // Allow title to take remaining space but not push buttons
+      margin-right: 10px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0; // Ensure buttons never shrink or move out
+
+      .cancel-btn-text {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 6px;
+        transition: all 0.2s;
+
+        &:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.08);
+        }
+      }
+
+      .done-btn {
+        background: $fh-primary;
+        color: #fff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba($fh-primary, 0.2);
+
+        &:hover {
+          filter: brightness(1.15);
+          transform: translateY(-1.1px);
+          box-shadow: 0 6px 14px rgba($fh-primary, 0.3);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+
+  .pop-options {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+
+    .pop-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: rgba(255, 255, 255, 0.8);
+      user-select: none;
+
+      input[type="checkbox"] {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:checked {
+          background: $fh-primary;
+          border-color: $fh-primary;
+
+          &::after {
+            content: '';
+            position: absolute;
+            // Center the "L" shape checkmark
+            left: 50%;
+            top: 45%;
+            width: 5px;
+            height: 9px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: translate(-50%, -50%) rotate(45deg);
+          }
+        }
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+
+        input[type="checkbox"]:not(:checked) {
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+      }
+
+      &.active {
+        background: rgba($fh-primary, 0.1);
+        color: lighten($fh-primary, 10%);
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+@keyframes popDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

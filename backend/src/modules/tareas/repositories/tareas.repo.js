@@ -49,7 +49,7 @@ export const buildListSQL = (params = {}, currentUser) => {
     // múltiples
     cliente_ids = [], estado_ids = [], etiqueta_ids = [],
     // flags
-    solo_mias, include_archivadas, is_favorita, is_seguidor,
+    solo_mias, include_archivadas, include_finalizadas, is_favorita, is_seguidor,
     // fechas
     vencimiento_from, vencimiento_to,
     inicio_from, inicio_to,
@@ -162,6 +162,12 @@ export const buildListSQL = (params = {}, currentUser) => {
   // Flags
   if (include_archivadas !== true) where.push(`t.is_archivada = false`);
   where.push(`t.deleted_at IS NULL`);
+
+  // Por defecto ocultar aprobadas/canceladas si no se pide incluirlas Y no hay filtro de estado explícito
+  if (include_finalizadas !== true && !estado_id && (!estado_ids || !estado_ids.length)) {
+    where.push(`te.codigo NOT IN ('aprobada', 'cancelada')`);
+  }
+
   if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);
   if (is_seguidor === true) where.push(`EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid)`);
 

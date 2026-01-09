@@ -17,7 +17,7 @@ import {
     subWeeks
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiClock, FiX } from "react-icons/fi";
 import "./TaskMonthlyView.scss";
 
 const STATUS_COLORS = {
@@ -26,10 +26,12 @@ const STATUS_COLORS = {
     revision: '#1B6D9F',
     aprobada: '#1B9F4E',
     cancelada: '#9F1B1B',
+    postergado: '#d97706', // Naranja para postergado
 }
 
-export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFilters, loading = false }) {
+export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFilters, catalog = {}, loading = false }) {
     const [viewMode, setViewMode] = useState("month"); // "month" o "week"
+    const [expandedDay, setExpandedDay] = useState(null); // { date: string, tasks: [] }
     const [currentDate, setCurrentDate] = useState(() => {
         // Al iniciar, intentar usar el filtro de fecha existente si hay uno
         if (filters?.vencimiento_from) return parseISO(filters.vencimiento_from);
@@ -113,14 +115,40 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
                 <div className="monthInfo">
                     <h2>{format(currentDate, "MMMM yyyy", { locale: es })}</h2>
                 </div>
+
+                <div className="calendarFilters">
+                    <select
+                        value={filters.tipo || ''}
+                        onChange={(e) => setFilters(f => ({ ...f, tipo: e.target.value || undefined }))}
+                        className="calSelect"
+                    >
+                        <option value="">Todos los tipos</option>
+                        <option value="STD">Estándar</option>
+                        <option value="TC">Publicación (TC)</option>
+                        <option value="IT">IT</option>
+                    </select>
+
+                    <select
+                        value={filters.cliente_id || ''}
+                        onChange={(e) => setFilters(f => ({ ...f, cliente_id: e.target.value ? Number(e.target.value) : undefined }))}
+                        className="calSelect"
+                    >
+                        <option value="">Todos los clientes</option>
+                        {catalog.clientes?.map(c => (
+                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="navButtons">
                     <button
                         className="modeToggle"
                         onClick={() => setViewMode(viewMode === "month" ? "week" : "month")}
                     >
-                        {viewMode === "month" ? "Ir a vista semanal" : "Ir a vista mensual"}
+                        {viewMode === "month" ? "Vista semanal" : "Vista mensual"}
                     </button>
 
+                    <div className="divider" />
                     <button onClick={handlePrev} title="Anterior">
                         <FiChevronLeft />
                     </button>
@@ -150,32 +178,91 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
                         <div
                             key={idx}
                             className={`dayCell ${!isCurrentMonth ? 'notCurrentMonth' : ''} ${isToday(day) ? 'isToday' : ''}`}
+                            onClick={(e) => {
+                                if (e.target.closest('.taskItem')) return;
+                                // Podríamos abrir el modal de creación aquí pasándole la fecha 'day'
+                            }}
                         >
-                            <div className="dayNumber">{format(day, "d")}</div>
+                            <div className="dayHeader">
+                                <div className="dayNumber">{format(day, "d")}</div>
+                                <button
+                                    className="quickAdd"
+                                    title="Añadir tarea para este día"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.dispatchEvent(new CustomEvent('calendar:quickAdd', {
+                                            detail: { date: day, tipo: filters.tipo, cliente_id: filters.cliente_id }
+                                        }));
+                                    }}
+                                >
+                                    + Agregar Tarea
+                                </button>
+                            </div>
 
                             <div className="taskList">
-                                {dayTasks.slice(0, 5).map(task => {
-                                    const color = STATUS_COLORS[task.estado_codigo] || '#94a3b8';
+                                {dayTasks.slice(0, 2).map(task => {
+                                    const isPostergado = task.tipo === 'TC' && task.datos_tc?.estado_publicacion_id === 4;
+                                    const color = isPostergado ? STATUS_COLORS.postergado : (STATUS_COLORS[task.estado_codigo] || '#94a3b8');
+
                                     return (
                                         <div
                                             key={task.id}
-                                            className="taskItem"
+                                            className={`taskItem ${isPostergado ? 'is-postergado' : ''}`}
                                             style={{ borderLeftColor: color }}
                                             onClick={() => onOpenTask(task.id)}
-                                            title={`${task.titulo} (${task.estado_nombre || task.estado_codigo})`}
+                                            title={task.titulo}
                                         >
-                                            {task.titulo}
+                                            {isPostergado && <span className="icon"><FiClock size={12} /></span>}
+                                            <span className="txt">{task.titulo}</span>
                                         </div>
                                     );
                                 })}
-                                {dayTasks.length > 5 && (
-                                    <div className="moreTasks">+{dayTasks.length - 5} más</div>
+                                {dayTasks.length > 2 && (
+                                    <button
+                                        className="moreTasksBtn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedDay({ date: dateKey, tasks: dayTasks });
+                                        }}
+                                    >
+                                        +{dayTasks.length - 2} más
+                                    </button>
                                 )}
                             </div>
                         </div>
                     );
                 })}
             </div>
+
+            {expandedDay && (
+                <div className="dayPopoverOverlay" onClick={() => setExpandedDay(null)}>
+                    <div className="dayPopover" onClick={e => e.stopPropagation()}>
+                        <header>
+                            <span>Tareas del {format(parseISO(expandedDay.date), "d 'de' MMMM", { locale: es })}</span>
+                            <button className="closePop" onClick={() => setExpandedDay(null)}><FiX /></button>
+                        </header>
+                        <div className="popList">
+                            {expandedDay.tasks.map(task => {
+                                const isPostergado = task.tipo === 'TC' && task.datos_tc?.estado_publicacion_id === 4;
+                                const color = isPostergado ? STATUS_COLORS.postergado : (STATUS_COLORS[task.estado_codigo] || '#94a3b8');
+                                return (
+                                    <div
+                                        key={task.id}
+                                        className="popItem"
+                                        onClick={() => { onOpenTask(task.id); setExpandedDay(null); }}
+                                    >
+                                        <span className="statusDot" style={{ backgroundColor: color }} />
+                                        <div className="popContent">
+                                            <span className="popTitle">{task.titulo}</span>
+                                            <span className="popSubtitle">{task.cliente_nombre} • {task.estado_nombre}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -8,7 +8,9 @@
     animation: fadeIn 0.3s ease;
 
     .calendarHeader {
-        display: flex;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         justify-content: space-between;
         align-items: center;
         background: v.$fh-bg;
@@ -17,23 +19,67 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 
-        h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-            text-transform: capitalize;
+        .monthInfo {
+            flex: 0 0 auto;
+            min-width: 200px;
+
+            h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #fff;
+                text-transform: capitalize;
+            }
+        }
+
+        .calendarFilters {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+
+            .calSelect {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                color: #fff;
+                padding: 10px 14px;
+                border-radius: 14px;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-weight: 600;
+                outline: none;
+                transition: all 0.2s;
+                min-width: 140px;
+                max-width: 200px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.2);
+                    transform: translateY(-1px);
+                }
+
+                option {
+                    background: #151a21;
+                    color: #fff;
+                    padding: 8px;
+                }
+            }
         }
 
         .navButtons {
             display: flex;
-            gap: 12px;
+            gap: 8px;
+            align-items: center;
 
             button {
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 color: #fff;
-                padding: 6px 10px;
+                padding: 6px 12px;
                 border-radius: 12px;
                 cursor: pointer;
                 transition: all 0.2s;
@@ -41,6 +87,7 @@
                 align-items: center;
                 gap: 6px;
                 font-weight: 600;
+                font-size: 0.8rem;
 
                 &:hover {
                     background: rgba(255, 255, 255, 0.12);
@@ -48,33 +95,34 @@
                     transform: translateY(-1px);
                 }
 
-                &:active {
-                    transform: translateY(0);
-                }
-
                 &.todayBtn {
                     background: rgba(v.$fh-primary, 0.15);
                     border-color: rgba(v.$fh-primary, 0.3);
                     color: lighten(v.$fh-primary, 10%);
-                    font-size: 0.8rem;
 
                     &:hover {
                         background: rgba(v.$fh-primary, 0.25);
                     }
                 }
 
-                .modeToggle {
-                    margin-right: 12px;
-                    background: rgba(255, 255, 255, 0.08);
-                    border-color: rgba(255, 255, 255, 0.15);
+                &.modeToggle {
+                    margin-right: 8px;
+                    background: rgba(v.$fh-accent, 0.1);
                     color: v.$fh-accent;
-                    font-size: 0.6rem;
+                    border-color: rgba(v.$fh-accent, 0.2);
+                    font-size: 0.7rem;
 
                     &:hover {
-                        background: rgba(v.$fh-accent, 0.15);
-                        border-color: rgba(v.$fh-accent, 0.3);
+                        background: rgba(v.$fh-accent, 0.2);
                     }
                 }
+            }
+
+            .divider {
+                width: 1px;
+                height: 20px;
+                background: rgba(255, 255, 255, 0.1);
+                margin: 0 4px;
             }
         }
     }
@@ -189,9 +237,7 @@
                 }
             }
 
-            &:hover {
-                background: rgba(255, 255, 255, 0.03);
-            }
+            /* Removed dayCell:hover highlight */
 
             .dayNumber {
                 width: 22px;
@@ -201,10 +247,47 @@
                 justify-content: center;
                 border-radius: 50%;
                 font-size: 0.8rem;
-                font-weight: 700;
                 margin-bottom: 2px;
                 transition: all 0.2s;
                 flex-shrink: 0;
+            }
+
+            .dayHeader {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 4px;
+
+                .quickAdd {
+                    padding: 2px 8px;
+                    width: auto;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(v.$fh-primary, 0.1);
+                    border: 1px solid rgba(v.$fh-primary, 0.2);
+                    border-radius: 6px;
+                    color: v.$fh-primary;
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition: all 0.2s;
+                    line-height: 1;
+                    white-space: nowrap;
+
+                    &:hover {
+                        background: v.$fh-primary;
+                        color: #fff;
+                        border-color: v.$fh-primary;
+                        transform: scale(1.05);
+                    }
+                }
+            }
+
+            &:hover .quickAdd {
+                opacity: 1;
             }
 
             .taskList {
@@ -258,6 +341,14 @@
                     &.status-aprobada {
                         border-left-color: #10b981;
                     }
+
+                    &.is-postergado {
+                        background: rgba(217, 119, 6, 0.1);
+
+                        .icon {
+                            margin-right: 4px;
+                        }
+                    }
                 }
 
                 .moreTasks {
@@ -280,5 +371,160 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* ===== Popover Detalle Día ===== */
+.dayPopoverOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(8, 12, 18, 0.6);
+    backdrop-filter: blur(8px);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.dayPopover {
+    width: min(500px, 100%);
+    background: #0f141b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    animation: popScale 0.25s cubic-bezier(0, 0, 0.2, 1);
+
+    header {
+        padding: 18px 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        span {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .closePop {
+            background: transparent;
+            border: none;
+            color: #fff;
+            opacity: 0.6;
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            padding: 0;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05);
+                opacity: 1;
+            }
+        }
+    }
+
+    .popList {
+        padding: 12px;
+        max-height: 480px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    }
+
+    .popItem {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+        }
+
+        .statusDot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .popContent {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+
+            .popTitle {
+                font-weight: 700;
+                font-size: 0.95rem;
+                color: #fff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .popSubtitle {
+                font-size: 0.8rem;
+                color: rgba(255, 255, 255, 0.5);
+                margin-top: 2px;
+            }
+        }
+    }
+}
+
+.moreTasksBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    margin-top: 2px;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+}
+
+@keyframes popScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }

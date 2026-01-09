@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useId } from 'react'
 import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
-import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle } from 'react-icons/fi'
+import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle, FiLock, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { MdKeyboardArrowDown } from "react-icons/md";
 import AttendanceBadge from '../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
@@ -194,7 +194,7 @@ const S = {
   fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
 }
 
-export default function CreateTaskModal({ onClose, onCreated }) {
+export default function CreateTaskModal({ onClose, onCreated, initialData = {} }) {
   const { data: cat, loading, error } = useTaskCatalog()
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef(null)
@@ -210,6 +210,17 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   const [vencimiento, setVencimiento] = useState('')
   const [requiereAprob, setRequiereAprob] = useState(false)
 
+  // Tipo de tarea
+  const [tipo, setTipo] = useState('STD') // STD, TC, IT
+
+  // TC specific state
+  const [tcRedSocialIds, setTcRedSocialIds] = useState([])
+  const [tcFormatoIds, setTcFormatoIds] = useState([])
+  const [tcObjetivoNegocioId, setTcObjetivoNegocioId] = useState('')
+  const [tcObjetivoMarketingId, setTcObjetivoMarketingId] = useState('')
+  const [tcInamovible, setTcInamovible] = useState(false)
+  const [tcEstadoPublicacionId, setTcEstadoPublicacionId] = useState('1') // Pendiente por defecto
+
   const [etiquetas, setEtiquetas] = useState([])
   const [responsables, setResponsables] = useState([])
   const [leaderId, setLeaderId] = useState('')
@@ -218,6 +229,19 @@ export default function CreateTaskModal({ onClose, onCreated }) {
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [apiError, setApiError] = useState(null)
+
+  const myId = Number(localStorage.getItem('feder_id')) // ID del usuario actual
+
+  // Sync initialData
+  useEffect(() => {
+    if (initialData?.vencimiento) setVencimiento(initialData.vencimiento);
+    if (initialData?.tipo) setTipo(initialData.tipo);
+    if (initialData?.cliente_id) setClienteId(initialData.cliente_id);
+    // Si no hay responsables y tenemos nuestro ID, nos ponemos nosotros
+    if (responsables.length === 0 && myId) {
+      setResponsables([String(myId)])
+    }
+  }, [initialData, myId])
 
   // Attendance status hook
   const allFederIds = useMemo(() => (cat.feders || []).map(f => f.id), [cat.feders])
@@ -304,6 +328,18 @@ export default function CreateTaskModal({ onClose, onCreated }) {
       etiquetas: etiquetas.map(id => Number(id)),
       responsables: respsPayload,
       colaboradores: colabsPayload,
+      tipo,
+    }
+
+    if (tipo === 'TC') {
+      body.tc = {
+        red_social_ids: tcRedSocialIds.map(id => Number(id)),
+        formato_ids: tcFormatoIds.map(id => Number(id)),
+        objetivo_negocio_id: parseNumOrNull(tcObjetivoNegocioId),
+        objetivo_marketing_id: parseNumOrNull(tcObjetivoMarketingId),
+        estado_publicacion_id: Number(tcEstadoPublicacionId),
+        inamovible: !!tcInamovible
+      }
     }
 
     try {
@@ -397,6 +433,37 @@ export default function CreateTaskModal({ onClose, onCreated }) {
         </header>
 
         <div className="tcBody">
+          {/* Selector de Tipo */}
+          <div className="segmented-tabs" role="tablist" aria-label="Tipo de tarea">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tipo === 'STD'}
+              className={tipo === 'STD' ? 'active' : ''}
+              onClick={() => setTipo('STD')}
+            >
+              Estándar
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tipo === 'TC'}
+              className={tipo === 'TC' ? 'active' : ''}
+              onClick={() => setTipo('TC')}
+            >
+              Publicación (TC)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tipo === 'IT'}
+              className={tipo === 'IT' ? 'active' : ''}
+              onClick={() => setTipo('IT')}
+            >
+              IT
+            </button>
+          </div>
+
           <div className="tcGrid">
             {/* Columna izquierda */}
             <div className="col">
@@ -440,7 +507,9 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', width: '100%' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className={'field ' + (fechaError ? 'is-error' : '')}>
-                      <span style={{ fontSize: '0.85rem', color: '#FFFFFF8C', whiteSpace: 'nowrap' }}>Deadline</span>
+                      <span style={{ fontSize: '0.85rem', color: '#FFFFFF8C', whiteSpace: 'nowrap' }}>
+                        {tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
+                      </span>
                       <input
                         type="date"
                         value={vencimiento}
@@ -520,6 +589,83 @@ export default function CreateTaskModal({ onClose, onCreated }) {
                 maxLength={3600}
                 minHeight="200px"
               />
+
+              {/* Campos específicos de TC */}
+              {tipo === 'TC' && (
+                <div className="tc-specific-fields" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <CustomSelect
+                      labelId="lbl-tc-redes"
+                      leftIcon={<FiTag className="ico" style={S.ico} />}
+                      options={(cat.tc_redes || []).map(r => ({ value: String(r.id), label: r.nombre }))}
+                      value={tcRedSocialIds}
+                      onChange={setTcRedSocialIds}
+                      placeholder="Redes Sociales"
+                      disabled={loading}
+                      multi={true}
+                    />
+                    <CustomSelect
+                      labelId="lbl-tc-formatos"
+                      leftIcon={<FiTag className="ico" style={S.ico} />}
+                      options={(cat.tc_formatos || []).map(f => ({ value: String(f.id), label: f.nombre }))}
+                      value={tcFormatoIds}
+                      onChange={setTcFormatoIds}
+                      placeholder="Formatos"
+                      disabled={loading}
+                      multi={true}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div className="field" style={{ flex: 1 }}>
+                      <select value={tcObjetivoNegocioId} onChange={(e) => setTcObjetivoNegocioId(e.target.value)} disabled={loading} style={S.control}>
+                        <option value="">— Objetivo Negocio —</option>
+                        {(cat.tc_obj_negocio || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                      </select>
+                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                    </div>
+                    <div className="field" style={{ flex: 1 }}>
+                      <select value={tcObjetivoMarketingId} onChange={(e) => setTcObjetivoMarketingId(e.target.value)} disabled={loading} style={S.control}>
+                        <option value="">— Objetivo Marketing —</option>
+                        {(cat.tc_obj_marketing || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                      </select>
+                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', padding: '0 8px', marginTop: '4px' }}>
+                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                      <input
+                        id="tc-inamovible" type="checkbox" checked={tcInamovible}
+                        onChange={(e) => setTcInamovible(e.target.checked)} disabled={loading}
+                      />
+                      <label htmlFor="tc-inamovible" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FiLock style={{ fontSize: '0.9rem' }} /> Inamovible
+                      </label>
+                    </div>
+
+                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                      <input
+                        id="tc-publicado" type="checkbox" checked={tcEstadoPublicacionId === '2'}
+                        onChange={(e) => setTcEstadoPublicacionId(e.target.checked ? '2' : '1')} disabled={loading}
+                      />
+                      <label htmlFor="tc-publicado" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FiCheckCircle style={{ fontSize: '0.9rem' }} /> Publicado
+                      </label>
+                    </div>
+
+                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                      <input
+                        id="tc-postergado" type="checkbox" checked={tcEstadoPublicacionId === '3'}
+                        onChange={(e) => setTcEstadoPublicacionId(e.target.checked ? '3' : '1')} disabled={loading}
+                      />
+                      <label htmlFor="tc-postergado" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FiClock style={{ fontSize: '0.9rem' }} /> Postergado
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
 
             </div>

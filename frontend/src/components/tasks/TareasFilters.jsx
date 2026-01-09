@@ -1,6 +1,7 @@
 // frontend/src/components/tasks/TareasFilters.jsx
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FaRegCalendarAlt, FaFilter, FaSearch, FaTimes, FaUser, FaArchive } from 'react-icons/fa'
+import { FiLock, FiUnlock, FiCheckCircle, FiClock } from 'react-icons/fi'
 import './TareasFilters.scss'
 
 function Field({ id, label, children, className = '' }) {
@@ -67,6 +68,43 @@ export default function TareasFilters({ value, catalog, onChange }) {
       };
       chips.push({ key: 'orden', label: `${ordenLabels[v.orden_by] || v.orden_by} ${v.sort === 'asc' ? '↑' : '↓'}` });
     }
+    if (v.include_archivadas) {
+      chips.push({ key: 'include_archivadas', label: 'Ver archivadas' });
+    }
+    if (v.include_finalizadas) {
+      chips.push({ key: 'include_finalizadas', label: 'Ver finalizadas' });
+    }
+    if (v.tipo && v.tipo !== '') {
+      const typeLabels = { STD: 'Estándar', TC: 'Publicación (TC)', IT: 'IT' };
+      chips.push({ key: 'tipo', label: `Tipo: ${typeLabels[v.tipo] || v.tipo}` });
+    }
+    if (v.tc_red_social_id) {
+      const rs = catalog.tc_redes?.find(r => Number(r.id) === Number(v.tc_red_social_id));
+      chips.push({ key: 'tc_red_social_id', label: `Red: ${rs?.nombre || v.tc_red_social_id}` });
+    }
+    if (v.tc_formato_id) {
+      const f = catalog.tc_formatos?.find(f => Number(f.id) === Number(v.tc_formato_id));
+      chips.push({ key: 'tc_formato_id', label: `Formato: ${f?.nombre || v.tc_formato_id}` });
+    }
+    if (v.tc_objetivo_negocio_id) {
+      const o = catalog.tc_obj_negocio?.find(o => Number(o.id) === Number(v.tc_objetivo_negocio_id));
+      chips.push({ key: 'tc_objetivo_negocio_id', label: `Obj. Neg: ${o?.nombre || v.tc_objetivo_negocio_id}` });
+    }
+    if (v.inamovible !== undefined && v.inamovible !== '') {
+      chips.push({
+        key: 'inamovible',
+        label: v.inamovible === 'true' ? 'Inamovible' : 'Movible',
+        icon: v.inamovible === 'true' ? <FiLock /> : <FiUnlock />
+      });
+    }
+    if (v.tc_estado_publicacion_id) {
+      const ep = catalog.tc_estados_pub?.find(e => Number(e.id) === Number(v.tc_estado_publicacion_id));
+      let icon = null;
+      if (Number(v.tc_estado_publicacion_id) === 2) icon = <FiCheckCircle />;
+      if (Number(v.tc_estado_publicacion_id) === 3) icon = <FiClock />;
+
+      chips.push({ key: 'tc_estado_publicacion_id', label: ep?.nombre || v.tc_estado_publicacion_id, icon });
+    }
 
     return chips;
   }, [v, catalog]);
@@ -99,7 +137,14 @@ export default function TareasFilters({ value, catalog, onChange }) {
     orden_by: 'prioridad',
     sort: 'desc',
     solo_mias: v.solo_mias,
-    include_archivadas: v.include_archivadas,
+    include_archivadas: false,
+    include_finalizadas: false,
+    tipo: undefined,
+    tc_red_social_id: undefined,
+    tc_formato_id: undefined,
+    tc_objetivo_negocio_id: undefined,
+    tc_objetivo_marketing_id: undefined,
+    inamovible: undefined
   })
 
   useEffect(() => {
@@ -148,7 +193,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
             <FaUser className="icon" />
             <span>Mis tareas</span>
           </button>
-          
+
           {/*
           <button
             type="button"
@@ -183,6 +228,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
               className="chip"
               style={chip.color ? { '--chip-color': chip.color } : undefined}
             >
+              {chip.icon && <span className="chipIcon">{chip.icon}</span>}
               <span className="chipLabel">{chip.label}</span>
               <button
                 type="button"
@@ -232,6 +278,69 @@ export default function TareasFilters({ value, catalog, onChange }) {
                 </select>
               </Field>
 
+              <Field label="Tipo de Tarea">
+                <select
+                  value={v.tipo ?? ''}
+                  onChange={e => upd({ tipo: e.target.value === '' ? undefined : e.target.value })}
+                >
+                  <option value="">Todos los tipos</option>
+                  <option value="STD">Estándar</option>
+                  <option value="TC">Publicación (TC)</option>
+                  <option value="IT">IT</option>
+                </select>
+              </Field>
+
+              {v.tipo === 'TC' && (
+                <>
+                  <Field label="Red Social">
+                    <select
+                      value={v.tc_red_social_id ?? ''}
+                      onChange={e => upd({ tc_red_social_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Todas las redes</option>
+                      {catalog.tc_redes?.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Formato">
+                    <select
+                      value={v.tc_formato_id ?? ''}
+                      onChange={e => upd({ tc_formato_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Todos los formatos</option>
+                      {catalog.tc_formatos?.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Obj. Negocio">
+                    <select
+                      value={v.tc_objetivo_negocio_id ?? ''}
+                      onChange={e => upd({ tc_objetivo_negocio_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Todos los objetivos</option>
+                      {catalog.tc_obj_negocio?.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Inamovible">
+                    <select
+                      value={v.inamovible ?? ''}
+                      onChange={e => upd({ inamovible: e.target.value === '' ? undefined : e.target.value })}
+                    >
+                      <option value="">Todos</option>
+                      <option value="true">Sí (Inamovible)</option>
+                      <option value="false">No (Movible)</option>
+                    </select>
+                  </Field>
+                  <Field label="Estado Publicación">
+                    <select
+                      value={v.tc_estado_publicacion_id ?? ''}
+                      onChange={e => upd({ tc_estado_publicacion_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Cualquier estado</option>
+                      {catalog.tc_estados_pub?.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                    </select>
+                  </Field>
+                </>
+              )}
+
 
               <div className="dateRange">
                 <span className="label">Vencimiento</span>
@@ -272,6 +381,27 @@ export default function TareasFilters({ value, catalog, onChange }) {
                   </select>
                 </div>
               </Field>
+
+              <div className="popCheckboxes">
+                <label className="toggleCheck">
+                  <input
+                    type="checkbox"
+                    checked={!!v.include_archivadas}
+                    onChange={e => upd({ include_archivadas: e.target.checked })}
+                  />
+                  <div className="checkmark" />
+                  <span className="label">Mostrar archivadas</span>
+                </label>
+                <label className="toggleCheck">
+                  <input
+                    type="checkbox"
+                    checked={!!v.include_finalizadas}
+                    onChange={e => upd({ include_finalizadas: e.target.checked })}
+                  />
+                  <div className="checkmark" />
+                  <span className="label">Mostrar aprobadas/canceladas</span>
+                </label>
+              </div>
             </div>
           </div>
 

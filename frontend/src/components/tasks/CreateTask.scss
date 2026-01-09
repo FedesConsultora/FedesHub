@@ -560,3 +560,40 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   box-shadow: 0 0 0px 1000px #0f141b inset !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+/* ===== Segmented Tabs (Task Type) ===== */
+.segmented-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 1.5rem;
+
+  button {
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+    }
+
+    &.active {
+      background: #3ea0ff;
+      color: white;
+      box-shadow: 0 4px 12px rgba(62, 160, 255, 0.3);
+    }
+  }
+}

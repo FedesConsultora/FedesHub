@@ -207,7 +207,7 @@ export default function ToolbarPlugin() {
             });
         });
         setCurrentColor(color);
-        setShowColorPicker(false);
+        // NO cerramos automáticamente para permitir ajustar tono y luego saturación/valor
     };
 
     const applyFontSize = (size) => {
