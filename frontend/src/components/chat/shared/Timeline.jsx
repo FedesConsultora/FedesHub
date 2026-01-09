@@ -74,13 +74,52 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   const setRead = useSetRead()
   const lastSentRef = useRef({ canal_id: null, id: 0 })
   const timerRef = useRef(null)
+  const hasScrolledToLastRead = useRef(new Set())
 
+  // Scroll to last read message on first load, then to bottom on updates
   useEffect(() => {
-    if (!rows?.length) return
+    if (!rows?.length || !canal_id) return
     const root = rootRef.current
     if (!root) return
+
+    // Check if we've already scrolled for this canal
+    if (hasScrolledToLastRead.current.has(canal_id)) {
+      // For subsequent updates, just scroll to bottom
+      root.scrollTop = root.scrollHeight
+      return
+    }
+
+    // Find my member info to get last_read_msg_id
+    const myMember = members?.find(m => Number(m.user_id) === Number(my_user_id))
+    const lastReadMsgId = Number(myMember?.last_read_msg_id ?? 0)
+
+    if (lastReadMsgId > 0) {
+      // Try to find the last read message element
+      const lastReadEl = document.getElementById(`msg-${lastReadMsgId}`)
+      if (lastReadEl) {
+        // Scroll to the last read message
+        setTimeout(() => {
+          lastReadEl.scrollIntoView({ behavior: 'instant', block: 'start' })
+          // Mark that we've scrolled for this canal
+          hasScrolledToLastRead.current.add(canal_id)
+        }, 100)
+        return
+      }
+    }
+
+    // If no last read message or not found, scroll to bottom
     root.scrollTop = root.scrollHeight
-  }, [rows])
+    hasScrolledToLastRead.current.add(canal_id)
+  }, [rows, canal_id, my_user_id, members])
+
+  // Clear the tracking when canal changes
+  useEffect(() => {
+    return () => {
+      if (canal_id) {
+        hasScrolledToLastRead.current.delete(canal_id)
+      }
+    }
+  }, [canal_id])
 
   useEffect(() => {
     const el = sentinelRef.current
