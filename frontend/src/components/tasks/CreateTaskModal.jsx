@@ -7,6 +7,8 @@ import AttendanceBadge from '../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
 import RichTextEditor from '../common/RichTextEditor.jsx'
 import TitleTooltip from './TitleTooltip.jsx'
+import { useAuthCtx } from '../../context/AuthContext'
+import { useModal } from '../modal/ModalProvider'
 
 import './CreateTask.scss'
 
@@ -199,6 +201,9 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef(null)
   const firstFieldRef = useRef(null)
+  const modal = useModal()
+  const { roles } = useAuthCtx() || {}
+  const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB')
 
   const [clienteId, setClienteId] = useState('')
   const [hitoId, setHitoId] = useState('')
@@ -634,12 +639,26 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
                   </div>
 
                   <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', padding: '0 8px', marginTop: '4px' }}>
-                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                    <div className="field checkbox" style={{ padding: 0, margin: 0, opacity: (!isDirectivo && !responsables.includes(String(myId))) ? 0.6 : 1 }}>
                       <input
                         id="tc-inamovible" type="checkbox" checked={tcInamovible}
-                        onChange={(e) => setTcInamovible(e.target.checked)} disabled={loading}
+                        disabled={loading || (!isDirectivo && !responsables.includes(String(myId)))}
+                        onChange={async (e) => {
+                          const val = e.target.checked;
+                          if (val) {
+                            const ok = await modal.confirm({
+                              title: 'Marcar como inamovible',
+                              message: '⚠️ Atención: Si creas esta tarea como inamovible, no podrás desmarcarla después ni cambiar su fecha de publicación. ¿Estás seguro?',
+                              okText: 'Sí, marcar como inamovible',
+                              cancelText: 'Cancelar'
+                            });
+                            if (ok) setTcInamovible(true);
+                          } else {
+                            setTcInamovible(false);
+                          }
+                        }}
                       />
-                      <label htmlFor="tc-inamovible" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <label htmlFor="tc-inamovible" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: (!isDirectivo && !responsables.includes(String(myId))) ? 'default' : 'pointer' }}>
                         <FiLock style={{ fontSize: '0.9rem' }} /> Inamovible
                       </label>
                     </div>

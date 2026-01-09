@@ -733,6 +733,20 @@ const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
       const tcData = await models.TareaTC.findByPk(id, { transaction: t }) ||
         await models.TareaTC.create({ tarea_id: id }, { transaction: t });
 
+      // REGLA DE NEGOCIO: inamovible (bloquear desactivación)
+      if (tcData.inamovible && tc.inamovible === false) {
+        throw Object.assign(new Error('No podés desmarcar una tarea como inamovible una vez establecida.'), { status: 400 });
+      }
+
+      // REGLA DE NEGOCIO: solo directivos o responsable pueden marcarlo
+      if (tc.inamovible === true && !tcData.inamovible) {
+        const isNivelB = currentUser?.roles?.includes('NivelA') || currentUser?.roles?.includes('NivelB');
+        const isResponsible = await models.TareaResponsable.findOne({ where: { tarea_id: id, feder_id: feder_id }, transaction: t });
+        if (!isNivelB && !isResponsible) {
+          throw Object.assign(new Error('Solo los directivos o el responsable de la tarea pueden marcarla como inamovible.'), { status: 403 });
+        }
+      }
+
       // Historial de cambios en campos de TareaTC
       for (const key of Object.keys(tcFields)) {
         const newVal = tcFields[key];

@@ -752,11 +752,24 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                   <span className="fh-chip primary" style={{ fontSize: '0.65rem', padding: '1px 8px' }}>TC</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#fff' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: (!!task.datos_tc.inamovible || (!isResponsible && !isDirectivo)) ? 'default' : 'pointer', fontSize: '0.85rem', color: '#fff', opacity: (!!task.datos_tc.inamovible || (!isResponsible && !isDirectivo)) ? 0.7 : 1 }}>
                     <input
                       type="checkbox"
                       checked={!!task.datos_tc.inamovible}
-                      onChange={(e) => performSave({ tc: { inamovible: e.target.checked } }, 'manual')}
+                      disabled={!!task.datos_tc.inamovible || (!isResponsible && !isDirectivo)}
+                      onChange={async (e) => {
+                        const val = e.target.checked;
+                        if (val) {
+                          const ok = await modal.confirm({
+                            title: 'Marcar como inamovible',
+                            message: '⚠️ Atención: Una vez marcada como inamovible, no podrás desmarcarla posteriormente ni cambiar la fecha de publicación. ¿Estás seguro?',
+                            okText: 'Sí, marcar como inamovible',
+                            cancelText: 'Cancelar'
+                          });
+                          if (!ok) return;
+                          performSave({ tc: { inamovible: true } }, 'manual');
+                        }
+                      }}
                     />
                     <FiLock size={14} /> Inamovible
                   </label>
