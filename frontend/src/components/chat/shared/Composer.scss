@@ -4,10 +4,11 @@
   position: relative;
   border-top: 1px solid rgba(255, 255, 255, .06);
   padding: 10px;
+  padding-bottom: 0 !important;
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 10px;
-  align-items: end;
+  align-items: start;
 
   .controlsLeft {
     position: relative
@@ -165,11 +166,13 @@
       }
     }
   }
-  .controlsRight{
+
+  .controlsRight {
     display: flex;
     align-items: center;
     gap: 6px;
   }
+
   .sendBtn {
     width: 42px;
     height: 42px;

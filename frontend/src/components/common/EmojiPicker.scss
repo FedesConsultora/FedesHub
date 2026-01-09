@@ -18,4 +18,85 @@
     left: 0;
     top: calc(100% + 8px);
   }
+
+  /* Personalización agresiva interna de emoji-picker-react */
+  .EmojiPickerReact {
+    --epr-highlight-color: #3b82f6 !important;
+    --epr-scrollbar-color: #cbd5e1 !important;
+    --epr-search-input-bg-color: #f1f5f9 !important;
+    --epr-search-border-color: #e2e8f0 !important;
+    --epr-header-padding: 8px 8px !important;
+    --epr-search-input-padding: 0 12px !important;
+    --epr-search-input-height: 28px !important; // Más bajo aún
+
+    /* Buscador: más angosto, más bajo y sin outline */
+    .epr-search-container,
+    .epr-header,
+    div[class*="search-container"] {
+      padding: 6px 6px !important; // Más ancho: reducido de 30px a 16px
+
+      input,
+      input.epr-search,
+      input[class*="search"] {
+        height: 28px !important;
+        min-height: 28px !important;
+        border-radius: 14px !important;
+        background-color: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 0.8rem !important;
+
+        &:focus,
+        &:active {
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
+          border-color: #3b82f6 !important;
+        }
+      }
+    }
+
+    /* Icono de búsqueda */
+    .epr-search-icon,
+    span[class*="search-icon"] {
+      display: none !important; // Limpiar para que se vea más minimalista
+    }
+
+    /* Botón de tonos de piel (Skin Tone Picker) */
+    .epr-status-bar,
+    div[class*="status-bar"] {
+      padding: 0 12px 6px !important;
+      min-height: 24px !important;
+
+      button.epr-skin-tones-button,
+      .epr-skin-tones,
+      div[class*="skin-tones"] {
+        border-radius: 50% !important;
+        transform: scale(0.65) !important; // Un poco más chico
+        overflow: hidden;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+      }
+    }
+
+    /* Scrollbars internos sin fondo */
+    .epr-body::-webkit-scrollbar,
+    .epr-emoji-list::-webkit-scrollbar {
+      width: 4px !important;
+    }
+
+    .epr-body::-webkit-scrollbar-track,
+    .epr-emoji-list::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+
+    .epr-body::-webkit-scrollbar-thumb,
+    .epr-emoji-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1 !important;
+      border-radius: 10px !important;
+    }
+  }
 }

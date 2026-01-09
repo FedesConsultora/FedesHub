@@ -237,9 +237,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   const reload = useCallback(async () => {
     const [t, cat] = await Promise.all([
-      tareasApi.get(taskId),
+      tareasApi.get(taskId).then(taskData => {
+        if (taskData.estado_nombre === 'Revisión') taskData.estado_nombre = 'En Revisión';
+        if (taskData.estado?.nombre === 'Revisión') taskData.estado.nombre = 'En Revisión';
+        return taskData;
+      }),
 
-      tareasApi.catalog().catch((err) => {
+      tareasApi.catalog().then(c => {
+        if (c.estados) {
+          c.estados = c.estados.map(s => s.nombre === 'Revisión' ? { ...s, nombre: 'En Revisión' } : s);
+        }
+        return c;
+      }).catch((err) => {
         console.error('ERROR LOADING CATALOG:', err)
         return {}
       })
@@ -447,6 +456,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   // estado
   const handleEstado = async (estado_id) => {
     const next = await tareasApi.setEstado(taskId, estado_id)
+    if (next.estado_nombre === 'Revisión') next.estado_nombre = 'En Revisión';
+    if (next.estado?.nombre === 'Revisión') next.estado.nombre = 'En Revisión';
     setTask(next)
     setHistoryRefresh(prev => prev + 1) // Trigger history refresh
     onUpdated?.()

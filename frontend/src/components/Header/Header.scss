@@ -40,27 +40,38 @@
   .userChip {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     background: #0f141b;
-    border: 1px solid rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .12);
     color: $fh-text;
-    padding: .35rem .6rem;
+    padding: 6px 14px 6px 8px;
     border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+
+    &:hover {
+      background: #161c24;
+      border-color: rgba(255, 255, 255, .2);
+    }
   }
 
   .avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
-  .email {
-    font-size: .9rem;
-    color: $fh-muted;
-    max-width: 28ch;
+  .user-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: $fh-text;
+    max-width: 180px;
     text-overflow: ellipsis;
     overflow: hidden;
-    white-space: nowrap
+    white-space: nowrap;
+    line-height: 1;
   }
 
   .caret {
@@ -123,6 +134,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     padding: 0;
+
     svg {
       font-size: 18px;
     }

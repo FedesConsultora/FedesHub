@@ -9,7 +9,7 @@ import './TaskStatusCard.scss'
 const MAP = {
   pendiente: { name: 'Pendiente', dot: '#7A1B9F' },
   en_curso: { name: 'En curso', dot: '#9F1B50' },
-  revision: { name: 'Revisión', dot: '#1B6D9F' },
+  revision: { name: 'En Revisión', dot: '#1B6D9F' },
   aprobada: { name: 'Aprobada', dot: '#1B9F4E' },
   cancelada: { name: 'Cancelada', dot: '#9F1B1B' }
 }

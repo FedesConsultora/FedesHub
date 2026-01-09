@@ -1,12 +1,173 @@
 /* src/components/ausencias/AusenciasBoard.scss */
 @use '../../styles/variables' as *;
 
-.aus-board{
-  display:grid; gap: 14px; color:$fh-text;
+.aus-board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: $fh-text;
+  padding: 0 4px;
 }
 
-.aus-cal{
-  display:grid; gap: 10px; align-items:start;
-  /* deja aire entre saldos, filtros y calendario */
-  margin-top: 2px;
+.aus-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .nav-l,
+    .nav-r {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 3px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      height: 38px;
+
+      .seg {
+        border-radius: 9px;
+        padding: 0 16px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: $fh-muted;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+
+        &.active {
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        &:hover:not(.active) {
+          background: rgba(255, 255, 255, 0.05);
+          color: $fh-text;
+        }
+      }
+    }
+
+    .date-picker-pill,
+    .status-pill {
+      display: flex;
+      align-items: center;
+      height: 38px;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0 16px;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      min-width: 150px;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      .display-date,
+      .year-picker {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: capitalize;
+        color: #fff;
+      }
+
+      svg {
+        color: $fh-accent;
+        font-size: 0.9rem;
+      }
+
+      .nav-date-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+
+        &::-webkit-calendar-picker-indicator {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          cursor: pointer;
+        }
+      }
+
+      .year-picker {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        outline: none;
+        cursor: pointer;
+        padding: 0 4px;
+
+        option {
+          background: #1a1a1a;
+          color: white;
+        }
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    .nav-r {
+      .fh-btn {
+        height: 38px;
+        min-width: 38px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-weight: 700;
+
+        &.ghost {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .aus-cal .cal-nav {
+    flex-direction: column;
+    align-items: stretch;
+
+    .nav-l,
+    .nav-r {
+      justify-content: space-between;
+    }
+  }
 }

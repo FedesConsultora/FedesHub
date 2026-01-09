@@ -245,3 +245,8 @@ export const historialQuerySchema = z.object({
 export const boostManualSchema = z.object({
   enabled: z.boolean()
 });
+
+export const reactionToggleSchema = z.object({
+  emoji: z.string().min(1).max(200),
+  on: z.boolean().optional().default(true)
+});

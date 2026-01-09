@@ -7,29 +7,30 @@ import AusenciasToolbar from './AusenciasToolbar'
 import SaldoGrid from './SaldoGrid'
 import YearCalendar from './YearCalendar'
 import MonthCalendar from './MonthCalendar'
-import CalendarLegend from './CalendarLegend'
+
 import AbsenceForm from './dialogs/AbsenceForm'
 import AllocationForm from './dialogs/AllocationForm'
 import AusenciasFilters from './AusenciasFilters'
 import DayDetails from './dialogs/DayDetails'
+import { FaCalendarAlt } from 'react-icons/fa'
 import { useModal } from '../modal/ModalProvider.jsx'
 import './AusenciasBoard.scss'
 
 const WORKDAY_HOURS = Number(import.meta.env.VITE_WORKDAY_HOURS || 8)
-const two = (n)=>String(n).padStart(2,'0')
-const todayLocal = ()=>{
+const two = (n) => String(n).padStart(2, '0')
+const todayLocal = () => {
   const d = new Date()
-  return `${d.getFullYear()}-${two(d.getMonth()+1)}-${two(d.getDate())}`
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
 }
 
 // Expande cada ausencia por todo su rango [desde..hasta] (inclusive)
-function mapByDateFromRows(rows){
+function mapByDateFromRows(rows) {
   const m = new Map()
-  for (const r of rows){
+  for (const r of rows) {
     let d = new Date(r.fecha_desde + 'T00:00:00')
     const end = new Date(r.fecha_hasta + 'T00:00:00')
-    while (d <= end){
-      const key = `${d.getFullYear()}-${two(d.getMonth()+1)}-${two(d.getDate())}`
+    while (d <= end) {
+      const key = `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
       const arr = m.get(key) || []
       arr.push(r)
       m.set(key, arr)
@@ -50,14 +51,14 @@ export default function AusenciasBoard() {
   // Filtros
   const [filters, setFilters] = useState({
     tipoId: '',
-    estados: new Set(['aprobada','pendiente','denegada','cancelada']),
+    estados: new Set(['aprobada', 'pendiente', 'denegada', 'cancelada']),
     futureOnly: false
   })
 
   const { can } = usePermission()
-  const canCreate  = can('ausencias','create')
-  const canApprove = can('ausencias','approve')
-  const canAssign  = can('ausencias','assign')
+  const canCreate = can('ausencias', 'create')
+  const canApprove = can('ausencias', 'approve')
+  const canAssign = can('ausencias', 'assign')
   const canRequestAllocation = canCreate || canAssign
 
   const board = useAusenciasBoard(String(year))
@@ -72,7 +73,7 @@ export default function AusenciasBoard() {
   // merge (board + locales) y deduplicar por id
   const allRows = useMemo(() => {
     const map = new Map()
-    ;[...board.aus.rows, ...localRows].forEach(r => map.set(r.id, r))
+      ;[...board.aus.rows, ...localRows].forEach(r => map.set(r.id, r))
     return Array.from(map.values())
   }, [board.aus.rows, localRows])
 
@@ -99,12 +100,12 @@ export default function AusenciasBoard() {
         unidad_codigo: row.unidad_codigo, allocated: 0, consumido: 0, available: 0, approved: 0, planned: 0
       }
       const amt = normalizeAmount(row, WORKDAY_HOURS)
-      const val = b.unidad_codigo==='hora' ? amt.horas : amt.dias
+      const val = b.unidad_codigo === 'hora' ? amt.horas : amt.dias
       if (row.estado_codigo === 'aprobada') b.approved += val
       else if (row.estado_codigo === 'pendiente' && row.fecha_desde >= today) b.planned += val
       map.set(row.tipo_id, b)
     }
-    return Array.from(map.values()).sort((a,b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
+    return Array.from(map.values()).sort((a, b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
   }, [board.saldos.saldos, allRows])
 
   // ---- filtros
@@ -127,19 +128,19 @@ export default function AusenciasBoard() {
   )
 
   // ---- abrir formularios con el Provider
-  const openNewAbs = (dateStr=null) => {
+  const openNewAbs = (dateStr = null) => {
     modal.open({
       title: 'Nueva ausencia',
       width: 720,
       render: (close) => (
         <AbsenceForm
-          onCancel={()=>close(false)}
-          onCreated={(row)=>{
+          onCancel={() => close(false)}
+          onCreated={(row) => {
             // inyecto localmente para ver al instante
-            setLocalRows(ls => [{...row}, ...ls])
+            setLocalRows(ls => [{ ...row }, ...ls])
             close(true)
             // abro detalle del día recién creado
-            setTimeout(()=>openDay(row.fecha_desde),0)
+            setTimeout(() => openDay(row.fecha_desde), 0)
           }}
           initDate={dateStr}
           tipos={board.saldos.tipos}
@@ -155,7 +156,7 @@ export default function AusenciasBoard() {
       title: 'Nueva asignación (solicitud)',
       width: 720,
       render: (close) => (
-        <AllocationForm onCancel={()=>close(false)} onDone={()=>close(true)} />
+        <AllocationForm onCancel={() => close(false)} onDone={() => close(true)} />
       )
     })
   }
@@ -164,7 +165,7 @@ export default function AusenciasBoard() {
   const onRowChanged = (updated) => {
     setLocalRows(ls => {
       const map = new Map()
-      ;[...ls, updated].forEach(r => map.set(r.id, r))
+        ;[...ls, updated].forEach(r => map.set(r.id, r))
       return Array.from(map.values())
     })
   }
@@ -173,7 +174,7 @@ export default function AusenciasBoard() {
   const openDay = (dateStr) => {
     const items = filteredByDate.get(dateStr) || []
     modal.open({
-      title: new Date(dateStr+'T00:00:00').toLocaleDateString(undefined, { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+      title: new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
       width: 720,
       render: (close) => (
         <DayDetails
@@ -182,7 +183,7 @@ export default function AusenciasBoard() {
           canApprove={canApprove}
           federById={federById}          // 🆕 datos del solicitante
           onUpdated={onRowChanged}       // 🆕 refresco local
-          onNew={()=>{ close(false); openNewAbs(dateStr) }}
+          onNew={() => { close(false); openNewAbs(dateStr) }}
         />
       )
     })
@@ -191,14 +192,6 @@ export default function AusenciasBoard() {
   return (
     <div className="aus-board">
       <AusenciasToolbar
-        year={year}
-        monthIdx={monthIdx}
-        onPrev={() => { if (view==='year') setYear(y=>y-1); else setMonthIdx(m => (m+11)%12) }}
-        onToday={() => { setYear(now.getFullYear()); setMonthIdx(now.getMonth()) }}
-        onNext={() => { if (view==='year') setYear(y=>y+1); else setMonthIdx(m => (m+1)%12) }}
-        onYearChange={setYear}
-        view={view}
-        setView={setView}
         canCreate={canCreate}
         canAssign={canRequestAllocation}
         onNewAbs={() => openNewAbs()}
@@ -215,6 +208,43 @@ export default function AusenciasBoard() {
       />
 
       <div className="aus-cal">
+        <div className="cal-nav">
+          <div className="nav-l">
+            <div className="segmented">
+              <button className={`seg ${view === 'year' ? 'active' : ''}`} onClick={() => setView('year')}>Año</button>
+              <button className={`seg ${view === 'month' ? 'active' : ''}`} onClick={() => setView('month')}>Mes</button>
+            </div>
+            {view === 'month' ? (
+              <div className="pill date-picker-pill">
+                <FaCalendarAlt />
+                <div className="display-date">
+                  {new Date(year, monthIdx, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+                </div>
+                <input
+                  type="date"
+                  className="nav-date-input"
+                  value={`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`}
+                  onChange={(e) => {
+                    const d = new Date(e.target.value + 'T00:00:00');
+                    if (!isNaN(d.getTime())) {
+                      setYear(d.getFullYear());
+                      setMonthIdx(d.getMonth());
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="pill status-pill">
+                <FaCalendarAlt />
+                <YearPicker value={year} onChange={setYear} />
+              </div>
+            )}
+          </div>
+
+          <div className="nav-r">
+            <button className="fh-btn ghost" onClick={() => { setYear(now.getFullYear()); setMonthIdx(now.getMonth()) }}>Hoy</button>
+          </div>
+        </div>
         {view === 'year' ? (
           <YearCalendar
             year={year}
@@ -229,10 +259,29 @@ export default function AusenciasBoard() {
             month={monthIdx}
             rows={filteredRows}
             onDayClick={openDay}
+            onPrev={() => {
+              if (monthIdx === 0) { setYear(y => y - 1); setMonthIdx(11); }
+              else { setMonthIdx(m => m - 1); }
+            }}
+            onNext={() => {
+              if (monthIdx === 11) { setYear(y => y + 1); setMonthIdx(0); }
+              else { setMonthIdx(m => m + 1); }
+            }}
           />
         )}
-        <CalendarLegend />
+
       </div>
     </div>
+  )
+}
+
+function YearPicker({ value, onChange }) {
+  const years = []
+  const base = new Date().getFullYear()
+  for (let y = base - 2; y <= base + 2; y++) years.push(y)
+  return (
+    <select className="year-picker" value={value} onChange={(e) => onChange(Number(e.target.value))}>
+      {years.map(y => <option key={y} value={y}>{y}</option>)}
+    </select>
   )
 }

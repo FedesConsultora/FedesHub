@@ -12,7 +12,7 @@ import {
   postResponsable, deleteResponsable, postColaborador, deleteColaborador,
   postEtiqueta, deleteEtiqueta,
   getChecklist, postChecklist, patchChecklistItem, deleteChecklistItemCtrl, patchChecklistReorder,
-  getComentarios, postComentario,
+  getComentarios, postComentario, postToggleReaccion,
   getAdjuntos, postAdjunto, deleteAdjuntoCtrl,
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
@@ -80,6 +80,7 @@ router.patch('/:id/checklist/reorder', requireAuth, requirePermission('tareas', 
 // Comentarios
 router.get('/:id/comentarios', requireAuth, requirePermission('tareas', 'read'), getComentarios);
 router.post('/:id/comentarios', requireAuth, requirePermission('tareas', 'comment'), postComentario);
+router.post('/:id/comentarios/:comentarioId/react', requireAuth, requirePermission('tareas', 'comment'), postToggleReaccion);
 
 // Historial de cambios
 router.get('/:id/historial', requireAuth, requirePermission('tareas', 'read'), getHistorial);

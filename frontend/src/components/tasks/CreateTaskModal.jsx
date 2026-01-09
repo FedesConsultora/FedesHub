@@ -194,7 +194,7 @@ const S = {
   fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
 }
 
-export default function CreateTaskModal({ onClose, onCreated, initialData = {} }) {
+export default function CreateTaskModal({ onClose, onCreated, initialVencimiento = null }) {
   const { data: cat, loading, error } = useTaskCatalog()
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef(null)
@@ -207,7 +207,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
   const [impactoId, setImpactoId] = useState('')
   const [urgenciaId, setUrgenciaId] = useState('')
   const [fechaInicio, setFechaInicio] = useState('')
-  const [vencimiento, setVencimiento] = useState('')
+  const [vencimiento, setVencimiento] = useState(initialVencimiento || '')
   const [requiereAprob, setRequiereAprob] = useState(false)
 
   // Tipo de tarea

@@ -17,6 +17,7 @@
 import { QueryTypes, Op } from 'sequelize';
 import { sequelize } from '../../../core/db.js';
 import { initModels } from '../../../models/registry.js';
+import { registrarCambio, TIPO_CAMBIO, ACCION } from '../helpers/historial.helper.js';
 
 const models = await initModels();
 
@@ -236,6 +237,11 @@ const buildListSQL = (params = {}, currentUser) => {
   addIn('t.cliente_id', cliente_ids, 'cids_');
   addIn('t.estado_id', estado_ids, 'eids_');
 
+  // Si no se especifica estado, excluir por defecto aprobadas y canceladas
+  if (!estado_id && !estado_codigo && !estado_ids?.length) {
+    where.push(`te.codigo NOT IN ('aprobada', 'cancelada')`);
+  }
+
   if (etiqueta_ids?.length) {
     const keys = etiqueta_ids.map((_, i) => `et${i}`);
     where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id IN (${keys.map(k => ':' + k).join(',')}))`);
@@ -445,7 +451,14 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
                     'id', p.id,
                     'autor', pf.nombre || ' ' || pf.apellido,
                     'excerpt', left(regexp_replace(p.contenido, E'\\s+', ' ', 'g'), 140)
-                  ) ELSE NULL END
+                  ) ELSE NULL END,
+                  'reacciones', (
+                    SELECT COALESCE(json_agg(json_build_object(
+                      'id', r.id, 'emoji', r.emoji, 'user_id', r.user_id, 'created_at', r.created_at
+                    )), '[]'::json)
+                    FROM "TareaComentarioReaccion" r
+                    WHERE r.comentario_id = cm.id
+                  )
                 )
                 ORDER BY cm.created_at
               )
@@ -1035,7 +1048,16 @@ const listComentarios = async (tarea_id, currentUser) =>
         'id', p.id,
         'autor', pf.nombre || ' ' || pf.apellido,
         'excerpt', left(regexp_replace(p.contenido, E'\\s+', ' ', 'g'), 140)
-      ) ELSE NULL END AS reply_to
+      ) ELSE NULL END AS reply_to,
+
+      -- reacciones del comentario
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'id', r.id, 'emoji', r.emoji, 'user_id', r.user_id, 'created_at', r.created_at
+        ))
+        FROM "TareaComentarioReaccion" r
+        WHERE r.comentario_id = cm.id
+      ), '[]'::json) AS reacciones
 
     FROM "TareaComentario" cm
     JOIN "Feder" f          ON f.id  = cm.feder_id
@@ -1266,7 +1288,6 @@ const setSeguidor = async (tarea_id, user_id, on) => {
 };
 
 // ---------- Estado / Aprobación / Kanban ----------
-import { registrarCambio, TIPO_CAMBIO, ACCION } from '../helpers/historial.helper.js';
 
 const setEstado = async (id, estado_id, feder_id) => {
   await ensureExists(models.TareaEstado, estado_id, 'Estado inválido');
@@ -1907,3 +1928,23 @@ export const svcGetUrgentTasks = async (user) => {
 };
 
 export const svcGetDashboardMetrics = (user, query) => getDashboardMetrics(user, query);
+
+// ---------- Reacciones en Comentarios ----------
+const toggleComentarioReaccion = async (comentario_id, user_id, emoji, on = true) => {
+  if (on) {
+    await models.TareaComentarioReaccion.findOrCreate({
+      where: { comentario_id, user_id, emoji },
+      defaults: { comentario_id, user_id, emoji }
+    });
+  } else {
+    await models.TareaComentarioReaccion.destroy({
+      where: { comentario_id, user_id, emoji }
+    });
+  }
+  return { ok: true };
+};
+
+export const svcToggleComentarioReaccion = (comentario_id, user_id, body) => {
+  const { emoji, on = true } = body || {};
+  return toggleComentarioReaccion(comentario_id, user_id, emoji, on);
+};

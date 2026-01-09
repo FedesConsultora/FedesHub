@@ -13,7 +13,7 @@ export const tipoCreateSchema = z.object({
   nombre: z.string().min(2).max(100),
   descripcion: z.string().max(2000).nullish(),
   unidad_id: id.optional(),
-  unidad_codigo: z.enum(['dia','hora']).optional(),
+  unidad_codigo: z.enum(['dia', 'hora']).optional(),
   requiere_asignacion: z.boolean().default(true),
   permite_medio_dia: z.boolean().default(false)
 }).refine(o => o.unidad_id || o.unidad_codigo, { message: 'unidad_id o unidad_codigo requerido' });
@@ -22,7 +22,7 @@ export const tipoUpdateSchema = z.object({
   nombre: z.string().min(2).max(100).optional(),
   descripcion: z.string().max(2000).nullish().optional(),
   unidad_id: id.optional(),
-  unidad_codigo: z.enum(['dia','hora']).optional(),
+  unidad_codigo: z.enum(['dia', 'hora']).optional(),
   requiere_asignacion: z.boolean().optional(),
   permite_medio_dia: z.boolean().optional()
 });
@@ -36,7 +36,7 @@ export const cuotaAssignSchema = z.object({
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(2).max(50).optional(),
   unidad_id: id.optional(),
-  unidad_codigo: z.enum(['dia','hora']).optional(),
+  unidad_codigo: z.enum(['dia', 'hora']).optional(),
   cantidad_total: z.coerce.number().positive(),
   vigencia_desde: isoDateOnly,
   vigencia_hasta: isoDateOnly,
@@ -57,7 +57,7 @@ export const saldoQuery = z.object({
 
 export const ausListQuery = z.object({
   feder_id: id.optional(),
-  estado_codigo: z.enum(['pendiente','aprobada','denegada','cancelada']).optional(),
+  estado_codigo: z.enum(['pendiente', 'aprobada', 'denegada', 'cancelada']).optional(),
   desde: isoDateOnly.optional(),
   hasta: isoDateOnly.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -82,7 +82,7 @@ export const ausenciaDecisionSchema = z.object({
 
 export const ausenciaRechazoSchema = z.object({
   comentario_admin: z.string().max(2000).nullish(),
-  denegado_motivo: z.string().max(4000).optional()
+  denegado_motivo: z.string().max(4000).nullish()
 });
 
 export const asignacionSolicitudCreate = z.object({
@@ -90,7 +90,7 @@ export const asignacionSolicitudCreate = z.object({
   tipo_id: id.optional(),
   tipo_codigo: z.string().min(2).max(50).optional(),
   unidad_id: id.optional(),
-  unidad_codigo: z.enum(['dia','hora']).optional(),
+  unidad_codigo: z.enum(['dia', 'hora']).optional(),
   cantidad_solicitada: z.coerce.number().positive(),
   vigencia_desde: isoDateOnly,
   vigencia_hasta: isoDateOnly,
@@ -100,5 +100,5 @@ export const asignacionSolicitudCreate = z.object({
 
 export const asignacionSolicitudList = z.object({
   feder_id: id.optional(),
-  estado_codigo: z.enum(['pendiente','aprobada','denegada','cancelada']).optional()
+  estado_codigo: z.enum(['pendiente', 'aprobada', 'denegada', 'cancelada']).optional()
 });

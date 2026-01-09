@@ -17,14 +17,10 @@ const DateInput = ({ id, ...props }) => (
   </div>
 )
 
-export default function TareasFilters({ value, catalog, onChange }) {
-  const v = value || {}
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef(null), popRef = useRef(null)
-
-  // Generar lista de filtros activos para mostrar como chips
-  const activeChips = useMemo(() => {
+export function useActiveChips(v, catalog) {
+  return useMemo(() => {
     const chips = [];
+    if (!v || !catalog) return chips;
 
     if (v.cliente_id) {
       const clienteId = Number(v.cliente_id);
@@ -35,6 +31,10 @@ export default function TareasFilters({ value, catalog, onChange }) {
       const estadoId = Number(v.estado_id);
       const estado = catalog.estados?.find(s => Number(s.id) === estadoId);
       chips.push({ key: 'estado_id', label: estado?.nombre || `Estado #${estadoId}` });
+    }
+    if (v.estado_codigo) {
+      const estado = catalog.estados?.find(s => s.codigo === v.estado_codigo);
+      chips.push({ key: 'estado_codigo', label: estado?.nombre || v.estado_codigo });
     }
     if (v.impacto_id) {
       const impactoId = Number(v.impacto_id);
@@ -108,13 +108,13 @@ export default function TareasFilters({ value, catalog, onChange }) {
 
     return chips;
   }, [v, catalog]);
+}
 
-  // Calcular cuántos filtros avanzados hay activos
-  const activeFiltersCount = activeChips.length;
+export function TareasActiveChips({ value, catalog, onChange }) {
+  const v = value || {};
+  const chips = useActiveChips(v, catalog);
 
-  const upd = (patch) => {
-    onChange?.({ ...v, ...patch });
-  }
+  const upd = (patch) => onChange?.({ ...v, ...patch });
 
   const removeChip = (key) => {
     if (key === 'vencimiento') {
@@ -130,6 +130,64 @@ export default function TareasFilters({ value, catalog, onChange }) {
     q: '',
     cliente_id: undefined,
     estado_id: undefined,
+    estado_codigo: undefined,
+    impacto_id: undefined,
+    urgencia_id: undefined,
+    vencimiento_from: '',
+    vencimiento_to: '',
+    orden_by: 'prioridad',
+    sort: 'desc',
+    solo_mias: v.solo_mias,
+    include_archivadas: v.include_archivadas,
+  })
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="activeFiltersChips">
+      {chips.map(chip => (
+        <div
+          key={chip.key}
+          className="chip"
+          style={chip.color ? { '--chip-color': chip.color } : undefined}
+        >
+          <span className="chipLabel">{chip.label}</span>
+          <button
+            type="button"
+            className="chipRemove"
+            onClick={() => removeChip(chip.key)}
+            title="Quitar filtro"
+          >
+            <FaTimes />
+          </button>
+        </div>
+      ))}
+      {chips.length > 1 && (
+        <button type="button" className="clearAllChips" onClick={clear}>
+          Limpiar todos
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function TareasFilters({ value, catalog, onChange, hideChips = false }) {
+  const v = value || {}
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null), popRef = useRef(null)
+
+  const activeChips = useActiveChips(v, catalog);
+  const activeFiltersCount = activeChips.length;
+
+  const upd = (patch) => {
+    onChange?.({ ...v, ...patch });
+  }
+
+  const clear = () => onChange?.({
+    q: '',
+    cliente_id: undefined,
+    estado_id: undefined,
+    estado_codigo: undefined,
     impacto_id: undefined,
     urgencia_id: undefined,
     vencimiento_from: '',
@@ -382,24 +440,25 @@ export default function TareasFilters({ value, catalog, onChange }) {
                 </div>
               </Field>
 
-              <div className="popCheckboxes">
+              <div className="popCheckboxes" style={{ gridColumn: 'span 2' }}>
                 <label className="toggleCheck">
                   <input
                     type="checkbox"
-                    checked={!!v.include_archivadas}
-                    onChange={e => upd({ include_archivadas: e.target.checked })}
+                    checked={v.estado_codigo === 'aprobada'}
+                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'aprobada' ? undefined : 'aprobada', estado_id: undefined })}
                   />
                   <div className="checkmark" />
-                  <span className="label">Mostrar archivadas</span>
+                  <span className="label">Ver sólo tareas aprobadas</span>
                 </label>
+
                 <label className="toggleCheck">
                   <input
                     type="checkbox"
-                    checked={!!v.include_finalizadas}
-                    onChange={e => upd({ include_finalizadas: e.target.checked })}
+                    checked={v.estado_codigo === 'cancelada'}
+                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'cancelada' ? undefined : 'cancelada', estado_id: undefined })}
                   />
                   <div className="checkmark" />
-                  <span className="label">Mostrar aprobadas/canceladas</span>
+                  <span className="label">Ver sólo tareas canceladas</span>
                 </label>
               </div>
             </div>

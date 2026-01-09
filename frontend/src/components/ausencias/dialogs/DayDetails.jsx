@@ -1,21 +1,23 @@
 // src/components/ausencias/dialogs/DayDetails.jsx
 import { useMemo, useState } from 'react'
 import { ausenciasApi } from '../../../api/ausencias'
+import { useToast } from '../../toast/ToastProvider'
 import './Dialog.scss'
 
 const statusLabel = (s) =>
-  s==='aprobada' ? 'Aprobada' :
-  s==='pendiente' ? 'Pendiente' :
-  s==='denegada' ? 'Denegada' :
-  s==='cancelada' ? 'Cancelada' : s
+  s === 'aprobada' ? 'Aprobada' :
+    s === 'pendiente' ? 'Pendiente' :
+      s === 'denegada' ? 'Denegada' :
+        s === 'cancelada' ? 'Cancelada' : s
 
-const initials = (txt='')=>{
-  const p = (txt||'').trim().split(/\s+/).slice(0,2)
-  return p.map(w=>w[0]||'').join('').toUpperCase() || '—'
+const initials = (txt = '') => {
+  const p = (txt || '').trim().split(/\s+/).slice(0, 2)
+  return p.map(w => w[0] || '').join('').toUpperCase() || '—'
 }
 
-export default function DayDetails({ date, items=[], canApprove=false, federById={}, onUpdated, onNew }) {
+export default function DayDetails({ date, items = [], canApprove = false, federById = {}, onUpdated, onNew }) {
   const [rows, setRows] = useState(items)
+  const { success, error } = useToast?.() || {}
 
   const enhanced = useMemo(() => rows.map(r => {
     const f = federById?.[r.feder_id]
@@ -23,18 +25,32 @@ export default function DayDetails({ date, items=[], canApprove=false, federById
       ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`)
       : (r.feder_nombre || `Feder #${r.feder_id}`)
     const avatar = f?.avatar_url || f?.img_url || null
-    return { ...r, _name:name, _avatar:avatar }
+    return { ...r, _name: name, _avatar: avatar }
   }), [rows, federById])
 
   async function approve(id) {
-    const updated = await ausenciasApi.aus.approve(id)
-    setRows(rs => rs.map(r => r.id===id ? { ...r, ...updated } : r))
-    onUpdated?.(updated)
+    try {
+      const updated = await ausenciasApi.aus.approve(id)
+      setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+      onUpdated?.(updated)
+      success?.('Ausencia aprobada correctamente')
+    } catch (e) {
+      console.error(e)
+      const msg = e.response?.data?.error || e.message || 'Error al aprobar'
+      error?.(msg)
+    }
   }
+
   async function reject(id) {
-    const updated = await ausenciasApi.aus.reject(id, { denegado_motivo: null })
-    setRows(rs => rs.map(r => r.id===id ? { ...r, ...updated } : r))
-    onUpdated?.(updated)
+    try {
+      const updated = await ausenciasApi.aus.reject(id, { denegado_motivo: null })
+      setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+      onUpdated?.(updated)
+      success?.('Ausencia rechazada')
+    } catch (e) {
+      console.error(e)
+      error?.(e.response?.data?.error || e.message || 'Error al rechazar')
+    }
   }
 
   if (!rows.length) {
@@ -70,19 +86,19 @@ export default function DayDetails({ date, items=[], canApprove=false, federById
             <div className="right">
               <div className={`badge ${item.estado_codigo}`}>{statusLabel(item.estado_codigo)}</div>
               <div className="when">
-                {item.fecha_desde}{item.fecha_desde!==item.fecha_hasta ? ` → ${item.fecha_hasta}` : ''}
+                {item.fecha_desde}{item.fecha_desde !== item.fecha_hasta ? ` → ${item.fecha_hasta}` : ''}
               </div>
-              {item.unidad_codigo==='hora' && item.duracion_horas
+              {item.unidad_codigo === 'hora' && item.duracion_horas
                 ? <div className="qty">{Number(item.duracion_horas).toFixed(1)} h</div>
                 : null}
-              {item.unidad_codigo==='dia' && item.es_medio_dia
+              {item.unidad_codigo === 'dia' && item.es_medio_dia
                 ? <div className="qty">½ día</div>
                 : null}
 
-              {canApprove && item.estado_codigo==='pendiente' && (
+              {canApprove && item.estado_codigo === 'pendiente' && (
                 <div className="actions inline">
-                  <button className="fh-btn primary" onClick={()=>approve(item.id)}>Aprobar</button>
-                  <button className="fh-btn danger" onClick={()=>reject(item.id)}>Rechazar</button>
+                  <button className="fh-btn primary" onClick={() => approve(item.id)}>Aprobar</button>
+                  <button className="fh-btn danger" onClick={() => reject(item.id)}>Rechazar</button>
                 </div>
               )}
             </div>

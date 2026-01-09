@@ -8,7 +8,7 @@ import {
   commentCreateSchema, adjuntoCreateSchema, relacionCreateSchema,
   toggleBoolSchema,
   idParam, itemIdParam, federIdParam, etiquetaIdParam, adjIdParam, relIdParam, comentarioIdParam, composeQuerySchema, setLeaderBodySchema,
-  historialQuerySchema, boostManualSchema
+  historialQuerySchema, boostManualSchema, reactionToggleSchema
 } from '../validators.js';
 
 import {
@@ -22,7 +22,7 @@ import {
   svcSetFavorito, svcSetSeguidor, svcSetEstado, svcSetAprobacion, svcMoveKanban,
   svcGetCompose, svcSetResponsableLeader,
   svcGetDashboardMetrics, svcGetUrgentTasks,
-  svcGetHistorial, svcSetBoostManual
+  svcGetHistorial, svcSetBoostManual, svcToggleComentarioReaccion
 } from '../services/tareas.service.js';
 
 import { saveUploadedFiles, getFolderLink } from '../../../infra/storage/index.js';
@@ -508,6 +508,15 @@ export const postComentario = async (req, res, next) => {
     req.log?.error('tareas.postComentario:err', { err: e?.message, stack: e?.stack });
     next(e);
   }
+};
+
+export const postToggleReaccion = async (req, res, next) => {
+  try {
+    const { id, comentarioId } = req.params;
+    const body = reactionToggleSchema.parse(req.body);
+    await svcToggleComentarioReaccion(Number(comentarioId), req.user.id, body);
+    res.json(await svcListComentarios(Number(id), req.user));
+  } catch (e) { next(e); }
 };
 
 // ---- Adjuntos (a nivel tarea, no comentario)

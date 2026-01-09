@@ -1,69 +1,168 @@
-.reactBar{
-  display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;
+.reactBar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
 
-  .reacts{
-    display:flex; gap:6px; flex-wrap:wrap;
+  .reacts {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 
-    .chipWrap{ position:relative; display:inline-flex; align-items:center; }
-
-    .chip{
-      display:inline-flex; align-items:center; gap:6px;
-      padding: 2px 8px; border-radius: 12px;
-      border:1px solid rgba(0,0,0,.08);
-      background:rgba(0,0,0,.03); color:#0d1117; cursor:pointer;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease;
-      &:hover{ transform: translateY(-1px); }
-      &.mine{ border-color: rgba(0,150,255,.35); background: rgba(0,150,255,.08); }
-      .em{ font-size: 16px }
-      .n{ font-weight: 700; font-size: .9rem; }
+    .chipWrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
     }
 
-    .chipPopover{
-      position:absolute; left:0; bottom: calc(100% + 6px);
-      min-width: 220px; max-width: 280px; z-index: 40;
-      background:#fff; color:#0d1117;
-      border:1px solid rgba(0,0,0,.08); border-radius: 10px;
-      box-shadow: 0 12px 32px rgba(0,0,0,.12);
-      padding:8px 10px 10px;
-      header{ font-size:12px; font-weight:800; color:#334155; margin-bottom:6px }
-      ul{ list-style:none; padding:0; margin:0; display:grid; gap:4px; max-height: 240px; overflow:auto }
-      li{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px;
-        &:hover{ background: rgba(0,0,0,.04) }
-        .name{ font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, .06);
+      background: rgba(0, 0, 0, .02);
+      color: #0d1117;
+      cursor: pointer;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        border-color: rgba(0, 0, 0, .12);
+      }
+
+      &.mine {
+        border-color: rgba(59, 130, 246, 0.4);
+        background: rgba(59, 130, 246, 0.08);
+      }
+
+      .em {
+        font-size: 14px
+      }
+
+      .n {
+        font-weight: 700;
+        font-size: 0.8rem;
+      }
+    }
+
+    .chipPopover {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 6px);
+      min-width: 160px;
+      max-width: 240px;
+      z-index: 40;
+      background: #fff;
+      color: #0d1117;
+      border: 1px solid rgba(0, 0, 0, .08);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
+      padding: 6px 8px 8px;
+
+      header {
+        font-size: 11px;
+        font-weight: 800;
+        color: #475569;
+        margin-bottom: 4px;
+        opacity: 0.8;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 2px;
+        max-height: 200px;
+        overflow: auto
+      }
+
+      li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 6px;
+        border-radius: 6px;
+
+        &:hover {
+          background: rgba(0, 0, 0, .03)
+        }
+
+        .name {
+          font-size: 12px;
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap
+        }
       }
     }
   }
 
-  .reactBtn.more{
-    background: transparent; border: 1px dashed rgba(0,0,0,.14);
-    border-radius: 10px; padding:2px 6px; padding-top: 7px; cursor: pointer; color:#0d1117;
-    &:hover{ background: rgba(0,0,0,.05); }
+  .reactBtn.more {
+    background: transparent;
+    border: 1px dashed rgba(0, 0, 0, .12);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    color: #212223;
+    transition: all 0.2s ease;
+
+    svg {
+      font-size: 15px;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, .04);
+      color: #1e293b;
+      border-color: rgba(0, 0, 0, .25);
+    }
   }
 
-  .pickerWrap{ position:relative; }
+  .pickerWrap {
+    position: relative;
+  }
 }
 
 /* ===== Portal (por encima y centrado SOLO con CSS) ===== */
-.emojiPortalBackdrop{
-  position: fixed; inset: 0; z-index: 9998;
-  background: transparent; /* clic fuera para cerrar */
+.emojiPortalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: transparent;
+  /* clic fuera para cerrar */
 }
 
-.emojiPortalLayer{
-  position: fixed; inset: 0; z-index: 9999;
-  display: grid; place-items: center; /* ♥ centro real */
-  padding: 12px; /* margen con bordes de viewport */
-  top: 33rem; left: 10rem;
+.emojiPortalLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  /* ♥ centro real */
+  padding: 12px;
+  /* margen con bordes de viewport */
+  top: 33rem;
+  left: 10rem;
 }
 
-.emojiPanel{
+.emojiPanel {
   background: #ffffff;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0, 0, 0, .08);
   border-radius: 12px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.18);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .18);
   max-width: min(92vw, 520px);
   max-height: min(86vh, 680px);
-  overflow: auto; /* si el picker es más alto, scrollea */
+  overflow: auto;
+  /* si el picker es más alto, scrollea */
 }
 
 /* (opcional) si tu EmojiPicker necesita un contenedor con padding: */

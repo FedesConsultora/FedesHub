@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import useTasksBoard from "../../hooks/useTasksBoard";
 import { tareasApi } from "../../api/tareas";
-import TareasFilters from "../../components/tasks/TareasFilters";
+import TareasFilters, { TareasActiveChips } from "../../components/tasks/TareasFilters";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import TaskList from "../../components/tasks/TaskList";
 import TaskMonthlyView from "../../components/tasks/TaskMonthlyView";
@@ -55,7 +55,13 @@ export default function TasksPage() {
     tc_estados_pub: []
   });
   useEffect(() => {
-    tareasApi.catalog().then(setCatalog).catch(console.error);
+    tareasApi.catalog().then(c => {
+      // Mapear nombre de estado "Revisión" -> "En Revisión" solo en el front
+      if (c.estados) {
+        c.estados = c.estados.map(s => s.nombre === 'Revisión' ? { ...s, nombre: 'En Revisión' } : s);
+      }
+      setCatalog(c);
+    }).catch(console.error);
   }, []);
 
   // filtros (compat con backend)
@@ -63,6 +69,7 @@ export default function TasksPage() {
     q: undefined,
     cliente_id: undefined,
     estado_id: undefined,
+    estado_codigo: undefined,
     impacto_id: undefined,
     urgencia_id: undefined,
     vencimiento_from: undefined,
@@ -88,6 +95,7 @@ export default function TasksPage() {
       "q",
       "cliente_id",
       "estado_id",
+      "estado_codigo",
       "impacto_id",
       "urgencia_id",
       "vencimiento_from",
@@ -150,6 +158,7 @@ export default function TasksPage() {
       "q",
       "cliente_id",
       "estado_id",
+      "estado_codigo",
       "impacto_id",
       "urgencia_id",
       "vencimiento_from",
@@ -203,7 +212,7 @@ export default function TasksPage() {
         id: t.id,
         titulo: t.titulo,
         cliente_nombre: t.cliente_nombre,
-        estado_nombre: t.estado_nombre,
+        estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
         estado_id: t.estado_id,
         estado_codigo: t.estado_codigo,
         vencimiento: t.vencimiento,
@@ -258,18 +267,22 @@ export default function TasksPage() {
 
   return (
     <div className="TareasListPage">
-      {/* Toolbar (igual a Clientes) */}
       <header className="toolbar card">
         <div className="left">
           <h1>Tareas</h1>
           <div className="counter">{countTxt}</div>
         </div>
 
-        <div
-          className="right"
-          style={{ display: "flex", gap: 10, alignItems: "center" }}
-        >
+        <div className="center">
+          <TareasFilters
+            value={filters}
+            catalog={catalog}
+            onChange={setFilters}
+            hideChips={true}
+          />
+        </div>
 
+        <div className="right">
           <div className="segmented" role="tablist" aria-label="Vista">
             <button
               type="button"
@@ -335,16 +348,12 @@ export default function TasksPage() {
         </div>
       </header>
 
-      {/* Filtros (igual a Clientes, sin tarjeta) */}
-      <section className="filters card">
-        <TareasFilters
-          value={filters}
-          catalog={catalog}
-          onChange={setFilters}
-        />
-      </section>
+      <TareasActiveChips
+        value={filters}
+        catalog={catalog}
+        onChange={setFilters}
+      />
 
-      {/* Resultados */}
       <section className="results" data-view={view}>
         {view === "kanban" ? (
           <KanbanBoard
@@ -403,7 +412,6 @@ export default function TasksPage() {
           />
         </ModalPanel>
       )}
-
     </div>
   );
 }
