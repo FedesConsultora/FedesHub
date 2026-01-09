@@ -82,34 +82,38 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
     const root = rootRef.current
     if (!root) return
 
-    // Check if we've already scrolled for this canal
+    // Autoscroll logic for updates
     if (hasScrolledToLastRead.current.has(canal_id)) {
-      // For subsequent updates, just scroll to bottom
-      root.scrollTop = root.scrollHeight
+      const nearBottom = (root.scrollHeight - root.scrollTop - root.clientHeight) < 150
+      if (nearBottom) {
+        // Use requestAnimationFrame or timeout to wait for render
+        setTimeout(() => {
+          root.scrollTop = root.scrollHeight
+        }, 50)
+      }
       return
     }
 
-    // Find my member info to get last_read_msg_id
+    // First time loading this canal: find last read or go to bottom
     const myMember = members?.find(m => Number(m.user_id) === Number(my_user_id))
     const lastReadMsgId = Number(myMember?.last_read_msg_id ?? 0)
 
     if (lastReadMsgId > 0) {
-      // Try to find the last read message element
       const lastReadEl = document.getElementById(`msg-${lastReadMsgId}`)
       if (lastReadEl) {
-        // Scroll to the last read message
         setTimeout(() => {
           lastReadEl.scrollIntoView({ behavior: 'instant', block: 'start' })
-          // Mark that we've scrolled for this canal
           hasScrolledToLastRead.current.add(canal_id)
         }, 100)
         return
       }
     }
 
-    // If no last read message or not found, scroll to bottom
-    root.scrollTop = root.scrollHeight
-    hasScrolledToLastRead.current.add(canal_id)
+    // Fallback: Scroll to bottom with a slight delay to ensure scrollHeight is ready
+    setTimeout(() => {
+      root.scrollTop = root.scrollHeight
+      hasScrolledToLastRead.current.add(canal_id)
+    }, 100)
   }, [rows, canal_id, my_user_id, members])
 
   // Clear the tracking when canal changes
