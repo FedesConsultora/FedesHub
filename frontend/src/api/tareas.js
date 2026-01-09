@@ -75,6 +75,7 @@ export const tareasApi = {
   // Comentarios, Adjuntos, Relaciones
   getComentarios: (id) => api.get(`${base}/${id}/comentarios`).then(r => r.data),
   postComentario: (id, body) => api.post(`${base}/${id}/comentarios`, body).then(r => r.data),
+  reactComentario: (id, comentarioId, body) => api.post(`${base}/${id}/comentarios/${comentarioId}/react`, body).then(r => r.data),
   getAdjuntos: (id) => api.get(`${base}/${id}/adjuntos`).then(r => r.data),
   postAdjunto: (id, meta) => api.post(`${base}/${id}/adjuntos`, meta).then(r => r.data),
   deleteAdjunto: (adjId) => api.delete(`${base}/adjuntos/${adjId}`).then(r => r.data),

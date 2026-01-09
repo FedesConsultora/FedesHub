@@ -3,8 +3,10 @@ import { FaReply } from 'react-icons/fa'
 import ReplyPreview from './ReplyPreview'
 import AttachList from './AttachList'
 
+import CommentReactionBar from './CommentReactionBar'
+
 export default function CommentItem({
-  c, author, isMine, timeAgo, fmtDateTime, onReply, renderContenido, renderReplyExcerpt
+  c, author, feders, isMine, timeAgo, fmtDateTime, onReply, onToggleReaction, renderContenido, renderReplyExcerpt
 }) {
   // debug opcional
   // console.log({ isMine, serverFlag: c.is_mine, author, c })
@@ -30,6 +32,12 @@ export default function CommentItem({
       <div className="txt" dangerouslySetInnerHTML={renderContenido(c.contenido, c.menciones)} />
 
       {!!(c.adjuntos?.length) && <AttachList items={c.adjuntos} />}
+
+      <CommentReactionBar
+        c={c}
+        feders={feders}
+        onToggle={(emoji, on) => onToggleReaction(c.id, emoji, on)}
+      />
     </div>
   )
 }

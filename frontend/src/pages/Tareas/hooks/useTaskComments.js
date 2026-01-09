@@ -86,5 +86,14 @@ export function useTaskComments(taskId, cat) {
     await load();
   }, [taskId, cat, load]);
 
-  return { comentarios, loading, add, reload: load };
+  const toggleReaction = useCallback(async (comentarioId, emoji, on = true) => {
+    try {
+      const updated = await tareasApi.reactComentario(taskId, comentarioId, { emoji, on });
+      setComentarios(updated);
+    } catch (err) {
+      console.error('Error toggling reaction:', err);
+    }
+  }, [taskId]);
+
+  return { comentarios, loading, add, toggleReaction, reload: load };
 }

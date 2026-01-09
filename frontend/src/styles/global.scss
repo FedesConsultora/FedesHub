@@ -1,10 +1,19 @@
 // ── /src/styles/global.scss
 @use './variables' as *;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+}
 
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
 
 body {
   margin: 0;
@@ -16,36 +25,126 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-code, pre { font-family: $font-mono; }
-a { color: inherit; text-decoration: none; }
-button { cursor: pointer; }
+code,
+pre {
+  font-family: $font-mono;
+}
 
-.card{
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.card {
   background: $fh-card;
-  border: 1px solid rgba(0,0,0,.18);
+  border: 1px solid rgba(0, 0, 0, .18);
   border-radius: 16px;
   padding: 12px;
 }
-.cardHeader{ display:flex; align-items:center; justify-content:space-between; }
 
-.muted{ color: $fh-muted; }
-.mt8{ margin-top: 8px; }
-.mt16{ margin-top: 16px; }
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.muted {
+  color: $fh-muted;
+}
+
+.mt8 {
+  margin-top: 8px;
+}
+
+.mt16 {
+  margin-top: 16px;
+}
 
 /* Tabla base */
-.fh-table{ width:100%; border-collapse:collapse; }
-.fh-table th, .fh-table td{ padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; }
-.fh-table thead th{ color: $fh-muted; font-size:.9rem; }
+.fh-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fh-table th,
+.fh-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  text-align: left;
+}
+
+.fh-table thead th {
+  color: $fh-muted;
+  font-size: .9rem;
+}
 
 /* Segmentado simple */
-.segmented{ background:rgba(255,255,255,.06); padding:4px; border-radius:10px; display:inline-flex; gap:4px; }
-.segmented button{ border:0; background:transparent; padding:6px 12px; border-radius:8px; cursor:pointer; color:$fh-muted }
-.segmented button.active{ background:rgba(255,255,255,.9); color:#0b1118; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+.segmented {
+  background: rgba(255, 255, 255, .06);
+  padding: 4px;
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 4px;
+}
 
-input{
-      width:100%; background: none !important;  color:$fh-text; border:0; outline:none; padding:0; height:22px;
-      font-size:.98rem;
+.segmented button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: $fh-muted
+}
 
-      &::placeholder { color: rgba(255,255,255,.4) }
-      &:focus { outline:none }
-    }
+.segmented button.active {
+  background: rgba(255, 255, 255, .9);
+  color: #0b1118;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+}
+
+input {
+  width: 100%;
+  background: none !important;
+  color: $fh-text;
+  border: 0;
+  outline: none;
+  padding: 0;
+  height: 22px;
+  font-size: .98rem;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, .4)
+  }
+
+  &:focus {
+    outline: none
+  }
+}
+
+/* Scrollbar Global Minimalista */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

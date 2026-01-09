@@ -219,6 +219,15 @@ export const setupAssociations = (m) => {
     if (m.Feder) m.TareaComentarioMencion.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'mencionado' });
   });
 
+  link(m.TareaComentarioReaccion && m.TareaComentario, 'TareaComentarioReaccion ↔ TareaComentario', () => {
+    m.TareaComentarioReaccion.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });
+    m.TareaComentario.hasMany(m.TareaComentarioReaccion, { foreignKey: 'comentario_id', as: 'reacciones' });
+  });
+
+  link(m.TareaComentarioReaccion && m.User, 'TareaComentarioReaccion → User (user_id)', () =>
+    m.TareaComentarioReaccion.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+
   link(m.TareaAdjunto, 'TareaAdjunto → (tarea, comentario, feder)', () => {
     if (m.Tarea) m.TareaAdjunto.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
     if (m.TareaComentario) m.TareaAdjunto.belongsTo(m.TareaComentario, { foreignKey: 'comentario_id', as: 'comentario' });

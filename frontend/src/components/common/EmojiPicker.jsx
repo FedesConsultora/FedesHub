@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import EmojiPickerLib from 'emoji-picker-react'
 import './EmojiPicker.scss'
 
-export default function EmojiPicker({ onSelect, theme='dark', onClickOutside }) {
+export default function EmojiPicker({ onSelect, theme = 'dark', onClickOutside, width = '350px', height = '450px' }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -16,9 +16,12 @@ export default function EmojiPicker({ onSelect, theme='dark', onClickOutside }) 
     <div ref={ref} className="fh-emojiPicker-pop">
       <EmojiPickerLib
         theme={theme}
+        width={width}
+        height={height}
         lazyLoadEmojis
         previewConfig={{ showPreview: false }}
         searchDisabled={false}
+        searchPlaceholder="    Buscar..."
         skinTonesDisabled={false}
         suggestedEmojisMode="recent"
         onEmojiClick={(e) => onSelect?.(e?.emoji)}

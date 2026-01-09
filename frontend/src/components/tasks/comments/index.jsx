@@ -34,7 +34,7 @@ const groupByDay = (arr = []) => {
 const toNum = v => (v === null || v === undefined || v === '' ? null : Number(v))
 
 export default function TaskComments({ taskId, catalog }) {
-  const { comentarios, loading, add } = useTaskComments(taskId, catalog)
+  const { comentarios, loading, add, toggleReaction } = useTaskComments(taskId, catalog)
   const [replyTo, setReplyTo] = useState(null)
   const composerRef = useRef(null)
   const listRef = useRef(null)
@@ -191,7 +191,7 @@ export default function TaskComments({ taskId, catalog }) {
     >
       <div className="cardHeader">
         <div className="header-info">
-          <span className="title">Conversación</span>
+          <span className="title">Comentarios</span>
           {!loading && (
             <span className="count-badge">
               {sorted?.length || 0}
@@ -231,10 +231,12 @@ export default function TaskComments({ taskId, catalog }) {
                   <CommentItem
                     c={c}
                     author={author}
+                    feders={feders}
                     isMine={isMine}
                     timeAgo={timeAgo}
                     fmtDateTime={fmtDateTime}
                     onReply={() => handleReply(c)}
+                    onToggleReaction={toggleReaction}
                     renderContenido={renderContenido}
                     renderReplyExcerpt={renderReplyExcerpt}
                   />
