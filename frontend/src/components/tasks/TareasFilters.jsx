@@ -35,6 +35,10 @@ export default function TareasFilters({ value, catalog, onChange }) {
       const estado = catalog.estados?.find(s => Number(s.id) === estadoId);
       chips.push({ key: 'estado_id', label: estado?.nombre || `Estado #${estadoId}` });
     }
+    if (v.estado_codigo) {
+      const estado = catalog.estados?.find(s => s.codigo === v.estado_codigo);
+      chips.push({ key: 'estado_codigo', label: estado?.nombre || v.estado_codigo });
+    }
     if (v.impacto_id) {
       const impactoId = Number(v.impacto_id);
       const impacto = catalog.impactos?.find(i => Number(i.id) === impactoId);
@@ -92,6 +96,7 @@ export default function TareasFilters({ value, catalog, onChange }) {
     q: '',
     cliente_id: undefined,
     estado_id: undefined,
+    estado_codigo: undefined,
     impacto_id: undefined,
     urgencia_id: undefined,
     vencimiento_from: '',
@@ -148,18 +153,6 @@ export default function TareasFilters({ value, catalog, onChange }) {
             <FaUser className="icon" />
             <span>Mis tareas</span>
           </button>
-          
-          {/*
-          <button
-            type="button"
-            className={`toggleBtn ${v.include_archivadas ? 'active' : ''}`}
-            onClick={() => upd({ include_archivadas: !v.include_archivadas })}
-            title="Incluir tareas archivadas"
-          >
-            <FaArchive className="icon" />
-            <span>Archivadas</span>
-          </button>
-          */}
 
         </div>
 
@@ -272,6 +265,28 @@ export default function TareasFilters({ value, catalog, onChange }) {
                   </select>
                 </div>
               </Field>
+
+              <div className="popCheckboxes" style={{ gridColumn: 'span 2' }}>
+                <label className="toggleCheck">
+                  <input
+                    type="checkbox"
+                    checked={v.estado_codigo === 'aprobada'}
+                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'aprobada' ? undefined : 'aprobada', estado_id: undefined })}
+                  />
+                  <div className="checkmark" />
+                  <span className="label">Ver sólo tareas aprobadas</span>
+                </label>
+
+                <label className="toggleCheck">
+                  <input
+                    type="checkbox"
+                    checked={v.estado_codigo === 'cancelada'}
+                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'cancelada' ? undefined : 'cancelada', estado_id: undefined })}
+                  />
+                  <div className="checkmark" />
+                  <span className="label">Ver sólo tareas canceladas</span>
+                </label>
+              </div>
             </div>
           </div>
 

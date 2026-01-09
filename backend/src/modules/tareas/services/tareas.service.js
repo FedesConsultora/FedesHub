@@ -212,6 +212,11 @@ const buildListSQL = (params = {}, currentUser) => {
   addIn('t.cliente_id', cliente_ids, 'cids_');
   addIn('t.estado_id', estado_ids, 'eids_');
 
+  // Si no se especifica estado, excluir por defecto aprobadas y canceladas
+  if (!estado_id && !estado_codigo && !estado_ids?.length) {
+    where.push(`te.codigo NOT IN ('aprobada', 'cancelada')`);
+  }
+
   if (etiqueta_ids?.length) {
     const keys = etiqueta_ids.map((_, i) => `et${i}`);
     where.push(`EXISTS (SELECT 1 FROM "TareaEtiquetaAsig" xe WHERE xe.tarea_id=t.id AND xe.etiqueta_id IN (${keys.map(k => ':' + k).join(',')}))`);
