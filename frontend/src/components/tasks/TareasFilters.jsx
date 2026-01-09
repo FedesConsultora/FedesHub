@@ -278,7 +278,7 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
       </div>
 
       {/* CHIPS DE FILTROS ACTIVOS */}
-      {activeChips.length > 0 && (
+      {!hideChips && activeChips.length > 0 && (
         <div className="activeFiltersChips">
           {activeChips.map(chip => (
             <div

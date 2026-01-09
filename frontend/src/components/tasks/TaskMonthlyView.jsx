@@ -17,7 +17,9 @@ import {
     subWeeks
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiClock, FiPlus, FiX } from "react-icons/fi";
+import CreateTaskModal from "./CreateTaskModal";
+import "./TaskMonthlyView.scss";
 
 
 const STATUS_COLORS = {
@@ -37,8 +39,6 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
         if (filters?.vencimiento_from) return parseISO(filters.vencimiento_from);
         return startOfToday();
     });
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(null);
 
     // Al cambiar la fecha o el modo, actualizamos los filtros del padre
     useEffect(() => {
@@ -176,11 +176,6 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
                     const dayTasks = tasksByDay[dateKey] || [];
                     const isCurrentMonth = isSameMonth(day, currentDate);
 
-                    const handleCreateTask = (e) => {
-                        e.stopPropagation();
-                        setSelectedDate(dateKey);
-                        setShowCreateModal(true);
-                    };
 
                     return (
                         <div
@@ -207,13 +202,6 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
                                 </button>
                             </div>
 
-                            <button
-                                className="createTaskBtn"
-                                onClick={handleCreateTask}
-
-                            >
-                                Crear tarea  <FiPlus />
-                            </button>
 
                             <div className="taskList">
                                 {dayTasks.slice(0, 2).map(task => {

@@ -246,8 +246,6 @@
                 }
             }
 
-            /* Removed dayCell:hover highlight */
-
             .dayNumber {
                 width: 22px;
                 height: 22px;
@@ -299,6 +297,8 @@
                 opacity: 1;
             }
 
+
+
             .taskList {
                 display: flex;
                 flex-direction: column;
@@ -315,7 +315,7 @@
                     background: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 6px;
-                    padding: 4px 10px; // Un poco más de padding lateral
+                    padding: 4px 10px;
                     font-size: 0.7rem;
                     color: #eee;
                     cursor: pointer;
@@ -329,29 +329,8 @@
                     &:hover {
                         background: rgba(255, 255, 255, 0.12);
                         border-color: rgba(255, 255, 255, 0.25);
-
                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
                         color: #fff;
-                    }
-
-                    &.status-nueva {
-                        border-left-color: #3b82f6;
-                    }
-
-                    &.status-en_progreso {
-                        border-left-color: #f59e0b;
-                    }
-
-                    &.status-pendiente {
-                        border-left-color: #ef4444;
-                    }
-
-                    &.status-revisar {
-                        border-left-color: #8b5cf6;
-                    }
-
-                    &.status-aprobada {
-                        border-left-color: #10b981;
                     }
 
                     &.is-postergado {
@@ -363,11 +342,24 @@
                     }
                 }
 
-                .moreTasks {
-                    font-size: 0.7rem;
-                    color: v.$fh-muted;
-                    padding-left: 4px;
-                    font-weight: 600;
+                .moreTasksBtn {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 0.75rem;
+                    padding: 4px 8px;
+                    border-radius: 8px;
+                    width: 100%;
+                    cursor: pointer;
+                    text-align: center;
+                    font-weight: 700;
+                    margin-top: 2px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                        color: #fff;
+                    }
                 }
             }
         }
@@ -506,26 +498,6 @@
                 margin-top: 2px;
             }
         }
-    }
-}
-
-.moreTasksBtn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 8px;
-    width: 100%;
-    cursor: pointer;
-    text-align: center;
-    font-weight: 700;
-    margin-top: 2px;
-    transition: all 0.2s;
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
     }
 }
 
