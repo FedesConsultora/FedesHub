@@ -189,9 +189,10 @@
                 }
             }
 
-            &:hover {
-                background: rgba(255, 255, 255, 0.03);
-            }
+            // Remover hover de la celda del día
+            // &:hover {
+            //     background: rgba(255, 255, 255, 0.03);
+            // }
 
             .dayNumber {
                 width: 22px;
@@ -223,20 +224,23 @@
                     background: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 6px;
-                    padding: 4px 6px;
+                    padding: 4px 10px; // Un poco más de padding lateral
                     font-size: 0.7rem;
                     color: #eee;
                     cursor: pointer;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
-                    transition: all 0.2s;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     border-left-width: 3px;
                     flex-shrink: 0;
 
                     &:hover {
-                        background: rgba(255, 255, 255, 0.1);
-                        transform: translateX(2px);
+                        background: rgba(255, 255, 255, 0.12);
+                        border-color: rgba(255, 255, 255, 0.25);
+
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                        color: #fff;
                     }
 
                     &.status-nueva {
