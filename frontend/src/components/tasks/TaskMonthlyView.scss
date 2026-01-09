@@ -129,6 +129,15 @@
                     font-size: 1.1rem;
                 }
 
+                .createTaskBtn {
+                    font-size: 0.8rem;
+                    padding: 6px 10px;
+
+                    svg {
+                        font-size: 0.85rem;
+                    }
+                }
+
                 .taskItem {
                     padding: 8px 12px;
                     font-size: 0.85rem;
@@ -206,6 +215,42 @@
                 margin-bottom: 2px;
                 transition: all 0.2s;
                 flex-shrink: 0;
+            }
+
+            .createTaskBtn {
+                position: absolute;
+                top: 6px;
+                right: 10px;
+                opacity: 0;
+                visibility: hidden;
+                background: transparent;
+                border: none;
+                color: v.$fh-primary;
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+                white-space: nowrap;
+                z-index: 2;
+
+                svg {
+                    font-size: 0.75rem;
+                }
+
+                &:hover {
+                    color: lighten(v.$fh-primary, 15%);
+                }
+            }
+
+            &:hover .createTaskBtn {
+                opacity: 1;
+                visibility: visible;
             }
 
             .taskList {
