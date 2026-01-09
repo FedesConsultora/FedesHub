@@ -5,10 +5,11 @@
   /* para el botón flotante */
   flex: 1 1 auto;
   overflow: auto;
-  padding: 14px 16px;
+  padding: 6px 10px;
+  padding-bottom: 0 !important;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
   /* clave para que scrollee dentro del panel */
 
@@ -22,6 +23,10 @@
   .dayGroup {
     display: grid;
     gap: 10px;
+
+    >.bubble:last-child {
+      margin-bottom: -8px;
+    }
   }
 
   .daySep {
@@ -54,6 +59,11 @@
 
       &.mine {
         background: #fdfaf0;
+      }
+
+      .bubble:last-child {
+        margin-bottom: 0 !important;
+        padding-bottom: 2px;
       }
     }
 
