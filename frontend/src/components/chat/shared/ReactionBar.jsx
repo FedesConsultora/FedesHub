@@ -12,8 +12,9 @@ import './ReactionBar.scss'
  * - canal_id: number
  * - mensaje: { id, reacciones?: [{ emoji, user_id, created_at? }] }
  * - members: array de miembros del canal (para resolver nombres)
+ * - showAdd: boolean (opcional, default true) para mostrar el botón de agregar reacción
  */
-export default function ReactionBar({ canal_id, mensaje, members = [] }) {
+export default function ReactionBar({ canal_id, mensaje, members = [], showAdd = true, isMine = false }) {
   const toggle = useToggleReaction()
   const { user } = useAuthCtx()
   const myUid = Number(user?.id ?? 0)
@@ -29,13 +30,13 @@ export default function ReactionBar({ canal_id, mensaje, members = [] }) {
     const byEmoji = new Map()
     for (const r of (mensaje.reacciones || [])) {
       const key = r.emoji
-      const obj = byEmoji.get(key) || { emoji:key, count:0, mine:false, users:[] }
+      const obj = byEmoji.get(key) || { emoji: key, count: 0, mine: false, users: [] }
       obj.count += 1
       if (Number(r.user_id) === myUid) obj.mine = true
       obj.users.push(memberByUid.get(Number(r.user_id)) || { user_id: r.user_id })
       byEmoji.set(key, obj)
     }
-    return [...byEmoji.values()].sort((a,b)=> (b.count - a.count) || String(a.emoji).localeCompare(String(b.emoji)))
+    return [...byEmoji.values()].sort((a, b) => (b.count - a.count) || String(a.emoji).localeCompare(String(b.emoji)))
   }, [mensaje.reacciones, myUid, memberByUid])
 
   const mutate = (emoji, on) => toggle.mutate({ mensaje_id: mensaje.id, emoji, on, canal_id })
@@ -45,7 +46,7 @@ export default function ReactionBar({ canal_id, mensaje, members = [] }) {
   const pickerBtnRef = useRef(null)
 
   return (
-    <div className="reactBar">
+    <div className={`reactBar ${isMine ? 'is-mine' : ''}`}>
       {!!reacts.length && (
         <div className="reacts">
           {reacts.map(r => (
@@ -61,44 +62,46 @@ export default function ReactionBar({ canal_id, mensaje, members = [] }) {
         </div>
       )}
 
-      <div className="pickerWrap">
-        <button
-          ref={pickerBtnRef}
-          type="button"
-          className="reactBtn more"
-          onClick={() => setPickerOpen(v => !v)}
-          title="Más emojis"
-          aria-expanded={pickerOpen}
-        >
-          <FiSmile/>
-        </button>
+      {showAdd && (
+        <div className="pickerWrap">
+          <button
+            ref={pickerBtnRef}
+            type="button"
+            className="reactBtn more"
+            onClick={() => setPickerOpen(v => !v)}
+            title="Más emojis"
+            aria-expanded={pickerOpen}
+          >
+            <FiSmile />
+          </button>
 
-        {pickerOpen && (
-          <CenteredPicker onClose={() => setPickerOpen(false)}>
-            <EmojiPicker
-              onSelect={(emoji) => {
-                setPickerOpen(false)
-                const cur = reacts.find(r => r.emoji === emoji)
-                mutate(emoji, cur ? !cur.mine : true)
-              }}
-              onClickOutside={() => setPickerOpen(false)}
-            />
-          </CenteredPicker>
-        )}
-      </div>
+          {pickerOpen && (
+            <CenteredPicker onClose={() => setPickerOpen(false)}>
+              <EmojiPicker
+                onSelect={(emoji) => {
+                  setPickerOpen(false)
+                  const cur = reacts.find(r => r.emoji === emoji)
+                  mutate(emoji, cur ? !cur.mine : true)
+                }}
+                onClickOutside={() => setPickerOpen(false)}
+              />
+            </CenteredPicker>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 /* ---------------- Hover list (popover por hover) ---------------- */
-function ChipWithHoverList({ emoji, count, mine, users=[], onToggleMine }) {
+function ChipWithHoverList({ emoji, count, mine, users = [], onToggleMine }) {
   const [hover, setHover] = useState(false)
   const leaveTimer = useRef(null)
 
   const open = () => { clearTimeout(leaveTimer.current); setHover(true) }
-  const close = () => { leaveTimer.current = setTimeout(()=> setHover(false), 120) }
+  const close = () => { leaveTimer.current = setTimeout(() => setHover(false), 120) }
 
-  useEffect(()=> () => clearTimeout(leaveTimer.current), [])
+  useEffect(() => () => clearTimeout(leaveTimer.current), [])
 
   return (
     <div className="chipWrap" onMouseEnter={open} onMouseLeave={close}>
@@ -114,7 +117,7 @@ function ChipWithHoverList({ emoji, count, mine, users=[], onToggleMine }) {
 
       {hover && (
         <div className="chipPopover" role="dialog" aria-label="Reaccionaron">
-          <header>{emoji} • {count} {count===1?'reacción':'reacciones'}</header>
+          <header>{emoji} • {count} {count === 1 ? 'reacción' : 'reacciones'}</header>
           <ul>
             {users.map(u => (
               <li key={u.user_id}>
@@ -129,7 +132,7 @@ function ChipWithHoverList({ emoji, count, mine, users=[], onToggleMine }) {
 }
 
 /* ---------------- Picker centrado por CSS (portal) ---------------- */
-function CenteredPicker({ onClose, children }) {
+export function CenteredPicker({ onClose, children }) {
   return createPortal(
     <>
       <div className="emojiPortalBackdrop" onClick={onClose} />

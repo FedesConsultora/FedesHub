@@ -513,6 +513,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const isFavorita = !!(task.is_favorita || task.favorita)
 
   const fmtDate = (d) => { try { return new Date(d).toLocaleDateString() } catch { return '' } }
+  const fmtDateTime = (d) => {
+    if (!d) return ''
+    try {
+      const date = new Date(d)
+      return date.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch { return '' }
+  }
 
   // === vencimiento en línea (con aprobación si aplica) ===
   const handleDueChange = async (inputValue) => {
@@ -583,6 +590,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
       {/* === Header sticky === */}
       <div className="taskHeader">
+
         <div className="titleWrap">
           {/* Título con truncamiento visual */}
           <div className="titleSection" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

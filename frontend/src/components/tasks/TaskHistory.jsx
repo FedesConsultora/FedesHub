@@ -4,6 +4,7 @@ import GlobalLoader from '../loader/GlobalLoader.jsx'
 import './task-history.scss'
 
 const TIPO_CAMBIO_LABELS = {
+    creacion: 'Creación',
     estado: 'Cambios de estado',
     cliente: 'Cambios de cliente',
     deadline: 'Cambios de deadline',

@@ -9,7 +9,7 @@ import AttachmentIcon from './AttachmentIcon'
 import AudioRecorderModal from './AudioRecorderModal'
 import { ChatActionCtx } from './context'
 import MentionInput from './MentionInput'
-import { displayName } from '../../../utils/people'
+import { fullName, displayName, pickAvatar, getEmail } from '../../../utils/people'
 import './Composer.scss'
 
 /* ---------------- Helpers menciones ---------------- */
@@ -151,7 +151,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const onDragOver = (e) => { e.preventDefault(); if (disabled) return }
   const onDrop = (e) => { e.preventDefault(); if (disabled) return; const arr = Array.from(e.dataTransfer?.files || []); if (arr.length) setFiles(prev => prev.concat(arr)) }
 
-  const replyAuthor = displayName(replyTo?.autor) || 'alguien'
+  const replyAuthor = fullName(replyTo) || displayName(replyTo) || 'alguien'
 
   return (
     <form
