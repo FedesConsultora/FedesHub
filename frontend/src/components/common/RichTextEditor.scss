@@ -3,6 +3,8 @@
 
 .richTextEditor {
     position: relative;
+    max-width: 100%;
+    width: 100%;
 
     .editor-container {
         background: rgba(255, 255, 255, 0.02);
@@ -10,6 +12,11 @@
         border-radius: 8px;
         color: $fh-text;
         transition: border-color 0.2s ease;
+        max-width: 100%;
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
 
         &:focus-within {
             border-color: $fh-primary;
@@ -18,15 +25,18 @@
     }
 
     .toolbar {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 2px;
-        padding: 4px 6px;
-        background: rgba(255, 255, 255, 0.04);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px 8px 0 0;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 2px !important;
+        padding: 4px 6px !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 8px 8px 0 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         min-height: 40px;
+        overflow: visible !important;
 
         .tb {
             background: transparent;

@@ -63,46 +63,48 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
                             </span>
                         </div>
 
-                        {/* FILA DE DÍAS DE LA SEMANA */}
-                        <div className="tm-weekdays">
-                            {weekdays.map((wd, idx) => (
-                                <div key={idx} className="tm-weekday">{wd}</div>
-                            ))}
-                        </div>
+                        <div className="tm-calendar-wrapper">
+                            {/* FILA DE DÍAS DE LA SEMANA */}
+                            <div className="tm-weekdays">
+                                {weekdays.map((wd, idx) => (
+                                    <div key={idx} className="tm-weekday">{wd}</div>
+                                ))}
+                            </div>
 
-                        {/* CALENDARIO */}
-                        <div className="tm-calendar">
-                            {calendarCells.map((d, idx) => {
-                                if (!d) return <div key={`empty-${idx}`} className="tm-day empty"></div>
+                            {/* CALENDARIO */}
+                            <div className="tm-calendar">
+                                {calendarCells.map((d, idx) => {
+                                    if (!d) return <div key={`empty-${idx}`} className="tm-day empty"></div>
 
-                                const key = yyyyMmDd(d)
-                                const minutes = f.days[key]?.minutes ?? 0
-                                return (
-                                    <div
-                                        key={key}
-                                        className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
-                                        title={'Ver detalle diario'}
-                                        onClick={() => onNavigate(key, 'day')}
-                                    >
-                                        <span className="day-num">{d.getDate()}</span>
-                                        {minutes > 0 && (
-                                            <div className="day-info">
-                                                <span className="day-hours">{formatDuration(minutes)}</span>
-                                                {f.days[key]?.registros?.some(r => r.cierre_motivo_codigo === 'corte_automatico') && (
-                                                    <TbClockStop
-                                                        className="auto-close-icon"
-                                                        title="Cerrado automáticamente por el sistema"
-                                                        style={{ cursor: 'pointer' }}
-                                                    />
-                                                )}
-                                                {f.days[key]?.registros?.[0]?.modalidad_codigo && !f.days[key].registros[0].check_out_at && (
-                                                    <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                    const key = yyyyMmDd(d)
+                                    const minutes = f.days[key]?.minutes ?? 0
+                                    return (
+                                        <div
+                                            key={key}
+                                            className={`tm-day ${minutes ? 'has-data' : 'empty'} clickable`}
+                                            title={'Ver detalle diario'}
+                                            onClick={() => onNavigate(key, 'day')}
+                                        >
+                                            <span className="day-num">{d.getDate()}</span>
+                                            {minutes > 0 && (
+                                                <div className="day-info">
+                                                    <span className="day-hours">{formatDuration(minutes)}</span>
+                                                    {f.days[key]?.registros?.some(r => r.cierre_motivo_codigo === 'corte_automatico') && (
+                                                        <TbClockStop
+                                                            className="auto-close-icon"
+                                                            title="Cerrado automáticamente por el sistema"
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    )}
+                                                    {f.days[key]?.registros?.[0]?.modalidad_codigo && !f.days[key].registros[0].check_out_at && (
+                                                        <AttendanceBadge modalidad={f.days[key].registros[0].modalidad_codigo} size={13} />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
                     </div>
                 )

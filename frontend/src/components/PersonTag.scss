@@ -74,4 +74,23 @@
     letter-spacing: 0.4px;
     box-shadow: 0 0 10px rgba(v.$fh-primary, 0.1);
   }
+
+  @media (max-width: 768px) {
+    gap: 14px;
+
+    .avatar {
+      width: 48px !important;
+      height: 48px !important;
+      font-size: 20px !important;
+      line-height: 48px !important;
+    }
+
+    .nm {
+      font-size: 1rem;
+    }
+
+    .sub {
+      font-size: 0.85rem;
+    }
+  }
 }

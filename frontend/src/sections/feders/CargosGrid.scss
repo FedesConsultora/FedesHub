@@ -51,7 +51,6 @@
 
         &:hover {
             border-color: rgba(255, 255, 255, 0.15);
-            // transform: translateY(-2px);
         }
 
         .cargoInfo {
@@ -116,6 +115,43 @@
                 font-style: italic;
                 color: v.$fh-muted;
                 opacity: 0.6;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .fhCargosGroups {
+        gap: 1.5rem;
+        padding-bottom: 3rem;
+
+        .cargosGrid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .cargoCard {
+            padding: 12px;
+            gap: 12px;
+
+            .cargoInfo {
+                h4 {
+                    font-size: 1rem;
+                }
+
+                .desc {
+                    font-size: 0.82rem;
+                }
+            }
+        }
+
+        .ambitoSection .ambitoHeader {
+            h3 {
+                font-size: 0.95rem;
+            }
+
+            .count {
+                font-size: 0.75rem;
             }
         }
     }

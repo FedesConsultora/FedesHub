@@ -258,6 +258,10 @@
           &.celula {
             color: #fbbf24;
           }
+
+          &.ponderacion {
+            color: #fbbf24;
+          }
         }
       }
     }
@@ -474,7 +478,7 @@
         text-transform: uppercase;
         display: flex;
         align-items: center;
-        gap: 10px; // Espacio entre icono y texto
+        gap: 10px;
       }
     }
 
@@ -484,61 +488,6 @@
       text-align: center;
       font-style: italic;
       padding: 10px;
-    }
-  }
-
-  /* Team List */
-  .avatarSide {
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .memberRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-
-    .memberAvatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: #6b7280; // Gris medio para que se vea siempre
-      background-size: cover;
-      background-position: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 14px;
-      color: #fff;
-    }
-
-    .memberInfo {
-      flex: 1;
-      min-width: 0;
-
-      .memberName {
-        font-size: 14px;
-        font-weight: 800;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .memberRole {
-        font-size: 12px;
-        color: v.$fh-muted;
-        margin: 2px 0 0;
-        font-weight: 600;
-      }
     }
   }
 
@@ -586,30 +535,143 @@
       }
     }
   }
+}
 
-  .addContactBtn {
-    width: 100%;
-    margin-top: 10px;
-    background: transparent;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    color: v.$fh-muted;
-    padding: 10px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 13px;
+@media (max-width: 1100px) {
+  .ClienteDetailPage {
+    .detailGrid {
+      grid-template-columns: 1fr;
+    }
 
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.4);
-      color: #fff;
+    .detailNavbar {
+      flex-wrap: wrap;
+      gap: 16px;
     }
   }
 }
 
-@media (max-width: 1100px) {
-  .ClienteDetailPage .detailGrid {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .ClienteDetailPage {
+    padding: 12px;
+    gap: 16px;
+
+    .detailNavbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      padding-bottom: 20px;
+
+      .left {
+        width: 100%;
+
+        .breadcrumb {
+          display: none;
+        }
+      }
+
+      .right {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 12px;
+
+        .actions {
+          width: 100%;
+
+          button {
+            flex: 1;
+            justify-content: center;
+          }
+        }
+      }
+    }
+
+    .profileCard {
+      flex-direction: column;
+      text-align: center;
+      padding: 24px 16px;
+      gap: 20px;
+
+      .avatarWrapper {
+        margin: 0 auto;
+
+        .avatar {
+          width: 80px;
+          height: 80px;
+          font-size: 28px;
+        }
+      }
+
+      .profileInfo {
+        h1 {
+          font-size: 24px;
+        }
+
+        .alias {
+          font-size: 14px;
+        }
+
+        .badgesRow {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+      }
+
+      .editFields {
+        input.titleInput {
+          font-size: 20px;
+          text-align: center;
+        }
+
+        input.aliasInput {
+          text-align: center;
+        }
+      }
+    }
+
+    .detailsPanel {
+      .panelBody.contactGrid {
+        grid-template-columns: 1fr;
+
+        .contactField.full {
+          grid-column: span 1;
+        }
+      }
+    }
+
+    .kpiGrid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+
+      .kpiCard {
+        padding: 16px;
+
+        .icon {
+          width: 40px;
+          height: 40px;
+          font-size: 20px;
+        }
+
+        .data strong {
+          font-size: 18px;
+        }
+      }
+    }
+
+    .sidePanel {
+      padding: 16px;
+
+      .contactRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        text-align: center;
+
+        .contactActions {
+          justify-content: center;
+        }
+      }
+    }
   }
 }
 

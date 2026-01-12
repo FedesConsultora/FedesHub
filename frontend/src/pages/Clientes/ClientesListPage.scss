@@ -1,26 +1,84 @@
 @use '../../styles/variables' as v;
 
 .ClientesListPage {
-  .card{
+  .card {
     background: v.$fh-card;
-    border: 1px solid rgba(255,255,255,.08);
+    border: 1px solid rgba(255, 255, 255, .08);
     border-radius: v.$radius-2xl;
     padding: 12px;
     box-shadow: v.$shadow-soft;
   }
 
-  .toolbar{
-    position: relative; z-index: 5;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px; flex-wrap:wrap; margin-bottom:10px;
+  .toolbar {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
 
-    .left{
-      display:flex; flex-direction:column; gap:4px; min-width: 200px;
-      h1{ margin:0; font-size:24px; line-height:1.2; color: v.$fh-text; }
-      .counter{ color: v.$fh-muted; font-size:.92rem; }
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 200px;
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        color: v.$fh-text;
+      }
+
+      .counter {
+        color: v.$fh-muted;
+        font-size: .92rem;
+      }
     }
-    .right{
-      display:flex; align-items:center; gap:10px; flex: 0 0 auto; min-width: fit-content;
+
+    .right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      min-width: fit-content;
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+      gap: 16px;
+
+      .left {
+        min-width: unset;
+      }
+
+      .right {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+
+        .segmented {
+          width: 100%;
+          justify-content: center;
+
+          button {
+            flex: 1;
+          }
+        }
+
+        .btnGhost {
+          flex: 1;
+        }
+
+        .submit {
+          width: 100% !important;
+          margin-top: 4px;
+        }
+      }
     }
   }
 
@@ -29,29 +87,64 @@
     border: 0;
     box-shadow: none;
     padding: 0;
-    margin-bottom: 10px; /* conserva separación */
+    margin-bottom: 10px;
+    /* conserva separación */
   }
 
-  .results{ margin-top: 3rem; }
-  .loading { margin-top: 8px; color: v.$fh-muted; text-align:center; }
-  .error   { margin: 8px 0; color: #ffb4b4; border:1px solid #5a2d2d; background:#3a1f1f; }
+  .results {
+    margin-top: 2rem;
+  }
+
+  .loading {
+    margin-top: 8px;
+    color: v.$fh-muted;
+    text-align: center;
+  }
+
+  .error {
+    margin: 8px 0;
+    color: #ffb4b4;
+    border: 1px solid #5a2d2d;
+    background: #3a1f1f;
+  }
 }
 
 /* Toggle */
-.segmented{
-  display:inline-flex; align-items:center; gap:0;
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px; overflow:hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
   color: #{v.$fh-text};
-  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
 
-  button{
-    appearance:none; background:transparent; color:inherit;
-    padding:8px 12px; border:none; font-weight:800; letter-spacing:.2px; cursor:pointer;
+  button {
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    padding: 8px 12px;
+    border: none;
+    font-weight: 800;
+    letter-spacing: .2px;
+    cursor: pointer;
     white-space: nowrap;
-    &:not(.active):hover{ background: rgba(255,255,255,.06); }
-    &.active{ background: v.$fh-primary; color:white; box-shadow: inset 0 8px 20px rgba(68,113,141,.35); }
-    &:focus-visible{ outline: 2px solid rgba(v.$fh-accent, .7); outline-offset: -2px; }
+
+    &:not(.active):hover {
+      background: rgba(255, 255, 255, .06);
+    }
+
+    &.active {
+      background: v.$fh-primary;
+      color: white;
+      box-shadow: inset 0 8px 20px rgba(68, 113, 141, .35);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(v.$fh-accent, .7);
+      outline-offset: -2px;
+    }
   }
 }

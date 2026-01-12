@@ -7,6 +7,7 @@ import TimelineWeek from './timeline/TimelineWeek'
 import TimelineMonth from './timeline/TimelineMonth'
 
 import { GrNext, GrPrevious } from "react-icons/gr";
+import { FiCalendar, FiSearch } from 'react-icons/fi'
 
 import './timeline/timeline.scss'
 
@@ -47,8 +48,13 @@ export default function AsistenciaPage() {
   const [tab, setTab] = useState(canReport ? 'equipo' : 'mi')
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
   const [q, setQ] = useState('')
-  const [view, setView] = useState('day');
+  const [view, setView] = useState(() => localStorage.getItem('asst-view') || 'day');
   const TODAY = new Date().toISOString().slice(0, 10)
+
+  // Persistir la vista seleccionada
+  useEffect(() => {
+    localStorage.setItem('asst-view', view)
+  }, [view])
 
 
   const addByView = (isoDate, delta, view) => {
@@ -74,58 +80,67 @@ export default function AsistenciaPage() {
 
   return (
     <div className="asst-page">
-      <div className="asst-head fh-row">
-        <h1 className="ttl">Asistencia</h1>
-        <div className="grow" />
-        {canReport && tab === 'equipo' && (
-          <input
-            style={{ maxWidth: '200px' }}
-            className="fh-input"
-            placeholder="Buscar persona…"
-            value={q}
-            onChange={e => setQ(e.target.value)}
-          />
-        )}
+      <div className="asst-head">
+        <div className="asst-head-top">
+          <h1 className="ttl">Asistencia</h1>
+          <div className="grow" />
+          <div className="asst-nav-controls">
+            <button
+              type="button"
+              className="fh-btn nav-btn"
+              onClick={goPrevDay}
+              title="Anterior"
+            >
+              <GrPrevious />
+            </button>
+            <button
+              type="button"
+              className="fh-btn fh-btn-today"
+              onClick={goToday}
+              disabled={fecha === TODAY}
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              className="fh-btn nav-btn"
+              onClick={goNextDay}
+              title="Siguiente"
+            >
+              <GrNext />
+            </button>
+          </div>
+        </div>
 
-        <input type="date" style={{ maxWidth: '200px' }} value={fecha} onChange={e => setFecha(e.target.value)} className="fh-input" />
-        <select
-          style={{ maxWidth: '200px' }}
-          className="fh-input asst-view-select"
-          value={view}
-          onChange={e => setView(e.target.value)}
-        >
-          <option value="day">Ver por día</option>
-          <option value="week">Ver por semana</option>
-          <option value="month">Ver por mes</option>
-        </select>
+        <div className="asst-head-bottom">
+          {canReport && tab === 'equipo' && (
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                className="fh-input"
+                placeholder="Buscar persona…"
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+            </div>
+          )}
 
-        <button
-          type="button"
-          className="fh-btn"
-          onClick={goPrevDay}
-          title="Día anterior"
-        >
-          <GrPrevious style={{ position: 'relative', top: '3px', marginRight: '2px' }} />
-        </button>
+          <div className="date-picker-box">
+            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="fh-input" />
+          </div>
 
-        <button
-          type="button"
-          className="fh-btn fh-btn-today"
-          onClick={goToday}
-          disabled={fecha === TODAY}
-        >
-          Hoy
-        </button>
-
-        <button
-          type="button"
-          className="fh-btn"
-          onClick={goNextDay}
-          title="Día siguiente"
-        >
-          <GrNext style={{ position: 'relative', top: '3px', marginLeft: '2px' }} />
-        </button>
-
+          <div className="view-picker-box">
+            <select
+              className="fh-input asst-view-select"
+              value={view}
+              onChange={e => setView(e.target.value)}
+            >
+              <option value="day">Día</option>
+              <option value="week">Semana</option>
+              <option value="month">Mes</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {canReport && (
@@ -139,9 +154,11 @@ export default function AsistenciaPage() {
         </div>
       )}
 
-      {tab === 'mi' && <TimelineWrapper view={view}
-        fecha={fecha} scope="me" onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
-      {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
+      <div className="asst-content">
+        {tab === 'mi' && <TimelineWrapper view={view}
+          fecha={fecha} scope="me" onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
+        {tab === 'equipo' && canReport && <TimelineWrapper view={view} fecha={fecha} scope="global" q={q} onNavigate={(f, v) => { setFecha(f); setView(v); }} />}
+      </div>
     </div>
   )
 }
@@ -228,7 +245,20 @@ function TimelineWrapper({ fecha, scope, q = '', view, onNavigate }) {
 
   if (loading && !data) return null
   if (error) return <div className="fh-err">{error}</div>
-  if (!data?.items?.length) return <div className="fh-empty">Sin registros.</div>
+  if (!data?.items?.length) {
+    return (
+      <div className="asst-empty-state">
+        <div className="empty-icon-box">
+          <FiCalendar />
+        </div>
+        <h3>Sin registros</h3>
+        <p>No se encontraron datos de asistencia para esta fecha.</p>
+        <button className="fh-btn" onClick={() => onNavigate(new Date().toISOString().slice(0, 10), view)}>
+          Volver a hoy
+        </button>
+      </div>
+    )
+  }
 
   if (view === 'day') {
     return <TimelineDay payload={data} startHour={5} />

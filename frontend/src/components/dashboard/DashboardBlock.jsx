@@ -1,5 +1,5 @@
 import React from 'react'
-import { FiMinimize2, FiMaximize2, FiMove } from 'react-icons/fi'
+import { FiMinimize2, FiMaximize2, FiChevronUp, FiChevronDown } from 'react-icons/fi'
 
 export default function DashboardBlock({
     id,
@@ -10,6 +10,9 @@ export default function DashboardBlock({
     onDragStart,
     onDragOver,
     onDrop,
+    onMove,
+    canMoveUp,
+    canMoveDown,
     children
 }) {
     const [canDrag, setCanDrag] = React.useState(false);
@@ -34,22 +37,31 @@ export default function DashboardBlock({
             <div
                 className="blockHeader"
                 onMouseDown={(e) => {
-                    // Solo activamos drag si no es un botón y es clic principal
                     if (e.button === 0 && !e.target.closest('button')) {
                         setCanDrag(true);
                     }
                 }}
                 onMouseLeave={() => {
-                    // Si el ratón sale pero no estamos arrastrando, lo apagamos
                     setCanDrag(false);
                 }}
             >
                 <div className="headerLeft">
-                    <FiMove className="dragHandle" />
                     <h3>{title}</h3>
                     {count !== undefined && <span className="countBadge">{count}</span>}
                 </div>
                 <div className="headerRight">
+                    <div className="moveActions">
+                        {canMoveUp && (
+                            <button className="moveBtn" onClick={() => onMove(-1)} title="Mover arriba">
+                                <FiChevronUp />
+                            </button>
+                        )}
+                        {canMoveDown && (
+                            <button className="moveBtn" onClick={() => onMove(1)} title="Mover abajo">
+                                <FiChevronDown />
+                            </button>
+                        )}
+                    </div>
                     <button
                         className="toggleBtn"
                         onClick={(e) => {

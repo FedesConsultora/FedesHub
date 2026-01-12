@@ -150,6 +150,30 @@
       margin-top: 8px;
     }
   }
+
+  .sbItem {
+    justify-content: center;
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-weight: 600;
+
+    &.sbItem--dev {
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .dot {
+      display: none; // Ocultamos el dot mini si vamos a centrar
+    }
+
+    .badge-dot {
+      position: relative;
+      right: auto;
+      top: auto;
+      transform: none;
+      margin-left: 8px;
+    }
+  }
 }
 
 /* ===== Items en desarrollo ===== */

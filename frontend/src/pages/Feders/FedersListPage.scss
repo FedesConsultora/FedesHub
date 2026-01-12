@@ -285,28 +285,61 @@
 // Media Queries for Responsiveness
 @media (max-width: 768px) {
   .fhFedersList {
-    padding: 16px;
+    padding: 12px;
 
     .listFilters {
+      gap: 12px;
+      margin-bottom: 20px;
       flex-direction: column;
       align-items: stretch;
 
+      .searchWrapper {
+        min-width: unset;
+        width: 100%;
+
+        input {
+          padding: 14px 16px 14px 44px;
+          border-radius: 12px;
+          font-size: 0.9rem;
+        }
+      }
+
       .filterGroup {
-        flex-direction: row;
+        width: 100%;
+        gap: 8px;
 
         .selectWrapper {
           flex: 1;
 
           select {
+            padding: 10px 12px 10px 36px !important;
+            font-size: 0.9rem;
             min-width: unset;
-            width: 100%;
+          }
+        }
+
+        .refreshBtn {
+          padding: 10px 12px;
+
+          span {
+            display: none;
           }
         }
       }
     }
 
     .cards {
+      gap: 12px;
       grid-template-columns: 1fr;
+    }
+
+    .card {
+      padding: 14px;
+      border-radius: 16px;
+
+      &:hover {
+        transform: none;
+      }
     }
 
     .pager {

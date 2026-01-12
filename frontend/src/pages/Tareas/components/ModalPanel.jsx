@@ -37,6 +37,9 @@ export default function ModalPanel({ open, onClose, children }) {
       onContextMenu={handleContextMenu}
     >
       <div className="modalPanel" onClick={(e) => e.stopPropagation()}>
+        <button className="modalCloseBtn" onClick={onClose} aria-label="Cerrar">
+          &times;
+        </button>
         {children}
       </div>
     </div>

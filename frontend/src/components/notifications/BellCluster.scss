@@ -73,22 +73,84 @@
     position: absolute;
     right: 0;
     top: 36px;
-    /* 28px btn + aire */
     width: 380px;
     max-height: 70vh;
     overflow: auto;
-    background: v.$fh-card;
-    border: 1px solid rgba(255, 255, 255, .1);
+    background: #141a23;
+    border: 1px solid rgba(255, 255, 255, .12);
     border-radius: v.$radius-2xl;
-    box-shadow: v.$shadow-soft;
-    z-index: 50;
+    box-shadow: v.$shadow-xl;
+    z-index: 100;
+  }
+
+  &.grouped {
+    .mobilePanel {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      top: 60px;
+      width: calc(100vw - 24px);
+      max-width: 400px;
+      margin: 0 auto;
+      max-height: 80vh;
+    }
+
+    .tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+      .tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 14px;
+        border: none;
+        background: transparent;
+        color: v.$fh-muted;
+        cursor: pointer;
+        position: relative;
+
+        &.active {
+          color: v.$fh-primary;
+          background: rgba(v.$fh-primary, 0.05);
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: v.$fh-primary;
+          }
+        }
+
+        .tabBadge {
+          position: absolute;
+          top: 8px;
+          right: 25%;
+          background: #ff5151;
+          color: white;
+          font-size: 10px;
+          min-width: 14px;
+          height: 14px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+    }
   }
 
   .panelHead {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 10px;
+    padding: 8px 12px;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
 
     .lbl {
@@ -97,7 +159,9 @@
       gap: 8px;
       opacity: .9;
       font-weight: 700;
+      font-size: 0.9rem;
     }
+
 
     .seeAll {
       margin-left: auto;

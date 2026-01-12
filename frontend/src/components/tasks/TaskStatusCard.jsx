@@ -1,5 +1,7 @@
 // /frontend/src/components/tasks/TaskStatusCard.jsx
 import React, { useState, Fragment, useRef, useEffect } from 'react'
+import { FiChevronDown } from 'react-icons/fi'
+import { IoCheckmarkCircle, IoTime, IoCloseCircle, IoPlayCircle, IoAlertCircle, IoPauseCircle } from 'react-icons/io5'
 import { createPortal } from 'react-dom'
 import { getPriorityMeta } from './priority-utils'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
@@ -158,8 +160,8 @@ export default function TaskStatusCard({
           className="statusMenu statusMenu--portal"
           style={{
             position: 'fixed',
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`
+            top: `${menuPosition.top} px`,
+            left: `${menuPosition.left} px`
           }}
         >
           {Object.entries(MAP)
@@ -170,7 +172,7 @@ export default function TaskStatusCard({
               return (
                 <div
                   key={code}
-                  className={`item ${active === code ? 'active' : ''} ${busy === code ? 'busy' : ''} ${!canChange ? 'disabled' : ''}`}
+                  className={`item ${active === code ? 'active' : ''} ${busy === code ? 'busy' : ''} ${!canChange ? 'disabled' : ''} `}
                   onClick={() => {
                     if (!canChange) {
                       // El mensaje de error ya se maneja en doPick

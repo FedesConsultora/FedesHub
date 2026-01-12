@@ -17,15 +17,17 @@
   }
 
   .tableWrap {
-    overflow: auto;
+    overflow-x: auto;
     border: 1px solid rgba(255, 255, 255, .08);
     border-radius: var(--radius);
     background: v.$fh-card;
     box-shadow: v.$shadow-soft;
+    -webkit-overflow-scrolling: touch;
   }
 
   table.clientes {
     width: 100%;
+    min-width: 800px;
     border-collapse: separate;
     border-spacing: 0;
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import AsistenciaDot from '../asistencia/AsistenciaDot.jsx'
 import { useState } from 'react'
-import { FiHeadphones } from 'react-icons/fi'
+import { FiHeadphones, FiChevronDown } from 'react-icons/fi'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import Avatar from '../Avatar.jsx'
@@ -31,7 +31,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fhHeader">
+      <header className={`fhHeader ${open ? 'user-menu-open' : ''}`}>
         <Link to="/" className="brand">FedesHub</Link>
         <span className='sys-version'>BETA v2.1</span>
         <div className="spacer" />
@@ -51,9 +51,10 @@ export default function Header() {
               name={`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || user?.email}
               size={28}
               federId={user?.feder_id}
+              enablePreview={false}
             />
             <span className="user-name">{`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || user?.email}</span>
-            <span className="caret">▾</span>
+            <span className="caret"><FiChevronDown /></span>
           </button>
           {open && (
             <div className="menu" role="menu" onMouseLeave={() => setOpen(false)}>

@@ -167,37 +167,113 @@
   }
 }
 
-@media (max-width: 900px) {
+// Pantalllas medianas/cramp (Tablet landscape, laptops pequeñas)
+@media (max-width: 1250px) and (min-width: 901px) {
   .TareasListPage {
     .toolbar {
+      gap: 4px;
+      padding: 8px 12px;
+
       .left {
-        min-width: 60px;
+        min-width: unset;
 
         h1 {
           font-size: 16px;
+          margin-left: 4px;
         }
 
         .counter {
-          font-size: 0.7rem;
+          font-size: 0.65rem;
+          margin-left: 4px;
         }
       }
-    }
 
-    .segmented button {
-      padding: 6px 6px;
-      font-size: 10px;
+      .right {
+        gap: 4px;
+
+        .submit {
+          padding: 6px 10px !important;
+          font-size: 12px;
+        }
+      }
+
+      .segmented button {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
     }
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .TareasListPage {
     .toolbar {
-      gap: 4px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      padding: 16px;
 
       .left {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0;
+
+        h1 {
+          margin-left: 0;
+          font-size: 22px;
+        }
+
         .counter {
-          display: none;
+          display: block;
+          margin-left: 0;
+        }
+      }
+
+      .center {
+        width: 100%;
+      }
+
+      .right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+
+        .segmented {
+          width: 100%;
+          justify-content: center;
+
+          button {
+            flex: 1;
+          }
+        }
+
+        .submit {
+          width: 100% !important;
+          padding: 12px !important;
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .TareasListPage {
+    .toolbar {
+      .right {
+        .segmented {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          border-radius: 12px;
+
+          button {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+            &:nth-child(even) {
+              border-left: 1px solid rgba(255, 255, 255, 0.05);
+            }
+          }
         }
       }
     }

@@ -366,6 +366,90 @@
     }
 }
 
+@media (max-width: 1024px) {
+    .TaskMonthlyView {
+        .calendarHeader {
+            padding: 12px 16px;
+
+            .monthInfo {
+                min-width: 150px;
+
+                h2 {
+                    font-size: 1.2rem;
+                }
+            }
+
+            .calendarFilters {
+                gap: 8px;
+
+                .calSelect {
+                    min-width: 120px;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 850px) {
+    .TaskMonthlyView {
+        .calendarHeader {
+            flex-direction: column !important;
+            align-items: stretch;
+            gap: 16px;
+
+            .monthInfo {
+                text-align: center;
+                min-width: auto;
+            }
+
+            .calendarFilters {
+                width: 100%;
+
+                .calSelect {
+                    flex: 1;
+                    max-width: none;
+                }
+            }
+
+            .navButtons {
+                justify-content: center;
+            }
+        }
+
+        .calendarGrid {
+            min-width: 800px;
+            grid-auto-rows: 120px;
+        }
+
+        // Wrapper for scroll
+        overflow-x: auto;
+        padding-bottom: 10px; // Space for scrollbar
+
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .TaskMonthlyView {
+        .dayCell {
+            .dayHeader {
+                .quickAdd {
+                    font-size: 0; // Ocultar texto
+                    width: 24px;
+                    padding: 0;
+
+                    &::before {
+                        content: '+';
+                        font-size: 14px;
+                    }
+                }
+            }
+        }
+    }
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -378,7 +462,6 @@
     }
 }
 
-/* ===== Popover Detalle Día ===== */
 .dayPopoverOverlay {
     position: fixed;
     inset: 0;

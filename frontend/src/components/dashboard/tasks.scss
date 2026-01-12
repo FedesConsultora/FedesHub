@@ -186,6 +186,30 @@
       }
     }
   }
+
+  @media (max-width: 600px) {
+    padding: 12px;
+    align-items: flex-start;
+    gap: 12px;
+
+    .itemMain,
+    .unreadInfo {
+
+      .taskTitle,
+      .unreadTitle {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+
+    .itemSide {
+      align-items: flex-end;
+    }
+  }
 }
 
 .urgentTasksEmpty,

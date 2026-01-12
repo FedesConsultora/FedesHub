@@ -4,43 +4,60 @@
 .fhFedersTabs {
   .tabsBar {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    margin-bottom: 10px;
+    justify-content: center; // Centrar para que el "suelto" quede en el medio
+    margin-bottom: 16px;
+    padding: 2px;
   }
 
   .tab {
     display: inline-flex;
     gap: 8px;
     align-items: center;
-    padding: 6px 12px;
+    padding: 8px 16px;
     border-radius: 999px;
-    background: color.adjust(v.$fh-card, $lightness: 3%);
+    background: rgba(255, 255, 255, 0.03);
     color: v.$fh-text;
     text-decoration: none;
     border: 1px solid rgba(255, 255, 255, .08);
-    transition: background .18s ease, color .18s ease, transform .06s ease;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    font-weight: 500;
 
     svg {
       width: 16px;
       height: 16px;
-      opacity: .9
+      opacity: .8;
     }
 
     &:hover {
-      background: color.adjust(v.$fh-card, $lightness: 6%);
-    }
-
-    &:active {
-      transform: translateY(1px);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
     }
   }
 
   // NavLink activo
   a.tab.active,
   a.tab[aria-current="page"] {
-    background: rgba(v.$fh-primary, .18);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, .25);
-    font-weight: 600;
+    background: v.$fh-primary;
+    border-color: v.$fh-primary;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(v.$fh-primary, 0.25);
+    font-weight: 800;
+
+    svg {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .tab {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      flex: 0 1 auto; // Evitar que se estiren al 100% pero permitir wrap
+    }
   }
 }

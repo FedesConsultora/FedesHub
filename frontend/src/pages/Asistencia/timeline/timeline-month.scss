@@ -110,10 +110,36 @@ $muted: $fh-muted;
 
 
 
+.tm-calendar-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+
+  /* Scrollbar discreta */
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+}
+
+.tm-weekdays,
 .tm-calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
+  min-width: 600px; // Forzar scroll en mobile
+}
+
+.tm-calendar {
   margin-top: 12px;
 }
 
@@ -157,7 +183,29 @@ $muted: $fh-muted;
 }
 
 .tm-person {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+
+  .tm-name {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 600px) {
+    .tm-name {
+      width: 100%;
+      text-align: center;
+    }
+
+    .person-total-meta {
+      width: 100%;
+      text-align: center;
+      margin-top: -4px;
+      margin-bottom: 4px;
+    }
+
+    .attendance-badge {
+      margin: 0 auto;
+    }
+  }
 
   .attendance-badge {
     position: static;
@@ -191,5 +239,24 @@ $muted: $fh-muted;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
     border-color: rgba($fh-primary, .6);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@media (max-width: 768px) {
+  .tm-calendar-wrapper {
+    margin-left: -16px;
+    margin-right: -16px;
+    width: calc(100% + 32px);
+    padding: 0 16px 12px 16px;
+  }
+
+  .tm-day {
+    min-height: 54px;
+    padding: 4px;
+    font-size: 0.7rem;
   }
 }

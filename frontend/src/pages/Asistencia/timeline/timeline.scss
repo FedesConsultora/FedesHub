@@ -327,7 +327,7 @@ $muted: $fh-muted;
   .tab {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff; // Texto siempre blanco
+    color: #fff;
     padding: 0.6rem 1.2rem;
     border-radius: 12px;
     font-size: 0.9rem;
@@ -341,9 +341,193 @@ $muted: $fh-muted;
 
     &.active {
       background: rgba(77, 208, 225, .12);
-      color: #fff; // Mantener blanco incluso en activo
+      color: #fff;
       font-weight: 600;
       border-color: $fh-accent;
+    }
+  }
+}
+
+/* =========================
+   NUEVA CABECERA ASISTENCIA
+========================= */
+.asst-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .asst-head-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    .ttl {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 900;
+    }
+  }
+
+  .asst-nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+
+      svg {
+        font-size: 1.1rem;
+      }
+    }
+
+    .fh-btn-today {
+      padding: 0 16px;
+      height: 40px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .asst-head-bottom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .search-box,
+    .date-picker-box,
+    .view-picker-box {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .fh-input {
+      width: 100%;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+
+      &:focus {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: $fh-primary;
+      }
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 200px;
+      flex: 2;
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.4;
+      }
+
+      input {
+        padding-left: 38px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .asst-head {
+    .asst-head-top {
+      flex-direction: row;
+
+      .ttl {
+        font-size: 1.5rem;
+      }
+    }
+
+    .asst-head-bottom {
+      flex-direction: column;
+      align-items: stretch;
+
+      .search-box,
+      .date-picker-box,
+      .view-picker-box {
+        width: 100%;
+        flex: none;
+      }
+    }
+  }
+
+  .asst-tabs {
+    justify-content: center;
+    gap: 8px;
+
+    .tab {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  }
+}
+
+/* =========================
+   EMPTY STATE BELLO
+========================= */
+.asst-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  margin: 20px 0;
+
+  .empty-icon-box {
+    width: 64px;
+    height: 64px;
+    background: rgba($fh-primary, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: $fh-primary;
+    font-size: 2rem;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  p {
+    color: $fh-muted;
+    max-width: 300px;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .fh-btn {
+    padding: 12px 24px;
+    font-weight: 700;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba($fh-primary, 0.3);
     }
   }
 }

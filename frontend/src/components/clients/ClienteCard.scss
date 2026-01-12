@@ -163,15 +163,63 @@
     }
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 600px) {
+    padding: 16px;
+
     .cardGrid {
-      grid-template-columns: auto 1fr;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .avatar {
+      margin: 0 auto;
+      width: 56px;
+      height: 56px;
+      font-size: 20px;
+    }
+
+    .main {
+      gap: 12px;
+    }
+
+    .head {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+
+      .name {
+        font-size: 1.1rem;
+      }
+
+      .meta {
+        justify-content: center;
+      }
+    }
+
+    .row.kpis {
+      justify-content: center;
+      flex-wrap: wrap;
+
+      .kpi {
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
+      }
     }
 
     .actions {
       grid-column: 1 / -1;
-      flex-direction: row;
-      justify-content: flex-start;
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+
+      .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+      }
     }
   }
 }

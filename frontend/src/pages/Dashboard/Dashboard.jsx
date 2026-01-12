@@ -97,6 +97,22 @@ export default function Dashboard() {
     )
   }
 
+  const moveBlock = (id, direction, col) => {
+    const isLeft = col === 'left'
+    const arr = isLeft ? [...leftCol] : [...rightCol]
+    const idx = arr.indexOf(id)
+    if (idx === -1) return
+
+    const newIdx = idx + direction
+    if (newIdx < 0 || newIdx >= arr.length) return
+
+    // Swap
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]]
+
+    if (isLeft) setLeftCol(arr)
+    else setRightCol(arr)
+  }
+
   // Drag & Drop
   const handleDragStart = (e, id, sourceCol) => {
     e.dataTransfer.setData('blockId', id)
@@ -109,7 +125,6 @@ export default function Dashboard() {
   }
 
   const handleDragLeave = (e) => {
-    // Solo si salimos del contenedor principal de columnas
     if (e.relatedTarget === null || !e.currentTarget.contains(e.relatedTarget)) {
       setDragOverInfo({ col: null, index: null })
     }
@@ -129,23 +144,15 @@ export default function Dashboard() {
     let newLeft = [...leftCol]
     let newRight = [...rightCol]
 
-    // Remove from source
     if (sourceCol === 'left') newLeft = newLeft.filter(id => id !== draggedId)
     else newRight = newRight.filter(id => id !== draggedId)
 
-    // Insert into target
     const targetArr = targetCol === 'left' ? newLeft : newRight
-
     let finalIdx = targetIndex
     if (finalIdx === null) {
-      if (targetId) {
-        finalIdx = targetArr.indexOf(targetId)
-      } else {
-        finalIdx = targetArr.length
-      }
+      finalIdx = targetId ? targetArr.indexOf(targetId) : targetArr.length
     }
 
-    // Asegurarnos de que no insertamos duplicados por error
     const cleanTargetArr = targetArr.filter(id => id !== draggedId)
     cleanTargetArr.splice(finalIdx, 0, draggedId)
 
@@ -160,53 +167,45 @@ export default function Dashboard() {
 
   const renderBlock = (id, col, index) => {
     const isCollapsed = collapsedBlocks.includes(id)
+    const canMoveUp = index > 0
+    const canMoveDown = index < (col === 'left' ? leftCol.length : rightCol.length) - 1
+
+    const blockProps = {
+      key: id,
+      id,
+      isCollapsed,
+      onToggle: toggleCollapse,
+      onDragStart: (e) => handleDragStart(e, id, col),
+      onDragOver: (e) => handleDragOver(e, col, index),
+      onDrop: (e) => handleDrop(e, id, col, index),
+      onMove: (dir) => moveBlock(id, dir, col),
+      canMoveUp,
+      canMoveDown
+    }
+
     switch (id) {
       case 'metrics':
         return (
-          <DashboardBlock
-            key={id} id={id} title="Resumen"
-            isCollapsed={isCollapsed} onToggle={toggleCollapse}
-            onDragStart={(e) => handleDragStart(e, id, col)}
-            onDragOver={(e) => handleDragOver(e, col, index)}
-            onDrop={(e) => handleDrop(e, id, col, index)}
-          >
+          <DashboardBlock {...blockProps} title="Resumen">
             <MetricsGrid data={metrics} />
           </DashboardBlock>
         )
       case 'urgent':
         return (
-          <DashboardBlock
-            key={id} id={id} title="🚀 Tareas más urgentes" count={urgentTasks.length}
-            isCollapsed={isCollapsed} onToggle={toggleCollapse}
-            onDragStart={(e) => handleDragStart(e, id, col)}
-            onDragOver={(e) => handleDragOver(e, col, index)}
-            onDrop={(e) => handleDrop(e, id, col, index)}
-          >
+          <DashboardBlock {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
             <UrgentTasks tasks={urgentTasks} onOpenTask={setOpenTaskId} />
           </DashboardBlock>
         )
       case 'revision':
         if (!metrics?.is_directivo) return null
         return (
-          <DashboardBlock
-            key={id} id={id} title="📋 Tareas en revisión" count={revisionTasks.length}
-            isCollapsed={isCollapsed} onToggle={toggleCollapse}
-            onDragStart={(e) => handleDragStart(e, id, col)}
-            onDragOver={(e) => handleDragOver(e, col, index)}
-            onDrop={(e) => handleDrop(e, id, col, index)}
-          >
+          <DashboardBlock {...blockProps} title="📋 Tareas en revisión" count={revisionTasks.length}>
             <RevisionTasks tasks={revisionTasks} onOpenTask={setOpenTaskId} />
           </DashboardBlock>
         )
       case 'unread':
         return (
-          <DashboardBlock
-            key={id} id={id} title="💬 Mensajes sin leer" count={unreadNotifs.length}
-            isCollapsed={isCollapsed} onToggle={toggleCollapse}
-            onDragStart={(e) => handleDragStart(e, id, col)}
-            onDragOver={(e) => handleDragOver(e, col, index)}
-            onDrop={(e) => handleDrop(e, id, col, index)}
-          >
+          <DashboardBlock {...blockProps} title="💬 Mensajes sin leer" count={unreadNotifs.length}>
             <DashboardUnread notifications={unreadNotifs} onOpenTask={setOpenTaskId} onRefresh={() => fetchData()} />
           </DashboardBlock>
         )

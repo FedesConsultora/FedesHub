@@ -53,11 +53,11 @@ export default function TaskList({
             <tr>
               <th className="text-left p-3" style={{ width: '32px' }}></th>
               <th className="text-left p-3">Tarea</th>
-              {cols.cliente && <th className="text-left p-3">Cliente</th>}
+              {cols.cliente && <th className="text-left p-3 hidden-mobile">Cliente</th>}
               {cols.responsables && <th className="text-left p-3">Asignados</th>}
               {cols.estado && <th className="text-left p-3">Estado</th>}
-              {cols.vence && <th className="text-left p-3">Vence</th>}
-              {cols.progreso && <th className="text-left p-3">Progreso</th>}
+              {cols.vence && <th className="text-left p-3 hidden-mobile">Vence</th>}
+              {cols.progreso && <th className="text-left p-3 hidden-mobile">Progreso</th>}
             </tr>
           </thead>
         )}
@@ -174,7 +174,7 @@ export default function TaskList({
                     {t.titulo || t.title}
                   </td>
                   {cols.cliente && (
-                    <td className={`px-3 cursor-pointer  ${RowPad}`}>
+                    <td className={`px-3 cursor-pointer  ${RowPad} hidden-mobile`}>
                       {t.cliente_nombre || t.client?.name || "—"}
                     </td>
                   )}
@@ -201,13 +201,13 @@ export default function TaskList({
                   )}
                   {cols.vence && (
                     <td
-                      className={`px-3 cursor-pointer  ${RowPad} text-muted-foreground`}
+                      className={`px-3 cursor-pointer  ${RowPad} text-muted-foreground hidden-mobile`}
                     >
                       {dueTxt}
                     </td>
                   )}
                   {cols.progreso && (
-                    <td className={`px-3 cursor-pointer  ${RowPad}`}>
+                    <td className={`px-3 cursor-pointer  ${RowPad} hidden-mobile`}>
                       <div className="h-1.5 w-40 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"

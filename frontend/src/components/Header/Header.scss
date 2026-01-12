@@ -40,15 +40,16 @@
   .userChip {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     background: #0f141b;
     border: 1px solid rgba(255, 255, 255, .12);
     color: $fh-text;
-    padding: 6px 14px 6px 8px;
+    padding: 6px 29px 6px 8px; // Increased right padding for curve
     border-radius: 999px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
+    position: relative;
 
     &:hover {
       background: #161c24;
@@ -64,43 +65,68 @@
   }
 
   .user-name {
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: $fh-text;
-    max-width: 180px;
+    max-width: 120px; // Slightly smaller to give more room
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
     line-height: 1;
+
+    @media (max-width: 600px) {
+      display: none;
+    }
   }
 
   .caret {
-    opacity: .6
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    width: 12px;
+    height: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: -2px; // Pull closer to name
+
+    svg {
+      display: block;
+      stroke-width: 3;
+    }
+  }
+
+  &.user-menu-open .caret {
+    transform: rotate(180deg);
   }
 
   .menu {
     position: absolute;
     right: 16px;
-    top: 56px;
-    min-width: 220px;
-    background: #0f141b;
-    border: 1px solid rgba(255, 255, 255, .12);
+    top: calc(100% + 8px);
+    min-width: 200px;
+    background: #141a23;
+    border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: $shadow-soft;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
+    z-index: 100;
 
     button {
       text-align: left;
       background: transparent;
       border: none;
       color: $fh-text;
-      padding: .65rem .8rem;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
     }
 
     button:hover {
-      background: #0b1118
+      background: rgba(255, 255, 255, 0.05);
     }
 
     hr {
@@ -112,6 +138,20 @@
 
     .danger {
       color: #ffb4b4
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    gap: 8px;
+
+    .brand {
+      font-size: 18px;
+    }
+
+    .sys-version {
+      font-size: 12px;
+      margin-top: 4px;
     }
   }
 }

@@ -6,7 +6,10 @@ export default function CargosGrid({ items = [] }) {
     // Agrupar por Ámbito
     const grouped = useMemo(() => {
         const map = {}
-        for (const it of items) {
+        // Solo mostrar cargos que tengan al menos una persona asignada
+        const visibleItems = items.filter(it => it.people && it.people.length > 0)
+
+        for (const it of visibleItems) {
             const g = it.ambito_nombre || 'Otros'
             if (!map[g]) map[g] = []
             map[g].push(it)

@@ -73,6 +73,10 @@ export default function Sidebar() {
     toast.warn(`"${appName}" - Ventana en Desarrollo`)
   }
 
+  const handleItemClick = () => {
+    if (isMobile) setOpen(false)
+  }
+
   return (
     <aside className={'fhSidebar' + (isMobile ? ' mobile' : '')}>
       {isMobile && (
@@ -98,7 +102,7 @@ export default function Sidebar() {
               <button
                 key={app.code}
                 className="sbItem sbItem--dev"
-                onClick={(e) => handleDevClick(e, app.name)}
+                onClick={(e) => { handleDevClick(e, app.name); handleItemClick(); }}
                 title="En desarrollo"
               >
                 <span>{app.name}</span>
@@ -114,6 +118,7 @@ export default function Sidebar() {
               to={app.to}
               end={app.to === '/'}
               className={({ isActive }) => 'sbItem' + (isActive ? ' active' : '') + extraCls}
+              onClick={handleItemClick}
             >
               {isChat && <i className="dot" />}
               <span>{app.name}</span>

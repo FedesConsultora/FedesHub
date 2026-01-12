@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { FiMessageSquare, FiCheckSquare, FiCalendar, FiExternalLink, FiEye, FiEyeOff } from 'react-icons/fi'
+import { useNavigate, Link } from 'react-router-dom'
+import {
+  FiBell,
+  FiMessageSquare,
+  FiCheckSquare,
+  FiCalendar,
+  FiExternalLink,
+  FiChevronRight,
+  FiEye,
+  FiEyeOff
+} from 'react-icons/fi'
 import { notifApi } from '../../api/notificaciones'
 import ChatBellPanel from './ChatBellPanel.jsx'
 import { useRealtime } from '../../realtime/RealtimeProvider'
@@ -28,21 +37,33 @@ function useCounts() {
   })
 }
 
-function useInbox(buzon, params) {
-  const p = { ...params }
-  if (buzon) p.buzon = buzon
+function useInbox(buzon, params = {}, options = {}) {
+  const p = useMemo(() => {
+    const obj = { ...params }
+    if (buzon) obj.buzon = buzon
+    return obj
+  }, [buzon, params])
+
   return useQuery({
     queryKey: ['notif', 'inbox', buzon || 'todo', p],
     queryFn: () => notifApi.inbox(p),
-    enabled: !!buzon || buzon === undefined
+    enabled: !!buzon || buzon === undefined,
+    ...options
   })
 }
 
 export default function BellCluster({ onAnyOpen }) {
   const [openKey, setOpenKey] = useState(null)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const { data: counts } = useCounts()
   const qc = useQueryClient()
   const ref = useRef(null)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // estado LOCAL de chat (para alinear icono aunque el contador del backend esté desfasado)
   const { unreadByCanal, mentionByCanal } = useRealtime()
@@ -86,6 +107,45 @@ export default function BellCluster({ onAnyOpen }) {
     { key: 'calendario', label: 'Calendario', count: counts?.calendario ?? 0 },
   ]), [counts, localChatUnreadCount, localChatHasMention])
 
+  const totalCount = useMemo(() => items.reduce((a, b) => a + (b.count || 0), 0), [items])
+
+  if (isMobile) {
+    return (
+      <div className="fhBellCluster grouped" ref={ref}>
+        <div className={`bell ${openKey ? 'open' : ''}`}>
+          <button className="iconBtn mainBell" onClick={() => setOpenKey(k => k ? null : 'all')} aria-label="Notificaciones">
+            <FiBell />
+            {!!totalCount && <span className="badge">{totalCount}</span>}
+          </button>
+
+          {openKey && (
+            <div className="panel mobilePanel">
+              <div className="tabs">
+                {items.map(it => (
+                  <button
+                    key={it.key}
+                    className={`tab ${openKey === it.key || (openKey === 'all' && it.key === 'chat') ? 'active' : ''}`}
+                    onClick={() => setOpenKey(it.key)}
+                  >
+                    {ICONS[it.key]}
+                    {!!it.count && <span className="tabBadge">{it.count}</span>}
+                  </button>
+                ))}
+              </div>
+              <div className="tabContent">
+                <BellButtonContent
+                  buzon={openKey === 'all' ? 'chat' : openKey}
+                  label={items.find(i => i.key === (openKey === 'all' ? 'chat' : openKey))?.label}
+                  closeAll={() => setOpenKey(null)}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fhBellCluster" ref={ref}>
       {items.map(it => (
@@ -105,61 +165,71 @@ export default function BellCluster({ onAnyOpen }) {
 }
 
 function BellButton({ buzon, label, count, dot = false, active, onToggle, closeAll }) {
-  const useGenericInbox = buzon !== 'chat'
-  const { data, isLoading, isError } = useGenericInbox
-    ? useInbox(buzon, { limit: 15, only_unread: true, sort: 'newest' })
-    : { data: null, isLoading: false, isError: false }
-
-  const list = data?.rows || []
-  const navigate = useNavigate()
-  const qc = useQueryClient()
-  const seenOnce = useRef(false)
-
-  useEffect(() => {
-    if (!active || seenOnce.current || !list.length) return
-    seenOnce.current = true
-    list.slice(0, 10).forEach(r => {
-      const id = r?.notificacion?.id
-      if (id) notifApi.seen(id).catch(() => { })
-    })
-  }, [active, list])
-
   return (
     <div className={`bell ${active ? 'open' : ''}`}>
       <button className="iconBtn" onClick={onToggle} aria-label={label} title={label}>
         {ICONS[buzon]}
         {!!count && <span className="badge">{count}</span>}
-        {dot && !count && <span className="dot" aria-hidden />} {/* 👈 puntito rojo si no hay número pero sí unread local */}
+        {dot && !count && <span className="dot" aria-hidden />}
       </button>
 
       {active && (
         <div className="panel">
-          <header className="panelHead">
-            <span className="lbl">{ICONS[buzon]} {label}</span>
-            {buzon !== 'chat' && (
-              <button
-                className="seeAll"
-                onClick={() => { closeAll(); navigate(`/notificaciones/${buzon}`) }}
-                title="Ver todas"
-              >
-                <FiExternalLink /> Ver todas
-              </button>
-            )}
-          </header>
-
-          {buzon === 'chat' ? (
-            <ChatBellPanel closeAll={closeAll} />
-          ) : (
-            <div className="list" style={{ position: 'relative', minHeight: 100 }}>
-              {isLoading && <GlobalLoader size={60} />}
-              {isError && <div className="fh-err">Error cargando.</div>}
-              {!isLoading && !isError && !list.length && <div className="fh-empty">Sin notificaciones.</div>}
-              {list.map(row => <NotifItem key={row.id} row={row} />)}
-            </div>
-          )}
+          <BellButtonContent buzon={buzon} label={label} closeAll={closeAll} />
         </div>
       )}
     </div>
+  )
+}
+
+function BellButtonContent({ buzon, label, closeAll }) {
+  const navigate = useNavigate()
+  const seenOnce = useRef(false)
+  const isChat = buzon === 'chat'
+
+  const { data, isLoading, isError } = useInbox(
+    buzon,
+    { limit: 15, only_unread: true, sort: 'newest' },
+    { enabled: !isChat && !!buzon }
+  )
+
+  const list = useMemo(() => (Array.isArray(data?.rows) ? data.rows : []), [data])
+
+  useEffect(() => {
+    if (seenOnce.current || !list.length) return
+    seenOnce.current = true
+    list.slice(0, 10).forEach(r => {
+      const id = r?.notificacion?.id
+      if (id) notifApi.seen(id).catch(() => { })
+    })
+  }, [list])
+
+  return (
+    <>
+      <header className="panelHead">
+        <span className="lbl">{ICONS[buzon]} {label}</span>
+        {buzon !== 'chat' && (
+          <button
+            className="seeAll"
+            onClick={() => { closeAll(); navigate(`/notificaciones/${buzon}`) }}
+            title="Ver todas"
+          >
+            <FiExternalLink /> Ver todas
+          </button>
+        )}
+      </header>
+
+      {buzon === 'chat' ? (
+        <ChatBellPanel closeAll={closeAll} />
+      ) : (
+        <div className="list" style={{ position: 'relative', minHeight: 100 }}>
+          {isLoading && <GlobalLoader size={60} />}
+          {isError && <div className="fh-err">Error cargando.</div>}
+          {!isLoading && !isError && !list.length && <div className="fh-empty">Sin notificaciones.</div>}
+          {list.map(row => <NotifItem key={row.id} row={row} />)}
+        </div>
+      )}
+    </>
   )
 }
 
@@ -170,7 +240,7 @@ function NotifItem({ row }) {
   console.log('-------------------->', n)
   const title =
     n.titulo || n?.tarea?.titulo || n?.evento?.titulo ||
-    (n?.chatCanal ? `Mención en ${n.chatCanal.nombre}` : n?.tipo?.nombre || 'Notificación')
+    (n?.chatCanal ? `Mención en ${n.chatCanal.nombre} ` : n?.tipo?.nombre || 'Notificación')
 
   const toggleRead = async () => {
     await notifApi.read(n.id, !row.read_at)
@@ -221,7 +291,7 @@ function NotifItem({ row }) {
   }
 
   return (
-    <div className={`item ${row.read_at ? 'read' : ''}`}>
+    <div className={`item ${row.read_at ? 'read' : ''} `}>
       <div className="main">
         <div className="ttl">{title}</div>
         {n.mensaje && <div className="msg">{stripHtml(n.mensaje)}</div>}
