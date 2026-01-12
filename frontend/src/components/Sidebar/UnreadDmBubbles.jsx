@@ -37,7 +37,7 @@ function deriveDmUnreadFromChannels(channels = []) {
 export default function UnreadDmBubbles({ limit = 8 }) {
   const nav = useNavigate()
   const { pathname } = useLocation()
-  const { unreadByCanal, mentionByCanal, currentCanal } = useRealtime()
+  const { unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, clearUnreadFor } = useRealtime()
 
   // Para nombres / emails del otro extremo del DM
   const dmQ = useDmCandidates()
@@ -58,29 +58,6 @@ export default function UnreadDmBubbles({ limit = 8 }) {
     return map
   }, [dmQ.data])
 
-  // Suprimir localmente un canal cuando lo marcamos leído (para no “reaparecer” hasta que el servidor refresque)
-  const [suppressed, setSuppressed] = useState(() => new Set())
-  useEffect(() => {
-    const onCleared = (e) => {
-      const id = Number(e?.detail?.canal_id || 0)
-      if (!id) return
-      setSuppressed(prev => {
-        const next = new Set(prev); next.add(id); return next
-      })
-      // TTL de cortesía: si por alguna razón no refresca el catálogo, lo volvemos a considerar
-      const t = setTimeout(() => {
-        setSuppressed(prev => { const next = new Set(prev); next.delete(id); return next })
-      }, 30_000)
-      return () => clearTimeout(t)
-    }
-    window.addEventListener('fh:chat:channel:cleared', onCleared)
-    window.addEventListener('fh:chat:sent', onCleared)
-    return () => {
-      window.removeEventListener('fh:chat:channel:cleared', onCleared)
-      window.removeEventListener('fh:chat:sent', onCleared)
-    }
-  }, [])
-
   // Lista final: unión de realtime (con conteo exacto) + derivado de canales (persistencia tras reload).
   const items = useMemo(() => {
     const arr = []
@@ -88,33 +65,38 @@ export default function UnreadDmBubbles({ limit = 8 }) {
     const allDmIds = new Set([...dmByCanal.keys(), ...Array.from(derivedUnread.keys())])
 
     allDmIds.forEach(cid => {
+      const cidNum = Number(cid)
       // Si este canal es el que el usuario está viendo, no mostrar badge
-      if (currentCanal && Number(currentCanal) === cid) return
+      if (currentCanal && Number(currentCanal) === cidNum) return
+      // Suppression global de realtime
+      if (suppressedCanals.has(cidNum)) return
 
-      const rtCount = (unreadByCanal?.[cid] | 0)
-      const fallback = suppressed.has(cid) ? 0 : (derivedUnread.get(cid) || 0)
+      const rtCount = (unreadByCanal?.[cidNum] | 0)
+      const fallback = derivedUnread.get(cidNum) || 0
       const count = rtCount || fallback
+
       if (!count) return
 
-      const u = dmByCanal.get(cid)
+      const u = dmByCanal.get(cidNum)
       if (!u) return // necesitamos usuario para avatar/iniciales
 
-      const ch = chById.get(cid)
+      const ch = chById.get(cidNum)
       const last = u?.last_msg_at || ch?.updated_at || null
 
       arr.push({
-        canal_id: cid,
+        canal_id: cidNum,
         user: u,
         label: initialsFromUser(u),
         last: last ? new Date(last).getTime() : 0,
-        hasMention: (mentionByCanal?.[cid] | 0) > 0,
+        hasMention: (mentionByCanal?.[cidNum] | 0) > 0,
         unreadCount: Math.min(99, count)
       })
     })
 
+    console.log('[Sidebar] Final items:', arr.map(i => ({ id: i.canal_id, count: i.unreadCount })))
     arr.sort((a, b) => b.last - a.last)
     return arr.slice(0, limit)
-  }, [dmByCanal, derivedUnread, unreadByCanal, mentionByCanal, suppressed, chById, limit])
+  }, [dmByCanal, derivedUnread, unreadByCanal, mentionByCanal, suppressedCanals, currentCanal, chById, limit])
 
   // Animación sutil al aparecer
   const [animIds, setAnimIds] = useState(() => new Set())
@@ -159,7 +141,11 @@ export default function UnreadDmBubbles({ limit = 8 }) {
             key={it.canal_id}
             className={cls}
             title={title}
-            onClick={() => nav(`/chat/c/${it.canal_id}`)}
+            onClick={() => {
+              console.log('[Sidebar] Clicking bubble for canal:', it.canal_id)
+              clearUnreadFor(it.canal_id)
+              nav(`/chat/c/${it.canal_id}`)
+            }}
             aria-label={`Abrir DM con ${title}. ${countTxt} sin leer`}
           >
             {it.label}

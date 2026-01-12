@@ -384,21 +384,29 @@ export const timelineRangoRepo = async ({ desde, hasta, feder_id, q }) => {
 // ================== Bulk Status (for attendance badges) ==================
 export const getBulkOpenStatus = async (federIds = []) => {
   if (!federIds.length) return [];
-  // Sanitizar IDs como integers para evitar SQL injection
   const safeIds = federIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
   if (!safeIds.length) return [];
 
   const sql = `
-    SELECT DISTINCT ON (ar.feder_id)
-      ar.feder_id,
+    SELECT 
+      f.id as feder_id,
       ar.id as registro_id,
-      ar.check_in_at,
-      mt.codigo as modalidad_codigo
-    FROM "AsistenciaRegistro" ar
-    LEFT JOIN "ModalidadTrabajoTipo" mt ON mt.id = ar.modalidad_id
-    WHERE ar.feder_id IN (${safeIds.join(',')})
+      mt_active.codigo as modalidad_codigo,
+      mt_plan.codigo as plan_modalidad_codigo,
+      ar.check_in_at
+    FROM "Feder" f
+    -- Registro abierto hoy
+    LEFT JOIN "AsistenciaRegistro" ar ON ar.feder_id = f.id 
       AND ar.check_out_at IS NULL
-    ORDER BY ar.feder_id, ar.check_in_at DESC
+      AND DATE(ar.check_in_at AT TIME ZONE 'America/Argentina/Buenos_Aires') = CURRENT_DATE
+    -- Modalidad del registro activo
+    LEFT JOIN "ModalidadTrabajoTipo" mt_active ON mt_active.id = ar.modalidad_id
+    -- Plan para hoy
+    LEFT JOIN "FederModalidadDia" fmd ON fmd.feder_id = f.id 
+      AND fmd.dia_semana_id = EXTRACT(ISODOW FROM CURRENT_DATE)::int
+      AND fmd.is_activo = true
+    LEFT JOIN "ModalidadTrabajoTipo" mt_plan ON mt_plan.id = fmd.modalidad_id
+    WHERE f.id IN (${safeIds.join(',')})
   `;
   return await sequelize.query(sql, {
     type: QueryTypes.SELECT

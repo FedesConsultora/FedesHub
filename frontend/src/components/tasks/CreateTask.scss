@@ -215,6 +215,53 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
 
 
+  &.has-label {
+    gap: 8px;
+    padding: 6px 14px;
+
+    .ico {
+      flex-shrink: 0;
+    }
+
+    .field-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+
+      .field-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: $fh-muted;
+        margin-bottom: 2px;
+        opacity: 0.8;
+      }
+
+      input[type="date"] {
+        height: 20px;
+        min-height: unset;
+        font-size: 14px;
+        padding: 0;
+        margin: 0;
+
+        &::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+        }
+      }
+    }
+  }
+
   input,
   select,
   textarea {
@@ -225,7 +272,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     border: 0;
     outline: none;
     padding: 0;
-    font-size: 16px; // Avoid iOS zoom
+    font-size: 15px; // Reduced slightly for better fit
     line-height: 1.2;
     min-height: 24px;
     height: 100%;
@@ -243,6 +290,12 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     min-width: 0;
     display: flex;
     align-items: center;
+    position: relative;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-clear-button {
+      display: none;
+    }
   }
 
 
@@ -623,8 +676,9 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   background: $fh-primary;
   border: none;
   color: white;
-  padding: .92rem 1rem;
+  padding: 10px 24px; // Un poco más (era .92rem 1rem)
   border-radius: 12px;
+  font-size: 14px; // Asegurado
   font-weight: 800;
   letter-spacing: .3px;
   box-shadow: 0 8px 20px rgba(68, 113, 141, .35);

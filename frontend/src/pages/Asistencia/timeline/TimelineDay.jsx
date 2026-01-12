@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { formatDuration } from './timeline.utils'
 import AttendanceBadge from '../../../components/common/AttendanceBadge.jsx'
-import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
 import { TbClockStop } from "react-icons/tb";
 
 // ... (helpers)
@@ -39,7 +39,9 @@ export default function TimelineDay({ payload, startHour = 5 }) {
     [items]
   )
 
+  console.log('[TimelineDay] federIds:', federIds)
   const { statuses } = useAttendanceStatus(federIds)
+  console.log('[TimelineDay] statuses:', statuses)
 
   // refs
   const rootRef = useRef(null)     // scroller
@@ -109,7 +111,7 @@ export default function TimelineDay({ payload, startHour = 5 }) {
                     {p.feder_apellido ?? p.apellido}, {p.feder_nombre ?? p.nombre}
                   </div>
                   <div style={{ position: 'relative', width: '16px', height: '16px', flexShrink: 0 }}>
-                    <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id)} size={16} />
+                    <AttendanceBadge {...getStatus(statuses, p.feder_id)} size={16} />
                   </div>
                 </div>
                 <div className="person-progress"><div className="bar" style={{ width: `${pct * 100}%` }} /></div>

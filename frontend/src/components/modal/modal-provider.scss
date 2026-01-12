@@ -4,7 +4,7 @@
 .fh-modal-layer {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: 20000; // Por encima de CreateTaskModal (10000)
   display: grid;
   place-items: center;
   padding: 24px;

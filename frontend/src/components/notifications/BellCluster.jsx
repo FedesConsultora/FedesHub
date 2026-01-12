@@ -66,13 +66,19 @@ export default function BellCluster({ onAnyOpen }) {
   }, [])
 
   // estado LOCAL de chat (para alinear icono aunque el contador del backend esté desfasado)
-  const { unreadByCanal, mentionByCanal } = useRealtime()
+  const { unreadByCanal, mentionByCanal, suppressedCanals } = useRealtime()
   const localChatUnreadCount = useMemo(() =>
-    Object.values(unreadByCanal || {}).reduce((a, b) => a + (b || 0), 0)
-    , [unreadByCanal])
+    Object.entries(unreadByCanal || {}).reduce((a, [cid, count]) => {
+      if (suppressedCanals.has(Number(cid))) return a
+      return a + (count || 0)
+    }, 0)
+    , [unreadByCanal, suppressedCanals])
   const localChatHasMention = useMemo(() =>
-    Object.values(mentionByCanal || {}).some(v => (v | 0) > 0)
-    , [mentionByCanal])
+    Object.entries(mentionByCanal || {}).some(([cid, v]) => {
+      if (suppressedCanals.has(Number(cid))) return false
+      return (v | 0) > 0
+    })
+    , [mentionByCanal, suppressedCanals])
 
   useEffect(() => { if (openKey) onAnyOpen?.(openKey) }, [openKey, onAnyOpen])
 

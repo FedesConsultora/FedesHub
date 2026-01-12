@@ -19,7 +19,7 @@ import Avatar from '../../Avatar.jsx'
 import { ChatActionCtx } from '../shared/context'
 import { fullName, displayName, pickAvatar } from '../../../utils/people'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
-import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
 import './Timeline.scss'
 
 const fmtDay = (d) =>
@@ -61,6 +61,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   }, [ordered, members])
 
   const { statuses } = useAttendanceStatus(authorFederIds)
+  console.log('[Timeline] statuses:', statuses)
 
   const groups = useMemo(() => {
     const g = {}
@@ -321,14 +322,14 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
 
   return (
     <div id={`msg-${m.id}`} className={'msgWrapper' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '')}>
-      <div className="msgAvatarContainer">
+      <div className="msgAvatarContainer" style={{ position: 'relative' }}>
         <Avatar
           src={pickAvatar(member) || pickAvatar(m)}
           name={author}
           size={32}
           federId={authorFederId}
         />
-        <AttendanceBadge modalidad={getModalidad(statuses, authorFederId)} size={12} />
+        <AttendanceBadge {...getStatus(statuses, authorFederId)} size={12} />
       </div>
 
       <div className="msgBody">

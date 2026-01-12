@@ -17,7 +17,7 @@ const getProveedorId = async (codigo, t) => {
   return row?.id ?? null;
 };
 
-export const renderEmail = async ({ tipo_id, idioma='es', payload={}, link_url }, t) => {
+export const renderEmail = async ({ tipo_id, idioma = 'es', payload = {}, link_url }, t) => {
   // 1) Plantilla en DB
   const canal = await getCanalId('email', t);
   const row = await m.NotificacionPlantilla.findOne({
@@ -47,52 +47,77 @@ export const renderEmail = async ({ tipo_id, idioma='es', payload={}, link_url }
     /* Tareas */
     case 'tarea_asignada':
       subject = 'Nueva tarea asignada';
-      html = templates.tarea_asignada(payload);
+      html = templates.tarea_asignada({ tarea: payload?.tarea, link: link_url });
       break;
     case 'tarea_comentario':
       subject = 'Nuevo comentario en tu tarea';
-      html = templates.tarea_comentario(payload);
+      html = templates.tarea_comentario({ tarea: payload?.tarea, comentario: payload?.comentario, link: link_url });
       break;
     case 'tarea_vencimiento':
       subject = 'Tu tarea está por vencer';
-      html = templates.tarea_vencimiento(payload);
+      html = templates.tarea_vencimiento({ tarea: payload?.tarea, link: link_url });
+      break;
+    case 'tarea_eliminada':
+      subject = `Tarea eliminada: ${payload?.tarea?.titulo || ''}`;
+      html = templates.tarea_eliminada({
+        tarea: payload?.tarea,
+        razon: payload?.razon_eliminacion,
+        eliminador: payload?.eliminador_nombre
+      });
+      break;
+    case 'tarea_cancelada':
+      subject = `Tarea cancelada: ${payload?.tarea?.titulo || ''}`;
+      html = templates.tarea_cancelada({
+        tarea: payload?.tarea,
+        motivo: payload?.cancelacion_motivo,
+        link: link_url
+      });
+      break;
+
+    /* Asistencia */
+    case 'asistencia_recordatorio':
+      subject = '🟢 Recordá activar tu asistencia en FedesHub';
+      html = templates.asistencia_recordatorio({
+        feder: payload?.feder,
+        link: link_url || 'https://hub.fedesconsultora.com'
+      });
       break;
 
     /* Chat */
     case 'chat_mencion':
       subject = 'Te mencionaron en un chat';
-      html = templates.chat_mencion(payload);
+      html = templates.chat_mencion({ canal: payload?.canal, mensaje: payload?.mensaje, link: link_url });
       break;
 
     /* Calendario */
     case 'evento_invitacion':
       subject = `Invitación: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_invitacion(payload);
+      html = templates.evento_invitacion({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_actualizado':
       subject = `Actualizado: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_actualizado(payload);
+      html = templates.evento_actualizado({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_cancelado':
       subject = `Cancelado: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_cancelado(payload);
+      html = templates.evento_cancelado({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_removido':
       subject = `Actualización de participación: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_removido(payload);
+      html = templates.evento_removido({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_nuevo':
       subject = `Nuevo evento: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_nuevo(payload);
+      html = templates.evento_nuevo({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_recordatorio':
     case 'recordatorio':
       subject = `Recordatorio: ${payload?.evento?.titulo || ''}`;
-      html = templates.evento_recordatorio(payload);
+      html = templates.evento_recordatorio({ evento: payload?.evento, link: link_url });
       break;
     case 'evento_rsvp':
       subject = `RSVP: ${payload?.evento?.titulo || ''} → ${payload?.rsvp || ''}`;
-      html = templates.evento_rsvp(payload);
+      html = templates.evento_rsvp({ evento: payload?.evento, rsvp: payload?.rsvp, link: link_url });
       break;
 
     default:
@@ -109,7 +134,7 @@ export const sendNotificationEmails = async (notificacion_id, t) => {
       { model: m.ImportanciaTipo, as: 'importancia' },
       { model: m.Tarea, as: 'tarea', include: [{ model: m.Cliente, as: 'cliente' }] },
       { model: m.Evento, as: 'evento' },
-      { model: m.ChatCanal, as: 'chatCanal', attributes: ['id','nombre','slug'] },
+      { model: m.ChatCanal, as: 'chatCanal', attributes: ['id', 'nombre', 'slug'] },
       { model: m.NotificacionDestino, as: 'destinos', include: [{ model: m.User, as: 'user' }] }
     ],
     transaction: t

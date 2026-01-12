@@ -4,25 +4,29 @@ import './AttendanceBadge.scss'
 /**
  * Renders a small attendance status icon (home/office)
  * - Green icon: checked in (home or office)
- * - Red dot icon: not checked in (offline)
- * @param {string} modalidad - 'oficina' | 'remoto' | null
+ * - Red icon: not checked in (showing planned modality)
+ * @param {string} modalidad - 'oficina' | 'remoto' | null (active check-in)
+ * @param {string} plan - 'oficina' | 'remoto' | null (planned modality)
  * @param {number} size - Icon size in px (default: 14)
  */
-export default function AttendanceBadge({ modalidad, size = 14, inline = false }) {
-    const isActive = !!modalidad
+export default function AttendanceBadge({ modalidad, plan, size = 14, inline = false }) {
+    console.log('[AttendanceBadge] Rendering:', { modalidad, plan, size, inline });
 
-    // Icon selection: Home for remote, Building for office, Circle (dot) for offline
-    const Icon = modalidad === 'remoto'
+    const isActive = !!modalidad
+    const effectiveModalidad = modalidad || plan
+
+    // Icon selection: Home for remote, Building for office, Circle (dot) for fallback
+    const Icon = effectiveModalidad === 'remoto'
         ? FaHome
-        : modalidad === 'oficina'
+        : effectiveModalidad === 'oficina'
             ? FaBuilding
             : FaCircle
 
-    const title = modalidad === 'remoto'
-        ? 'Trabajando desde casa'
-        : modalidad === 'oficina'
-            ? 'En la oficina'
-            : 'Sin registrar entrada (Offline)'
+    const title = isActive
+        ? (modalidad === 'remoto' ? 'Trabajando desde casa' : 'En la oficina')
+        : (plan
+            ? `Pendiente de ingreso: ${plan === 'remoto' ? 'Home Office' : 'Oficina'}`
+            : 'Sin registrar entrada (Offline)')
 
     return (
         <span
@@ -30,7 +34,7 @@ export default function AttendanceBadge({ modalidad, size = 14, inline = false }
             title={title}
             style={{ '--badge-size': `${size}px` }}
         >
-            <Icon style={!isActive ? { fontSize: '0.6em' } : {}} />
+            <Icon style={!effectiveModalidad ? { fontSize: '0.6em' } : {}} />
         </span>
     )
 }

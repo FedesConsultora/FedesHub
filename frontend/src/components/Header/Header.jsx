@@ -3,14 +3,32 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import AsistenciaDot from '../asistencia/AsistenciaDot.jsx'
 import { useState } from 'react'
-import { FiHeadphones, FiChevronDown } from 'react-icons/fi'
+import { FiHeadphones, FiChevronDown, FiBell } from 'react-icons/fi'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import Avatar from '../Avatar.jsx'
 import { useProfilePreview } from '../../context/ProfilePreviewProvider.jsx'
+import NotifHealthModal from '../notifications/NotifHealthModal/NotifHealthModal.jsx'
+import { useRealtime } from '../../realtime/RealtimeProvider'
 import './Header.scss'
 
 const SUPPORT_URL = 'https://miro.com/app/board/uXjVGf1enLk=/'
+
+function NotifRequestBtn({ onOpenHealth }) {
+  const { notifPermission } = useRealtime()
+  if (notifPermission !== 'default') return null
+
+  return (
+    <button
+      className="notifRequestBtn"
+      onClick={onOpenHealth}
+      title="Habilitar notificaciones de escritorio"
+    >
+      <FiBell />
+      <span className="dot" />
+    </button>
+  )
+}
 
 export default function Header() {
   const { user, hasPerm, logout } = useAuthCtx()
@@ -19,6 +37,7 @@ export default function Header() {
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const [healthOpen, setHealthOpen] = useState(false) // Added this state
 
   const onLogout = async () => { await logout(); nav('/login') }
 
@@ -43,6 +62,7 @@ export default function Header() {
           >
             <FiHeadphones />
           </button>
+          <NotifRequestBtn onOpenHealth={() => setHealthOpen(true)} />
           <BellCluster onAnyOpen={() => setOpen(false)} />
           <AsistenciaDot />
           <button className="userChip" onClick={() => setOpen(v => !v)} aria-haspopup="menu" title={user?.email}>
@@ -59,6 +79,9 @@ export default function Header() {
           {open && (
             <div className="menu" role="menu" onMouseLeave={() => setOpen(false)}>
               <button onClick={() => { setOpen(false); openProfile(user?.feder_id) }} role="menuitem">Mi perfil</button>
+              <button onClick={() => { setOpen(false); setHealthOpen(true) }} role="menuitem">
+                <FiBell style={{ marginRight: 8, verticalAlign: 'middle' }} /> Notificaciones
+              </button>
               {isAdmin && (
                 <button onClick={() => { setOpen(false); setAdminOpen(true) }} role="menuitem">Admin</button>
               )}
@@ -70,6 +93,7 @@ export default function Header() {
       </header>
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
+      <NotifHealthModal isOpen={healthOpen} onClose={() => setHealthOpen(false)} />
     </>
   )
 }

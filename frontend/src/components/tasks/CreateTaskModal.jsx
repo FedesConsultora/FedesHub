@@ -2,16 +2,17 @@ import { useEffect, useMemo, useRef, useState, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
-import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle, FiLock, FiCheckCircle, FiClock } from 'react-icons/fi'
+import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle, FiLock, FiCheckCircle, FiClock, FiCalendar } from 'react-icons/fi'
 import { MdKeyboardArrowDown } from "react-icons/md";
 import AttendanceBadge from '../common/AttendanceBadge.jsx'
-import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js'
+import useAttendanceStatus, { getStatus } from '../../hooks/useAttendanceStatus.js'
 import RichTextEditor from '../common/RichTextEditor.jsx'
 import TitleTooltip from './TitleTooltip.jsx'
 import { useAuthCtx } from '../../context/AuthContext'
 import { useModal } from '../modal/ModalProvider'
 
 import './CreateTask.scss'
+import './CreateTaskCheckboxes.scss'
 
 /* === helpers fecha === */
 const fromInputDate = (val) => {
@@ -236,6 +237,8 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
   const [uploading, setUploading] = useState(false)
   const [apiError, setApiError] = useState(null)
 
+  const dateInputRef = useRef(null)
+
   const myId = Number(localStorage.getItem('feder_id')) // ID del usuario actual
 
   // Sync initialData
@@ -251,7 +254,9 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
 
   // Attendance status hook
   const allFederIds = useMemo(() => (cat.feders || []).map(f => f.id), [cat.feders])
+  console.log('[CreateTaskModal] federIds:', allFederIds)
   const { statuses } = useAttendanceStatus(allFederIds)
+  console.log('[CreateTaskModal] statuses:', statuses)
 
   const hitosOpts = useMemo(() => {
     if (!clienteId) return []
@@ -395,7 +400,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
           height: '14px',
           position: 'relative'
         }}>
-          <AttendanceBadge modalidad={getModalidad(statuses, opt.feder_id)} size={14} inline />
+          <AttendanceBadge {...getStatus(statuses, opt.feder_id)} size={14} inline />
         </div>
       </div>
     )
@@ -518,16 +523,23 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
               {(cat.feders || []).length > 0 && (
                 <div className="form-row">
                   <div className="form-item">
-                    <div className={'field ' + (fechaError ? 'is-error' : '')}>
-                      <span className="field-label">
-                        {tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
-                      </span>
-                      <input
-                        type="date"
-                        value={vencimiento}
-                        onChange={(e) => setVencimiento(e.target.value)}
-                        disabled={loading}
-                      />
+                    <div
+                      className={'field has-label ' + (fechaError ? 'is-error' : '')}
+                      onClick={() => dateInputRef.current?.showPicker?.()}
+                    >
+                      <FiCalendar className="ico" style={S.ico} />
+                      <div className="field-content">
+                        <span className="field-label">
+                          {tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
+                        </span>
+                        <input
+                          ref={dateInputRef}
+                          type="date"
+                          value={vencimiento}
+                          onChange={(e) => setVencimiento(e.target.value)}
+                          disabled={loading}
+                        />
+                      </div>
                     </div>
                     {fechaError && <div className="help error-inline">{fechaError}</div>}
                   </div>
@@ -633,27 +645,33 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
 
                   <div className="form-row">
                     <div className="form-item">
-                      <div className="field">
-                        <select value={tcObjetivoNegocioId} onChange={(e) => setTcObjetivoNegocioId(e.target.value)} disabled={loading} style={S.control}>
-                          <option value="">— Objetivo Negocio —</option>
-                          {(cat.tc_obj_negocio || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                        </select>
-                        <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
-                      </div>
+                      <CustomSelect
+                        labelId="lbl-tc-negocio"
+                        leftIcon={<FiTag className="ico" style={S.ico} />}
+                        options={(cat.tc_obj_negocio || []).map(o => ({ value: String(o.id), label: o.nombre }))}
+                        value={tcObjetivoNegocioId ? [String(tcObjetivoNegocioId)] : []}
+                        onChange={(next) => setTcObjetivoNegocioId(next[0] || '')}
+                        placeholder="Objetivo Negocio"
+                        disabled={loading}
+                        multi={false}
+                      />
                     </div>
                     <div className="form-item">
-                      <div className="field">
-                        <select value={tcObjetivoMarketingId} onChange={(e) => setTcObjetivoMarketingId(e.target.value)} disabled={loading} style={S.control}>
-                          <option value="">— Objetivo Marketing —</option>
-                          {(cat.tc_obj_marketing || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                        </select>
-                        <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
-                      </div>
+                      <CustomSelect
+                        labelId="lbl-tc-marketing"
+                        leftIcon={<FiTag className="ico" style={S.ico} />}
+                        options={(cat.tc_obj_marketing || []).map(o => ({ value: String(o.id), label: o.nombre }))}
+                        value={tcObjetivoMarketingId ? [String(tcObjetivoMarketingId)] : []}
+                        onChange={(next) => setTcObjetivoMarketingId(next[0] || '')}
+                        placeholder="Objetivo Marketing"
+                        disabled={loading}
+                        multi={false}
+                      />
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', padding: '0 8px', marginTop: '4px' }}>
-                    <div className="field checkbox" style={{ padding: 0, margin: 0, opacity: (!isDirectivo && !responsables.includes(String(myId))) ? 0.6 : 1 }}>
+                  <div className="checkbox-group-bottom">
+                    <div className="field checkbox" style={{ opacity: (!isDirectivo && !responsables.includes(String(myId))) ? 0.6 : 1 }}>
                       <input
                         id="tc-inamovible" type="checkbox" checked={tcInamovible}
                         disabled={loading || (!isDirectivo && !responsables.includes(String(myId)))}
@@ -663,6 +681,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
                             const ok = await modal.confirm({
                               title: 'Marcar como inamovible',
                               message: '⚠️ Atención: Si creas esta tarea como inamovible, no podrás desmarcarla después ni cambiar su fecha de publicación. ¿Estás seguro?',
+                              tone: 'warn',
                               okText: 'Sí, marcar como inamovible',
                               cancelText: 'Cancelar'
                             });
@@ -672,28 +691,28 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
                           }
                         }}
                       />
-                      <label htmlFor="tc-inamovible" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: (!isDirectivo && !responsables.includes(String(myId))) ? 'default' : 'pointer' }}>
-                        <FiLock style={{ fontSize: '0.9rem' }} /> Inamovible
+                      <label htmlFor="tc-inamovible" className="check-label">
+                        <FiLock /> Inamovible
                       </label>
                     </div>
 
-                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                    <div className="field checkbox">
                       <input
                         id="tc-publicado" type="checkbox" checked={tcEstadoPublicacionId === '2'}
                         onChange={(e) => setTcEstadoPublicacionId(e.target.checked ? '2' : '1')} disabled={loading}
                       />
-                      <label htmlFor="tc-publicado" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <FiCheckCircle style={{ fontSize: '0.9rem' }} /> Publicado
+                      <label htmlFor="tc-publicado" className="check-label">
+                        <FiCheckCircle /> Publicado
                       </label>
                     </div>
 
-                    <div className="field checkbox" style={{ padding: 0, margin: 0 }}>
+                    <div className="field checkbox">
                       <input
                         id="tc-postergado" type="checkbox" checked={tcEstadoPublicacionId === '3'}
                         onChange={(e) => setTcEstadoPublicacionId(e.target.checked ? '3' : '1')} disabled={loading}
                       />
-                      <label htmlFor="tc-postergado" style={{ color: '#fff', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <FiClock style={{ fontSize: '0.9rem' }} /> Postergado
+                      <label htmlFor="tc-postergado" className="check-label">
+                        <FiClock /> Postergado
                       </label>
                     </div>
                   </div>

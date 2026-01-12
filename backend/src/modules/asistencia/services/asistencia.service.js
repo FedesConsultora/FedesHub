@@ -200,11 +200,12 @@ export const svcTimelineRango = async (params) => {
 // Bulk status for attendance badges
 export const svcBulkStatus = async (federIds = []) => {
   const rows = await getBulkOpenStatus(federIds);
-  // Transform to map: { feder_id: { modalidad_codigo, check_in_at } }
+  // Transform to map: { feder_id: { modalidad_codigo, plan_modalidad_codigo, check_in_at } }
   const result = {};
   for (const r of rows) {
     result[r.feder_id] = {
       modalidad_codigo: r.modalidad_codigo,
+      plan_modalidad_codigo: r.plan_modalidad_codigo,
       check_in_at: r.check_in_at
     };
   }

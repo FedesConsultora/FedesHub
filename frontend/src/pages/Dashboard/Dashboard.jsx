@@ -171,7 +171,6 @@ export default function Dashboard() {
     const canMoveDown = index < (col === 'left' ? leftCol.length : rightCol.length) - 1
 
     const blockProps = {
-      key: id,
       id,
       isCollapsed,
       onToggle: toggleCollapse,
@@ -186,26 +185,26 @@ export default function Dashboard() {
     switch (id) {
       case 'metrics':
         return (
-          <DashboardBlock {...blockProps} title="Resumen">
+          <DashboardBlock key={id} {...blockProps} title="Resumen">
             <MetricsGrid data={metrics} />
           </DashboardBlock>
         )
       case 'urgent':
         return (
-          <DashboardBlock {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
+          <DashboardBlock key={id} {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
             <UrgentTasks tasks={urgentTasks} onOpenTask={setOpenTaskId} />
           </DashboardBlock>
         )
       case 'revision':
         if (!metrics?.is_directivo) return null
         return (
-          <DashboardBlock {...blockProps} title="📋 Tareas en revisión" count={revisionTasks.length}>
+          <DashboardBlock key={id} {...blockProps} title="📋 Tareas en revisión" count={revisionTasks.length}>
             <RevisionTasks tasks={revisionTasks} onOpenTask={setOpenTaskId} />
           </DashboardBlock>
         )
       case 'unread':
         return (
-          <DashboardBlock {...blockProps} title="💬 Mensajes sin leer" count={unreadNotifs.length}>
+          <DashboardBlock key={id} {...blockProps} title="💬 Mensajes sin leer" count={unreadNotifs.length}>
             <DashboardUnread notifications={unreadNotifs} onOpenTask={setOpenTaskId} onRefresh={() => fetchData()} />
           </DashboardBlock>
         )

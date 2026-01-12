@@ -102,6 +102,7 @@
       }
 
       .avatarWrapper {
+        position: relative;
         flex-shrink: 0;
         margin-bottom: 4px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);

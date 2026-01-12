@@ -161,6 +161,23 @@
   align-items: center;
   gap: 8px;
 
+  .notifRequestBtn {
+    @extend .supportBtn;
+    position: relative;
+    color: #ffd54f; // Color llamativo pero elegante
+
+    .dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px;
+      height: 6px;
+      background: #ff5151;
+      border-radius: 50%;
+      border: 1px solid #0b1118;
+    }
+  }
+
   .supportBtn {
     display: flex;
     align-items: center;

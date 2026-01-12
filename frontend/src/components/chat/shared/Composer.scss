@@ -196,7 +196,7 @@
     place-items: center;
     cursor: pointer;
     transition: all 0.2s;
-
+    padding: 0;
     &:hover:not(:disabled) {
       transform: scale(1.05);
       background: color.adjust(v.$fh-primary, $lightness: 5%);

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import Avatar from '../Avatar.jsx';
 import { pickAvatar } from '../../utils/people.js';
 import AttendanceBadge from '../common/AttendanceBadge.jsx';
-import useAttendanceStatus, { getModalidad } from '../../hooks/useAttendanceStatus.js';
+import useAttendanceStatus, { getStatus } from '../../hooks/useAttendanceStatus.js';
 import { MdClose } from 'react-icons/md';
 import { CiCirclePlus } from "react-icons/ci";
 import { MdEdit } from "react-icons/md";
@@ -116,7 +116,7 @@ const Group = ({ title, groupKey, items, candidates, openAdd, setOpenAdd, handle
                   size={36}
                   federId={p.feder_id || p.id}
                 />
-                <AttendanceBadge modalidad={getModalidad(statuses, p.feder_id || p.id)} size={14} />
+                <AttendanceBadge {...getStatus(statuses, p.feder_id || p.id)} size={14} />
 
                 {/* Tooltip con el nombre */}
                 <div className="avatarTooltip">
@@ -154,7 +154,9 @@ export default function AssignedPeople({
     return ids;
   }, [responsables, colaboradores]);
 
+  console.log('[AssignedPeople] federIds:', allFederIds)
   const { statuses } = useAttendanceStatus(allFederIds);
+  console.log('[AssignedPeople] statuses:', statuses)
 
   // Click outside para cerrar dropdown - Solución definitiva
   useEffect(() => {

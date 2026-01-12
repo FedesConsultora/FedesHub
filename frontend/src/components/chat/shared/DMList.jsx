@@ -3,7 +3,7 @@ import Avatar from '../../Avatar.jsx'
 import './DMList.scss'
 import { displayName, pickAvatar } from '../../../utils/people'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
-import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
 
 export default function DMList({ items = [], selectedId = null, unreadLookup = {}, mentionLookup = {}, onOpenDm }) {
   // Collect feder_ids for attendance status
@@ -11,7 +11,9 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
     items.map(u => u.feder_id || u.id_feder).filter(Boolean),
     [items]
   )
+  console.log('[DMList] federIds:', federIds)
   const { statuses } = useAttendanceStatus(federIds)
+  console.log('[DMList] statuses:', statuses)
 
   return (
     <div className="chat-dms">
@@ -27,6 +29,7 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
             const hasMention = !!(canalId && mentionLookup[canalId])
             const sel = selectedId === canalId
             const name = displayName(u)
+            const fid = u.feder_id || u.id_feder
             return (
               <button
                 key={u.user_id}
@@ -35,9 +38,9 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
                 title={u.email}
               >
                 <span className={'avatarWrap' + (hasMention ? ' mention' : '')}>
-                  <Avatar src={pickAvatar(u)} name={name} size={36} federId={u.feder_id || u.id_feder} />
+                  <Avatar src={pickAvatar(u)} name={name} size={36} federId={fid} />
                   {unread && <i className="dot" />}
-                  <AttendanceBadge modalidad={getModalidad(statuses, u.feder_id || u.id_feder)} size={14} />
+                  <AttendanceBadge {...getStatus(statuses, fid)} size={14} />
                 </span>
                 <div className="meta">
                   <div className="name">

@@ -68,7 +68,7 @@ async function notifyAsignacionTarea(tarea, req, federIds = [], rol = 'responsab
   if (!destinos.length) return;
 
   const baseUrl = buildBaseUrl(req);
-  const linkUrl = baseUrl ? `${baseUrl}/tareas/${tarea.id}` : undefined;
+  const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${tarea.id}` : undefined;
   const tituloRol = rol === 'colaborador' ? 'Te agregaron como colaborador' : 'Te asignaron como responsable';
 
   await notifCreate({
@@ -242,8 +242,55 @@ export const archiveTarea = async (req, res, next) => {
 export const deleteTarea = async (req, res, next) => {
   try {
     const { id } = taskIdParamSchema.parse(req.params);
+
+    // Obtener información de la tarea ANTES de eliminarla para la notificación
+    const tarea = await svcGetTask(id, req.user);
+    if (!tarea) {
+      throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
+    }
+
+    // Extraer afectados (responsables y colaboradores)
+    const responsablesFederIds = (tarea.responsables || []).map(r => r.feder_id).filter(Boolean);
+    const colaboradoresFederIds = (tarea.colaboradores || []).map(c => c.feder_id).filter(Boolean);
+    const allAfectados = [...new Set([...responsablesFederIds, ...colaboradoresFederIds])];
+
+    // Realizar la eliminación
     const result = await svcDeleteTask(id, req.user);
     res.json(result);
+
+    // Enviar notificación de eliminación (no bloqueante)
+    if (allAfectados.length > 0) {
+      (async () => {
+        try {
+          const destinos = await federIdsToDestinos(allAfectados, req);
+          if (!destinos.length) return;
+
+          const eliminadorFeder = await models.Feder.findOne({
+            where: { id: req.user.feder_id },
+            attributes: ['nombre', 'apellido']
+          });
+          const eliminadorNombre = eliminadorFeder
+            ? `${eliminadorFeder.nombre} ${eliminadorFeder.apellido}`
+            : 'Un directivo';
+
+          await notifCreate({
+            tipo_codigo: 'tarea_eliminada',
+            titulo: `Tarea eliminada: "${tarea.titulo}"`,
+            mensaje: `La tarea "${tarea.titulo}" fue eliminada del sistema`,
+            data: {
+              tarea_id: Number(id),
+              razon_eliminacion: 'Eliminación por directivo',
+              eliminador_nombre: eliminadorNombre
+            },
+            tarea_id: null, // La tarea ya no existe
+            destinos,
+            canales: ['in_app', 'email']
+          }, req.user);
+        } catch (err) {
+          req.log?.error('tareas.delete:notif:err', { err: err?.message });
+        }
+      })();
+    }
   } catch (e) { next(e); }
 };
 
@@ -275,8 +322,49 @@ export const patchEstado = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
     const { estado_id, cancelacion_motivo } = setEstadoSchema.parse(req.body);
+
+    // Obtener estado ANTES del cambio para detectar si cambia a cancelada
+    const tareaAntes = await svcGetTask(id, req.user);
+    const estadoCodigo = await models.TareaEstado.findByPk(estado_id, { attributes: ['codigo'] });
+
+    // Realizar el cambio de estado
     await svcSetEstado(id, estado_id, req.user.feder_id, cancelacion_motivo);
-    res.json(await svcGetTask(id, req.user));
+    const tareaActualizada = await svcGetTask(id, req.user);
+
+    res.json(tareaActualizada);
+
+    // Enviar notificación si se canceló la tarea (no bloqueante)
+    if (estadoCodigo?.codigo === 'cancelada') {
+      (async () => {
+        try {
+          const responsablesFederIds = (tareaActualizada.responsables || []).map(r => r.feder_id).filter(Boolean);
+          const colaboradoresFederIds = (tareaActualizada.colaboradores || []).map(c => c.feder_id).filter(Boolean);
+          const allAfectados = [...new Set([...responsablesFederIds, ...colaboradoresFederIds])];
+
+          const destinos = await federIdsToDestinos(allAfectados, req);
+          if (!destinos.length) return;
+
+          const baseUrl = buildBaseUrl(req);
+          const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${id}` : undefined;
+
+          await notifCreate({
+            tipo_codigo: 'tarea_cancelada',
+            titulo: `Tarea cancelada: "${tareaActualizada.titulo}"`,
+            mensaje: cancelacion_motivo || 'La tarea fue cancelada',
+            data: {
+              tarea_id: Number(id),
+              cancelacion_motivo: cancelacion_motivo || null
+            },
+            link_url: linkUrl,
+            tarea_id: Number(id),
+            destinos,
+            canales: ['in_app', 'email']
+          }, req.user);
+        } catch (err) {
+          req.log?.error('tareas.patchEstado:notif:err', { err: err?.message });
+        }
+      })();
+    }
   } catch (e) { next(e); }
 };
 
@@ -479,7 +567,7 @@ export const postComentario = async (req, res, next) => {
         // --- 2) Datos de la tarea y link
         const tarea = await models.Tarea.findByPk(id, { attributes: ['id', 'titulo'] });
         const baseUrl = buildBaseUrl(req);
-        const linkUrl = baseUrl ? `${baseUrl}/tareas/${id}#c${cm.id}` : undefined;
+        const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${id}#c${cm.id}` : undefined;
 
         req.log?.info('tareas.postComentario:notif:payload', {
           tipo_codigo: 'tarea_comentario',

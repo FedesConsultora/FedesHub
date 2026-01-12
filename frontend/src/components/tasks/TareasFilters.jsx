@@ -174,7 +174,9 @@ export function TareasActiveChips({ value, catalog, onChange }) {
 export default function TareasFilters({ value, catalog, onChange, hideChips = false }) {
   const v = value || {}
   const [open, setOpen] = useState(false)
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const rootRef = useRef(null), popRef = useRef(null)
+  const searchInputRef = useRef(null);
 
   const activeChips = useActiveChips(v, catalog);
   const activeFiltersCount = activeChips.length;
@@ -182,6 +184,13 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
   const upd = (patch) => {
     onChange?.({ ...v, ...patch });
   }
+
+  const toggleSearch = () => {
+    setIsSearchExpanded(!isSearchExpanded);
+    if (!isSearchExpanded) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  };
 
   const clear = () => onChange?.({
     q: '',
@@ -225,16 +234,25 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     <div className="TareasFiltersContainer" ref={rootRef}>
       <div className="FilterToolbar">
         {/* BUSCADOR PRINCIPAL */}
-        <div className="searchWrapper">
-          <FaSearch className="searchIcon" />
+        <div className={`searchWrapper ${isSearchExpanded || v.q ? 'expanded' : 'collapsed'}`}>
+          <button
+            type="button"
+            className="searchToggle"
+            onClick={toggleSearch}
+            title="Buscar"
+          >
+            <FaSearch className="searchIcon" />
+          </button>
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Buscar por título, ID o cliente..."
+            placeholder="Buscar..."
             value={v.q ?? ''}
             onChange={e => upd({ q: e.target.value })}
+            onBlur={() => { if (!v.q) setIsSearchExpanded(false); }}
           />
-          {v.q && (
-            <button className="clearSearch" onClick={() => upd({ q: '' })}>
+          {(v.q) && (
+            <button className="clearSearch" onClick={() => { upd({ q: '' }); setIsSearchExpanded(false); }}>
               <FaTimes />
             </button>
           )}

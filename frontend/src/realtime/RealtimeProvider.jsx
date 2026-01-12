@@ -107,6 +107,8 @@ export default function RealtimeProvider({ children }) {
   const notifByCanalRef = useRef(new Map())
   const audioContextRef = useRef(null)
   const processedNotifsRef = useRef(new Map()) // Clave -> Nivel (SSE=1, FCM=2)
+  const lastInteractionRef = useRef(0)
+  const audioContextStateRef = useRef('unknown')
 
   // ---- Estados Reactivos
   const [muted, setMuted] = useState(() => localStorage.getItem('fh:sound:muted') === '1')
@@ -117,6 +119,9 @@ export default function RealtimeProvider({ children }) {
   const [mentionByCanal, setMentionByCanal] = useState(() => Object.create(null))
   const [currentCanal, setCurrentCanalState] = useState(null)  // Canal actualmente visible
   const [suppressedCanals, setSuppressedCanals] = useState(() => new Set())
+  const [notifPermission, setNotifPermission] = useState(() =>
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+  )
 
   // ---- Helpers de Gestión Automática
   const checkSeenOnce = (key, ttl = 5000) => {
@@ -138,6 +143,22 @@ export default function RealtimeProvider({ children }) {
   const isLikelySelfEcho = (canal_id, windowMs = 5000) => {
     const ts = recentSelfSendsRef.current.get(Number(canal_id))
     return !!(ts && (Date.now() - ts) <= windowMs)
+  }
+
+  const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined') return 'unsupported'
+    try {
+      const res = await Notification.requestPermission()
+      setNotifPermission(res)
+      if (res === 'granted') {
+        console.log('[🔔 NOTIF] Permission granted by user action.')
+        initFCM().then(() => registerStoredPushToken()).catch(() => { })
+      }
+      return res
+    } catch (err) {
+      console.error('[🔔 NOTIF] Error requesting permission:', err)
+      return 'error'
+    }
   }
 
   const rememberNotifForCanal = (canal_id, notif_id) => {
@@ -178,6 +199,9 @@ export default function RealtimeProvider({ children }) {
     qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
     qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     window.dispatchEvent(new Event('fh:notif:changed'))
+    // Asegurar que el el local unread también se limpie
+    setUnreadByCanal(prev => { if (!prev[id]) return prev; const n = { ...prev }; delete n[id]; return n })
+    setMentionByCanal(prev => { if (!prev[id]) return prev; const n = { ...prev }; delete n[id]; return n })
   }
 
   // ---- LocalStorage Sync
@@ -205,15 +229,26 @@ export default function RealtimeProvider({ children }) {
   useEffect(() => {
     if (audioUnlocked) return
     const unlock = async () => {
+      lastInteractionRef.current = Date.now()
+      if (audioUnlocked) return
       try {
+        console.log('[🔊 AUDIO] Attempting to unlock audio...')
         const a = new Audio(SOUND_MAP.default); a.volume = 0
-        await a.play().catch(() => { }); a.pause()
+        await a.play().catch(e => { console.warn('[🔊 AUDIO] Native unlock failed:', e.message) });
+        a.pause()
         setAudioUnlocked(true)
         if (!audioContextRef.current) {
           audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
         }
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+        audioContextStateRef.current = audioContextRef.current.state
+        console.log('[🔊 AUDIO] Audio unlocked successfully. State:', audioContextStateRef.current)
         ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
-      } catch { }
+      } catch (e) {
+        console.error('[🔊 AUDIO] Critical unlock error:', e)
+      }
     }
     ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock))
     return () => ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
@@ -430,6 +465,11 @@ export default function RealtimeProvider({ children }) {
         qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
         // Disparar evento de limpieza para suprimir temporalmente en UnreadDmBubbles
         window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
+        // Matar localmente también por si acaso
+        setSuppressedCanals(prev => {
+          if (prev.has(cid)) return prev
+          const next = new Set(prev); next.add(cid); return next
+        })
         return
       }
 
@@ -471,6 +511,14 @@ export default function RealtimeProvider({ children }) {
         const mentions = extractMentionsFromPayload(data)
         setUnreadByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
         if (mentions.has(myId)) setMentionByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
+
+        // Si estaba suprimido (ej: porque lo acabamos de leer), lo liberamos porque llegó algo nuevo
+        setSuppressedCanals(prev => {
+          if (!prev.has(cid)) return prev
+          const next = new Set(prev)
+          next.delete(cid)
+          return next
+        })
       }
     }
 
@@ -529,6 +577,7 @@ export default function RealtimeProvider({ children }) {
 
   const value = useMemo(() => ({
     muted, setMuted, volume, setVolume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals,
+    notifPermission, requestNotificationPermission,
     clearUnreadFor: (cid) => {
       const id = Number(cid)
       setUnreadByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
@@ -543,8 +592,15 @@ export default function RealtimeProvider({ children }) {
     },
     markSelfSend,
     flushChatNotifsForCanal,
+    getHealthReport: () => ({
+      permission: notifPermission,
+      audioUnlocked,
+      audioContextState: audioContextStateRef.current,
+      lastInteraction: lastInteractionRef.current ? new Date(lastInteractionRef.current).toISOString() : 'none',
+      isWindowVisible: document.visibilityState === 'visible'
+    }),
     playTest: () => onIncoming({ type: 'chat.message.created', canal_id: 1, user_id: -1 })
-  }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal])
+  }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, notifPermission, audioUnlocked])
 
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>
 }

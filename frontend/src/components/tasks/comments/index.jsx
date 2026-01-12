@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import Avatar from '../../Avatar.jsx'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
-import useAttendanceStatus, { getModalidad } from '../../../hooks/useAttendanceStatus.js'
+import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
 import { useTaskComments } from '../../../pages/Tareas/hooks/useTaskComments'
 import CommentItem from './CommentItem'
 import Composer from './Composer'
@@ -151,7 +151,9 @@ export default function TaskComments({ taskId, catalog }) {
     }
     return [...ids]
   }, [sorted])
+  console.log('[TaskComments] federIds:', commentFederIds)
   const { statuses } = useAttendanceStatus(commentFederIds)
+  console.log('[TaskComments] statuses:', statuses)
 
   // autoscroll al final
   useEffect(() => {
@@ -226,7 +228,7 @@ export default function TaskComments({ taskId, catalog }) {
                 <div className={`item ${isMine ? 'mine' : ''}`} key={c.id}>
                   <div className="avatarWrapper">
                     <Avatar className="ph-avatar" name={author} src={c.autor_avatar_url} size={30} />
-                    <AttendanceBadge modalidad={getModalidad(statuses, cFederId)} size={12} />
+                    <AttendanceBadge {...getStatus(statuses, cFederId)} size={12} />
                   </div>
                   <CommentItem
                     c={c}

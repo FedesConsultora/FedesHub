@@ -64,21 +64,27 @@ export default function useAttendanceStatus(federIds = []) {
 
         setLoading(true)
         try {
+            console.log('[useAttendanceStatus] Fetching from API for IDs:', idsToFetch)
             const data = await asistenciaApi.bulkStatus(idsToFetch)
+            console.log('[useAttendanceStatus] API response:', data)
             lastFetchTime = Date.now()
 
             // Update cache with results
             for (const id of idsToFetch) {
-                const status = data[id] || data[String(id)] || null
-                cache.set(id, status)
-                cache.set(String(id), status)
+                const raw = data[id] || {}
+                cache.set(id, {
+                    modalidad: raw.modalidad_codigo || null,
+                    plan: raw.plan_modalidad_codigo || null,
+                    check_in_at: raw.check_in_at || null
+                })
             }
 
             // Build final result
             const result = {}
             for (const id of uniqueIds) {
-                result[id] = cache.get(id) || null
+                result[id] = cache.get(id) || { modalidad: null, plan: null }
             }
+            console.log('[useAttendanceStatus] Final statuses:', result)
             setStatuses(result)
         } catch (err) {
             console.error('[useAttendanceStatus] Error fetching statuses:', err)
@@ -102,11 +108,21 @@ export default function useAttendanceStatus(federIds = []) {
 }
 
 /**
- * Utility function to get modalidad from the statuses object
+ * Utility function to get the full status object
  * @param {Object} statuses - The statuses object from the hook
  * @param {number} federId - The feder ID to look up
- * @returns {string|null} 'oficina' | 'remoto' | null (null means offline)
+ * @returns {Object} { modalidad, plan, check_in_at }
+ */
+export function getStatus(statuses, federId) {
+    return statuses?.[federId] || { modalidad: null, plan: null }
+}
+
+/**
+ * Utility function to get modalidad from the statuses object (legacy support)
+ * @param {Object} statuses - The statuses object from the hook
+ * @param {number} federId - The feder ID to look up
+ * @returns {string|null} 'oficina' | 'remoto' | null
  */
 export function getModalidad(statuses, federId) {
-    return statuses?.[federId]?.modalidad_codigo || null
+    return statuses?.[federId]?.modalidad || null
 }

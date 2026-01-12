@@ -292,7 +292,8 @@ export default function TasksPage() {
               onClick={() => handleSetView("kanban")}
               title="Ver en Kanban"
             >
-              Kanban
+              <i className="fi fi-rr-apps" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Kanban</span>
             </button>
             <button
               type="button"
@@ -302,7 +303,8 @@ export default function TasksPage() {
               onClick={() => handleSetView("list")}
               title="Ver como lista"
             >
-              Lista
+              <i className="fi fi-rr-list-check" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Lista</span>
             </button>
             <button
               type="button"
@@ -312,7 +314,8 @@ export default function TasksPage() {
               onClick={() => handleSetView("month")}
               title="Ver por mes"
             >
-              Calendario
+              <i className="fi fi-rr-calendar" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Calendario</span>
             </button>
             <button
               type="button"
@@ -322,7 +325,8 @@ export default function TasksPage() {
               onClick={() => handleSetView("starred")}
               title="Ver destacados"
             >
-              Destacadas
+              <i className="fi fi-rr-star" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Destacadas</span>
             </button>
             {isDirectivo && (
               <button
@@ -333,14 +337,14 @@ export default function TasksPage() {
                 onClick={() => handleSetView("trash")}
                 title="Ver papelera"
               >
-                Papelera
+                <i className="fi fi-rr-trash" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+                <span>Papelera</span>
               </button>
             )}
           </div>
 
           <button
             className="submit"
-            style={{ padding: "8px 12px", width: "auto" }}
             onClick={() => setShowCreate(true)}
           >
             + Nueva tarea

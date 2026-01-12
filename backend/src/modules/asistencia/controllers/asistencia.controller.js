@@ -152,6 +152,8 @@ export const bulkStatus = async (req, res, next) => {
       .split(',')
       .map(Number)
       .filter(id => Number.isInteger(id) && id > 0);
-    res.json(await svcBulkStatus(ids));
+    const result = await svcBulkStatus(ids);
+    console.log('[bulkStatus] Request IDs:', ids, 'Result count:', Object.keys(result).length);
+    res.json(result);
   } catch (e) { next(e); }
 };
