@@ -170,7 +170,10 @@ export const updateTaskSchema = z.object({
   return result;
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
 
-export const setEstadoSchema = z.object({ estado_id: intId });
+export const setEstadoSchema = z.object({
+  estado_id: intId,
+  cancelacion_motivo: z.string().max(2000).nullish().optional()
+});
 
 export const setAprobacionSchema = z.object({
   aprobacion_estado_id: intId,           // no_aplica / pendiente / aprobada / rechazada

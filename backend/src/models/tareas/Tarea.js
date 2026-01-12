@@ -16,6 +16,7 @@ export default (sequelize, DataTypes) => {
     rechazado_por_user_id: { type: DataTypes.INTEGER },
     rechazado_at: { type: DataTypes.DATE },
     rechazo_motivo: { type: DataTypes.TEXT },
+    cancelacion_motivo: { type: DataTypes.TEXT },
     fecha_inicio: { type: DataTypes.DATE },
     vencimiento: { type: DataTypes.DATE },
     impacto_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 2 },

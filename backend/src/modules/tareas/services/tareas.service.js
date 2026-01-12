@@ -1315,7 +1315,7 @@ const setSeguidor = async (tarea_id, user_id, on) => {
 
 // ---------- Estado / Aprobación / Kanban ----------
 
-const setEstado = async (id, estado_id, feder_id) => {
+const setEstado = async (id, estado_id, feder_id, cancelacion_motivo = null) => {
   await ensureExists(models.TareaEstado, estado_id, 'Estado inválido');
 
   return sequelize.transaction(async (t) => {
@@ -1340,13 +1340,15 @@ const setEstado = async (id, estado_id, feder_id) => {
       if (nuevoEstado?.codigo === 'finalizada') {
         // cerrar la tarea: fecha y progreso al 100
         await models.Tarea.update(
-          { estado_id, finalizada_at: new Date(), progreso_pct: 100 },
+          { estado_id, finalizada_at: new Date(), progreso_pct: 100, cancelacion_motivo: null },
           { where: { id }, transaction: t }
         );
       } else {
         // sacamos finalizada: limpiamos finalizada_at y recomputamos progreso real desde checklist
+        // Si el estado es 'cancelada', guardamos el motivo, si no lo limpiamos
+        const motivo = nuevoEstado?.codigo === 'cancelada' ? (cancelacion_motivo ?? null) : null;
         await models.Tarea.update(
-          { estado_id, finalizada_at: null },
+          { estado_id, finalizada_at: null, cancelacion_motivo: motivo },
           { where: { id }, transaction: t }
         );
         await recomputeProgressPct(id, t);
@@ -1360,8 +1362,10 @@ const setEstado = async (id, estado_id, feder_id) => {
           tipo_cambio: TIPO_CAMBIO.ESTADO,
           accion: ACCION.UPDATED,
           valor_anterior: { id: estadoAnterior, nombre: estadoAnteriorNombre },
-          valor_nuevo: { id: estado_id, nombre: nuevoEstado?.nombre },
-          descripcion: `Cambió el estado de "${estadoAnteriorNombre}" a "${nuevoEstado?.nombre}"`,
+          valor_nuevo: { id: estado_id, nombre: nuevoEstado?.nombre, cancelacion_motivo },
+          descripcion: cancelacion_motivo
+            ? `Cambió el estado de "${estadoAnteriorNombre}" a "${nuevoEstado?.nombre}" con motivo: "${cancelacion_motivo}"`
+            : `Cambió el estado de "${estadoAnteriorNombre}" a "${nuevoEstado?.nombre}"`,
           transaction: t
         });
       }
@@ -1775,7 +1779,7 @@ export const svcSetFavorito = (tarea_id, user_id, on) => setFavorito(tarea_id, u
 export const svcSetSeguidor = (tarea_id, user_id, on) => setSeguidor(tarea_id, user_id, on);
 
 // Estado / Aprobación / Kanban
-export const svcSetEstado = (id, estado_id, feder_id) => setEstado(id, estado_id, feder_id);
+export const svcSetEstado = (id, estado_id, feder_id, cancelacion_motivo = null) => setEstado(id, estado_id, feder_id, cancelacion_motivo);
 export const svcSetAprobacion = (id, user_id, body, feder_id) => {
   const { aprobacion_estado_id, rechazo_motivo = null } = body || {};
   return setAprobacion(id, aprobacion_estado_id, user_id, rechazo_motivo, feder_id);

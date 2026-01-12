@@ -33,7 +33,7 @@ export default function Header() {
     <>
       <header className="fhHeader">
         <Link to="/" className="brand">FedesHub</Link>
-        <span className='sys-version'>BETA v2.0</span>
+        <span className='sys-version'>BETA v2.1</span>
         <div className="spacer" />
         <div className="rightCluster">
           <button

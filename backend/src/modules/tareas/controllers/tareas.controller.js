@@ -274,8 +274,8 @@ export const patchRestore = async (req, res, next) => {
 export const patchEstado = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
-    const { estado_id } = setEstadoSchema.parse(req.body);
-    await svcSetEstado(id, estado_id, req.user.feder_id);
+    const { estado_id, cancelacion_motivo } = setEstadoSchema.parse(req.body);
+    await svcSetEstado(id, estado_id, req.user.feder_id, cancelacion_motivo);
     res.json(await svcGetTask(id, req.user));
   } catch (e) { next(e); }
 };

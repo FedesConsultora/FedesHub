@@ -49,7 +49,7 @@ export const tareasApi = {
   // Estado / aprobación / kanban
   moveKanban: (id, { stage, orden = 0 }) =>
     api.patch(`${base}/${id}/kanban`, { stage, orden }).then(r => r.data),
-  setEstado: (id, estado_id) => api.patch(`${base}/${id}/estado`, { estado_id }).then(r => r.data),
+  setEstado: (id, estado_id, cancelacion_motivo = null) => api.patch(`${base}/${id}/estado`, { estado_id, cancelacion_motivo }).then(r => r.data),
   setAprobacion: (id, body) => api.patch(`${base}/${id}/aprobacion`, body).then(r => r.data),
 
 
