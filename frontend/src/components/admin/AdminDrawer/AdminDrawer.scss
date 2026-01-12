@@ -26,37 +26,59 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .8));
+    cursor: pointer;
 }
 
 .adminPanel {
     position: relative;
     margin-left: auto;
     height: 100%;
-    width: min(1100px, 100%);
-    background: v.$fh-card;
-    backdrop-filter: blur(18px);
-    border-left: 1px solid rgba(255, 255, 255, .08);
-    box-shadow: v.$shadow-soft;
+    width: 100%;
+    max-width: 1100px;
+    background: #0c1118;
+    backdrop-filter: blur(25px);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    border-top-left-radius: v.$radius-2xl;
-    border-bottom-left-radius: v.$radius-2xl;
+
+    /* Slide-in animation from right */
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @media (min-width: 1024px) {
+        border-top-left-radius: 24px;
+        border-bottom-left-radius: 24px;
+    }
+
+    .adminWrap.open & {
+        transform: translateX(0);
+    }
+
+    .adminWrap.closing & {
+        transform: translateX(100%);
+    }
 }
 
 .adminTopBar {
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    gap: 16px;
+    align-items: center;
     justify-content: space-between;
+    background: rgba(12, 17, 24, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 20;
     flex-shrink: 0;
 
     .brand {
         .logo {
             font-weight: 900;
-            font-size: 22px;
-            letter-spacing: .3px;
+            font-size: 20px;
+            letter-spacing: -0.02em;
             color: #fff;
             display: flex;
             align-items: center;
@@ -69,26 +91,33 @@
 
         .sub {
             color: v.$fh-muted;
-            margin-top: 2px;
-            font-size: 12px;
+            margin-top: 1px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
     }
 
     .close {
         border: 0;
-        background: transparent;
-        color: inherit;
-        font-size: 22px;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #fff;
+        font-size: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
         display: grid;
         place-items: center;
         cursor: pointer;
-        padding: 0 !important;
+        transition: all 0.2s ease;
 
         &:hover {
-            background: rgba(255, 255, 255, .06);
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.05);
+        }
+
+        &:active {
+            transform: scale(0.95);
         }
     }
 }
@@ -97,23 +126,35 @@
 .adminTabs {
     display: flex;
     gap: 4px;
-    padding: 0 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    padding: 0 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: rgba(12, 17, 24, 0.4);
+    position: sticky;
+    top: 77px; // Height of top bar
+    z-index: 15;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 
     .tab {
-        padding: 12px 16px;
+        padding: 14px 16px;
         background: transparent;
         border: none;
         color: v.$fh-muted;
         cursor: pointer;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         border-bottom: 2px solid transparent;
-        transition: all .15s ease;
+        transition: all 0.15s ease;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+        white-space: nowrap;
 
         &:hover {
             color: v.$fh-text;
@@ -122,14 +163,20 @@
         &.active {
             color: v.$fh-accent;
             border-bottom-color: v.$fh-accent;
+            background: rgba(v.$fh-accent, 0.05);
         }
     }
 }
 
 .adminBody {
     flex: 1 1 auto;
-    overflow: auto;
-    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px 20px;
+
+    @media (max-width: 600px) {
+        padding: 16px;
+    }
 }
 
 /* --- Tab Content Styles --- */
@@ -137,49 +184,45 @@
     .toolbar {
         display: flex;
         gap: 12px;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         align-items: center;
         flex-wrap: wrap;
-        flex-shrink: 0;
 
         .searchInput {
             flex: 1;
-            min-width: 200px;
-            max-width: 320px;
-            height: 42px;
-            padding: 0 14px;
-            box-sizing: border-box;
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .1);
-            border-radius: 8px;
-            color: v.$fh-text;
-            font-size: 13px;
+            min-width: 150px;
+            height: 44px;
+            padding: 0 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
 
-            &::placeholder {
-                color: v.$fh-muted;
-            }
-
-            &:focus {
-                outline: none;
-                border-color: v.$fh-accent;
-                background: rgba(255, 255, 255, .06);
+            @media (max-width: 480px) {
+                width: 100%;
+                flex: none;
             }
         }
 
         .btnPrimary {
-            height: 42px;
-            padding: 0 18px;
-            box-sizing: border-box;
+            height: 44px;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-size: 14px;
             background: v.$fh-accent;
             border: none;
-            border-radius: 8px;
             color: #fff;
             font-weight: 600;
-            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+
+            @media (max-width: 480px) {
+                width: 100%;
+                justify-content: center;
+            }
 
             &:hover {
                 background: color.adjust(v.$fh-accent, $lightness: 5%);
@@ -195,20 +238,26 @@
         td {
             padding: 12px 14px;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             font-size: 13px;
+
+            @media (max-width: 600px) {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
         }
 
         th {
             color: v.$fh-muted;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             font-size: 11px;
-            letter-spacing: .5px;
+            letter-spacing: 0.1em;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         tr:hover td {
-            background: rgba(255, 255, 255, .02);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .badge {
@@ -259,16 +308,15 @@
                         background: rgba(239, 68, 68, .15);
                     }
                 }
+
+                @media (max-width: 600px) {
+                    padding: 5px 8px;
+                }
             }
         }
     }
 
-    .empty {
-        text-align: center;
-        padding: 40px;
-        color: v.$fh-muted;
-    }
-
+    .empty,
     .loading {
         text-align: center;
         padding: 40px;
@@ -282,18 +330,22 @@
     border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 12px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+
+    @media (max-width: 600px) {
+        padding: 16px;
+    }
 
     h3 {
         margin: 0 0 16px;
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 600;
         color: v.$fh-text;
     }
 
     .formGrid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 16px;
     }
 
@@ -311,13 +363,13 @@
         input,
         select {
             padding: 10px 12px;
-            min-height: 42px;
+            min-height: 44px;
             box-sizing: border-box;
             background: rgba(255, 255, 255, .04);
             border: 1px solid rgba(255, 255, 255, .1);
-            border-radius: 8px;
-            color: v.$fh-text;
-            font-size: 13px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
             width: 100%;
 
             &:focus {
@@ -337,13 +389,13 @@
     }
 
     .rolesGroup {
-        margin-top: 12px;
+        margin-top: 16px;
 
         .rolesLabel {
             font-size: 12px;
             font-weight: 500;
             color: v.$fh-muted;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .rolesChips {
@@ -377,15 +429,23 @@
 
     .formActions {
         display: flex;
-        gap: 10px;
-        margin-top: 20px;
+        gap: 12px;
+        margin-top: 24px;
         justify-content: flex-end;
 
+        @media (max-width: 480px) {
+            flex-direction: column-reverse;
+
+            button {
+                width: 100%;
+            }
+        }
+
         button {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
 
             &.cancel {

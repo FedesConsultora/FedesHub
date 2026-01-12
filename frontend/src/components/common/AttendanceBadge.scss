@@ -8,7 +8,7 @@
     display: grid;
     place-items: center;
     font-size: var(--badge-size, 14px);
-    z-index: 10;
+    z-index: 5;
     pointer-events: none;
 
     // Fondo protector para que resalte sobre el avatar

@@ -72,9 +72,9 @@ export default function RolesTab() {
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Descripción</th>
-                            <th>Tipo</th>
-                            <th></th>
+                            <th className="hidden-mobile">Descripción</th>
+                            <th className="hidden-mobile">Tipo</th>
+                            <th style={{ width: 100 }}>Permisos</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,8 +82,8 @@ export default function RolesTab() {
                             <React.Fragment key={role.id}>
                                 <tr>
                                     <td><strong>{role.nombre}</strong></td>
-                                    <td style={{ color: 'var(--fh-muted)' }}>{role.descripcion || '—'}</td>
-                                    <td>
+                                    <td className="hidden-mobile" style={{ color: 'var(--fh-muted)' }}>{role.descripcion || '—'}</td>
+                                    <td className="hidden-mobile">
                                         <span className="badge role">
                                             {role.nombre.startsWith('Nivel') ? 'Sistema' : 'Custom'}
                                         </span>

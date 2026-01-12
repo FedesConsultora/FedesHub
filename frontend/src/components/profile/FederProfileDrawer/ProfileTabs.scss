@@ -3,14 +3,12 @@
 
 
 .pfTabsBar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, max-content));
-  justify-content: start;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 12px 0 14px;
-  margin-top: 2rem;
-  margin-left: 0.8rem;
+  gap: 10px 8px;
+  margin: 24px 0 16px;
+  padding: 4px 0;
 }
 
 .pfTabsBar .tab {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import useClientesCatalog from '../../pages/Clientes/hooks/useClientesCatalog'
 import { clientesApi } from '../../api/clientes'
 import { useToast } from '../toast/ToastProvider.jsx'
@@ -115,7 +116,13 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     }
   }
 
-  return (
+  // Scroll lock
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  const modalContent = (
     <div className="clienteModalWrap" role="dialog" aria-modal="true" aria-label="Crear cliente">
       <form ref={formRef} className="ccCard" onSubmit={onSubmit} noValidate>
         <header className="ccHeader">
@@ -302,6 +309,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
           </button>
         </footer>
       </form>
-    </div>
+    </div >
   )
+
+  return createPortal(modalContent, document.body)
 }

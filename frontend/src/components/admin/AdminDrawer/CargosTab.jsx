@@ -207,21 +207,21 @@ export default function CargosTab() {
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Ámbito</th>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th></th>
+                            <th className="hidden-mobile">Ámbito</th>
+                            <th className="hidden-mobile">Descripción</th>
+                            <th className="hidden-mobile">Estado</th>
+                            <th style={{ width: 80 }}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {cargos.map(cargo => (
                             <tr key={cargo.id}>
                                 <td><strong>{cargo.nombre}</strong></td>
-                                <td>
+                                <td className="hidden-mobile">
                                     <span className="badge role">{cargo.ambito_nombre}</span>
                                 </td>
-                                <td style={{ color: 'var(--fh-muted)' }}>{cargo.descripcion || '—'}</td>
-                                <td>
+                                <td className="hidden-mobile" style={{ color: 'var(--fh-muted)' }}>{cargo.descripcion || '—'}</td>
+                                <td className="hidden-mobile">
                                     <span className={`badge ${cargo.is_activo ? 'ok' : 'off'}`}>
                                         {cargo.is_activo ? 'Activo' : 'Inactivo'}
                                     </span>

@@ -435,7 +435,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
       {pickerOpen && (
         <CenteredPicker onClose={() => setPickerOpen(false)}>
           <EmojiPicker
-            theme="light"
+            theme="dark"
             width="350px"
             height="450px"
             onSelect={handleToggleReaction}

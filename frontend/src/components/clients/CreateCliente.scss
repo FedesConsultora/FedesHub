@@ -1,42 +1,55 @@
 @use "sass:meta";
 @use '../../styles/variables' as *;
 
-/* Fallbacks por si faltan en theme */
+/* Fallbacks */
 $fh-primary: if(meta.global-variable-exists(fh-primary), $fh-primary, #3ea0ff);
 $fh-text: if(meta.global-variable-exists(fh-text), $fh-text, #e8f0ff);
 $fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a9b7c7);
-$fh-card: if(meta.global-variable-exists(fh-card), $fh-card, rgba(12, 16, 23, .98));
 $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 /* ===== Overlay / Card ===== */
 .clienteModalWrap {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .8));
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   color: $fh-text;
   overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 .ccCard {
-  width: min(980px, 96vw);
-  max-height: 92vh;
-
-  @supports (height: 100dvh) {
-    max-height: 92dvh;
-  }
-
-  overflow: hidden;
-  backdrop-filter: blur(18px);
-  background: $fh-card;
-  border: 1px solid rgba(255, 255, 255, .08);
+  width: calc(100% - 24px);
+  max-width: 980px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: #0c1017;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
-  box-shadow: $shadow-soft;
-  display:flex;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    width: calc(100% - 12px);
+    max-height: 94vh;
+    max-height: 94dvh;
+    border-radius: 14px;
+  }
 }
 
 .ccHeader {
@@ -79,6 +92,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     display: grid;
     place-items: center;
     padding: 0;
+
     &:hover {
       background: rgba(255, 255, 255, .06)
     }
@@ -88,8 +102,15 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 /* Zona scrolleable interna */
 .ccBody {
   flex: 1 1 auto;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 12px;
+  }
 }
 
 /* Grid responsiva */
@@ -151,57 +172,64 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 14px;
+  padding: 0 12px;
+  min-height: 48px;
+  background: #11171f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, .12);
-  background: #0f141b;
-  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  cursor: text;
+  transition: all .2s ease;
+  overflow: hidden;
 
   .ico {
-    flex: 0 0 22px;
-    width: 22px;
-    height: 22px;
-    opacity: .85;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    opacity: .7;
   }
 
   .addon {
-    flex: 0 0 22px;
-    width: 22px;
-    height: 22px;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
   }
 
-  /* simetría derecha */
-
-  /* clave para que no se corten */
   input,
   select,
   textarea {
-    flex: 1 1 auto;
+    flex: 1;
     min-width: 0;
-    width: 100%;
     background: none !important;
     color: $fh-text;
     border: 0;
     outline: none;
     padding: 0;
-    font-size: 1rem;
+    font-size: 16px;
     line-height: 1.2;
     min-height: 24px;
+    height: 100%;
+    cursor: pointer;
 
     &::placeholder {
-      color: rgba(255, 255, 255, .45);
+      color: rgba(255, 255, 255, .35);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
   }
 
   textarea {
-    padding-top: 2px;
+    padding: 8px 0;
     resize: vertical;
   }
 
   &:focus-within {
     border-color: $fh-primary;
-    box-shadow: 0 0 0 2px rgba($fh-primary, .30);
+    box-shadow: 0 0 0 2px rgba($fh-primary, .15);
     background: #111823;
   }
 
@@ -212,6 +240,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
   &.area {
     align-items: flex-start;
+    padding-top: 4px;
   }
 }
 

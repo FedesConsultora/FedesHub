@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { FiX, FiSend, FiRefreshCw, FiPlay, FiPause } from 'react-icons/fi'
 import WaveSurfer from 'wavesurfer.js'
 import './AudioRecorderModal.scss'
@@ -227,7 +228,7 @@ export default function AudioRecorderModal({ open, onClose, onSend }) {
 
     if (!open) return null
 
-    return (
+    return createPortal(
         <div className="audio-recorder-overlay" onClick={handleClose}>
             <div className="audio-recorder-modal" onClick={e => e.stopPropagation()}>
                 <button className="close-btn" onClick={handleClose}><FiX /></button>
@@ -303,6 +304,7 @@ export default function AudioRecorderModal({ open, onClose, onSend }) {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

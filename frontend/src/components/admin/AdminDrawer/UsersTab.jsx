@@ -460,21 +460,21 @@ export default function UsersTab() {
                     <thead>
                         <tr>
                             <th>Email</th>
-                            <th>Estado</th>
-                            <th>Roles</th>
-                            <th></th>
+                            <th className="hidden-mobile">Estado</th>
+                            <th className="hidden-mobile">Roles</th>
+                            <th style={{ width: 80 }}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {users.map(user => (
                             <tr key={user.id}>
                                 <td>{user.email}</td>
-                                <td>
+                                <td className="hidden-mobile">
                                     <span className={`badge ${user.is_activo ? 'ok' : 'off'}`}>
                                         {user.is_activo ? 'Activo' : 'Inactivo'}
                                     </span>
                                 </td>
-                                <td>
+                                <td className="hidden-mobile">
                                     {(user.roles || []).map(r => (
                                         <span key={r.id} className="badge role">{r.nombre}</span>
                                     ))}

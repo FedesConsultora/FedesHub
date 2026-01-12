@@ -26,7 +26,8 @@
 
     .toolbar {
         display: flex !important;
-        flex-wrap: wrap !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
         gap: 2px !important;
         padding: 4px 6px !important;
@@ -36,22 +37,33 @@
         width: 100% !important;
         box-sizing: border-box !important;
         min-height: 40px;
-        overflow: visible !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
 
         .tb {
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            width: 32px !important;
+            height: 32px !important;
+            min-width: 32px !important;
             background: transparent;
             border: none;
             color: rgba(255, 255, 255, 0.65);
             cursor: pointer;
-            padding: 4px;
+            padding: 0 !important;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 1.2rem;
             transition: all 0.12s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 !important;
 
             svg {
                 width: 16px;
@@ -353,7 +365,7 @@
         font-size: 0.85rem;
         font-weight: 600;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 20;
+        z-index: 100;
         animation: slideInRight 0.3s ease-out;
         pointer-events: none;
     }

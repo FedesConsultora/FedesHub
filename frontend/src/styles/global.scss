@@ -148,3 +148,46 @@ input {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Utils Mobile */
+@media (max-width: 580px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  .fh-table {
+    width: 100% !important;
+    table-layout: fixed;
+
+    th,
+    td {
+      padding: 6px 4px !important;
+      font-size: 0.72rem;
+      word-break: break-all;
+      word-wrap: break-word;
+    }
+
+    .col-title {
+      width: auto;
+    }
+
+    .col-assigned {
+      width: 60px !important;
+    }
+
+    .col-status {
+      width: 85px !important;
+
+      .Badge {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+      }
+    }
+  }
+
+  // Ensure table container scrolls if still too wide
+  .w-full.overflow-auto {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}

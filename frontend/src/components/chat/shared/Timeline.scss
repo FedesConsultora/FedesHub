@@ -5,10 +5,10 @@
   position: relative;
   flex: 1 1 auto;
   overflow: auto;
-  padding: 12px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   min-height: 0;
 
   .loading,
@@ -16,6 +16,7 @@
     color: v.$fh-muted;
     text-align: center;
     padding: 24px;
+    font-size: 0.9rem;
   }
 
   .dayGroup {
@@ -28,80 +29,87 @@
     display: flex;
     justify-content: center;
     text-transform: capitalize;
-    color: #9ca3af;
-    margin: 8px 0;
-    font-size: 0.8rem;
-    font-weight: 600;
+    color: v.$fh-muted;
+    margin: 12px 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    position: relative;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      align-self: center;
+    }
+
+    &::before {
+      margin-right: 16px;
+    }
+
+    &::after {
+      margin-left: 16px;
+    }
   }
 
   .msgWrapper {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     position: relative;
-    max-width: 90%;
+    max-width: 85%;
     align-self: flex-start;
 
     &.mine {
       flex-direction: row-reverse;
       align-self: flex-end;
+      max-width: 85%;
 
       .msgBody {
         align-items: flex-end;
       }
 
       .bubble {
-        background: #f0f7ff;
-        border-color: rgba(v.$fh-primary, 0.2);
+        background: rgba(v.$fh-primary, 0.15);
+        border: 1px solid rgba(v.$fh-primary, 0.3);
         border-radius: 18px 4px 18px 18px;
+        color: v.$fh-text;
       }
 
       .msgMeta {
         justify-content: flex-end;
+        flex-direction: row-reverse;
       }
 
       .bubbleContainer {
         flex-direction: row-reverse;
       }
-
-      .msgHoverActions {
-        right: auto;
-        left: 0;
-        transform: translate(-65px, -65%);
-      }
-
-      .bubbleContainer:hover .msgHoverActions,
-      .msgHoverActions:hover {
-        opacity: 1;
-        pointer-events: all;
-        transform: translate(-90px, -90%);
-      }
     }
 
     &.deleted {
-      opacity: 0.7;
+      opacity: 0.5;
     }
 
     &.pinned {
       .bubble {
-        border-left: 4px solid #f6ad55;
-        background: #fffdf5;
+        border-right: 3px solid #f6ad55 !important;
+        background: rgba(246, 173, 85, 0.05) !important;
       }
     }
 
     .msgAvatarContainer {
       flex-shrink: 0;
+      width: 34px;
+      height: 34px;
       position: relative;
-      width: 32px;
-      height: 32px;
 
-      .attendance-badge {
-        position: absolute;
-        bottom: 0px;
-        left: 0px;
-        z-index: 2;
-        background: white;
-        border-radius: 50%;
-        padding: 1px;
+      img {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        object-fit: cover;
       }
     }
 
@@ -116,129 +124,86 @@
     .msgMeta {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-      color: #64748b;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: v.$fh-muted;
       padding: 0 4px;
+      margin-bottom: 2px;
 
       .author {
-        font-weight: 700;
-        color: #ffffff;
+        font-weight: 800;
+        color: v.$fh-text;
       }
 
       .time {
-        opacity: 0.9;
-      }
-
-      .editedLabel {
-        font-style: italic;
-        font-size: 0.7rem;
-      }
-
-      .pinnedBadge {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        color: #f59e0b;
-        font-weight: 600;
+        opacity: 0.6;
       }
     }
 
     .bubbleContainer {
       position: relative;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       max-width: 100%;
+      gap: 4px;
     }
 
     .bubble {
       padding: 10px 14px;
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: v.$fh-card;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 4px 18px 18px 18px;
-      color: #0f172a;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      min-width: 60px;
+      color: v.$fh-text;
+      box-shadow: v.$shadow-sm;
+      min-width: 40px;
       word-break: break-word;
       line-height: 1.5;
-      font-size: 0.95rem;
-      transition: background 0.2s ease;
+      font-size: 0.92rem;
+      transition: all 0.2s;
 
       .txt {
         white-space: pre-wrap;
       }
 
       .txt.deleted {
-        color: #94a3b8;
         font-style: italic;
+        opacity: 0.7;
       }
     }
 
-    .alwaysVisibleReply {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: grid;
-      background: transparent;
-      border: none;
-      outline: none;
-      place-items: center;
-      color: #ffffff;
-      cursor: pointer;
-      margin-left: 6px;
-      flex-shrink: 0;
-
-      &:hover {
-        color: rgb(232, 230, 230);
-      }
-
-      svg {
-        width: 22px;
-        height: 22px;
-      }
-    }
-
-    &.mine .alwaysVisibleReply {
-      margin-left: 0;
-      margin-right: 6px;
-    }
-
+    /* Acciones en hover (Desktop) o ocultas inicialmente */
     .msgHoverActions {
       position: absolute;
-      top: 0;
+      top: -10px;
       right: 0;
-      transform: translate(50px, -50%);
       display: flex;
       gap: 2px;
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 20px;
-      color: #787b80;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 4px;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 2px;
       opacity: 0;
-      pointer-events: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      visibility: hidden;
+      transform: translateY(5px);
+      transition: all 0.2s;
       z-index: 10;
-      align-items: center;
-      justify-content: center;
+      box-shadow: v.$shadow-lg;
 
       .actionBtn {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
         background: transparent;
-        color: #070707;
+        color: v.$fh-muted;
         cursor: pointer;
-        transition: all 0.1s ease;
 
         &:hover {
-          background: #f1f5f9;
-          color: v.$fh-primary;
+          background: rgba(255, 255, 255, 0.05);
+          color: v.$fh-text;
         }
 
         &.active {
@@ -246,81 +211,77 @@
         }
 
         svg {
-          width: 44px !important;
-          height: 44px !important;
-          stroke: currentColor;
-          fill: currentColor;
-          display: block;
+          width: 16px;
+          height: 16px;
         }
       }
     }
 
-    .bubbleContainer:hover .msgHoverActions,
-    .msgHoverActions:hover {
+    &:hover .msgHoverActions {
       opacity: 1;
-      pointer-events: all;
-      transform: translate(40px, -50%);
+      visibility: visible;
+      transform: translateY(0);
     }
 
-    .msgFooter {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 4px;
+    &.mine .msgHoverActions {
+      right: auto;
+      left: 0;
     }
   }
 
   .scrollToBottom {
     position: sticky;
-    margin-left: auto;
     bottom: 16px;
-    align-self: flex-end;
+    right: 16px;
+    margin-left: auto;
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: #1e293b;
+    background: v.$fh-primary;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     display: grid;
     place-items: center;
     z-index: 20;
+    transition: all 0.2s;
 
     &:hover {
-      background: #334155;
+      transform: scale(1.1);
+      background: color.adjust(v.$fh-primary, $lightness: 5%);
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
     }
   }
 }
 
+/* Response and Edit stuff */
 .replyPreview {
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   border-left: 3px solid v.$fh-primary;
   border-radius: 4px;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-  max-width: 300px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  max-width: 100%;
 
   .replyAuthor {
-    font-weight: 700;
+    font-weight: 800;
     color: v.$fh-primary;
   }
 
   .replyExcerpt {
-    color: #64748b;
+    color: v.$fh-muted;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-}
-
-.hi-lite {
-  .bubble {
-    box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.3);
   }
 }
 
@@ -328,20 +289,23 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: 250px;
+  width: 100%;
+  min-width: 200px;
 
   textarea {
     width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px;
+    color: v.$fh-text;
     font-family: inherit;
-    font-size: 0.95rem;
-    resize: none;
+    font-size: 0.9rem;
+    resize: vertical;
+    outline: none;
 
     &:focus {
-      outline: none;
-      border-color: color.adjust(v.$fh-primary, $lightness: -10%);
+      border-color: v.$fh-primary;
     }
   }
 
@@ -351,32 +315,23 @@
     gap: 8px;
 
     button {
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s ease;
+      border: none;
+      transition: all 0.2s;
     }
 
     .saveBtn {
       background: v.$fh-primary;
       color: white;
-
-      &:hover:not(:disabled) {
-        background: color.adjust(v.$fh-primary, $lightness: -8%);
-      }
     }
 
     .cancelBtn {
-      background: white;
-      border-color: #cbd5e1;
-      color: #64748b;
-
-      &:hover {
-        background: #f8fafc;
-      }
+      background: rgba(255, 255, 255, 0.05);
+      color: v.$fh-muted;
     }
   }
 }
@@ -384,71 +339,92 @@
 .deleteConfirmOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  backdrop-filter: blur(4px);
 }
 
 .deleteConfirmModal {
-  background: white;
+  background: v.$fh-bg;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 24px;
-  border-radius: 16px;
-  max-width: 360px;
+  border-radius: 20px;
+  max-width: 320px;
   width: 90%;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: v.$shadow-2xl;
+  text-align: center;
 
   h3 {
-    margin: 0 0 8px;
-    font-size: 1.25rem;
-    color: #0f172a;
+    margin: 0 0 10px;
+    color: v.$fh-text;
+    font-size: 1.2rem;
   }
 
   p {
-    margin: 0 0 24px;
-    color: #64748b;
-    font-size: 0.95rem;
+    margin: 0 0 20px;
+    color: v.$fh-muted;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
   .modalActions {
     display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    gap: 10px;
 
     button {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: none;
       cursor: pointer;
-      border: 1px solid transparent;
     }
 
     .cancelBtn {
-      background: #f1f5f9;
-      color: #64748b;
-
-      &:hover {
-        background: #e2e8f0;
-      }
+      background: rgba(255, 255, 255, 0.05);
+      color: v.$fh-text;
     }
 
     .deleteBtn {
       background: #ef4444;
       color: white;
-
-      &:hover {
-        background: #dc2626;
-      }
     }
   }
 }
 
+.hi-lite .bubble {
+  box-shadow: 0 0 0 4px rgba(v.$fh-primary, 0.4);
+  border-color: v.$fh-primary;
+}
+
 .mentions {
-  color: v.$fh-primary;
-  font-weight: 600;
-  background: rgba(v.$fh-primary, 0.1);
-  padding: 0 4px;
+  color: v.$fh-secondary;
+  background: rgba(v.$fh-secondary, 0.1);
+  padding: 0 2px;
   border-radius: 4px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .chat-timeline {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .msgWrapper {
+    max-width: 92%;
+
+    &.mine {
+      max-width: 92%;
+    }
+  }
+
+  .bubble {
+    font-size: 0.88rem;
+    padding: 8px 12px;
+  }
 }

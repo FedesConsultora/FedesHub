@@ -13,8 +13,16 @@ export default function AsistenciaDot() {
   const place = () => {
     const r = btnRef.current?.getBoundingClientRect()
     if (!r) return
-    // popover centrado bajo el punto
-    setPos({ top: r.bottom + 10, left: r.left + r.width / 2 })
+    const popWidth = 340
+    const margin = 10
+    let left = r.left + r.width / 2
+
+    // Clamp
+    const minLeft = (popWidth / 2) + margin
+    const maxLeft = window.innerWidth - (popWidth / 2) - margin
+    left = Math.max(minLeft, Math.min(left, maxLeft))
+
+    setPos({ top: r.bottom + 10, left })
   }
 
   const togglePop = () => {
@@ -45,8 +53,8 @@ export default function AsistenciaDot() {
   }, [openPop])
 
   const onInHome = async () => { await checkInHome(); setOpenPop(false) }
-  const onInOfi  = async () => { await checkInOficina(); setOpenPop(false) }
-  const onOut    = async () => { await checkOut(); setOpenPop(false) }
+  const onInOfi = async () => { await checkInOficina(); setOpenPop(false) }
+  const onOut = async () => { await checkOut(); setOpenPop(false) }
 
   return (
     <>

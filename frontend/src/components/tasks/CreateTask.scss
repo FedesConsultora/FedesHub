@@ -7,44 +7,64 @@ $fh-text: if(meta.global-variable-exists(fh-text), $fh-text, #e8f0ff);
 $fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a9b7c7);
 $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* ===== Overlay / Card ===== */
 .taskModalWrap {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .8));
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   color: $fh-text;
   overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 .tcCard {
-  width: min(980px, 96vw);
-  max-height: 92vh;
-
-  @supports (height: 100dvh) {
-    max-height: 92dvh;
-  }
-
-  overflow: hidden;
-  backdrop-filter: blur(18px);
-  background: rgba(12, 16, 23, .98);
-  border: 1px solid rgba(255, 255, 255, .08);
+  width: calc(100% - 24px); // Safe side margins
+  max-width: 980px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: #0c1017;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
-  box-shadow: $shadow-soft;
-  display:flex;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    width: calc(100% - 12px);
+    max-height: 94vh;
+    max-height: 94dvh;
+    border-radius: 14px;
+  }
 }
 
 .tcHeader {
-  padding: 16px 16px 10px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, .08);
+
+  @media (max-width: 600px) {
+    padding: 12px;
+  }
+
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  box-sizing: border-box;
 
   .brand {
     .logo {
@@ -87,8 +107,15 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
 .tcBody {
   flex: 1 1 auto;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden !important; // FORCE NO HORIZONTAL SCROLL
   padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 12px;
+  }
 }
 
 .tcGrid {
@@ -106,7 +133,40 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 .col {
   display: flex;
   flex-direction: column;
-  gap: 12px; // Unified gap for all elements in the column
+  gap: 12px;
+  min-width: 0; // Essential for grid child resizing
+}
+
+.form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.form-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-specific-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
 }
 
 .lbl {
@@ -140,15 +200,18 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 14px;
-  min-height: 46px; // Fixed height for alignment, but allows growth
-  background: #0f141b;
-  border: 1px solid rgba(255, 255, 255, .08);
+  padding: 0 12px;
+  min-height: 48px;
+  background: #11171f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0; // Prevent pushing
   cursor: text;
   transition: all .2s ease;
+  overflow: hidden;
 
 
 
@@ -156,19 +219,23 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   select,
   textarea {
     flex: 1;
+    min-width: 0; // Prevent flex children from overflowing
     background: none !important;
     color: $fh-text;
     border: 0;
     outline: none;
     padding: 0;
-    font-size: 1rem;
+    font-size: 16px; // Avoid iOS zoom
     line-height: 1.2;
     min-height: 24px;
-    height: 100%; // Fill the .field (except textarea will override)
+    height: 100%;
     cursor: pointer;
 
     &::placeholder {
-      color: rgba(255, 255, 255, .45);
+      color: rgba(255, 255, 255, .35);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
   }
 
@@ -215,31 +282,44 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   }
 
   &.upload-files {
-    min-height: 300px;
+    min-height: 200px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 24px 14px;
+
+    @media (max-width: 600px) {
+      min-height: 150px;
+    }
 
     label {
       color: #305064;
-      font-size: 1.5rem;
-      font-weight: 500;
+      font-size: 1.2rem;
+      font-weight: 600;
       text-transform: uppercase;
+      margin-bottom: 4px;
+
+      @media (max-width: 600px) {
+        font-size: 1rem;
+      }
+    }
+
+    span {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      text-align: center;
     }
 
     .upload-btn {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-
+      position: relative;
+      margin-top: 16px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 1rem;
+      width: 100%;
     }
   }
 }
@@ -264,6 +344,9 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   .placeholder {
     color: rgba(255, 255, 255, .4);
     font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tag {
@@ -295,6 +378,9 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   .single-val {
     color: #fff;
     font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   min-width: 0;
@@ -418,34 +504,34 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  background-color: transparent;
-  margin: 0;
-  gap: 0.5rem;
-  padding-bottom: 3rem;
-  align-items: flex-start;
-  max-width: fit-content;
-  white-space: wrap;
-
+  gap: 12px;
+  padding: 8px 0 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 
   .fileRow {
-    align-items: flex-start;
-
-    padding: 0;
-    width: 100px;
-    height: auto;
+    flex: 0 0 auto;
+    width: 80px;
+    display: flex;
     flex-direction: column;
-    background-color: transparent;
-
+    gap: 4px;
     position: relative;
 
-    span {
-      white-space: nowrap;
-      text-overflow: ellipsis;
+    img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
     }
 
-
-
-
+    span {
+      font-size: 0.75rem;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      width: 100%;
+    }
   }
 }
 
@@ -505,9 +591,21 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 .tcFooter {
   padding: 12px 16px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: flex-end;
   border-top: 1px solid rgba(255, 255, 255, .08);
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: 10px;
+
+    .btn,
+    .submit {
+      flex: 1;
+      padding: 10px 4px;
+      font-size: 0.85rem;
+    }
+  }
 }
 
 .btn {
@@ -548,6 +646,11 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     cursor: not-allowed;
     box-shadow: none
   }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
 }
 
 /* Autofill */
@@ -560,40 +663,52 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   box-shadow: 0 0 0px 1000px #0f141b inset !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
 /* ===== Segmented Tabs (Task Type) ===== */
 .segmented-tabs {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  overflow: hidden;
   padding: 4px;
   gap: 4px;
   margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; // We'll let them shrink or grow, but NO horizontal scroll of the viewport
 
   button {
+    flex: 1;
+    min-width: 0; // Allow shrinking to tiny sizes if needed
     appearance: none;
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    padding: 8px 18px;
-    font-size: 0.85rem;
+    padding: 10px 4px;
+    font-size: 0.82rem;
     font-weight: 700;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
-
-    &:hover:not(.active) {
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-    }
+    text-overflow: ellipsis;
+    overflow: hidden;
+    text-align: center;
 
     &.active {
       background: #3ea0ff;
       color: white;
       box-shadow: 0 4px 12px rgba(62, 160, 255, 0.3);
+    }
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 1rem;
+
+    button {
+      padding: 8px 4px;
+      font-size: 0.75rem;
     }
   }
 }

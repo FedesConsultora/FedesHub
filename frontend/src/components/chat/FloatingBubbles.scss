@@ -1,0 +1,160 @@
+@use '../../styles/variables' as v;
+
+.fh-floating-bubbles {
+    position: fixed;
+    right: 24px;
+    bottom: 80px; // Encima de posibles botones de ayuda o scrolls
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 16px;
+    z-index: 9999;
+    pointer-events: none;
+
+    @media (max-width: 768px) {
+        right: 16px;
+        bottom: 24px;
+    }
+
+    .bubble-item {
+        position: relative;
+        pointer-events: all;
+        animation: bubblePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        &.mention {
+            .bubble-main {
+                border-color: #ffc14d;
+                box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.2), v.$shadow-xl;
+
+                .badge {
+                    background: #ffc14d;
+                    color: #1a1a2e;
+                }
+            }
+        }
+
+        &:hover {
+            .bubble-close {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    }
+
+    .bubble-main {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #1e293b;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        box-shadow: v.$shadow-xl;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        padding: 0;
+        transition: all 0.2s;
+        overflow: visible;
+
+        &:hover {
+            transform: scale(1.05) translateY(-2px);
+            background: #334155;
+        }
+
+        .avatar-wrap {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            // Para el Avatar component que inyecta su propio estilo
+            .fh-avatar {
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        .channel-avatar {
+            font-weight: 900;
+            color: #fff;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ff5151;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #0b0f15;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+    }
+
+    .bubble-close {
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: white;
+        border: 2px solid #0b0f15;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.8rem;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 3;
+
+        &:hover {
+            background: #dc2626;
+        }
+    }
+}
+
+@keyframes bubblePop {
+    0% {
+        transform: scale(0) translateY(20px);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1.1) translateY(-2px);
+    }
+
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}

@@ -252,10 +252,12 @@ $text: $fh-text;
     // Mobile: permitir que todo haga wrap
     @media (max-width: 768px) {
       flex-wrap: wrap;
+      padding-right: 70px !important; // Más espacio para que el botón "X" no tape nada
 
       .titleSection {
         max-width: 100%;
         width: 100%;
+        padding-right: 10px; // Espacio extra interno
       }
 
       .meta {
@@ -1264,15 +1266,11 @@ $text: $fh-text;
   .people-detail {
     width: 100%;
     display: flex;
-    align-self: flex-end;
-    flex-direction: row !important;
-    align-items: center;
-    justify-content: space-between;
-
-    padding-top: 4rem;
-
-
-
+    flex-direction: column !important;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding-top: 2rem;
+    margin-top: auto; // Empujar al fondo si hay espacio
   }
 
   .commentsToggleBtn {
@@ -1559,7 +1557,7 @@ $text: $fh-text;
 
       &.active {
         background: rgba($fh-primary, 0.1);
-        color: lighten($fh-primary, 10%);
+        color: color.adjust($fh-primary, $lightness: 10%);
         font-weight: 600;
       }
     }

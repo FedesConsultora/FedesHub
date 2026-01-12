@@ -51,11 +51,11 @@ export default function TaskList({
         {showHeader && (
           <thead className="bg-muted/50 sticky top-0 z-10">
             <tr>
-              <th className="text-left p-3" style={{ width: '32px' }}></th>
-              <th className="text-left p-3">Tarea</th>
+              <th className="text-left p-2" style={{ width: '40px' }}></th>
+              <th className="text-left p-2 col-title">Tarea</th>
               {cols.cliente && <th className="text-left p-3 hidden-mobile">Cliente</th>}
-              {cols.responsables && <th className="text-left p-3">Asignados</th>}
-              {cols.estado && <th className="text-left p-3">Estado</th>}
+              {cols.responsables && <th className="text-left p-2 col-assigned" style={{ width: '80px' }}>Asignados</th>}
+              {cols.estado && <th className="text-left p-2 col-status" style={{ width: '100px' }}>Estado</th>}
               {cols.vence && <th className="text-left p-3 hidden-mobile">Vence</th>}
               {cols.progreso && <th className="text-left p-3 hidden-mobile">Progreso</th>}
             </tr>
@@ -170,7 +170,7 @@ export default function TaskList({
                       )}
                     </div>
                   </td>
-                  <td className={`px-3 ${RowPad} font-medium cursor-pointer `}>
+                  <td className={`px-3 ${RowPad} font-medium cursor-pointer col-title`}>
                     {t.titulo || t.title}
                   </td>
                   {cols.cliente && (
@@ -179,12 +179,12 @@ export default function TaskList({
                     </td>
                   )}
                   {cols.responsables && (
-                    <td className={`px-3 cursor-pointer ${RowPad}`}>
+                    <td className={`px-3 cursor-pointer ${RowPad} col-assigned`}>
                       <AvatarStack people={allPeople} size={24} attendanceStatuses={attendanceStatuses} />
                     </td>
                   )}
                   {cols.estado && (
-                    <td className={`px-3 cursor-pointer  ${RowPad}`}>
+                    <td className={`px-3 cursor-pointer  ${RowPad} col-status`}>
                       <Badge
                         variant="secondary"
                         style={{

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useId } from 'react'
+import { createPortal } from 'react-dom'
 import { tareasApi } from '../../api/tareas'
 import useTaskCatalog from '../../hooks/useTaskCatalog'
 import { FiFlag, FiBriefcase, FiHash, FiTag, FiUsers, FiX, FiUpload, FiHelpCircle, FiLock, FiCheckCircle, FiClock } from 'react-icons/fi'
@@ -426,7 +427,13 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
     }
   }
 
-  return (
+  // Scroll lock
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  const modalContent = (
     <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea" onClick={handleOverlayClick}>
       <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="tcHeader">
@@ -509,10 +516,10 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
 
 
               {(cat.feders || []).length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', width: '100%' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="form-row">
+                  <div className="form-item">
                     <div className={'field ' + (fechaError ? 'is-error' : '')}>
-                      <span style={{ fontSize: '0.85rem', color: '#FFFFFF8C', whiteSpace: 'nowrap' }}>
+                      <span className="field-label">
                         {tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
                       </span>
                       <input
@@ -520,13 +527,12 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
                         value={vencimiento}
                         onChange={(e) => setVencimiento(e.target.value)}
                         disabled={loading}
-                        style={{ flex: 1, minWidth: 0, fontSize: '0.9rem' }}
                       />
                     </div>
                     {fechaError && <div className="help error-inline">{fechaError}</div>}
                   </div>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="form-item">
                     <CustomSelect
                       id="responsable"
                       labelId={lblRespsId}
@@ -597,44 +603,52 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
 
               {/* Campos específicos de TC */}
               {tipo === 'TC' && (
-                <div className="tc-specific-fields" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <CustomSelect
-                      labelId="lbl-tc-redes"
-                      leftIcon={<FiTag className="ico" style={S.ico} />}
-                      options={(cat.tc_redes || []).map(r => ({ value: String(r.id), label: r.nombre }))}
-                      value={tcRedSocialIds}
-                      onChange={setTcRedSocialIds}
-                      placeholder="Redes Sociales"
-                      disabled={loading}
-                      multi={true}
-                    />
-                    <CustomSelect
-                      labelId="lbl-tc-formatos"
-                      leftIcon={<FiTag className="ico" style={S.ico} />}
-                      options={(cat.tc_formatos || []).map(f => ({ value: String(f.id), label: f.nombre }))}
-                      value={tcFormatoIds}
-                      onChange={setTcFormatoIds}
-                      placeholder="Formatos"
-                      disabled={loading}
-                      multi={true}
-                    />
+                <div className="tc-specific-fields">
+                  <div className="form-row">
+                    <div className="form-item">
+                      <CustomSelect
+                        labelId="lbl-tc-redes"
+                        leftIcon={<FiTag className="ico" style={S.ico} />}
+                        options={(cat.tc_redes || []).map(r => ({ value: String(r.id), label: r.nombre }))}
+                        value={tcRedSocialIds}
+                        onChange={setTcRedSocialIds}
+                        placeholder="Redes Sociales"
+                        disabled={loading}
+                        multi={true}
+                      />
+                    </div>
+                    <div className="form-item">
+                      <CustomSelect
+                        labelId="lbl-tc-formatos"
+                        leftIcon={<FiTag className="ico" style={S.ico} />}
+                        options={(cat.tc_formatos || []).map(f => ({ value: String(f.id), label: f.nombre }))}
+                        value={tcFormatoIds}
+                        onChange={setTcFormatoIds}
+                        placeholder="Formatos"
+                        disabled={loading}
+                        multi={true}
+                      />
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <div className="field" style={{ flex: 1 }}>
-                      <select value={tcObjetivoNegocioId} onChange={(e) => setTcObjetivoNegocioId(e.target.value)} disabled={loading} style={S.control}>
-                        <option value="">— Objetivo Negocio —</option>
-                        {(cat.tc_obj_negocio || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                      </select>
-                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                  <div className="form-row">
+                    <div className="form-item">
+                      <div className="field">
+                        <select value={tcObjetivoNegocioId} onChange={(e) => setTcObjetivoNegocioId(e.target.value)} disabled={loading} style={S.control}>
+                          <option value="">— Objetivo Negocio —</option>
+                          {(cat.tc_obj_negocio || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                        </select>
+                        <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                      </div>
                     </div>
-                    <div className="field" style={{ flex: 1 }}>
-                      <select value={tcObjetivoMarketingId} onChange={(e) => setTcObjetivoMarketingId(e.target.value)} disabled={loading} style={S.control}>
-                        <option value="">— Objetivo Marketing —</option>
-                        {(cat.tc_obj_marketing || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                      </select>
-                      <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                    <div className="form-item">
+                      <div className="field">
+                        <select value={tcObjetivoMarketingId} onChange={(e) => setTcObjetivoMarketingId(e.target.value)} disabled={loading} style={S.control}>
+                          <option value="">— Objetivo Marketing —</option>
+                          {(cat.tc_obj_marketing || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                        </select>
+                        <div className="addon" style={S.addon}><MdKeyboardArrowDown /></div>
+                      </div>
                     </div>
                   </div>
 
@@ -849,5 +863,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
       </form>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
 

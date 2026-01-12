@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../../styles/variables" as v;
 
 .TaskMonthlyView {
@@ -98,7 +99,7 @@
                 &.todayBtn {
                     background: rgba(v.$fh-primary, 0.15);
                     border-color: rgba(v.$fh-primary, 0.3);
-                    color: lighten(v.$fh-primary, 10%);
+                    color: color.adjust(v.$fh-primary, $lightness: 10%);
 
                     &:hover {
                         background: rgba(v.$fh-primary, 0.25);
