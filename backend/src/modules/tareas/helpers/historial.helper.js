@@ -12,6 +12,7 @@ const models = await initModels();
  * Extendible: solo agregar nuevos tipos aquí
  */
 export const TIPO_CAMBIO = {
+    TAREA: 'tarea',
     ESTADO: 'estado',
     RESPONSABLE: 'responsable',
     COLABORADOR: 'colaborador',

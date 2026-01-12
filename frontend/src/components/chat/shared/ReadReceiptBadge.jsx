@@ -141,8 +141,8 @@ function ReceiptGroupBadge({ align, allSeen, vistos, noVistos, total }) {
 
       {open && (
         <div className="popover" role="dialog" aria-label="Detalles de lectura">
-          <section style={{ backgroundColor: "white" }}>
-            <header>Vieron ({vistos.length})</header>
+          <section>
+            <header>Visto por ({vistos.length})</header>
             {vistos.length ? (
               <ul className="list">
                 {vistos.map((u) => (
@@ -157,11 +157,11 @@ function ReceiptGroupBadge({ align, allSeen, vistos, noVistos, total }) {
                 ))}
               </ul>
             ) : (
-              <div className="muted">Nadie aún</div>
+              <div className="muted" style={{ padding: '8px' }}>Nadie aún</div>
             )}
           </section>
           <section>
-            <header>No vieron ({noVistos.length})</header>
+            <header>No visto aún por ({noVistos.length})</header>
             {noVistos.length ? (
               <ul className="list">
                 {noVistos.map((u) => (
@@ -174,7 +174,7 @@ function ReceiptGroupBadge({ align, allSeen, vistos, noVistos, total }) {
                 ))}
               </ul>
             ) : (
-              <div className="muted">—</div>
+              <div className="muted" style={{ padding: '8px' }}>—</div>
             )}
           </section>
         </div>

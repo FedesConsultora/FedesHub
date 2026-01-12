@@ -351,6 +351,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
   const sql = `
     SELECT
       t.*,
+      fa.nombre AS creador_nombre, fa.apellido AS creador_apellido, fa.avatar_url AS creador_avatar,
       te.codigo AS estado_codigo, te.nombre AS estado_nombre,
       it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
@@ -500,6 +501,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
 
     FROM "Tarea" t
     JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "Feder" fa ON fa.id = t.creado_por_feder_id
     LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
     LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
@@ -576,6 +578,16 @@ const createTask = async (payload, currentFederId) => {
       fecha_inicio, vencimiento,
       tipo // STD, TC, IT
     }, { transaction: t });
+
+    // ===== Registrar creación en historial =====
+    await registrarCambio({
+      tarea_id: tarea.id,
+      feder_id: currentFederId,
+      tipo_cambio: TIPO_CAMBIO.TAREA,
+      accion: ACCION.CREATED,
+      descripcion: 'Creó la tarea',
+      transaction: t
+    });
 
     // ===== Datos específicos de TC =====
     if (tipo === 'TC' && tc) {

@@ -1,9 +1,17 @@
 import { useMemo, useEffect, useRef, useState, useContext } from 'react'
 import { FaArrowDown } from 'react-icons/fa'
-import { FiEdit2, FiTrash2, FiCheck, FiX } from 'react-icons/fi'
-import { VscPinned } from "react-icons/vsc";
-import { useSetRead, useEditMessage, useDeleteMessage, usePinMessage } from '../../../hooks/useChat'
-import ReactionBar from './ReactionBar'
+import { FiX, FiCheck } from 'react-icons/fi'
+import { CiFaceSmile } from "react-icons/ci";
+import { MdOutlineModeEdit } from "react-icons/md";
+import { BsPinAngle } from "react-icons/bs";
+
+import { FaRegTrashCan } from "react-icons/fa6";
+
+import { LuReply } from "react-icons/lu";
+
+import { useSetRead, useEditMessage, useDeleteMessage, usePinMessage, useToggleReaction } from '../../../hooks/useChat'
+import ReactionBar, { CenteredPicker } from './ReactionBar'
+import EmojiPicker from '../../common/EmojiPicker'
 import MessageAttachments from './MessageAttachments'
 import ReplyPreview from './ReplyPreview'
 import ReadReceiptBadge from './ReadReceiptBadge'
@@ -220,20 +228,16 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
     return map
   }, [members])
 
-  const msgUserId = toNum(m.user_id ?? m.autor?.id ?? null)
-  const isMine = (msgUserId != null && my_user_id != null && msgUserId === my_user_id)
+  const msgUserIdNum = toNum(m.user_id ?? m.autor?.id ?? null)
+  const myUserIdNum = toNum(my_user_id)
+  const isMine = (msgUserIdNum != null && myUserIdNum != null && msgUserIdNum === myUserIdNum)
   const isDeleted = !!m.deleted_at
   const isEdited = !!m.is_edited
   const isPinned = m.pins && m.pins.length > 0
+  const canEditOrDelete = true // Always true for own messages as per latest request
 
-  // Check if message is older than 30 minutes (use created_at for the original send time)
-  const messageTime = new Date(m.created_at).getTime()
-  const now = Date.now()
-  const thirtyMinutes = 30 * 60 * 1000
-  const canEditOrDelete = !isNaN(messageTime) && (now - messageTime) < thirtyMinutes
-
-  const member = memberByUserId.get(toNum(m.user_id))
-  const author = member ? displayName(member) : displayName(m?.autor) || 'usuario'
+  const member = memberByUserId.get(msgUserIdNum)
+  const author = member ? (fullName(member) || displayName(member)) : (fullName(m?.autor) || displayName(m?.autor) || 'usuario')
   const authorFederId = toNum(
     member?.feder_id ?? member?.id_feder ?? member?.feder?.id ?? member?.user?.feder?.id ??
     m.feder_id ?? m.id_feder ?? m.feder?.id ?? m.user?.feder?.id ??
@@ -304,104 +308,117 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
     pinMessage.mutate({ mensaje_id: m.id, canal_id: Number(canal_id), on: !isPinned })
   }
 
+  // Reaction state
+  const toggleReaction = useToggleReaction()
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  const handleToggleReaction = (emoji) => {
+    const reacts = m.reacciones || []
+    const cur = reacts.find(r => r.emoji === emoji && Number(r.user_id) === Number(my_user_id))
+    toggleReaction.mutate({ mensaje_id: m.id, emoji, on: !cur, canal_id })
+    setPickerOpen(false)
+  }
+
   return (
-    <div id={`msg-${m.id}`} className={'bubble' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '')}>
-      {!isDeleted && <button className="replyIco" title="Responder" onClick={() => setReplyTo(m)}>↩</button>}
+    <div id={`msg-${m.id}`} className={'msgWrapper' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '')}>
+      <div className="msgAvatarContainer">
+        <Avatar
+          src={pickAvatar(member) || pickAvatar(m)}
+          name={author}
+          size={32}
+          federId={authorFederId}
+        />
+        <AttendanceBadge modalidad={getModalidad(statuses, authorFederId)} size={12} />
+      </div>
 
-      {/* Message actions menu (edit/delete/pin) */}
-      {!isDeleted && !isEditing && (
-        <div className="msgActions">
-          <button
-            className={`actionBtn ${isPinned ? 'active' : ''}`}
-            title={isPinned ? 'Desfijar' : 'Fijar'}
-            onClick={handleTogglePin}
-            disabled={pinMessage.isPending}
-          >
-            <VscPinned style={{ transform: isPinned ? 'rotate(45deg)' : 'none' }} />
-          </button>
+      <div className="msgBody">
+        <div className="msgMeta">
+          <span className="author">{author}</span>
+          <span className="time">{ts}</span>
+          {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
+          {!isDeleted && isPinned && (
+            <span className="pinnedBadge">
+              <BsPinAngle size={12} /> fijado
+            </span>
+          )}
+        </div>
 
-          {isMine && canEditOrDelete && (
+        <div className="bubbleContainer">
+          <div className="bubble">
+            {m.parent && !isDeleted && (
+              <div onClick={goToParent} style={{ cursor: 'pointer' }}>
+                <ReplyPreview
+                  autor={fullName(m.parent) || displayName(m.parent) || 'alguien'}
+                  excerptHtml={renderReplyExcerpt(m.parent?.body_text || '')}
+                />
+              </div>
+            )}
+
+            {isDeleted ? (
+              <div className="txt deleted">
+                <em>{author} ha eliminado este mensaje</em>
+              </div>
+            ) : isEditing ? (
+              <div className="editMode">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  rows={3}
+                  autoFocus
+                />
+                <div className="editActions">
+                  <button className="saveBtn" onClick={handleSaveEdit} disabled={!editText.trim() || editMessage.isPending}>
+                    <FiCheck /> Guardar
+                  </button>
+                  <button className="cancelBtn" onClick={handleCancelEdit}>
+                    <FiX /> Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
+                <MessageAttachments items={m.adjuntos || []} />
+              </>
+            )}
+          </div>
+
+          {!isDeleted && !isEditing && (
             <>
-              <button className="actionBtn" title="Editar" onClick={handleEdit}>
-                <FiEdit2 />
+              <button className="alwaysVisibleReply" title="Responder" onClick={() => setReplyTo(m)}>
+                <LuReply />
               </button>
-              <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
-                <FiTrash2 />
-              </button>
+
+              <div className="msgHoverActions">
+                <button className="actionBtn" title="Reaccionar" onClick={() => setPickerOpen(true)}>
+                  <CiFaceSmile />
+                </button>
+                <button
+                  className={`actionBtn ${isPinned ? 'active' : ''}`}
+                  title={isPinned ? 'Desfijar' : 'Fijar'}
+                  onClick={handleTogglePin}
+                  disabled={pinMessage.isPending}
+                >
+                  <BsPinAngle style={{ transform: isPinned ? 'rotate(45deg)' : 'none' }} />
+                </button>
+                {isMine && (
+
+                  <>
+                    <button className="actionBtn" title="Editar" onClick={handleEdit}>
+                      <MdOutlineModeEdit />
+                    </button>
+                    <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
+                      <FaRegTrashCan />
+                    </button>
+                  </>
+                )}
+              </div>
             </>
           )}
         </div>
-      )}
 
-      <div className="meta">
-        <div className="avatarSide" style={{ position: 'relative' }}>
-          <Avatar
-            src={pickAvatar(member) || pickAvatar(m)}
-            name={author}
-            size={28}
-            federId={authorFederId}
-          />
-          <AttendanceBadge modalidad={getModalidad(statuses, authorFederId)} size={12} />
-        </div>
-        <div className="author">{author}</div>
-        <span className="dot">•</span>
-        <div className="fecha">{ts}</div>
-        {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
-        {!isDeleted && isPinned && (
-          <span className="pinnedBadge" style={{ marginLeft: '8px' }}>
-            <VscPinned size={12} /> fijado
-          </span>
-        )}
-      </div>
-
-      {m.parent && !isDeleted && (
-        <div onClick={goToParent} style={{ cursor: 'pointer' }}>
-          <ReplyPreview
-            autor={fullName(m.parent?.autor) || displayName(m.parent?.autor) || 'alguien'}
-            excerptHtml={renderReplyExcerpt(m.parent?.body_text || '')}
-          />
-        </div>
-      )}
-
-      {/* Deleted message display */}
-      {isDeleted && (
-        <div className="txt deleted">
-          <em>{author} ha eliminado este mensaje</em>
-        </div>
-      )}
-
-      {/* Edit mode */}
-      {!isDeleted && isEditing && (
-        <div className="editMode">
-          <textarea
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            rows={3}
-            autoFocus
-          />
-          <div className="editActions">
-            <button className="saveBtn" onClick={handleSaveEdit} disabled={!editText.trim() || editMessage.isPending}>
-              <FiCheck /> Guardar
-            </button>
-            <button className="cancelBtn" onClick={handleCancelEdit}>
-              <FiX /> Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Normal message display */}
-      {!isDeleted && !isEditing && (
-        <>
-          <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
-          <MessageAttachments items={m.adjuntos || []} />
-        </>
-      )}
-
-      {/* Footer: reacciones + visto, alineados derecha */}
-      {!isDeleted && (
         <div className="msgFooter">
-          <ReactionBar canal_id={canal_id} mensaje={m} members={members} />
+          <ReactionBar canal_id={canal_id} mensaje={m} members={members} showAdd={false} isMine={isMine} />
           {isMine && (
             <ReadReceiptBadge
               canal_id={canal_id}
@@ -413,6 +430,18 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
             />
           )}
         </div>
+      </div>
+
+      {pickerOpen && (
+        <CenteredPicker onClose={() => setPickerOpen(false)}>
+          <EmojiPicker
+            theme="light"
+            width="350px"
+            height="450px"
+            onSelect={handleToggleReaction}
+            onClickOutside={() => setPickerOpen(false)}
+          />
+        </CenteredPicker>
       )}
 
       {/* Delete confirmation modal */}
