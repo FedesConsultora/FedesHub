@@ -19,6 +19,43 @@ $text: $fh-text;
   --elev: 0 16px 40px rgba(0, 0, 0, .35);
 }
 
+.cancelReasonBanner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 12px 16px 12px;
+  animation: fadeIn 0.3s ease-out;
+
+  .bannerLabel {
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .bannerText {
+    color: #ffdada;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Utilidades globales */
 .fh-card {
   padding: 1.2rem;

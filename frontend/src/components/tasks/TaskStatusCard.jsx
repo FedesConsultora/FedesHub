@@ -123,17 +123,6 @@ export default function TaskStatusCard({
     const id = idByCode[code]
     if (!id || !onPick) return
 
-    // Confirmación mínima para "cancelada"
-    if (code === 'cancelada') {
-      const ok = await modal.confirm({
-        title: 'Cancelar tarea',
-        message: '¿Seguro que querés marcar esta tarea como cancelada?',
-        okText: 'Cancelar tarea',
-        cancelText: 'Volver'
-      })
-      if (!ok) return
-    }
-
     try {
       setBusy(code)
       await onPick(id)

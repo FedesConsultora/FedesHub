@@ -455,7 +455,27 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
   // estado
   const handleEstado = async (estado_id) => {
-    const next = await tareasApi.setEstado(taskId, estado_id)
+    // Buscar si el estado es "cancelada"
+    const targetState = catalog?.estados?.find(s => s.id === estado_id);
+    const isCancelada = targetState?.codigo === 'cancelada';
+
+    let cancelacion_motivo = null;
+    if (isCancelada) {
+      const resp = await modal.prompt({
+        title: 'Cancelar tarea',
+        message: '¿Por qué se cancela esta tarea?',
+        placeholder: 'Ej: El cliente decidió no avanzar...',
+        okText: 'Confirmar cancelación',
+        cancelText: 'Volver',
+        multiline: true
+      });
+      // Si el usuario cancela el prompt (le da a "Volver" o cierra el modal), resp es undefined/null
+      // Pero si simplemente lo deja vacío y le da a OK, resp es ""
+      if (resp === undefined) return;
+      cancelacion_motivo = resp || null;
+    }
+
+    const next = await tareasApi.setEstado(taskId, estado_id, cancelacion_motivo)
     if (next.estado_nombre === 'Revisión') next.estado_nombre = 'En Revisión';
     if (next.estado?.nombre === 'Revisión') next.estado.nombre = 'En Revisión';
     setTask(next)
@@ -721,6 +741,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 {/* <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button> */}
               </div>
             </div>
+
+            {estadoCodigo === 'cancelada' && task?.cancelacion_motivo && (
+              <div className="cancelReasonBanner">
+                <div className="bannerLabel">Motivo de cancelación:</div>
+                <div className="bannerText">{task.cancelacion_motivo}</div>
+              </div>
+            )}
 
             {tab === 'desc' ? (
               // Descripción con editor de texto enriquecido
