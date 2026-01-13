@@ -1,5 +1,6 @@
 // src/components/ausencias/AusenciasBoard.jsx
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import usePermission from '../../hooks/usePermissions'
 import { useAusenciasBoard, normalizeAmount } from '../../hooks/useAusencias'
 import useFeders from '../../hooks/useFeders'          // 🆕
@@ -45,6 +46,7 @@ function mapByDateFromRows(rows) {
 }
 
 export default function AusenciasBoard() {
+  const { user } = useAuth()
   const now = new Date()
   const modal = useModal()
 
@@ -93,6 +95,12 @@ export default function AusenciasBoard() {
   // ---- cards de saldo
   const breakdown = useMemo(() => {
     const map = new Map()
+
+    // Debug: ver qué trae el endpoint
+    if (import.meta.env.DEV && board.saldos.saldos.length > 0) {
+      console.log('📊 board.saldos.saldos:', board.saldos.saldos)
+    }
+
     for (const s of board.saldos.saldos) {
       map.set(s.tipo_id, {
         tipo_id: s.tipo_id,
@@ -109,7 +117,13 @@ export default function AusenciasBoard() {
       })
     }
     const today = todayLocal()
-    for (const row of allRows) {
+    // SOLO contar ausencias del usuario actual
+    const myFederId = user?.feder_id
+
+    for (const row of board.aus.rows) {
+      // FILTRO CRÍTICO: Solo sumar si es mi ausencia
+      if (myFederId && row.feder_id !== myFederId) continue
+
       const b = map.get(row.tipo_id) || {
         tipo_id: row.tipo_id, tipo_codigo: row.tipo_codigo, tipo_nombre: row.tipo_nombre,
         tipo_icon: row.tipo_icon, tipo_color: row.tipo_color,
@@ -122,9 +136,9 @@ export default function AusenciasBoard() {
       map.set(row.tipo_id, b)
     }
     return Array.from(map.values())
-      .filter(b => b.available > 0 || b.approved > 0 || b.planned > 0)
+      .filter(b => b.allocated > 0 || b.approved > 0 || b.planned > 0)
       .sort((a, b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
-  }, [board.saldos.saldos, allRows])
+  }, [board.saldos.saldos, board.aus.rows])
 
   // ---- filtros
   const todayISO = todayLocal()

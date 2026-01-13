@@ -329,7 +329,10 @@ export const repoOverview = async ({
       ) AS roles,
       (
         SELECT EXISTS (
-          SELECT 1 FROM "UserRol" ur3 WHERE ur3.user_id = u.id AND ur3.rol_id = 2
+          SELECT 1 FROM "UserRol" ur3
+          JOIN "Rol" r3 ON r3.id = ur3.rol_id
+          WHERE ur3.user_id = u.id 
+            AND r3.nombre IN ('NivelB', 'RRHH')
         )
       ) AS is_leader
     FROM "Feder" f
