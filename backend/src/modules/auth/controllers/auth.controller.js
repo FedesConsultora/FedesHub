@@ -1,4 +1,5 @@
 // backend/src/modules/auth/controllers/auth.controller.js
+import { z } from 'zod';
 import {
   loginSchema, createUserSchema, changePasswordSchema,
   listUsersQuerySchema, assignUserRolesSchema, setUserActiveSchema, listPermsQuerySchema, roleIdParamSchema,
@@ -7,7 +8,7 @@ import {
 import {
   loginWithPassword, refreshSession, logoutAll, createUserWithRoles, changePassword,
   adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive, adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
-  adminGetRole, adminCreateRole, adminUpdateRole, adminDeleteRole,
+  adminGetRole, adminCreateRole, adminUpdateRole, adminDeleteRole, adminSetRoleMembers,
   adminSetRolePermissions, adminAddRolePermissions, adminRemoveRolePermissions,
   forgotPassword, resetPasswordByToken
 } from '../services/auth.service.js';
@@ -136,6 +137,14 @@ export const deleteRoleCtrl = async (req, res, next) => {
   try {
     const { id } = roleIdParamSchema.parse(req.params);
     res.json(await adminDeleteRole(id));
+  } catch (e) { next(e); }
+};
+
+export const setRoleMembersCtrl = async (req, res, next) => {
+  try {
+    const { id } = roleIdParamSchema.parse(req.params);
+    const { user_ids } = z.object({ user_ids: z.array(z.number().int().positive()) }).parse(req.body);
+    res.json(await adminSetRoleMembers(id, user_ids));
   } catch (e) { next(e); }
 };
 

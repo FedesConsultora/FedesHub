@@ -237,3 +237,58 @@
     border: none;
   }
 }
+@media (max-width: 768px) {
+  .aus-month-view {
+    padding: 10px;
+    border-radius: 12px;
+
+    .title {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .day {
+      min-height: 50px;
+      padding: 4px;
+
+      .num {
+        font-size: 0.75rem;
+      }
+
+      .tags {
+        right: 4px;
+        top: 4px;
+        gap: 2px;
+
+        .tag {
+          font-size: 0.6rem;
+          padding: 0 4px;
+        }
+      }
+
+      .chip {
+        display: none; 
+      }
+
+      .more {
+        display: none;
+      }
+    }
+  }
+
+  .aus-month-container {
+    .nav-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 0.9rem;
+
+      &.prev {
+        left: -16px;
+      }
+
+      &.next {
+        right: -16px;
+      }
+    }
+  }
+}

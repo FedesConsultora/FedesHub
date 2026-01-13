@@ -105,9 +105,5 @@ export function ProfilePreviewProvider({ children }) {
 }
 
 export const useProfilePreview = () => {
-    const context = useContext(ProfilePreviewContext);
-    if (!context) {
-        throw new Error('useProfilePreview must be used within a ProfilePreviewProvider');
-    }
-    return context;
+    return useContext(ProfilePreviewContext);
 };

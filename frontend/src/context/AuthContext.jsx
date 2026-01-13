@@ -11,7 +11,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 let sharedBootPromise = null
 
 export function AuthProvider({ children }) {
-  const [user,  setUser]  = useState(null)
+  const [user, setUser] = useState(null)
   const [roles, setRoles] = useState([])
   const [perms, setPerms] = useState([])
   const [booted, setBooted] = useState(false)
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
         sharedBootPromise = (async () => {
           try {
             if (DEBUG) console.log('[boot] start')
-            await ensureCsrf().catch(() => {})
+            await ensureCsrf().catch(() => { })
 
             const boot = (async () => {
               try {
@@ -34,17 +34,17 @@ export function AuthProvider({ children }) {
                   return { status: 401, data: null }
                 })
                 const status = resp?.status ?? 401
-                const data   = resp?.data ?? null
-                return status === 200 ? { ok:true, data } : { ok:false, data:null }
+                const data = resp?.data ?? null
+                return status === 200 ? { ok: true, data } : { ok: false, data: null }
               } catch (e) {
                 if (DEBUG) console.log('[boot] exception:', e?.message || e)
-                return { ok:false, data:null }
+                return { ok: false, data: null }
               }
             })()
 
             const timed = Promise.race([
               boot,
-              (async () => { await sleep(BOOT_TIMEOUT_MS); return { ok:false, timeout:true } })()
+              (async () => { await sleep(BOOT_TIMEOUT_MS); return { ok: false, timeout: true } })()
             ])
 
             return await timed
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
       return sharedBootPromise
     }
 
-    ;(async () => {
+    ; (async () => {
       const result = await doBootOnce()
       if (!alive) return
 

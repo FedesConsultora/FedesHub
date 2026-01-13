@@ -56,11 +56,12 @@ module.exports = {
     const unidadHora = unitRowsHora[0];
 
     await bulkInsertIfNotExists('AusenciaTipo', [
-      { codigo: 'vacaciones', nombre: 'Vacaciones', descripcion: null, unidad_id: unidadDia.id, requiere_asignacion: true, created_at: now, updated_at: now },
-      { codigo: 'tristeza', nombre: 'Días de Tristeza', descripcion: 'Beneficio interno', unidad_id: unidadDia.id, requiere_asignacion: true, created_at: now, updated_at: now },
-      { codigo: 'examen', nombre: 'Examen', descripcion: 'Horas para examen', unidad_id: unidadHora.id, requiere_asignacion: true, created_at: now, updated_at: now },
-      { codigo: 'personal', nombre: 'Asunto personal', descripcion: null, unidad_id: unidadHora.id, requiere_asignacion: false, created_at: now, updated_at: now },
-      { codigo: 'no_pagado', nombre: 'No pagado', descripcion: 'Sin cupo, requiere aprobación', unidad_id: unidadDia.id, requiere_asignacion: false, created_at: now, updated_at: now },
+      { codigo: 'vacaciones', nombre: 'Vacaciones', descripcion: null, unidad_id: unidadDia.id, requiere_asignacion: true, icon: 'FiSun', color: '#ff9f43', created_at: now, updated_at: now },
+      { codigo: 'tristeza', nombre: 'Días de Tristeza', descripcion: 'Beneficio interno', unidad_id: unidadDia.id, requiere_asignacion: true, icon: 'FiCloudRain', color: '#54a0ff', created_at: now, updated_at: now },
+      { codigo: 'examen', nombre: 'Examen', descripcion: 'Horas para examen', unidad_id: unidadHora.id, requiere_asignacion: true, icon: 'FiBookOpen', color: '#1dd1a1', created_at: now, updated_at: now },
+      { codigo: 'personal', nombre: 'Asunto personal', descripcion: null, unidad_id: unidadHora.id, requiere_asignacion: false, icon: 'FiUser', color: '#feca57', created_at: now, updated_at: now },
+      { codigo: 'no_pagado', nombre: 'No pagado', descripcion: 'Sin cupo, requiere aprobación', unidad_id: unidadDia.id, requiere_asignacion: false, icon: 'FiXCircle', color: '#ee5253', created_at: now, updated_at: now },
+      { codigo: 'cumpleaños', nombre: 'Cumpleaños', descripcion: 'Día de descanso por cumpleaños', unidad_id: unidadDia.id, requiere_asignacion: false, icon: 'FiGift', color: '#ff9fcf', created_at: now, updated_at: now },
     ]);
   },
 

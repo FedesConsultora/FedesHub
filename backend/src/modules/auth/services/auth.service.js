@@ -1,5 +1,6 @@
 // src/modules/auth/services/auth.service.js
 import crypto from 'crypto';
+import { QueryTypes } from 'sequelize';
 
 import { hashPassword, verifyPassword } from '../password.js';
 import { signAccess, signRefresh, newJti, verifyRefresh, decodeUnsafe, verifyAccess } from '../token.js';
@@ -15,7 +16,8 @@ import { listAllRoles } from '../repositories/role.repo.js';
 import { isRevoked, revokeJti } from '../repositories/jwtRevocation.repo.js';
 import {
   listPermissions, listModules, listActions,
-  getRolePermissions, setRolePermissions, addRolePermissions, removeRolePermissions
+  getRolePermissions, setRolePermissions, addRolePermissions, removeRolePermissions,
+  ensurePermission
 } from '../repositories/permission.repo.js';
 import {
   listRoleTypes, getRoleById, createRole, updateRole, deleteRole, isSystemRole
@@ -28,6 +30,17 @@ const models = await initModels();
 
 import { createPasswordResetToken, usePasswordResetToken } from '../repositories/passwordReset.repo.js';
 import { sendNotificationEmails } from '../../notificaciones/services/email.service.js';
+
+// Registro de permisos críticos del sistema
+export const registerCorePermissions = async () => {
+  try {
+    await ensurePermission('rrhh', 'manage', 'Administrar RRHH', 'Permite asignar cupos y ver historial de ausencias');
+    // console.log('[AuthService] Core permissions registered');
+  } catch (e) {
+    console.error('[AuthService] Error registering core permissions:', e.message);
+  }
+};
+registerCorePermissions(); // Se ejecuta al cargar el servicio
 
 const emailDomain = (email) => String(email).split('@')[1]?.toLowerCase();
 
@@ -146,6 +159,21 @@ export const adminListUsers = (q) => {
   return listUsersWithRoles(q);
 };
 export const adminAssignUserRoles = (userId, roles) => assignRoles(userId, roles);
+export const adminSetRoleMembers = async (rolId, userIds) => {
+  const t = await sequelize.transaction();
+  try {
+    // 1. Quitar a todos los que tenían el rol
+    await models.UserRol.destroy({ where: { rol_id: rolId }, transaction: t });
+    // 2. Agregar a los nuevos
+    const rows = userIds.map(uid => ({ user_id: uid, rol_id: rolId, created_at: new Date() }));
+    if (rows.length) await models.UserRol.bulkCreate(rows, { ignoreDuplicates: true, transaction: t });
+    await t.commit();
+    return { success: true, count: rows.length };
+  } catch (e) {
+    await t.rollback();
+    throw e;
+  }
+};
 export const adminSetUserActive = (userId, is_activo) => setUserActive(userId, is_activo);
 
 export const adminListPermissions = (q) => listPermissions(q);
@@ -157,7 +185,17 @@ export const adminGetRole = async (id) => {
   const role = await getRoleById(id);
   if (!role) throw Object.assign(new Error('Rol no encontrado'), { status: 404 });
   const permisos = await getRolePermissions(id);
-  return { ...role.get({ plain: true }), permisos };
+
+  // Fetch members
+  const members = await sequelize.query(`
+    SELECT u.id, u.email
+    FROM "UserRol" ur
+    JOIN "User" u ON u.id = ur.user_id
+    WHERE ur.rol_id = :rid
+    ORDER BY u.email ASC
+  `, { type: QueryTypes.SELECT, replacements: { rid: id } });
+
+  return { ...role.get({ plain: true }), permisos, members };
 };
 
 export const adminCreateRole = async (body) => {

@@ -32,7 +32,8 @@ export default function Avatar({
 }) {
   const [broken, setBroken] = useState(false)
   const hoverTimer = useRef(null)
-  const { openProfile } = useProfilePreview()
+  const context = useProfilePreview()
+  const openProfile = context?.openProfile
 
   useEffect(() => { setBroken(false) }, [src])
 

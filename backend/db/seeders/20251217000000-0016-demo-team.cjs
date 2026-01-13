@@ -17,13 +17,13 @@ const PEOPLE = [
   { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedesconsultora.com', nivel: 'NivelA' },
   { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedesconsultora.com', nivel: 'NivelA' },
   { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedesconsultora.com', nivel: 'NivelA' },
-  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'ralbanesi@fedesconsultora.com', nivel: 'NivelB' },
+  { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'romina@fedesconsultora.com', nivel: 'RRHH' },
   { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedesconsultora.com', nivel: 'NivelB' },
 
   // NivelC / NivelB (Florencia): Colaboradores
   { nombre: 'Micaela', apellido: 'Martinez', cargo: 'Asesora Comercial', email: 'mmartinez@fedesconsultora.com', nivel: 'NivelC' },
   { nombre: 'Mateo', apellido: 'Germano', cargo: 'Editor de Contenido Audiovisual', email: 'mgermano@fedesconsultora.com' },
-  { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Coordinadora de proyectos', email: 'fmarchesotti@fedesconsultora.com', nivel: 'NivelB' },
+  { nombre: 'Florencia', apellido: 'Marchesotti', cargo: 'Coordinadora de proyectos', email: 'florencia@fedesconsultora.com', nivel: 'RRHH' },
   { nombre: 'Gonzalo', apellido: 'Canibano', cargo: 'Ejecutivo de Cuentas', email: 'gcanibano@fedesconsultora.com' },
   { nombre: 'Victoria', apellido: 'Pellegrino', cargo: 'Analista de Cuentas', email: 'vpellegrino@fedesconsultora.com', nivel: 'NivelB' },
   { nombre: 'Juan', apellido: 'Perozo', cargo: 'Diseñador UX/UI', email: 'jperozo@fedesconsultora.com' },
@@ -133,7 +133,7 @@ module.exports = {
 
       // Roles disponibles (3 niveles)
       const [roleRows] = await qi.sequelize.query(
-        `SELECT id, nombre FROM "Rol" WHERE nombre IN ('NivelA', 'NivelB', 'NivelC')`,
+        `SELECT id, nombre FROM "Rol" WHERE nombre IN ('NivelA', 'NivelB', 'NivelC', 'RRHH')`,
         { transaction: t }
       );
       const rid = Object.fromEntries(roleRows.map(r => [r.nombre, r.id]));
@@ -230,7 +230,7 @@ module.exports = {
           // borrar duplicados (dejar el primero)
           const idsToDelete = sameNameRows.slice(1).map(r => r.id);
           if (idsToDelete.length) {
-            await qi.sequelize.query(`DELETE FROM "Feder" WHERE id = ANY(:ids)`,
+            await qi.sequelize.query(`DELETE FROM "Feder" WHERE id IN (:ids)`,
               { transaction: t, replacements: { ids: idsToDelete } });
           }
 
@@ -494,7 +494,7 @@ module.exports = {
       const uids = users.map(u => u.id);
       if (uids.length) {
         await qi.sequelize.query(
-          `DELETE FROM "UserRol" WHERE user_id = ANY(:ids)`,
+          `DELETE FROM "UserRol" WHERE user_id IN (:ids)`,
           { transaction: t, replacements: { ids: uids } }
         );
       }

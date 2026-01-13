@@ -1,22 +1,43 @@
 import { createPortal } from 'react-dom'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FaXmark } from 'react-icons/fa6'
-import { FiUsers, FiShield, FiBriefcase, FiSettings } from 'react-icons/fi'
+import { FiUsers, FiShield, FiBriefcase, FiSettings, FiDatabase, FiTag } from 'react-icons/fi'
+import usePermission from '../../../hooks/usePermissions'
+import BackupTab from './BackupTab.jsx'
 import UsersTab from './UsersTab.jsx'
 import RolesTab from './RolesTab.jsx'
 import CargosTab from './CargosTab.jsx'
+import RrhhAusenciasTab from './RrhhAusenciasTab.jsx'
+import AbsenceTypesTab from './AbsenceTypesTab.jsx'
 import './AdminDrawer.scss'
 
-const TABS = [
-    { id: 'users', label: 'Usuarios', icon: FiUsers },
-    { id: 'roles', label: 'Roles', icon: FiShield },
-    { id: 'cargos', label: 'Cargos', icon: FiBriefcase },
+const TABS_CONFIG = [
+    { id: 'users', label: 'Usuarios', icon: FiUsers, permission: { mod: 'auth', act: 'read' } },
+    { id: 'roles', label: 'Roles', icon: FiShield, permission: { mod: 'auth', act: 'manage' } },
+    { id: 'cargos', label: 'Cargos', icon: FiBriefcase, permission: { mod: 'cargos', act: 'manage' } },
+    { id: 'backups', label: 'Mantenimiento', icon: FiDatabase, permission: { mod: 'auth', act: 'manage' } },
+    { id: 'ausencia_tipos', label: 'Tipos de Ausencia', icon: FiTag, permission: { mod: 'ausencias', act: 'manage' } },
+    { id: 'rrhh', label: 'RRHH', icon: FiBriefcase, permission: { mod: 'rrhh', act: 'manage' } },
 ]
 
 export default function AdminDrawer({ open = false, onClose }) {
-    const [mounted, setMounted] = useState(false)
     const [closing, setClosing] = useState(false)
-    const [activeTab, setActiveTab] = useState('users')
+    const [mounted, setMounted] = useState(false)
+    const { can } = usePermission()
+
+    const visibleTabs = useMemo(() => {
+        return TABS_CONFIG.filter(t => !t.permission || can(t.permission.mod, t.permission.act))
+    }, [can])
+
+    const [activeTab, setActiveTab] = useState(() => {
+        const saved = localStorage.getItem('fh_admin_tab')
+        if (saved && visibleTabs.some(t => t.id === saved)) return saved
+        return visibleTabs[0]?.id || 'users'
+    })
+
+    useEffect(() => {
+        if (activeTab) localStorage.setItem('fh_admin_tab', activeTab)
+    }, [activeTab])
 
     useEffect(() => {
         if (!open) return
@@ -47,10 +68,14 @@ export default function AdminDrawer({ open = false, onClose }) {
     if (!open) return null
 
     const renderTabContent = () => {
+        const props = { setActiveTab }
         switch (activeTab) {
-            case 'users': return <UsersTab />
-            case 'roles': return <RolesTab />
-            case 'cargos': return <CargosTab />
+            case 'users': return <UsersTab {...props} />
+            case 'roles': return <RolesTab {...props} />
+            case 'cargos': return <CargosTab {...props} />
+            case 'backups': return <BackupTab {...props} />
+            case 'ausencia_tipos': return <AbsenceTypesTab {...props} />
+            case 'rrhh': return <RrhhAusenciasTab {...props} />
             default: return null
         }
     }
@@ -72,7 +97,7 @@ export default function AdminDrawer({ open = false, onClose }) {
                 </header>
 
                 <nav className="adminTabs">
-                    {TABS.map(tab => (
+                    {visibleTabs.map(tab => (
                         <button
                             key={tab.id}
                             className={`tab ${activeTab === tab.id ? 'active' : ''}`}

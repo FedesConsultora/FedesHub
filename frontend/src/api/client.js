@@ -12,6 +12,7 @@ export const api = axios.create({
 
 let CSRF = null
 let csrfPromise = null
+let sharedBootPromise = null
 
 const isUnsafe = (m) => /^(post|put|patch|delete)$/i.test(m || '')
 const isAuthPath = (u = '') => /\/auth\/(login|refresh|csrf)$/.test(u || '')

@@ -22,8 +22,10 @@
   box-shadow: $shadow-soft;
   padding: 18px 18px 14px;
   max-height: 90vh;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  overflow: hidden;
 
   .x {
     position: absolute;
@@ -38,6 +40,7 @@
     background: rgba(255, 255, 255, .03);
     color: $fh-muted;
     cursor: pointer;
+    z-index: 10;
 
     &:hover {
       background: rgba(255, 255, 255, .07);
@@ -51,6 +54,8 @@
     align-items: center;
     gap: 12px;
     padding-right: 40px;
+    flex-shrink: 0;
+    margin-bottom: 12px;
 
     .title {
       font-weight: 800;
@@ -60,9 +65,24 @@
   }
 
   .body {
-    margin-top: 10px;
+    flex: 1 1 auto;
+    overflow-y: auto;
     line-height: 1.45;
     color: $fh-muted;
+    padding-bottom: 20px;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
   }
 
   .actions {
@@ -70,6 +90,9 @@
     gap: 10px;
     justify-content: flex-end;
     margin-top: 16px;
+    flex-shrink: 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .btn {

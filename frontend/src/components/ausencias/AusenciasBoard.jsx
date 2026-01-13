@@ -10,9 +10,12 @@ import MonthCalendar from './MonthCalendar'
 
 import AbsenceForm from './dialogs/AbsenceForm'
 import AllocationForm from './dialogs/AllocationForm'
+import RrhhAusenciasTab from '../admin/AdminDrawer/RrhhAusenciasTab'
+import AbsenceTypesTab from '../admin/AdminDrawer/AbsenceTypesTab'
 import AusenciasFilters from './AusenciasFilters'
 import DayDetails from './dialogs/DayDetails'
 import { FaCalendarAlt } from 'react-icons/fa'
+import { FiLoader, FiSettings } from 'react-icons/fi'
 import { useModal } from '../modal/ModalProvider.jsx'
 import './AusenciasBoard.scss'
 
@@ -46,7 +49,7 @@ export default function AusenciasBoard() {
 
   const [year, setYear] = useState(now.getFullYear())
   const [monthIdx, setMonthIdx] = useState(now.getMonth())
-  const [view, setView] = useState('year')
+  const [view, setView] = useState(window.innerWidth < 768 ? 'month' : 'year')
 
   // Filtros
   const [filters, setFilters] = useState({
@@ -55,10 +58,19 @@ export default function AusenciasBoard() {
     futureOnly: false
   })
 
-  const { can } = usePermission()
+  const { perms, can } = usePermission()
   const canCreate = can('ausencias', 'create')
   const canApprove = can('ausencias', 'approve')
   const canAssign = can('ausencias', 'assign')
+  const canManageRrhh = can('rrhh', 'manage') || can('ausencias', 'manage')
+
+  if (import.meta.env.DEV) {
+    console.log('--- AUSENCIAS PERMISSIONS DEBUG ---')
+    console.log('User Perms Array:', perms)
+    console.log('canManageRrhh:', canManageRrhh)
+    console.log('canApprove (ausencias.approve):', canApprove)
+    console.log('-----------------------------------')
+  }
   const canRequestAllocation = canCreate || canAssign
 
   const board = useAusenciasBoard(String(year))
@@ -85,6 +97,8 @@ export default function AusenciasBoard() {
         tipo_id: s.tipo_id,
         tipo_codigo: s.tipo_codigo,
         tipo_nombre: s.tipo_nombre,
+        tipo_icon: s.tipo_icon,
+        tipo_color: s.tipo_color,
         unidad_codigo: s.unidad_codigo,
         allocated: Number(s.asignado || 0),
         consumido: Number(s.consumido || 0),
@@ -97,6 +111,7 @@ export default function AusenciasBoard() {
     for (const row of allRows) {
       const b = map.get(row.tipo_id) || {
         tipo_id: row.tipo_id, tipo_codigo: row.tipo_codigo, tipo_nombre: row.tipo_nombre,
+        tipo_icon: row.tipo_icon, tipo_color: row.tipo_color,
         unidad_codigo: row.unidad_codigo, allocated: 0, consumido: 0, available: 0, approved: 0, planned: 0
       }
       const amt = normalizeAmount(row, WORKDAY_HOURS)
@@ -105,7 +120,9 @@ export default function AusenciasBoard() {
       else if (row.estado_codigo === 'pendiente' && row.fecha_desde >= today) b.planned += val
       map.set(row.tipo_id, b)
     }
-    return Array.from(map.values()).sort((a, b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
+    return Array.from(map.values())
+      .filter(b => b.available > 0 || b.approved > 0 || b.planned > 0)
+      .sort((a, b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
   }, [board.saldos.saldos, allRows])
 
   // ---- filtros
@@ -136,11 +153,9 @@ export default function AusenciasBoard() {
         <AbsenceForm
           onCancel={() => close(false)}
           onCreated={(row) => {
-            // inyecto localmente para ver al instante
             setLocalRows(ls => [{ ...row }, ...ls])
             close(true)
-            // abro detalle del día recién creado
-            setTimeout(() => openDay(row.fecha_desde), 0)
+            setTimeout(() => openDay(row.fecha_desde), 100)
           }}
           initDate={dateStr}
           tipos={board.saldos.tipos}
@@ -151,12 +166,53 @@ export default function AusenciasBoard() {
     })
   }
 
-  const openNewAlloc = () => {
+  const openEditAbs = (item) => {
+    modal.open({
+      title: 'Editar ausencia',
+      width: 720,
+      render: (close) => (
+        <AbsenceForm
+          onCancel={() => close(false)}
+          onCreated={(row) => {
+            onRowChanged(row)
+            close(true)
+            setTimeout(() => openDay(row.fecha_desde), 100)
+          }}
+          editingItem={item}
+          tipos={board.saldos.tipos}
+          saldos={board.saldos.saldos}
+          canApprove={canApprove}
+        />
+      )
+    })
+  }
+
+  const openNewAlloc = (initDate = null) => {
     modal.open({
       title: 'Nueva asignación (solicitud)',
       width: 720,
       render: (close) => (
-        <AllocationForm onCancel={() => close(false)} onDone={() => close(true)} />
+        <AllocationForm initDate={initDate} onCancel={() => close(false)} onDone={() => { close(true); fetchAll() }} />
+      )
+    })
+  }
+
+  const openRrhhModal = () => {
+    modal.open({
+      title: 'Panel de RRHH - Asignación de Cupos',
+      width: 1100,
+      render: (close) => (
+        <RrhhAusenciasTab onOpenConfig={() => { close(true); openConfigModal() }} />
+      )
+    })
+  }
+
+  const openConfigModal = () => {
+    modal.open({
+      title: 'Configuración de tipos de ausencia',
+      width: 900,
+      render: (close) => (
+        <AbsenceTypesTab />
       )
     })
   }
@@ -181,9 +237,11 @@ export default function AusenciasBoard() {
           date={dateStr}
           items={items}
           canApprove={canApprove}
-          federById={federById}          // 🆕 datos del solicitante
-          onUpdated={onRowChanged}       // 🆕 refresco local
+          federById={federById}
+          onUpdated={onRowChanged}
           onNew={() => { close(false); openNewAbs(dateStr) }}
+          onNewAlloc={() => { close(false); openNewAlloc(dateStr) }}
+          onEdit={(item) => { close(false); openEditAbs(item) }}
         />
       )
     })
@@ -194,10 +252,21 @@ export default function AusenciasBoard() {
       <AusenciasToolbar
         canCreate={canCreate}
         canAssign={canRequestAllocation}
+        canManageRrhh={canManageRrhh}
         onNewAbs={() => openNewAbs()}
         onNewAlloc={openNewAlloc}
+        onOpenRrhh={openRrhhModal}
+        onOpenConfig={openConfigModal}
+        canManageTypes={can('ausencias', 'manage')}
         pendingBadge={canApprove ? pendingVisible : 0}
       />
+
+      {board.aus.loading && (
+        <div className="board-loader">
+          <FiLoader className="spin" />
+          <span>Cargando ausencias...</span>
+        </div>
+      )}
 
       <SaldoGrid breakdown={breakdown} loading={board.saldos.loading} />
 

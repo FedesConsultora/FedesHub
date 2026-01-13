@@ -10,17 +10,27 @@ function computeUnreadLookup(channels = []) {
     const mm = c?.miembros?.[0] || {}
     const lastReadMsgId = Number(mm.last_read_msg_id ?? 0)
     const lastMsgId = Number(c.last_msg_id ?? c.ultimo_msg_id ?? 0)
+
     if (lastMsgId > 0) {
-      // regla preferida: comparar ids
+      // Regla principal: comparar IDs de mensajes
       res[c.id] = lastMsgId > lastReadMsgId
       continue
     }
-    // fallback: sólo si creemos que hubo mensajes (updated_at posterior a created_at)
+
+    // Fallback por fechas (menos preciso)
     const createdAt = c.created_at ? new Date(c.created_at).getTime() : 0
     const updatedAt = c.updated_at ? new Date(c.updated_at).getTime() : 0
     const lastReadAt = mm.last_read_at ? new Date(mm.last_read_at).getTime() : 0
-    const looksLikeThereAreMsgs = updatedAt > createdAt
-    res[c.id] = looksLikeThereAreMsgs && (updatedAt > lastReadAt)
+
+    // Si no hay mensajes registrados (ID 0) y la actualización es muy cercana a la creación, 
+    // lo ignoramos para evitar "fantasmas" durante el proceso de creación del canal.
+    const isVeryRecentCreation = (updatedAt - createdAt) < 2000 // 2 seg margin
+    if (isVeryRecentCreation) {
+      res[c.id] = false
+      continue
+    }
+
+    res[c.id] = updatedAt > lastReadAt
   }
   return res
 }

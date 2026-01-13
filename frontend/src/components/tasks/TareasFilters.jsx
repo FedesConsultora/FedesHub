@@ -334,87 +334,95 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
 
           <div className="popBody">
             <div className="filterGrid">
-              <Field label="Cliente">
-                <select
-                  value={v.cliente_id ?? ''}
-                  onChange={e => upd({ cliente_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                >
-                  <option value="">Todos los clientes</option>
-                  {catalog.clientes?.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
-              </Field>
+              <div className="filterSection" style={{ gridColumn: 'span 2' }}>
+                <h4 style={{ color: '#ffd54f', fontSize: '11px', textTransform: 'uppercase', marginBottom: '16px', opacity: 0.8, letterSpacing: '1px' }}>Filtros Generales</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <Field label="Cliente">
+                    <select
+                      value={v.cliente_id ?? ''}
+                      onChange={e => upd({ cliente_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Todos los clientes</option>
+                      {catalog.clientes?.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    </select>
+                  </Field>
 
-              <Field label="Estado">
-                <select
-                  value={v.estado_id ?? ''}
-                  onChange={e => upd({ estado_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                >
-                  <option value="">Pendientes y en curso</option>
-                  {catalog.estados?.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                </select>
-              </Field>
+                  <Field label="Estado">
+                    <select
+                      value={v.estado_id ?? ''}
+                      onChange={e => upd({ estado_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    >
+                      <option value="">Pendientes y en curso</option>
+                      {catalog.estados?.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                    </select>
+                  </Field>
 
-              <Field label="Tipo de Tarea">
-                <select
-                  value={v.tipo ?? ''}
-                  onChange={e => upd({ tipo: e.target.value === '' ? undefined : e.target.value })}
-                >
-                  <option value="">Todos los tipos</option>
-                  <option value="STD">Estándar</option>
-                  <option value="TC">Publicación (TC)</option>
-                  <option value="IT">IT</option>
-                </select>
-              </Field>
+                  <Field label="Tipo de Tarea">
+                    <select
+                      value={v.tipo ?? ''}
+                      onChange={e => upd({ tipo: e.target.value === '' ? undefined : e.target.value })}
+                    >
+                      <option value="">Todos los tipos</option>
+                      <option value="STD">Estándar</option>
+                      <option value="TC">Publicación (TC)</option>
+                      <option value="IT">IT</option>
+                    </select>
+                  </Field>
+                </div>
+              </div>
 
               {v.tipo === 'TC' && (
-                <>
-                  <Field label="Red Social">
-                    <select
-                      value={v.tc_red_social_id ?? ''}
-                      onChange={e => upd({ tc_red_social_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                    >
-                      <option value="">Todas las redes</option>
-                      {catalog.tc_redes?.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Formato">
-                    <select
-                      value={v.tc_formato_id ?? ''}
-                      onChange={e => upd({ tc_formato_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                    >
-                      <option value="">Todos los formatos</option>
-                      {catalog.tc_formatos?.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Obj. Negocio">
-                    <select
-                      value={v.tc_objetivo_negocio_id ?? ''}
-                      onChange={e => upd({ tc_objetivo_negocio_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                    >
-                      <option value="">Todos los objetivos</option>
-                      {catalog.tc_obj_negocio?.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Inamovible">
-                    <select
-                      value={v.inamovible ?? ''}
-                      onChange={e => upd({ inamovible: e.target.value === '' ? undefined : e.target.value })}
-                    >
-                      <option value="">Todos</option>
-                      <option value="true">Sí (Inamovible)</option>
-                      <option value="false">No (Movible)</option>
-                    </select>
-                  </Field>
-                  <Field label="Estado Publicación">
-                    <select
-                      value={v.tc_estado_publicacion_id ?? ''}
-                      onChange={e => upd({ tc_estado_publicacion_id: e.target.value === '' ? undefined : Number(e.target.value) })}
-                    >
-                      <option value="">Cualquier estado</option>
-                      {catalog.tc_estados_pub?.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-                    </select>
-                  </Field>
-                </>
+                <div className="filterSection tcSection" style={{ gridColumn: 'span 2', background: 'rgba(255, 171, 0, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 171, 0, 0.1)' }}>
+                  <h4 style={{ color: '#ffd54f', fontSize: '11px', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '1px' }}>Contenido / Redes</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <Field label="Red Social">
+                      <select
+                        value={v.tc_red_social_id ?? ''}
+                        onChange={e => upd({ tc_red_social_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      >
+                        <option value="">Todas las redes</option>
+                        {catalog.tc_redes?.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Formato">
+                      <select
+                        value={v.tc_formato_id ?? ''}
+                        onChange={e => upd({ tc_formato_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      >
+                        <option value="">Todos los formatos</option>
+                        {catalog.tc_formatos?.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Obj. Negocio">
+                      <select
+                        value={v.tc_objetivo_negocio_id ?? ''}
+                        onChange={e => upd({ tc_objetivo_negocio_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      >
+                        <option value="">Todos los objetivos</option>
+                        {catalog.tc_obj_negocio?.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Inamovible">
+                      <select
+                        value={v.inamovible ?? ''}
+                        onChange={e => upd({ inamovible: e.target.value === '' ? undefined : e.target.value })}
+                      >
+                        <option value="">Todos</option>
+                        <option value="true">Sí (Inamovible)</option>
+                        <option value="false">No (Movible)</option>
+                      </select>
+                    </Field>
+                    <Field label="Estado Publicación">
+                      <select
+                        value={v.tc_estado_publicacion_id ?? ''}
+                        onChange={e => upd({ tc_estado_publicacion_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      >
+                        <option value="">Cualquier estado</option>
+                        {catalog.tc_estados_pub?.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                </div>
               )}
 
 
@@ -462,21 +470,21 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                 <label className="toggleCheck">
                   <input
                     type="checkbox"
-                    checked={v.estado_codigo === 'aprobada'}
-                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'aprobada' ? undefined : 'aprobada', estado_id: undefined })}
+                    checked={!!v.include_archivadas}
+                    onChange={e => upd({ include_archivadas: e.target.checked })}
                   />
                   <div className="checkmark" />
-                  <span className="label">Ver sólo tareas aprobadas</span>
+                  <span className="label">Mostrar archivadas</span>
                 </label>
 
                 <label className="toggleCheck">
                   <input
                     type="checkbox"
-                    checked={v.estado_codigo === 'cancelada'}
-                    onChange={() => upd({ estado_codigo: v.estado_codigo === 'cancelada' ? undefined : 'cancelada', estado_id: undefined })}
+                    checked={!!v.include_finalizadas}
+                    onChange={e => upd({ include_finalizadas: e.target.checked })}
                   />
                   <div className="checkmark" />
-                  <span className="label">Ver sólo tareas canceladas</span>
+                  <span className="label">Mostrar aprobadas/canceladas</span>
                 </label>
               </div>
             </div>

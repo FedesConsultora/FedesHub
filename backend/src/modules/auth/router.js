@@ -4,7 +4,7 @@ import {
   health, login, refresh, logout, me,
   adminCreateUser, postChangePassword,
   listRoles, listUsers, patchUserRoles, patchUserActive, listPermissionsCtrl, listModulesCtrl, listActionsCtrl, listRoleTypesCtrl,
-  getRoleCtrl, createRoleCtrl, updateRoleCtrl, deleteRoleCtrl,
+  getRoleCtrl, createRoleCtrl, updateRoleCtrl, deleteRoleCtrl, setRoleMembersCtrl,
   setRolePermissionsCtrl, addRolePermissionsCtrl, removeRolePermissionsCtrl,
   postForgotPassword,
   postResetPassword
@@ -24,7 +24,7 @@ router.get('/health', health);
 router.post('/csrf', issueCsrf);
 
 router.post('/forgot-password', postForgotPassword);
-router.post('/reset-password',  postResetPassword);
+router.post('/reset-password', postResetPassword);
 
 // auth core (con CSRF en login/refresh)
 router.post('/login', loginLimiter, loginSlowdown, requireCsrf, login);
@@ -34,29 +34,30 @@ router.get('/me', requireAuth, me);
 router.post('/change-password', requireAuth, postChangePassword);
 
 // admin: gestión de usuarios/roles (permiso: auth.assign)
-router.post('/users', requireAuth, requirePermission('auth','assign'), adminCreateUser);
-router.get('/roles', requireAuth, requirePermission('auth','assign'), listRoles);
-router.get('/users', requireAuth, requirePermission('auth','assign'), listUsers);
-router.patch('/users/:id/roles', requireAuth, requirePermission('auth','assign'), patchUserRoles);
-router.patch('/users/:id/active', requireAuth, requirePermission('auth','assign'), patchUserActive);
+router.post('/users', requireAuth, requirePermission('auth', 'assign'), adminCreateUser);
+router.get('/roles', requireAuth, requirePermission('auth', 'assign'), listRoles);
+router.get('/users', requireAuth, requirePermission('auth', 'assign'), listUsers);
+router.patch('/users/:id/roles', requireAuth, requirePermission('auth', 'assign'), patchUserRoles);
+router.patch('/users/:id/active', requireAuth, requirePermission('auth', 'assign'), patchUserActive);
 
 
 // ===== Admin: catálogos de permisos
-router.get('/permissions',  requireAuth, requirePermission('auth','assign'), listPermissionsCtrl);
-router.get('/modules',      requireAuth, requirePermission('auth','assign'), listModulesCtrl);
-router.get('/actions',      requireAuth, requirePermission('auth','assign'), listActionsCtrl);
-router.get('/role-types',   requireAuth, requirePermission('auth','assign'), listRoleTypesCtrl);
+router.get('/permissions', requireAuth, requirePermission('auth', 'assign'), listPermissionsCtrl);
+router.get('/modules', requireAuth, requirePermission('auth', 'assign'), listModulesCtrl);
+router.get('/actions', requireAuth, requirePermission('auth', 'assign'), listActionsCtrl);
+router.get('/role-types', requireAuth, requirePermission('auth', 'assign'), listRoleTypesCtrl);
 
 // ===== Admin: roles CRUD
-router.get('/roles/:id',    requireAuth, requirePermission('auth','assign'), getRoleCtrl);
-router.post('/roles',       requireAuth, requirePermission('auth','assign'), createRoleCtrl);
-router.patch('/roles/:id',  requireAuth, requirePermission('auth','assign'), updateRoleCtrl);
-router.delete('/roles/:id', requireAuth, requirePermission('auth','assign'), deleteRoleCtrl);
+router.get('/roles/:id', requireAuth, requirePermission('auth', 'assign'), getRoleCtrl);
+router.post('/roles', requireAuth, requirePermission('auth', 'assign'), createRoleCtrl);
+router.patch('/roles/:id', requireAuth, requirePermission('auth', 'assign'), updateRoleCtrl);
+router.delete('/roles/:id', requireAuth, requirePermission('auth', 'assign'), deleteRoleCtrl);
+router.post('/roles/:id/members', requireAuth, requirePermission('auth', 'assign'), setRoleMembersCtrl);
 
 // ===== Admin: permisos por rol
 // set = reemplaza todo, add/remove = incrementales
-router.patch('/roles/:id/permissions',  requireAuth, requirePermission('auth','assign'), setRolePermissionsCtrl);
-router.post('/roles/:id/permissions',   requireAuth, requirePermission('auth','assign'), addRolePermissionsCtrl);
-router.delete('/roles/:id/permissions', requireAuth, requirePermission('auth','assign'), removeRolePermissionsCtrl);
+router.patch('/roles/:id/permissions', requireAuth, requirePermission('auth', 'assign'), setRolePermissionsCtrl);
+router.post('/roles/:id/permissions', requireAuth, requirePermission('auth', 'assign'), addRolePermissionsCtrl);
+router.delete('/roles/:id/permissions', requireAuth, requirePermission('auth', 'assign'), removeRolePermissionsCtrl);
 
 export default router;

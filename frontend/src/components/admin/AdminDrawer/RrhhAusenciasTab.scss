@@ -1,0 +1,552 @@
+@use '../../../styles/variables' as v;
+
+.rrhhAusenciasTab {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .tabInnerHead {
+        h3 {
+            margin: 0 0 0.5rem 0;
+            color: #fff;
+            font-size: 1.25rem;
+        }
+
+        p {
+            margin: 0;
+            color: v.$fh-muted;
+            font-size: 0.9rem;
+        }
+
+        .segmented-selector {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 10px;
+            gap: 4px;
+
+            button {
+                background: none;
+                border: none;
+                color: v.$fh-muted;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &.active {
+                    background: v.$fh-accent;
+                    color: #000;
+                    font-weight: 600;
+                }
+
+                .badge {
+                    background: #ff4d4d;
+                    color: #fff;
+                    font-size: 0.7rem;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+
+    .rrhhGrid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        align-items: start;
+
+        @media (min-width: 1024px) {
+            grid-template-columns: 350px 1fr;
+        }
+    }
+
+    .rrhhCard {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+
+        h4 {
+            margin: 0 0 1rem 0;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    }
+
+    .userSelector {
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: v.$fh-muted;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+
+            &:focus {
+                border-color: v.$fh-accent;
+                outline: none;
+            }
+        }
+    }
+
+    .currentBalances {
+        .balanceList {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .balanceItem {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(v.$fh-accent, 0.05);
+            border: 1px solid rgba(v.$fh-accent, 0.15);
+            border-radius: 8px;
+            font-size: 0.9rem;
+
+            .name {
+                color: #fff;
+                font-weight: 500;
+            }
+
+            .value {
+                color: v.$fh-accent;
+                font-weight: 700;
+            }
+        }
+
+        .empty {
+            color: v.$fh-muted;
+            font-size: 0.85rem;
+            text-align: center;
+            font-style: italic;
+        }
+    }
+
+    .assignmentForm {
+        .formRow {
+            margin-bottom: 1rem;
+
+            label {
+                display: block;
+                font-size: 0.8rem;
+                color: v.$fh-muted;
+                margin-bottom: 0.4rem;
+            }
+
+            input,
+            select,
+            textarea {
+                width: 100%;
+                padding: 0.6rem 0.75rem;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                color: #fff;
+                font-size: 0.9rem;
+
+                &:focus {
+                    border-color: v.$fh-accent;
+                    outline: none;
+                }
+            }
+
+            textarea {
+                resize: vertical;
+                min-height: 80px;
+            }
+        }
+
+        .formGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btnSubmit {
+            width: 100%;
+            padding: 0.75rem;
+            background: v.$fh-accent;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                opacity: 0.9;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+        }
+
+        .statusMsg {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+
+            &.success {
+                background: rgba(40, 167, 69, 0.1);
+                color: #72d572;
+                border: 1px solid rgba(40, 167, 69, 0.2);
+            }
+
+            &.error {
+                background: rgba(220, 53, 69, 0.1);
+                color: #ff8e98;
+                border: 1px solid rgba(220, 53, 69, 0.2);
+            }
+        }
+    }
+
+    .historyCard {
+        .cardHead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+
+            svg {
+                color: v.$fh-accent;
+                font-size: 1.2rem;
+            }
+
+            h4 {
+                margin: 0;
+            }
+        }
+    }
+
+    .historyList {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding-right: 4px;
+        scroll-behavior: smooth;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .historyItem {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.04);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .itemTop {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+
+                .tipo {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 0.95rem;
+                }
+
+                .qty {
+                    color: #8fd3ff;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                }
+
+                .btnTrash {
+                    background: none;
+                    border: none;
+                    color: v.$fh-muted;
+                    cursor: pointer;
+                    padding: 4px;
+                    display: flex;
+                    align-items: center;
+                    border-radius: 4px;
+
+                    &:hover {
+                        color: #ff4d4d;
+                        background: rgba(255, 77, 77, 0.1);
+                    }
+                }
+            }
+
+            .itemDates {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.8rem;
+                color: v.$fh-muted;
+                margin-bottom: 0.75rem;
+
+                svg {
+                    font-size: 0.9rem;
+                }
+            }
+
+            .comment {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.7);
+                line-height: 1.4;
+                margin: 0 0 0.75rem 0;
+                padding-left: 0.5rem;
+                border-left: 2px solid v.$fh-accent;
+            }
+
+            .itemMeta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.75rem;
+                color: v.$fh-muted;
+                padding-top: 0.5rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.03);
+
+                span {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                }
+            }
+
+            // Status colors for history items
+            &.aprobada {
+                border-left: 3px solid #22c55e !important;
+                background: rgba(34, 197, 94, 0.05);
+            }
+
+            &.denegada {
+                border-left: 3px solid #ef4444 !important;
+                background: rgba(239, 68, 68, 0.05);
+            }
+
+            &.pendiente {
+                border-left: 3px solid #eab308 !important;
+                background: rgba(234, 179, 8, 0.05);
+            }
+        }
+
+        .status-pill {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+
+            &.aprobada {
+                background: rgba(34, 197, 94, 0.15);
+                color: #22c55e;
+            }
+
+            &.denegada {
+                background: rgba(239, 68, 68, 0.15);
+                color: #ef4444;
+            }
+
+            &.pendiente {
+                background: rgba(234, 179, 8, 0.15);
+                color: #eab308;
+            }
+        }
+
+        .notice,
+        .empty,
+        .loading {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: v.$fh-muted;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .loading .spin {
+            display: block;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            animation: spin 1s linear infinite;
+        }
+    }
+
+    .pendingsView {
+        padding-top: 1rem;
+
+        .emptyState {
+            padding: 4rem;
+            text-align: center;
+            color: v.$fh-muted;
+
+            svg {
+                color: #28a745;
+                margin-bottom: 1rem;
+                opacity: 0.5;
+            }
+        }
+
+        .pendingsGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .pendingCard {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+
+            .pHead {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .pInfo {
+                    flex: 1;
+
+                    .pName {
+                        display: block;
+                        color: #fff;
+                        font-weight: 600;
+                    }
+
+                    .pEmail {
+                        display: block;
+                        color: v.$fh-muted;
+                        font-size: 0.8rem;
+                    }
+                }
+
+                .pBadge {
+                    background: rgba(v.$fh-accent, 0.1);
+                    color: v.$fh-accent;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+            }
+
+            .pDates {
+                font-size: 0.9rem;
+                color: #fff;
+                line-height: 1.5;
+
+                strong {
+                    color: v.$fh-muted;
+                    font-weight: 500;
+                    margin-right: 4px;
+                }
+
+                .pTag {
+                    color: v.$fh-accent;
+                    margin-left: 6px;
+                    font-weight: 600;
+                }
+            }
+
+            .pComment {
+                font-size: 0.85rem;
+                color: v.$fh-muted;
+                font-style: italic;
+                padding-left: 10px;
+                border-left: 2px solid rgba(255, 255, 255, 0.1);
+                margin: 0;
+            }
+
+            .pActions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: auto;
+
+                button {
+                    padding: 8px;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .btnDeny {
+                    background: transparent;
+                    border: 1px solid rgba(255, 77, 77, 0.3);
+                    color: #ff4d4d;
+
+                    &:hover {
+                        background: rgba(255, 77, 77, 0.1);
+                    }
+                }
+
+                .btnApprove {
+                    background: #28a745;
+                    border: none;
+                    color: #fff;
+
+                    &:hover {
+                        background: #218838;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

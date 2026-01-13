@@ -1941,6 +1941,7 @@ export const svcGetUrgentTasks = async (user) => {
     LEFT JOIN "Feder" fa ON fa.id = t.creado_por_feder_id
     WHERE t.is_archivada = false 
       AND t.deleted_at IS NULL
+      AND te.codigo NOT IN ('aprobada', 'cancelada')
       AND (
         t.creado_por_feder_id = :fid
         OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)

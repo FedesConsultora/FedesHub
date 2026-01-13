@@ -3,8 +3,9 @@
 
 .aus-saldos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
+  max-width: 1200px;
 
   .placeholder {
     opacity: .7;
@@ -17,22 +18,24 @@
 }
 
 .aus-saldo {
-  padding: 16px;
+  padding: 12px 14px;
   position: relative;
-  background: $fh-card;
+  background: rgba(var(--fh-bg-rgb), 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --color: var(--accent, #{$fh-accent});
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-4px);
+    border-color: rgba(var(--fh-accent-rgb), 0.2);
+    background: rgba(var(--fh-bg-rgb), 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 
     .icon {
-      opacity: 1;
-      transform: scale(1.1);
+      opacity: 0.9;
+      transform: scale(1.1) rotate(-5deg);
     }
   }
 
@@ -41,71 +44,77 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 3px;
     height: 100%;
-    background: $fh-accent;
-    opacity: 0.8;
+    background: var(--color);
+    opacity: 0.9;
+    box-shadow: 0 0 10px var(--color);
   }
 
   .icon {
     position: absolute;
-    right: 16px;
-    top: 16px;
-    opacity: .6;
-    font-size: 28px;
-    color: $fh-accent;
-    transition: all 0.2s ease;
+    right: 14px;
+    top: 14px;
+    opacity: .4;
+    font-size: 24px;
+    color: var(--color);
+    transition: all 0.3s ease;
   }
 
   .title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    letter-spacing: .4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: .6px;
     color: $fh-muted;
     text-transform: uppercase;
+    padding-right: 30px;
   }
 
   .main {
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 800;
-    margin: 4px 0;
+    margin: 2px 0;
     line-height: 1;
     display: flex;
     align-items: baseline;
     gap: 4px;
+    color: #fff;
   }
 
   .unit {
-    font-size: .85rem;
-    opacity: .6;
-    font-weight: 500;
+    font-size: .8rem;
+    opacity: .5;
+    font-weight: 600;
   }
 
   .muted {
     color: $fh-muted;
-    font-size: .82rem;
-    margin-bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
     display: block;
   }
 
   .grid {
     display: grid;
     grid-template-columns: 1fr auto;
-    column-gap: 12px;
-    row-gap: 6px;
-    font-size: .88rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 12px;
-    margin-top: 4px;
+    column-gap: 8px;
+    row-gap: 4px;
+    font-size: .8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 10px;
+    margin-top: 2px;
 
     label {
       color: $fh-muted;
+      font-weight: 500;
     }
 
     span {
       font-weight: 700;
-      color: $fh-text;
+      color: #fff;
     }
   }
 }

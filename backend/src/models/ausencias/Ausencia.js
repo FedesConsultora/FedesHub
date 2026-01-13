@@ -7,10 +7,10 @@ export default (sequelize, DataTypes) => {
     estado_id: { type: DataTypes.INTEGER, allowNull: false },
     fecha_desde: { type: DataTypes.DATEONLY, allowNull: false },
     fecha_hasta: { type: DataTypes.DATEONLY, allowNull: false },
+    archivo_url: { type: DataTypes.TEXT },
     es_medio_dia: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     mitad_dia_id: { type: DataTypes.SMALLINT },
-    duracion_horas: { type: DataTypes.DECIMAL(10,2) }, // NUEVO (para unidad=horas)
-    motivo: { type: DataTypes.TEXT },
+    duracion_horas: { type: DataTypes.DECIMAL(10, 2) }, // NUEVO (para unidad=horas)
     comentario_admin: { type: DataTypes.TEXT },
     aprobado_por_user_id: { type: DataTypes.INTEGER },
     aprobado_at: { type: DataTypes.DATE },

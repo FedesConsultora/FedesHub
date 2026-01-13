@@ -1,23 +1,20 @@
-// src/components/ausencias/dialogs/DayDetails.jsx
 import { useMemo, useState } from 'react'
+import { FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiInfo, FiCalendar, FiClock, FiPaperclip } from 'react-icons/fi'
+import { useAuth } from '../../../context/AuthContext'
 import { ausenciasApi } from '../../../api/ausencias'
 import { useToast } from '../../toast/ToastProvider'
 import './Dialog.scss'
-
-const statusLabel = (s) =>
-  s === 'aprobada' ? 'Aprobada' :
-    s === 'pendiente' ? 'Pendiente' :
-      s === 'denegada' ? 'Denegada' :
-        s === 'cancelada' ? 'Cancelada' : s
 
 const initials = (txt = '') => {
   const p = (txt || '').trim().split(/\s+/).slice(0, 2)
   return p.map(w => w[0] || '').join('').toUpperCase() || '—'
 }
 
-export default function DayDetails({ date, items = [], canApprove = false, federById = {}, onUpdated, onNew }) {
+export default function DayDetails({ date, items = [], canApprove = false, federById = {}, onUpdated, onNew, onNewAlloc, onEdit }) {
   const [rows, setRows] = useState(items)
-  const { success, error } = useToast?.() || {}
+  const { success, error: toastError } = useToast?.() || {}
+  const { roles, user } = useAuth()
+  const isRRHH = roles.includes('RRHH') || roles.includes('NivelA')
 
   const enhanced = useMemo(() => rows.map(r => {
     const f = federById?.[r.feder_id]
@@ -33,11 +30,9 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
       const updated = await ausenciasApi.aus.approve(id)
       setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
       onUpdated?.(updated)
-      success?.('Ausencia aprobada correctamente')
+      success?.('La ausencia ha sido aprobada.')
     } catch (e) {
-      console.error(e)
-      const msg = e.response?.data?.error || e.message || 'Error al aprobar'
-      error?.(msg)
+      toastError?.(e.response?.data?.error || 'No se pudo aprobar la ausencia.')
     }
   }
 
@@ -46,68 +41,128 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
       const updated = await ausenciasApi.aus.reject(id, { denegado_motivo: null })
       setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
       onUpdated?.(updated)
-      success?.('Ausencia rechazada')
+      success?.('La ausencia ha sido rechazada.')
     } catch (e) {
-      console.error(e)
-      error?.(e.response?.data?.error || e.message || 'Error al rechazar')
+      toastError?.(e.response?.data?.error || 'Error al rechazar.')
     }
   }
 
-  if (!rows.length) {
-    return (
-      <div className="dlg-form">
-        <div className="empty">No hay ausencias en este día.</div>
-        <div className="actions">
-          <button className="fh-btn primary" onClick={onNew}>+ Solicitar ausencia</button>
-        </div>
-      </div>
-    )
+  async function cancel(id) {
+    if (!window.confirm('¿Quieres cancelar esta solicitud?')) return
+    try {
+      const updated = await ausenciasApi.aus.cancel(id)
+      setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+      onUpdated?.(updated)
+      success?.('Solicitud cancelada con éxito.')
+    } catch (e) {
+      toastError?.(e.response?.data?.error || 'Error al cancelar.')
+    }
   }
 
   return (
     <div className="dlg-form day-details">
-      <div className="list">
-        {enhanced.map(item => (
-          <div key={item.id} className={`rowItem st-${item.estado_codigo}`}>
-            <div className="left">
-              <div className="who">
-                {item._avatar
-                  ? <img className="avatar" src={item._avatar} alt="" />
-                  : <div className="avatar avatar--fallback">{initials(item._name)}</div>}
-                <div className="whoText">
-                  <div className="name">{item._name}</div>
-                  <div className="type">{item.tipo_nombre}</div>
+      {!rows.length ? (
+        <div className="section" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <FiInfo size={40} style={{ opacity: 0.2, marginBottom: '1rem', color: 'var(--fh-muted)' }} />
+          <p style={{ color: 'var(--fh-muted)', marginBottom: '2rem' }}>No hay registros para este día.</p>
+        </div>
+      ) : (
+        <div className="list">
+          {enhanced.map(item => (
+            <div key={item.id} className="rowItem">
+              <div className="left">
+                <div className="who">
+                  {item._avatar
+                    ? <img className="avatar" src={item._avatar} style={{ width: 42, height: 42, borderRadius: '50%' }} alt="" />
+                    : <div className="avatar avatar--fallback" style={{ width: 42, height: 42, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', fontWeight: 800, fontSize: '0.8rem' }}>{initials(item._name)}</div>}
+                  <div className="whoText">
+                    <span className="name">{item._name}</span>
+                    <span className="type">{item.tipo_nombre}</span>
+                  </div>
                 </div>
+                {(isRRHH || item.user_id === user?.id) && item.motivo && (
+                  <div className="motivo" style={{
+                    marginTop: 8,
+                    fontSize: '0.85rem',
+                    color: 'var(--fh-muted)',
+                    fontStyle: 'italic',
+                    background: 'rgba(255,255,255,0.02)',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    borderLeft: '2px solid var(--fh-accent)'
+                  }}>
+                    "{item.motivo}"
+                  </div>
+                )}
+
+                {/* Acciones para pendientes */}
+                {item.estado_codigo === 'pendiente' && (
+                  <div style={{ display: 'flex', gap: 8, paddingLeft: 54, marginTop: 4 }}>
+                    {canApprove ? (
+                      <>
+                        <button className="fh-btn primary sm" onClick={() => approve(item.id)}><FiCheck /> Aprobar</button>
+                        <button className="fh-btn danger sm" onClick={() => reject(item.id)}><FiX /> Rechazar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="fh-btn ghost sm" style={{ padding: '6px 12px' }} onClick={() => onEdit(item)}><FiEdit2 /> Editar</button>
+                        <button className="fh-btn danger sm" style={{ padding: '6px 12px', background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }} onClick={() => cancel(item.id)}><FiTrash2 /> Cancelar</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {item.motivo && <div className="motivo">{item.motivo}</div>}
-            </div>
-
-            <div className="right">
-              <div className={`badge ${item.estado_codigo}`}>{statusLabel(item.estado_codigo)}</div>
-              <div className="when">
-                {item.fecha_desde}{item.fecha_desde !== item.fecha_hasta ? ` → ${item.fecha_hasta}` : ''}
-              </div>
-              {item.unidad_codigo === 'hora' && item.duracion_horas
-                ? <div className="qty">{Number(item.duracion_horas).toFixed(1)} h</div>
-                : null}
-              {item.unidad_codigo === 'dia' && item.es_medio_dia
-                ? <div className="qty">½ día</div>
-                : null}
-
-              {canApprove && item.estado_codigo === 'pendiente' && (
-                <div className="actions inline">
-                  <button className="fh-btn primary" onClick={() => approve(item.id)}>Aprobar</button>
-                  <button className="fh-btn danger" onClick={() => reject(item.id)}>Rechazar</button>
+              <div className="right">
+                <div className="status-dot-wrap">
+                  <span className={`dot ${item.estado_codigo}`}></span>
+                  {item.estado_codigo}
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="when" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FiCalendar size={12} />
+                  {item.fecha_desde === item.fecha_hasta ? item.fecha_desde : 'Rango'}
+                </div>
+                <div className="qty" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FiClock size={14} style={{ opacity: 0.5 }} />
+                  {item.unidad_codigo === 'hora'
+                    ? `${Number(item.duracion_horas).toFixed(1)}h`
+                    : item.es_medio_dia ? '0.5d' : '1.0d'}
+                </div>
 
-      <div className="actions">
-        <button className="fh-btn ghost" onClick={onNew}>+ Nueva</button>
+                {item.archivo_url && (
+                  <div className="file-indicator" style={{ marginTop: 8 }}>
+                    {(isRRHH || item.user_id === user?.id) ? (
+                      <a
+                        href={item.archivo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="file-link"
+                        title="Ver adjunto"
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--fh-accent)', fontSize: '0.75rem', fontWeight: 600 }}
+                      >
+                        <FiPaperclip /> Adjunto (Ver)
+                      </a>
+                    ) : (
+                      <span
+                        className="file-exists"
+                        title="Hay un archivo adjunto (Solo RRHH puede verlo)"
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--fh-muted)', fontSize: '0.75rem' }}
+                      >
+                        <FiPaperclip /> Adjunto (📎)
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="bottom-actions" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button className="fh-btn primary" style={{ minWidth: 200 }} onClick={() => onNew(date)}>
+          <FiPlus /> Solicitar Ausencia
+        </button>
       </div>
     </div>
   )

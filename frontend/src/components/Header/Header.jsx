@@ -2,12 +2,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import AsistenciaDot from '../asistencia/AsistenciaDot.jsx'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiHeadphones, FiChevronDown, FiBell } from 'react-icons/fi'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import Avatar from '../Avatar.jsx'
-import { useProfilePreview } from '../../context/ProfilePreviewProvider.jsx'
+import { useProfilePreview } from '../../context/ProfilePreviewProvider'
 import NotifHealthModal from '../notifications/NotifHealthModal/NotifHealthModal.jsx'
 import { useRealtime } from '../../realtime/RealtimeProvider'
 import './Header.scss'
@@ -32,17 +32,22 @@ function NotifRequestBtn({ onOpenHealth }) {
 
 export default function Header() {
   const { user, hasPerm, logout } = useAuthCtx()
-  const { openProfile } = useProfilePreview()
+  const context = useProfilePreview()
+  const openProfile = context?.openProfile
 
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
-  const [adminOpen, setAdminOpen] = useState(false)
-  const [healthOpen, setHealthOpen] = useState(false) // Added this state
+  const [adminOpen, setAdminOpen] = useState(() => localStorage.getItem('fh_admin_open') === 'true')
+  const [healthOpen, setHealthOpen] = useState(false)
+
+  useEffect(() => {
+    localStorage.setItem('fh_admin_open', adminOpen)
+  }, [adminOpen])
 
   const onLogout = async () => { await logout(); nav('/login') }
 
-  // Check if user can access admin (same as sidebar used)
-  const isAdmin = hasPerm('auth', 'assign')
+  // Check if user can access admin
+  const isAdmin = hasPerm('auth', 'manage') || hasPerm('rrhh', 'manage')
 
   const handleSupportClick = () => {
     window.open(SUPPORT_URL, '_blank', 'noopener,noreferrer')

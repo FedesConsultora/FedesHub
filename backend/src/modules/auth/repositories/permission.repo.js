@@ -6,10 +6,10 @@ import { initModels } from '../../../models/registry.js';
 const models = await initModels();
 
 export const listModules = () =>
-  models.Modulo.findAll({ attributes: ['id','codigo','nombre','descripcion'], order: [['codigo','ASC']] });
+  models.Modulo.findAll({ attributes: ['id', 'codigo', 'nombre', 'descripcion'], order: [['codigo', 'ASC']] });
 
 export const listActions = () =>
-  models.Accion.findAll({ attributes: ['id','codigo','nombre','descripcion'], order: [['codigo','ASC']] });
+  models.Accion.findAll({ attributes: ['id', 'codigo', 'nombre', 'descripcion'], order: [['codigo', 'ASC']] });
 
 export const listPermissions = async ({ modulo, accion } = {}) => {
   let where = [];
@@ -37,11 +37,11 @@ export const getRolePermissions = async (rolId) => {
     JOIN "Accion" a ON a.id = p.accion_id
     WHERE rp.rol_id = :rid
     ORDER BY m.codigo, a.codigo
-  `, { type: QueryTypes.SELECT, replacements: { rid: rolId }});
+  `, { type: QueryTypes.SELECT, replacements: { rid: rolId } });
 };
 
 export const setRolePermissions = async (rolId, permisoIds) => {
-  await models.RolPermiso.destroy({ where: { rol_id: rolId }});
+  await models.RolPermiso.destroy({ where: { rol_id: rolId } });
   const rows = permisoIds.map(pid => ({ rol_id: rolId, permiso_id: pid }));
   if (rows.length) await models.RolPermiso.bulkCreate(rows, { ignoreDuplicates: true });
   return getRolePermissions(rolId);
@@ -55,7 +55,19 @@ export const addRolePermissions = async (rolId, permisoIds) => {
 
 export const removeRolePermissions = async (rolId, permisoIds) => {
   if (permisoIds?.length) {
-    await models.RolPermiso.destroy({ where: { rol_id: rolId, permiso_id: permisoIds }});
+    await models.RolPermiso.destroy({ where: { rol_id: rolId, permiso_id: permisoIds } });
   }
   return getRolePermissions(rolId);
+};
+
+export const ensurePermission = async (modulo, accion, nombre, descripcion = null) => {
+  const [m] = await models.Modulo.findOrCreate({ where: { codigo: modulo }, defaults: { nombre: modulo } });
+  const [a] = await models.Accion.findOrCreate({ where: { codigo: accion }, defaults: { nombre: accion } });
+
+  const [p, created] = await models.Permiso.findOrCreate({
+    where: { modulo_id: m.id, accion_id: a.id },
+    defaults: { nombre: nombre || `${modulo}.${accion}`, descripcion }
+  });
+
+  return p;
 };

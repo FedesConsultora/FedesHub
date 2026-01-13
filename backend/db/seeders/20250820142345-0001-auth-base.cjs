@@ -37,7 +37,8 @@ module.exports = {
       ['tareas', 'Tareas'],
       ['calendario', 'Calendario'],
       ['notificaciones', 'Notificaciones'],
-      ['chat', 'Chat']
+      ['chat', 'Chat'],
+      ['rrhh', 'RRHH']
     ].map(([codigo, nombre]) => ({
       codigo, nombre,
       descripcion: null, created_at: now, updated_at: now
@@ -52,7 +53,8 @@ module.exports = {
       ['delete', 'Eliminar'],
       ['approve', 'Aprobar'],
       ['assign', 'Asignar'],
-      ['report', 'Reportes/Indicadores']
+      ['report', 'Reportes/Indicadores'],
+      ['manage', 'Gestionar']
     ].map(([codigo, nombre]) => ({
       codigo, nombre, descripcion: null, created_at: now, updated_at: now
     }));
@@ -70,6 +72,7 @@ module.exports = {
       ['NivelA', 'Administrador - Acceso total al sistema'],
       ['NivelB', 'Líder - Acceso intermedio con aprobaciones'],
       ['NivelC', 'Colaborador - Acceso básico'],
+      ['RRHH', 'Recursos Humanos - Gestión de ausencias y asignaciones'],
     ].map(([nombre, desc]) => ({
       nombre,
       descripcion: desc,

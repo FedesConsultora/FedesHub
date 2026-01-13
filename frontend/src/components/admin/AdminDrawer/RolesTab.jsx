@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import * as A from '../../../api/auth'
 import { useToast } from '../../toast/ToastProvider'
+import { useModal } from '../../modal/ModalProvider.jsx'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
+import RolePermissionsModal from './RolePermissionsModal.jsx'
+import RoleMembersModal from './RoleMembersModal.jsx'
+import { FiEdit2, FiShield, FiPlus, FiTrash2, FiEye, FiSettings, FiUsers } from 'react-icons/fi'
 
 export default function RolesTab() {
     const toast = useToast()
+    const modal = useModal()
     const [roles, setRoles] = useState([])
     const [loading, setLoading] = useState(true)
-    const [expanded, setExpanded] = useState(null)
-    const [permissions, setPermissions] = useState({})
 
     const load = async () => {
         setLoading(true)
@@ -24,42 +27,119 @@ export default function RolesTab() {
 
     useEffect(() => { load() }, [])
 
-    const loadPermissions = async (roleId) => {
-        if (permissions[roleId]) return
+    const openPermissions = (role) => {
+        modal.open({
+            title: `Permisos: ${role.nombre}`,
+            width: 800,
+            render: (close) => (
+                <RolePermissionsModal
+                    roleId={role.id}
+                    initialPermissions={role.permisos || []}
+                    onSave={async (newIds) => {
+                        try {
+                            await A.adminSetRolePermissions(role.id, newIds)
+                            toast?.success('Permisos actualizados')
+                            load()
+                            close()
+                        } catch (e) {
+                            toast?.error(e.response?.data?.error || 'Error al guardar permisos')
+                        }
+                    }}
+                    onCancel={() => close()}
+                />
+            )
+        })
+    }
+
+    const openMembers = (role) => {
+        modal.open({
+            title: `Miembros: ${role.nombre}`,
+            width: 500,
+            render: (close) => (
+                <RoleMembersModal
+                    roleId={role.id}
+                    roleName={role.nombre}
+                    initialMembers={role.members || []}
+                    onSave={async (userIds) => {
+                        try {
+                            await A.adminSetRoleMembers(role.id, userIds)
+                            toast?.success('Miembros actualizados')
+                            load()
+                            close()
+                        } catch (e) {
+                            toast?.error(e.response?.data?.error || 'Error al guardar miembros')
+                        }
+                    }}
+                    onCancel={() => close()}
+                />
+            )
+        })
+    }
+
+    const openEditRole = (role = null) => {
+        modal.open({
+            title: role ? 'Editar Rol' : 'Nuevo Rol',
+            width: 400,
+            render: (close) => (
+                <RoleForm
+                    role={role}
+                    onSave={async (data) => {
+                        try {
+                            if (role) await A.adminUpdateRole(role.id, data)
+                            else await A.adminCreateRole(data)
+                            toast?.success(role ? 'Rol actualizado' : 'Rol creado')
+                            load()
+                            close()
+                        } catch (e) {
+                            toast?.error(e.response?.data?.error || 'Error al guardar rol')
+                        }
+                    }}
+                    onCancel={() => close()}
+                />
+            )
+        })
+    }
+
+    const handleDelete = async (role) => {
+        if (!window.confirm(`¿Estás seguro de eliminar el rol "${role.nombre}"?`)) return
         try {
-            const { data } = await A.adminGetRole(roleId)
-            setPermissions(p => ({ ...p, [roleId]: data?.permisos || [] }))
+            await A.adminDeleteRole(role.id)
+            toast?.success('Rol eliminado')
+            load()
         } catch (e) {
-            toast?.error('Error cargando permisos')
+            toast?.error(e.response?.data?.error || 'Error al eliminar rol')
         }
     }
 
-    const toggleExpand = (roleId) => {
-        if (expanded === roleId) {
-            setExpanded(null)
-        } else {
-            setExpanded(roleId)
-            loadPermissions(roleId)
+    const fetchAndOpenPermissions = async (role) => {
+        try {
+            const { data } = await A.adminGetRole(role.id)
+            openPermissions(data)
+        } catch (e) {
+            toast?.error('Error al cargar detalle del rol')
         }
     }
 
-    const groupPermissions = (perms) => {
-        const groups = {}
-        for (const p of perms) {
-            const mod = p.modulo || 'otro'
-            if (!groups[mod]) groups[mod] = []
-            groups[mod].push(p.accion)
+    const fetchAndOpenMembers = async (role) => {
+        try {
+            const { data } = await A.adminGetRole(role.id)
+            openMembers(data)
+        } catch (e) {
+            toast?.error('Error al cargar miembros del rol')
         }
-        return groups
     }
 
     return (
-        <div className="tabContent">
-            <div className="toolbar">
-                <div style={{ color: 'var(--fh-muted)', fontSize: 13 }}>
-                    Los roles del sistema (NivelA, NivelB, NivelC) no se pueden editar.
+        <div className="tabContent rolesTab">
+            <header className="tabInnerHead" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h3>Gestión de Roles y Permisos</h3>
+                    <p style={{ color: 'var(--fh-muted)', fontSize: '0.9rem', margin: 0 }}>Define qué puede hacer cada perfil en el sistema.</p>
                 </div>
-            </div>
+                <button className="fh-btn primary" onClick={() => openEditRole()}>
+                    <FiPlus /> Nuevo Rol
+                </button>
+            </header>
 
             {loading ? (
                 <div style={{ position: 'relative', minHeight: 200 }}>
@@ -68,78 +148,104 @@ export default function RolesTab() {
             ) : roles.length === 0 ? (
                 <div className="empty">No hay roles</div>
             ) : (
-                <table className="dataTable">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th className="hidden-mobile">Descripción</th>
-                            <th className="hidden-mobile">Tipo</th>
-                            <th style={{ width: 100 }}>Permisos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {roles.map(role => (
-                            <React.Fragment key={role.id}>
-                                <tr>
-                                    <td><strong>{role.nombre}</strong></td>
-                                    <td className="hidden-mobile" style={{ color: 'var(--fh-muted)' }}>{role.descripcion || '—'}</td>
-                                    <td className="hidden-mobile">
-                                        <span className="badge role">
-                                            {role.nombre.startsWith('Nivel') ? 'Sistema' : 'Custom'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="actions">
-                                            <button onClick={() => toggleExpand(role.id)}>
-                                                {expanded === role.id ? 'Ocultar' : 'Ver permisos'}
-                                            </button>
+                <div className="rolesGrid">
+                    {roles.map(role => {
+                        const isSystem = role.nombre.startsWith('Nivel')
+                        return (
+                            <div key={role.id} className={`roleCard ${isSystem ? 'system' : ''}`}>
+                                <div className="roleInfo">
+                                    <div className="top">
+                                        <FiShield className="icon" />
+                                        <div className="labels">
+                                            <span className="name">{role.nombre}</span>
+                                            {isSystem && <span className="badge system">Sistema</span>}
                                         </div>
-                                    </td>
-                                </tr>
-                                {expanded === role.id && (
-                                    <tr>
-                                        <td colSpan={4} style={{ background: 'rgba(255,255,255,.02)', padding: '16px 20px' }}>
-                                            {permissions[role.id] ? (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                                                    {Object.entries(groupPermissions(permissions[role.id])).map(([mod, acts]) => (
-                                                        <div key={mod} style={{
-                                                            background: 'rgba(255,255,255,.04)',
-                                                            padding: '10px 14px',
-                                                            borderRadius: 8,
-                                                            minWidth: 140
-                                                        }}>
-                                                            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6, textTransform: 'uppercase', color: 'var(--fh-accent)' }}>
-                                                                {mod}
-                                                            </div>
-                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                                                {acts.map(a => (
-                                                                    <span key={a} style={{
-                                                                        fontSize: 11,
-                                                                        background: 'rgba(255,255,255,.08)',
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: 10,
-                                                                        color: 'var(--fh-text)'
-                                                                    }}>
-                                                                        {a}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div style={{ position: 'relative', minHeight: 60 }}>
-                                                    <GlobalLoader size={40} />
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </tbody>
-                </table>
+                                    </div>
+                                    <p className="desc">{role.descripcion || 'Sin descripción.'}</p>
+                                </div>
+                                <div className="roleActions">
+                                    <button
+                                        className="btnAction"
+                                        onClick={() => fetchAndOpenPermissions(role)}
+                                        title="Gestionar Permisos"
+                                    >
+                                        <FiEdit2 /> Permisos
+                                    </button>
+                                    <button
+                                        className="btnAction"
+                                        onClick={() => fetchAndOpenMembers(role)}
+                                        title="Gestionar Usuarios"
+                                    >
+                                        <FiUsers /> Miembros
+                                    </button>
+                                    {!isSystem && (
+                                        <>
+                                            <button
+                                                className="btnAction"
+                                                onClick={() => openEditRole(role)}
+                                                title="Editar nombre/desc"
+                                            >
+                                                <FiSettings />
+                                            </button>
+                                            <button
+                                                className="btnAction danger"
+                                                onClick={() => handleDelete(role)}
+                                                title="Eliminar"
+                                            >
+                                                <FiTrash2 />
+                                            </button>
+                                        </>
+                                    )}
+                                    {isSystem && (
+                                        <button className="btnAction ghost" disabled title="Roles de sistema no editables">
+                                            <FiEye /> Solo lectura
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
             )}
         </div>
     )
 }
+
+function RoleForm({ role, onSave, onCancel }) {
+    const [form, setForm] = useState({
+        nombre: role?.nombre || '',
+        descripcion: role?.descripcion || ''
+    })
+
+    return (
+        <div className="dlg-form">
+            <div className="formRow">
+                <label>Nombre del Rol</label>
+                <input
+                    type="text"
+                    className="fh-input"
+                    value={form.nombre}
+                    onChange={e => setForm({ ...form, nombre: e.target.value })}
+                    placeholder="Ej: Auditor RRHH"
+                    required
+                />
+            </div>
+            <div className="formRow">
+                <label>Descripción</label>
+                <textarea
+                    className="fh-input"
+                    value={form.descripcion}
+                    onChange={e => setForm({ ...form, descripcion: e.target.value })}
+                    placeholder="Para qué sirve este rol..."
+                />
+            </div>
+            <div className="actions">
+                <button className="fh-btn ghost" onClick={onCancel}>Cancelar</button>
+                <button className="fh-btn primary" onClick={() => onSave(form)} disabled={!form.nombre}>
+                    {role ? 'Actualizar' : 'Crear'}
+                </button>
+            </div>
+        </div>
+    )
+}
+

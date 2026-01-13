@@ -38,50 +38,7 @@ module.exports = {
     const asignadoPorUserId = uid['ralbanesi@fedesconsultora.com'] || uid['sistemas@fedesconsultora.com'];
 
     const cuotas = [];
-
-    // Para Romina (RRHH)
-    if (federByUserId[uid['ralbanesi@fedesconsultora.com']]) {
-      const fid = federByUserId[uid['ralbanesi@fedesconsultora.com']];
-      cuotas.push(
-        {
-          feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Cuota anual inicial', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        },
-        {
-          feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Beneficio interno', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        },
-        {
-          feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Horas para examen', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        }
-      );
-    }
-
-    // Para Enzo
-    if (federByUserId[uid['epinotti@fedesconsultora.com']]) {
-      const fid = federByUserId[uid['epinotti@fedesconsultora.com']];
-      cuotas.push(
-        {
-          feder_id: fid, tipo_id: tipos.vacaciones.id, unidad_id: tipos.vacaciones.unidad_id, cantidad_total: 15,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Cuota anual inicial', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        },
-        {
-          feder_id: fid, tipo_id: tipos.tristeza.id, unidad_id: tipos.tristeza.unidad_id, cantidad_total: 5,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Beneficio interno', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        },
-        {
-          feder_id: fid, tipo_id: tipos.examen.id, unidad_id: tipos.examen.unidad_id, cantidad_total: 32,
-          vigencia_desde: desde, vigencia_hasta: hasta, comentario: 'Horas para examen', asignado_por_user_id: asignadoPorUserId,
-          is_activo: true, created_at: now, updated_at: now
-        }
-      );
-    }
+    // Asignaciones removidas según solicitud del usuario.
 
     if (cuotas.length) {
       await queryInterface.bulkInsert('AusenciaCuota', cuotas, {});

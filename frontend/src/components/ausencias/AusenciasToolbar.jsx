@@ -1,11 +1,13 @@
 // src/components/ausencias/AusenciasToolbar.jsx
 import { FaCalendarAlt, FaPlus } from 'react-icons/fa'
+import { FiSettings } from 'react-icons/fi'
 import './AusenciasToolbar.scss'
 
 const monthNames = [...Array(12)].map((_, i) => new Date(2000, i, 1).toLocaleString(undefined, { month: 'long' }))
 
 export default function AusenciasToolbar({
-  canCreate, canAssign, onNewAbs, onNewAlloc, pendingBadge = 0
+  canCreate, canAssign, canManageRrhh, onNewAbs, onNewAlloc, onOpenRrhh,
+  onOpenConfig, canManageTypes, pendingBadge = 0
 }) {
   return (
     <div className="aus-toolbar">
@@ -25,6 +27,16 @@ export default function AusenciasToolbar({
         {canAssign && (
           <button className="fh-btn" onClick={onNewAlloc}>
             Solicitar asignación
+          </button>
+        )}
+        {canManageRrhh && (
+          <button className="fh-btn accent" onClick={onOpenRrhh}>
+            Panel RRHH
+          </button>
+        )}
+        {canManageTypes && (
+          <button className="fh-btn ghost" onClick={onOpenConfig}>
+            <FiSettings style={{ marginRight: 6 }} /> Configurar
           </button>
         )}
       </div>

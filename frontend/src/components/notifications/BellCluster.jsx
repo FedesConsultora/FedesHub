@@ -101,17 +101,33 @@ export default function BellCluster({ onAnyOpen }) {
     }
   }, [qc])
 
+  // Reconciliación del conteo de chat:
+  // Si el backend dice que hay 1 y nosotros acabamos de limpiar uno (suppressed), prefiero confiar en el local 0.
+  const finalChatCount = useMemo(() => {
+    const backendCount = counts?.chat ?? 0
+    // Si el backend dice 0, usamos local.
+    if (backendCount === 0) return localChatUnreadCount
+    // Si el local es 0 y tenemos canales suprimidos, es muy probable que el backend esté desfasado (ghost badge).
+    if (localChatUnreadCount === 0 && suppressedCanals.size > 0) {
+      // Si el backend dice 1 o 2, y nosotros acabamos de limpiar canales, es probable que ese 1 o 2 sea lo que acabamos de limpiar.
+      // En este caso, preferimos mostrar 0 para evitar la sensación de "no se borra".
+      if (backendCount <= suppressedCanals.size) return 0
+    }
+    // En otros casos, el backend suele ser más completo (mensajes antiguos).
+    return Math.max(backendCount, localChatUnreadCount)
+  }, [counts?.chat, localChatUnreadCount, suppressedCanals.size])
+
   const items = useMemo(() => ([
     {
       key: 'chat',
       label: 'Chat',
-      count: (counts?.chat ?? 0) || localChatUnreadCount,  // Preferir backend, fallback a local
-      dot: (counts?.chat ?? 0) === 0 && localChatUnreadCount > 0,
+      count: finalChatCount,
+      dot: finalChatCount === 0 && localChatUnreadCount > 0, // Inconsistencia, mostrar punto? (raro)
       mention: localChatHasMention
     },
     { key: 'tareas', label: 'Tareas', count: counts?.tareas ?? 0 },
     { key: 'calendario', label: 'Calendario', count: counts?.calendario ?? 0 },
-  ]), [counts, localChatUnreadCount, localChatHasMention])
+  ]), [counts, finalChatCount, localChatUnreadCount, localChatHasMention])
 
   const totalCount = useMemo(() => items.reduce((a, b) => a + (b.count || 0), 0), [items])
 

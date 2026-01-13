@@ -3,6 +3,14 @@
 
 :root {
   color-scheme: dark;
+  --fh-primary: #{$fh-primary};
+  --fh-secondary: #{$fh-secondary};
+  --fh-accent: #{$fh-accent};
+  --fh-bg: #{$fh-bg};
+  --fh-card: #{$fh-card};
+  --fh-text: #{$fh-text};
+  --fh-muted: #{$fh-muted};
+  --fh-danger: #{$fh-danger};
 }
 
 * {

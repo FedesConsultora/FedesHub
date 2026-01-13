@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
-import { ProfilePreviewProvider } from './context/ProfilePreviewProvider.jsx'
+import { ProfilePreviewProvider } from './context/ProfilePreviewProvider'
 import { UploadProvider } from './context/UploadProvider.jsx'
 import { ToastProvider } from './components/toast/ToastProvider.jsx'
 import { ModalProvider } from './components/modal/ModalProvider.jsx'
@@ -33,22 +33,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <ModalProvider>
-          <AuthProvider>
-            <UploadProvider>
-              <RealtimeProvider>
-                <BrowserRouter>
-                  <LoadingProvider>
-                    <ProfilePreviewProvider>
+        <AuthProvider>
+          <UploadProvider>
+            <RealtimeProvider>
+              <BrowserRouter>
+                <LoadingProvider>
+                  <ProfilePreviewProvider>
+                    <ModalProvider>
                       <AppRouter />
                       <UploadIndicator />
-                    </ProfilePreviewProvider>
-                  </LoadingProvider>
-                </BrowserRouter>
-              </RealtimeProvider>
-            </UploadProvider>
-          </AuthProvider>
-        </ModalProvider>
+                    </ModalProvider>
+                  </ProfilePreviewProvider>
+                </LoadingProvider>
+              </BrowserRouter>
+            </RealtimeProvider>
+          </UploadProvider>
+        </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
   </React.StrictMode>

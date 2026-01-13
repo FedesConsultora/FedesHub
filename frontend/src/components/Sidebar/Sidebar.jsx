@@ -4,6 +4,7 @@ import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useUploadContext } from '../../context/UploadProvider.jsx'
 import { useToast } from '../toast/ToastProvider.jsx'
 import { FaHourglassHalf } from 'react-icons/fa'
+import { ausenciasApi } from '../../api/ausencias'
 import UnreadDmBubbles from './UnreadDmBubbles.jsx'
 import './Sidebar.scss'
 
@@ -13,7 +14,7 @@ const APPS = [
   { code: 'home', name: 'Inicio', to: '/' },
   { code: 'feders', name: 'Feders', to: '/feders' },
   { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
-  { code: 'ausencia', name: 'Ausencias', to: '/ausencias', inDev: true },
+  { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
   { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
   { code: 'chat', name: 'Chat', to: '/chat' },
@@ -25,6 +26,9 @@ export default function Sidebar() {
   const uploadCtx = useUploadContext()
   const toast = useToast()
   const [chatHasUnread, setChatHasUnread] = useState(false)
+  const [ausPendingCount, setAusPendingCount] = useState(0)
+
+  const canApproveAus = hasPerm('ausencias', 'approve')
 
   // Verificar si es directivo (NivelB o admin)
   const isDirectivo = roles?.includes('NivelB') || hasPerm('auth', 'assign')
@@ -32,8 +36,30 @@ export default function Sidebar() {
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)
     window.addEventListener('fh:chat:hasUnread', handler)
-    return () => window.removeEventListener('fh:chat:hasUnread', handler)
-  }, [])
+
+    const fetchCounts = async () => {
+      if (!canApproveAus) return
+      try {
+        const counts = await ausenciasApi.getCounts()
+        setAusPendingCount(counts.total || 0)
+      } catch (e) { console.warn('Error fetching aus counts:', e) }
+    }
+
+    fetchCounts()
+    const timer = setInterval(fetchCounts, 60000)
+
+    const pushHandler = (ev) => {
+      const type = ev?.detail?.type || ''
+      if (type.includes('ausencia')) fetchCounts()
+    }
+    window.addEventListener('fh:push', pushHandler)
+
+    return () => {
+      window.removeEventListener('fh:chat:hasUnread', handler)
+      window.removeEventListener('fh:push', pushHandler)
+      clearInterval(timer)
+    }
+  }, [canApproveAus])
 
   // Filtrar apps según permisos
   const allowed = APPS.filter(a => {
@@ -123,6 +149,20 @@ export default function Sidebar() {
               {isChat && <i className="dot" />}
               <span>{app.name}</span>
               {isChat && chatHasUnread && <span className="badge-dot" aria-label="no leídos" />}
+              {app.code === 'ausencia' && ausPendingCount > 0 && (
+                <span className="badge-count" style={{
+                  marginLeft: 'auto',
+                  background: 'var(--fh-accent)',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {ausPendingCount}
+                </span>
+              )}
             </NavLink>
           )
         })}

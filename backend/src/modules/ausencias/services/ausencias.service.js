@@ -1,11 +1,13 @@
-// /backend/src/modules/ausencias/services/ausencias.service.js
 import {
   listUnidades, listEstados, listMitadDia,
   listTipos, createTipo, updateTipo, getTipoBy,
-  assignCuota, listCuotas, saldoPorTipo,
+  assignCuota, listCuotas, deleteCuota, saldoPorTipo,
   listAusencias, getAusenciaById, createAusencia, updateAusencia,
   aprobarAusenciaConConsumo, getEstadoByCodigo, getFederByUser, ensureFeder
 } from '../repositories/ausencias.repo.js';
+import { initModels } from '../../../models/registry.js';
+import { sequelize } from '../../../core/db.js';
+import { QueryTypes } from 'sequelize';
 
 const WORKDAY_HOURS = Number(process.env.WORKDAY_HOURS ?? 8);
 
@@ -42,13 +44,14 @@ export const cuotaAssign = async ({ feder_id, tipo_id, tipo_codigo, unidad_id, u
 };
 
 export const cuotasList = (q) => listCuotas(q);
+export const cuotaDelete = (id) => deleteCuota(id);
 export const saldoTipos = (q) => saldoPorTipo(q);
 
 // ===== Ausencias =====
 export const ausList = (q) => listAusencias(q);
 export const ausDetail = (id) => getAusenciaById(id);
 
-const buildPayloadSolicitud = async ({ feder_id, tipo_id, tipo_codigo, fecha_desde, fecha_hasta, es_medio_dia, mitad_dia_id, duracion_horas, motivo }) => {
+const buildPayloadSolicitud = async ({ feder_id, tipo_id, tipo_codigo, fecha_desde, fecha_hasta, es_medio_dia, mitad_dia_id, duracion_horas, archivo_url, motivo }) => {
   const tipo = await getTipoBy({ id: tipo_id, codigo: tipo_codigo });
   if (!tipo) throw Object.assign(new Error('Tipo inválido'), { status: 400 });
 
@@ -67,6 +70,7 @@ const buildPayloadSolicitud = async ({ feder_id, tipo_id, tipo_codigo, fecha_des
     es_medio_dia: !!es_medio_dia,
     mitad_dia_id: es_medio_dia ? (mitad_dia_id ?? null) : null,
     duracion_horas: null,
+    archivo_url: archivo_url ?? null,
     motivo: motivo ?? null,
     comentario_admin: null,
     aprobado_por_user_id: null,
@@ -161,6 +165,16 @@ export const ausCancel = async (id) => {
   return updateAusencia(id, { estado_id: can.id });
 };
 
+export const ausUpdateSvc = async (id, body) => {
+  const row = await ausDetail(id);
+  if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
+  const pend = await getEstadoByCodigo('pendiente');
+  if (row.estado_id !== pend.id) throw Object.assign(new Error('Sólo ausencias pendientes pueden editarse'), { status: 409 });
+
+  const { payload } = await buildPayloadSolicitud({ ...row, ...body });
+  return updateAusencia(id, payload);
+};
+
 // ===== Solicitud de Asignación (cuota extra) =====
 export const asignacionSolicitudCreateSvc = async (body, meUserId) => {
   const { feder_id, tipo_id, tipo_codigo, unidad_id, unidad_codigo, cantidad_solicitada, vigencia_desde, vigencia_hasta, motivo } = body;
@@ -190,6 +204,7 @@ export const asignacionSolicitudCreateSvc = async (body, meUserId) => {
     cantidad_solicitada,
     vigencia_desde,
     vigencia_hasta,
+    archivo_url: archivo_url ?? null,
     motivo: motivo ?? null,
     estado_id: pend.id
   });
@@ -203,11 +218,15 @@ export const asignacionSolicitudListSvc = async ({ feder_id, estado_codigo }) =>
   if (feder_id) { where.push('s.feder_id = :fid'); repl.fid = feder_id; }
   if (estado_codigo) { where.push('e.codigo = :ec'); repl.ec = estado_codigo; }
   const sql = `
-    SELECT s.*, e.codigo AS estado_codigo, t.nombre AS tipo_nombre, u.codigo AS unidad_codigo
+    SELECT s.*, e.codigo AS estado_codigo, t.nombre AS tipo_nombre, u.codigo AS unidad_codigo,
+           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url,
+           usr.email AS solicitante_email
     FROM "AusenciaAsignacionSolicitud" s
-    JOIN "AusenciaEstado" e ON e.id = s.estado_id
+    JOIN "AsignacionSolicitudEstado" e ON e.id = s.estado_id
     JOIN "AusenciaTipo" t ON t.id = s.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = s.unidad_id
+    JOIN "Feder" f ON f.id = s.feder_id
+    JOIN "User" usr ON usr.id = f.user_id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY s.created_at DESC
   `;
@@ -264,4 +283,29 @@ export const meFeder = async (user_id) => {
   const me = await getFederByUser(user_id);
   if (!me) throw Object.assign(new Error('El usuario no tiene Feder activo'), { status: 404 });
   return me;
+};
+
+export const svcGetCounts = async () => {
+  const [resAus] = await sequelize.query(`
+    SELECT COUNT(*)::int as count 
+    FROM "Ausencia" a
+    JOIN "AusenciaEstado" e ON e.id = a.estado_id
+    WHERE e.codigo = 'pendiente'
+  `, { type: QueryTypes.SELECT });
+
+  const [resAsig] = await sequelize.query(`
+    SELECT COUNT(*)::int as count 
+    FROM "AusenciaAsignacionSolicitud" s
+    JOIN "AsignacionSolicitudEstado" e ON e.id = s.estado_id
+    WHERE e.codigo = 'pendiente'
+  `, { type: QueryTypes.SELECT });
+
+  const aus = resAus?.count || 0;
+  const asig = resAsig?.count || 0;
+
+  return {
+    total: aus + asig,
+    ausencias: aus,
+    asignaciones: asig
+  };
 };

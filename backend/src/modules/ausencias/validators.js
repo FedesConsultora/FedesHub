@@ -14,6 +14,8 @@ export const tipoCreateSchema = z.object({
   descripcion: z.string().max(2000).nullish(),
   unidad_id: id.optional(),
   unidad_codigo: z.enum(['dia', 'hora']).optional(),
+  icon: z.string().max(50).nullish(),
+  color: z.string().max(20).nullish(),
   requiere_asignacion: z.boolean().default(true),
   permite_medio_dia: z.boolean().default(false)
 }).refine(o => o.unidad_id || o.unidad_codigo, { message: 'unidad_id o unidad_codigo requerido' });
@@ -23,6 +25,8 @@ export const tipoUpdateSchema = z.object({
   descripcion: z.string().max(2000).nullish().optional(),
   unidad_id: id.optional(),
   unidad_codigo: z.enum(['dia', 'hora']).optional(),
+  icon: z.string().max(50).nullish().optional(),
+  color: z.string().max(20).nullish().optional(),
   requiere_asignacion: z.boolean().optional(),
   permite_medio_dia: z.boolean().optional()
 });
@@ -73,6 +77,7 @@ export const ausenciaCreateSchema = z.object({
   es_medio_dia: z.boolean().optional().default(false),
   mitad_dia_id: z.coerce.number().int().min(1).max(2).optional(), // 1=am, 2=pm
   duracion_horas: z.coerce.number().positive().optional(), // requerido si unidad=hora
+  archivo_url: z.string().url().nullish(),
   motivo: z.string().max(4000).nullish()
 }).refine(o => (o.tipo_id || o.tipo_codigo), { message: 'tipo_id o tipo_codigo requerido' });
 
@@ -94,6 +99,7 @@ export const asignacionSolicitudCreate = z.object({
   cantidad_solicitada: z.coerce.number().positive(),
   vigencia_desde: isoDateOnly,
   vigencia_hasta: isoDateOnly,
+  archivo_url: z.string().url().nullish(),
   motivo: z.string().max(4000).nullish()
 }).refine(o => (o.tipo_id || o.tipo_codigo), { message: 'tipo_id o tipo_codigo requerido' })
   .refine(o => (o.unidad_id || o.unidad_codigo), { message: 'unidad_id o unidad_codigo requerido' });

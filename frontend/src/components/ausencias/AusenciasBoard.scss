@@ -9,6 +9,41 @@
   padding: 0 4px;
 }
 
+.board-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  color: $fh-accent;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 20px;
+
+  .spin {
+    font-size: 2rem;
+    animation: fa-spin 1.5s linear infinite;
+  }
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .aus-cal {
   display: flex;
   flex-direction: column;

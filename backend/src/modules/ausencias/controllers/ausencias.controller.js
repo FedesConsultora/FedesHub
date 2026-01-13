@@ -8,19 +8,20 @@ import {
 
 import {
   catUnidades, catEstados, catMitadDia, tiposList, tipoCreate, tipoUpdate,
-  cuotaAssign, cuotasList, saldoTipos,
-  ausList, ausDetail, ausCreate, ausApprove, ausReject, ausCancel,
+  cuotaAssign, cuotasList, cuotaDelete, saldoTipos,
+  ausList, ausDetail, ausCreate, ausApprove, ausReject, ausCancel, ausUpdateSvc,
   asignacionSolicitudCreateSvc, asignacionSolicitudListSvc,
   asignacionSolicitudApproveSvc, asignacionSolicitudDenySvc, asignacionSolicitudCancelSvc,
-  meFeder
+  meFeder, svcGetCounts
 } from '../services/ausencias.service.js';
+import { saveUploadedFiles } from '../../../infra/storage/index.js';
 
 // Health
 export const health = (_req, res) => res.json({ module: 'ausencias', ok: true });
 
 // ==== Catálogos
 export const getUnidades = async (_req, res, next) => { try { res.json(await catUnidades()); } catch (e) { next(e); } };
-export const getEstados  = async (_req, res, next) => { try { res.json(await catEstados()); } catch (e) { next(e); } };
+export const getEstados = async (_req, res, next) => { try { res.json(await catEstados()); } catch (e) { next(e); } };
 export const getMitadDia = async (_req, res, next) => { try { res.json(await catMitadDia()); } catch (e) { next(e); } };
 
 export const getTipos = async (req, res, next) => {
@@ -39,6 +40,9 @@ export const postCuota = async (req, res, next) => {
 };
 export const getCuotas = async (req, res, next) => {
   try { res.json(await cuotasList(cuotasListQuery.parse(req.query))); } catch (e) { next(e); }
+};
+export const deleteCuota = async (req, res, next) => {
+  try { res.json(await cuotaDelete(Number(req.params.id))); } catch (e) { next(e); }
 };
 export const getSaldoPorTipo = async (req, res, next) => {
   try { res.json(await saldoTipos(saldoQuery.parse(req.query))); } catch (e) { next(e); }
@@ -73,6 +77,13 @@ export const rejectAus = async (req, res, next) => {
 export const cancelAus = async (req, res, next) => {
   try { res.json(await ausCancel(Number(req.params.id))); } catch (e) { next(e); }
 };
+export const updateAus = async (req, res, next) => {
+  try { res.json(await ausUpdateSvc(Number(req.params.id), req.body)); } catch (e) { next(e); }
+};
+
+export const getCounts = async (req, res, next) => {
+  try { res.json(await svcGetCounts()); } catch (e) { next(e); }
+};
 
 // ==== Solicitudes de Asignación (cupo extra)
 export const createAsignacionSolicitud = async (req, res, next) => {
@@ -89,4 +100,14 @@ export const denyAsignacionSolicitud = async (req, res, next) => {
 };
 export const cancelAsignacionSolicitud = async (req, res, next) => {
   try { res.json(await asignacionSolicitudCancelSvc(Number(req.params.id))); } catch (e) { next(e); }
+};
+
+export const postUpload = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const saved = await saveUploadedFiles([req.file], ['ausencias', 'adjuntos']);
+    const f = saved[0];
+    const url = f.webViewLink || f.publicUrl || f.url || f.drive_url || null;
+    res.json({ url });
+  } catch (e) { next(e); }
 };

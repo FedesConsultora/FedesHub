@@ -21,19 +21,19 @@ export const getEstadoByCodigo = (codigo) =>
   m.AusenciaEstado.findOne({ where: { codigo } });
 
 export const getFederByUser = async (user_id) =>
-  m.Feder.findOne({ where: { user_id, is_activo: true }, attributes: ['id','user_id','is_activo'] });
+  m.Feder.findOne({ where: { user_id, is_activo: true }, attributes: ['id', 'user_id', 'is_activo'] });
 
 export const ensureFeder = async (feder_id) => {
-  const f = await m.Feder.findByPk(feder_id, { attributes: ['id','is_activo'] });
+  const f = await m.Feder.findByPk(feder_id, { attributes: ['id', 'is_activo'] });
   if (!f) throw Object.assign(new Error('Feder no encontrado'), { status: 404 });
   if (!f.is_activo) throw Object.assign(new Error('Feder inactivo'), { status: 400 });
   return f;
 };
 
 // ====== Catálogos ======
-export const listUnidades = () => m.AusenciaUnidadTipo.findAll({ order: [['id','ASC']] });
-export const listEstados  = () => m.AusenciaEstado.findAll({ order: [['id','ASC']] });
-export const listMitadDia = () => m.MitadDiaTipo.findAll({ order: [['id','ASC']] });
+export const listUnidades = () => m.AusenciaUnidadTipo.findAll({ order: [['id', 'ASC']] });
+export const listEstados = () => m.AusenciaEstado.findAll({ order: [['id', 'ASC']] });
+export const listMitadDia = () => m.MitadDiaTipo.findAll({ order: [['id', 'ASC']] });
 
 export const listTipos = async ({ q }) => {
   const where = q ? `WHERE LOWER(t.nombre) LIKE :q OR LOWER(t.codigo) LIKE :q` : '';
@@ -99,17 +99,30 @@ export const listCuotas = async ({ feder_id, tipo_id, vigentes }) => {
     );
   }
   const sql = `
-    SELECT c.*, t.nombre AS tipo_nombre, u.codigo AS unidad_codigo,
-      COALESCE(c.cantidad_total - SUM(cc.cantidad_consumida), c.cantidad_total) AS saldo
+    SELECT c.*, t.nombre AS tipo_nombre, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo,
+      COALESCE(c.cantidad_total - SUM(cc.cantidad_consumida), c.cantidad_total) AS saldo,
+      f_admin.nombre AS admin_nombre, f_admin.apellido AS admin_apellido
     FROM "AusenciaCuota" c
     JOIN "AusenciaTipo" t ON t.id = c.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = c.unidad_id
     LEFT JOIN "AusenciaCuotaConsumo" cc ON cc.cuota_id = c.id
+    LEFT JOIN "Feder" f_admin ON f_admin.user_id = c.asignado_por_user_id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-    GROUP BY c.id, t.nombre, u.codigo
+    GROUP BY c.id, t.nombre, t.icon, t.color, u.codigo, f_admin.nombre, f_admin.apellido
     ORDER BY c.vigencia_desde ASC, c.id ASC
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
+};
+
+export const deleteCuota = async (id) => {
+  const row = await m.AusenciaCuota.findByPk(id);
+  if (!row) throw Object.assign(new Error('Cuota no encontrada'), { status: 404 });
+  const consumptionCount = await m.AusenciaCuotaConsumo.count({ where: { cuota_id: id } });
+  if (consumptionCount > 0) {
+    throw Object.assign(new Error('No se puede eliminar una cuota que ya tiene consumos.'), { status: 400 });
+  }
+  await row.destroy();
+  return { ok: true };
 };
 
 export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
@@ -119,7 +132,7 @@ export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
 
   const sql = `
     SELECT
-      t.id AS tipo_id, t.codigo AS tipo_codigo, t.nombre AS tipo_nombre, u.codigo AS unidad_codigo,
+      t.id AS tipo_id, t.codigo AS tipo_codigo, t.nombre AS tipo_nombre, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo,
       COALESCE(SUM(c.cantidad_total),0) AS asignado,
       COALESCE(SUM(cc.consumido),0) AS consumido,
       COALESCE(SUM(c.cantidad_total),0) - COALESCE(SUM(cc.consumido),0) AS disponible
@@ -133,7 +146,7 @@ export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
       FROM "AusenciaCuotaConsumo"
       GROUP BY cuota_id
     ) cc ON cc.cuota_id = c.id
-    GROUP BY t.id, t.codigo, t.nombre, u.codigo
+    GROUP BY t.id, t.codigo, t.nombre, t.icon, t.color, u.codigo
     ORDER BY t.nombre ASC
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
@@ -149,12 +162,15 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
   if (hasta) { where.push('a.fecha_hasta <= :hasta'); repl.hasta = hasta; }
 
   const sql = `
-    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, f.nombre  AS feder_nombre, f.apellido AS feder_apellido, f.avatar_url AS feder_avatar_url
+    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
+           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url,
+           u_user.email AS solicitante_email
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
     JOIN "Feder" f          ON f.id = a.feder_id
+    JOIN "User" u_user      ON u_user.id = f.user_id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY a.fecha_desde DESC, a.id DESC
     LIMIT :limit OFFSET :offset
@@ -164,12 +180,15 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
 
 export const getAusenciaById = async (id) => {
   const rows = await sequelize.query(`
-    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, f.nombre  AS feder_nombre, f.apellido AS feder_apellido, f.avatar_url AS feder_avatar_url
+    SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
+           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url,
+           u_user.email AS solicitante_email
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
     JOIN "Feder" f          ON f.id = a.feder_id
+    JOIN "User" u_user       ON u_user.id = f.user_id
     WHERE a.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });
   return rows[0] || null;
@@ -212,7 +231,7 @@ export const aprobarAusenciaConConsumo = async ({ ausencia_id, aprobado_por_user
     if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
     const tipo = await m.AusenciaTipo.findByPk(row.tipo_id);
     const estadoAprob = await getEstadoByCodigo('aprobada');
-    const estadoPend  = await getEstadoByCodigo('pendiente');
+    const estadoPend = await getEstadoByCodigo('pendiente');
 
     if (row.estado_id !== estadoPend.id) throw Object.assign(new Error('Sólo ausencias pendientes pueden aprobarse'), { status: 409 });
 
