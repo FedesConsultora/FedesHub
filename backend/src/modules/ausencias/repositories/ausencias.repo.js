@@ -17,11 +17,23 @@ export const getTipoBy = async ({ id, codigo }) => {
   return null;
 };
 
+export const isUserRRHH = async (userId) => {
+  const rows = await sequelize.query(`
+    SELECT r.nombre
+    FROM "UserRol" ur
+    JOIN "Rol" r ON r.id = ur.rol_id
+    WHERE ur.user_id = :uid AND r.nombre = 'RRHH'
+  `, { type: QueryTypes.SELECT, replacements: { uid: userId } });
+  return rows.length > 0;
+};
+
 export const getEstadoByCodigo = (codigo) =>
   m.AusenciaEstado.findOne({ where: { codigo } });
 
 export const getFederByUser = async (user_id) =>
   m.Feder.findOne({ where: { user_id, is_activo: true }, attributes: ['id', 'user_id', 'is_activo'] });
+
+export const getUserById = async (id) => m.User.findByPk(id);
 
 export const ensureFeder = async (feder_id) => {
   const f = await m.Feder.findByPk(feder_id, { attributes: ['id', 'is_activo'] });
@@ -163,7 +175,7 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
 
   const sql = `
     SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
-           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url,
+           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url, f.user_id AS user_id,
            u_user.email AS solicitante_email
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
@@ -181,7 +193,7 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
 export const getAusenciaById = async (id) => {
   const rows = await sequelize.query(`
     SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
-           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url,
+           f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url, f.user_id AS user_id,
            u_user.email AS solicitante_email
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
@@ -305,5 +317,33 @@ export const aprobarAusenciaConConsumo = async ({ ausencia_id, aprobado_por_user
     }
 
     return getAusenciaById(row.id);
+  });
+};
+
+export const resetAusenciaRepo = async (id) => {
+  return sequelize.transaction(async (tx) => {
+    const row = await m.Ausencia.findByPk(id, { transaction: tx, lock: tx.LOCK.UPDATE });
+    if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
+
+    const pend = await m.AusenciaEstado.findOne({ where: { codigo: 'pendiente' }, transaction: tx });
+
+    // 1. Revertir consumos
+    await m.AusenciaCuotaConsumo.destroy({ where: { ausencia_id: id }, transaction: tx });
+
+    // 2. Eliminar eventos de calendario
+    if (m.Evento) {
+      await m.Evento.destroy({ where: { ausencia_id: id }, transaction: tx });
+    }
+
+    // 3. Resetear estado
+    await row.update({
+      estado_id: pend.id,
+      aprobado_por_user_id: null,
+      aprobado_at: null,
+      denegado_motivo: null,
+      comentario_admin: null
+    }, { transaction: tx });
+
+    return true;
   });
 };

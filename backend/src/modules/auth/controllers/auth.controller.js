@@ -7,7 +7,7 @@ import {
 } from '../validators.js';
 import {
   loginWithPassword, refreshSession, logoutAll, createUserWithRoles, changePassword,
-  adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive, adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
+  adminListRoles, adminListUsers, adminAssignUserRoles, adminSetUserActive, adminDeleteUser, adminListPermissions, adminListModules, adminListActions, adminListRoleTypes,
   adminGetRole, adminCreateRole, adminUpdateRole, adminDeleteRole, adminSetRoleMembers,
   adminSetRolePermissions, adminAddRolePermissions, adminRemoveRolePermissions,
   forgotPassword, resetPasswordByToken
@@ -89,6 +89,14 @@ export const patchUserActive = async (req, res, next) => {
     res.json({ user_id: userId, is_activo });
   } catch (e) { next(e); }
 }
+
+export const adminDeleteUserCtrl = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    await adminDeleteUser(id);
+    res.json({ ok: true, user_id: id });
+  } catch (e) { next(e); }
+};
 
 // ===== Catálogos permisos
 export const listPermissionsCtrl = async (req, res, next) => {

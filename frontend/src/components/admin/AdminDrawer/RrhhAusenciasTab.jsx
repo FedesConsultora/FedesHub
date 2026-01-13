@@ -170,12 +170,16 @@ export default function RrhhAusenciasTab({ setActiveTab, onOpenConfig }) {
     }
 
     const handleReview = async (id) => {
-        if (!window.confirm('¿Deseas volver a poner esta solicitud en revisión (pendiente)?')) return
+        const ok = await modal.confirm({
+            title: 'Revision de Decisión',
+            message: '¿Deseas volver a poner esta solicitud en revisión (pendiente)? Esto revertirá el consumo de días/horas y eliminará el bloqueo en el calendario.',
+            tone: 'warning',
+            okText: 'Re-abrir'
+        })
+        if (!ok) return
+
         try {
-            // Re-abrir la solicitud usando PATCH para volver a estado pendiente (código 'pendiente')
-            // El backend ya tiene una ruta PATCH /ausencias/:id que permite actualizar el estado
-            // Necesitamos asegurarnos de que el estado_id 1 sea pendiente o usar el controller dedicado si existiera
-            await api.patch(`/ausencias/${id}`, { estado_id: 1 }) // Asumiendo que 1 es 'pendiente' por convención de seeders
+            await AUS_API.aus.reset(id)
             if (selectedFederId) fetchUserStatus(selectedFederId)
             fetchPendings()
             toast?.success('Solicitud re-abierta')

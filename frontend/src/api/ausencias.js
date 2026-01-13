@@ -17,6 +17,7 @@ export const ausenciasApi = {
   // ── Cuotas / Saldos
   cuotas: {
     assign: (body) => api.post(`${base}/cuotas`, body).then(r => r.data),
+    assignBatch: (body) => api.post(`${base}/cuotas/batch`, body).then(r => r.data),
     list: (params = {}) => api.get(`${base}/cuotas`, { params }).then(r => r.data),
     saldo: (params) => api.get(`${base}/saldos`, { params }).then(r => r.data),
     meSaldo: (params = {}) => api.get(`${base}/me/saldos`, { params }).then(r => r.data),
@@ -31,6 +32,7 @@ export const ausenciasApi = {
     approve: (id) => api.post(`${base}/${id}/approve`).then(r => r.data),
     reject: (id, body) => api.post(`${base}/${id}/reject`, body).then(r => r.data),
     cancel: (id) => api.post(`${base}/${id}/cancel`).then(r => r.data),
+    reset: (id) => api.post(`${base}/${id}/reset`).then(r => r.data),
     update: (id, body) => api.patch(`${base}/${id}`, body).then(r => r.data),
   },
 

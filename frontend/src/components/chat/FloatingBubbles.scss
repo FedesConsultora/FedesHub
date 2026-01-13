@@ -2,15 +2,14 @@
 
 .fh-floating-bubbles {
     position: fixed;
-    right: 24px;
-    bottom: 80px; // Encima de posibles botones de ayuda o scrolls
-    display: flex;
+    display: none; // Oculto en desktop (sidebar visible)
     flex-direction: column-reverse;
     gap: 16px;
     z-index: 9999;
     pointer-events: none;
 
-    @media (max-width: 768px) {
+    @media (max-width: 980px) {
+        display: flex; // Solo en celular/tablet (sidebar colapsado)
         right: 16px;
         bottom: 24px;
     }

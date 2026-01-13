@@ -5,13 +5,15 @@
   position: fixed;
   inset: 0;
   z-index: 20000; // Por encima de CreateTaskModal (10000)
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
   background:
     radial-gradient(1200px 600px at 50% -10%, rgba(77, 208, 225, .10), transparent 60%),
     linear-gradient(180deg, rgba(8, 12, 18, .55), rgba(8, 12, 18, .80));
   backdrop-filter: blur(6px);
+  overscroll-behavior: contain;
 }
 
 .fh-modal {
@@ -20,12 +22,14 @@
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: $radius-2xl;
   box-shadow: $shadow-soft;
-  padding: 18px 18px 14px;
-  max-height: 90vh;
+  padding: 0;
+  // max-height se maneja dinámicamente desde el componente
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  max-width: 96vw;
+  box-sizing: border-box;
 
   .x {
     position: absolute;
@@ -53,9 +57,10 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding-right: 40px;
+    padding: 18px 18px 12px;
+    padding-right: 50px;
     flex-shrink: 0;
-    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, .05);
 
     .title {
       font-weight: 800;
@@ -67,9 +72,10 @@
   .body {
     flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
     line-height: 1.45;
     color: $fh-muted;
-    padding-bottom: 20px;
+    padding: 16px 18px;
 
     &::-webkit-scrollbar {
       width: 6px;
@@ -89,9 +95,8 @@
     display: flex;
     gap: 10px;
     justify-content: flex-end;
-    margin-top: 16px;
     flex-shrink: 0;
-    padding-top: 12px;
+    padding: 12px 18px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
   }
 

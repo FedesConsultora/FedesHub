@@ -6,7 +6,7 @@ import './AusenciasToolbar.scss'
 const monthNames = [...Array(12)].map((_, i) => new Date(2000, i, 1).toLocaleString(undefined, { month: 'long' }))
 
 export default function AusenciasToolbar({
-  canCreate, canAssign, canManageRrhh, onNewAbs, onNewAlloc, onOpenRrhh,
+  canCreate, canAssign, canManageRrhh, onNewAbs, onNewAlloc, onMassiveAlloc, onOpenRrhh,
   onOpenConfig, canManageTypes, pendingBadge = 0
 }) {
   return (
@@ -27,6 +27,11 @@ export default function AusenciasToolbar({
         {canAssign && (
           <button className="fh-btn" onClick={onNewAlloc}>
             Solicitar asignación
+          </button>
+        )}
+        {canManageRrhh && (
+          <button className="fh-btn ghost" onClick={onMassiveAlloc}>
+            Asignación Masiva
           </button>
         )}
         {canManageRrhh && (

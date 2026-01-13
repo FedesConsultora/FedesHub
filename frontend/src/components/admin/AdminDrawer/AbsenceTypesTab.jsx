@@ -3,6 +3,7 @@ import { ausenciasApi as API } from '../../../api/ausencias'
 import { useToast } from '../../toast/ToastProvider'
 import { useModal } from '../../modal/ModalProvider.jsx'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
+import PremiumSelect from '../../ui/PremiumSelect'
 import {
     FiPlus, FiEdit2, FiTrash2, FiSun, FiCloudRain, FiBookOpen,
     FiUser, FiXCircle, FiGift, FiClock, FiHeart, FiCoffee,
@@ -10,6 +11,7 @@ import {
     FiHome, FiMapPin, FiShield, FiShoppingCart, FiSmile, FiActivity
 } from 'react-icons/fi'
 import { FaBaby, FaHospital, FaUserGraduate, FaCar, FaUmbrellaBeach, FaPlane } from 'react-icons/fa'
+import '../../ausencias/dialogs/Dialog.scss'
 
 const ICON_MAP = {
     // Basic
@@ -61,7 +63,8 @@ export default function AbsenceTypesTab() {
     const openEdit = (tipo = null) => {
         modal.open({
             title: tipo ? 'Editar Tipo de Ausencia' : 'Nuevo Tipo de Ausencia',
-            width: 550,
+            width: 600,
+            maxHeight: '75vh',
             render: (close) => (
                 <AbsenceTypeForm
                     tipo={tipo}
@@ -70,8 +73,11 @@ export default function AbsenceTypesTab() {
                             if (tipo) await API.catalog.tipoPatch(tipo.id, data)
                             else await API.catalog.tipoCreate(data)
                             toast?.success(tipo ? 'Tipo actualizado' : 'Tipo creado')
-                            window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'ausencia_tipo' } }))
                             close()
+                            // Recargar la lista inmediatamente
+                            await load()
+                            // Notificar a otros componentes
+                            window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'ausencia_tipo' } }))
                         } catch (e) {
                             toast?.error(e.response?.data?.error || 'Error al guardar tipo')
                         }
@@ -177,102 +183,74 @@ function AbsenceTypeForm({ tipo, onSave, onCancel }) {
     const isHora = form.unidad_codigo === 'hora'
 
     return (
-        <div className="dlg-form premium-form" style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-                <div className="section">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <FiTag /> Nombre del Tipo
-                    </label>
-                    <input
-                        type="text"
-                        className="fh-input"
-                        value={form.nombre}
-                        onChange={e => {
-                            const val = e.target.value
-                            setForm({
-                                ...form,
-                                nombre: val,
-                                codigo: tipo ? form.codigo : val.toLowerCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                            })
-                        }}
-                        placeholder="Ej: Vacaciones"
-                        required
-                        style={{ height: 42, background: 'var(--fh-bg)', border: '1px solid var(--fh-border)', borderRadius: 10 }}
-                    />
-                </div>
-                {!tipo && (
-                    <div className="section">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <FiZap /> Código Único
-                        </label>
-                        <input
-                            type="text"
-                            className="fh-input"
-                            value={form.codigo}
-                            onChange={e => setForm({ ...form, codigo: e.target.value })}
-                            placeholder="vacaciones"
-                            required
-                            style={{ height: 42, background: 'var(--fh-bg)', border: '1px solid var(--fh-border)', borderRadius: 10 }}
-                        />
-                    </div>
-                )}
+        <div className="dlg-form premium-form" style={{ padding: '0 4px' }}>
+            <div className="section">
+                <label><FiTag /> Nombre del Tipo</label>
+                <input
+                    type="text"
+                    className="fh-input"
+                    value={form.nombre}
+                    onChange={e => {
+                        const val = e.target.value
+                        setForm({
+                            ...form,
+                            nombre: val,
+                            codigo: tipo ? form.codigo : val.toLowerCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        })
+                    }}
+                    placeholder="Ej: Vacaciones"
+                    required
+                />
             </div>
 
-            <div className="section" style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <FiBriefcase /> Descripción / Reglas
-                </label>
+            <div className="section">
+                <label><FiBriefcase /> Descripción / Reglas</label>
                 <textarea
                     className="fh-input"
                     value={form.descripcion}
                     onChange={e => setForm({ ...form, descripcion: e.target.value })}
                     rows={2}
                     placeholder="Describe cuándo se aplica..."
-                    style={{ background: 'var(--fh-bg)', border: '1px solid var(--fh-border)', borderRadius: 10, padding: '10px 14px' }}
                 />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-                <div className="section">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <FiClock /> Unidad
+            <div className="section">
+                <PremiumSelect
+                    label="Unidad de Medida"
+                    icon={FiClock}
+                    options={[
+                        { value: 'dia', label: 'Días' },
+                        { value: 'hora', label: 'Horas' }
+                    ]}
+                    value={form.unidad_codigo}
+                    onChange={val => setForm({ ...form, unidad_codigo: val })}
+                />
+            </div>
+            <div className="section" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <label className="check-row">
+                    <input type="checkbox" checked={form.requiere_asignacion} onChange={e => setForm({ ...form, requiere_asignacion: e.target.checked })} />
+                    <span>Requiere Cupo</span>
+                </label>
+                {!isHora && (
+                    <label className="check-row">
+                        <input type="checkbox" checked={form.permite_medio_dia} onChange={e => setForm({ ...form, permite_medio_dia: e.target.checked })} />
+                        <span>Permitir 1/2 Día</span>
                     </label>
-                    <select
-                        className="fh-input"
-                        value={form.unidad_codigo}
-                        onChange={e => setForm({ ...form, unidad_codigo: e.target.value })}
-                        style={{ height: 42, background: 'var(--fh-bg)', border: '1px solid var(--fh-border)', borderRadius: 10 }}
-                    >
-                        <option value="dia">Días</option>
-                        <option value="hora">Horas</option>
-                    </select>
-                </div>
-                <div className="section" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
-                        <input type="checkbox" checked={form.requiere_asignacion} onChange={e => setForm({ ...form, requiere_asignacion: e.target.checked })} />
-                        Requiere Cupo
-                    </label>
-                    {!isHora && (
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
-                            <input type="checkbox" checked={form.permite_medio_dia} onChange={e => setForm({ ...form, permite_medio_dia: e.target.checked })} />
-                            Permitir 1/2 Día
-                        </label>
-                    )}
-                </div>
+                )}
             </div>
 
-            <div className="section" style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 12 }}>Selecciona un Icono</label>
+            <div className="section">
+                <label style={{ marginBottom: 8 }}>Selecciona un Icono</label>
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
                     gap: 8,
-                    maxHeight: 140,
+                    maxHeight: 120,
                     overflowY: 'auto',
-                    padding: '10px',
-                    background: 'var(--fh-bg)',
-                    borderRadius: 14,
-                    border: '1px solid var(--fh-border)'
+                    padding: '8px',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255,255,255,0.08)'
                 }}>
                     {Object.keys(ICON_MAP).map(key => {
                         const Icon = ICON_MAP[key]
@@ -298,8 +276,8 @@ function AbsenceTypeForm({ tipo, onSave, onCancel }) {
                 </div>
             </div>
 
-            <div className="section" style={{ marginBottom: 24 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--fh-muted)', marginBottom: 12 }}>Selecciona un Color</label>
+            <div className="section">
+                <label style={{ marginBottom: 8 }}>Selecciona un Color</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '4px' }}>
                     {COLORS.map(c => (
                         <button
@@ -307,7 +285,7 @@ function AbsenceTypeForm({ tipo, onSave, onCancel }) {
                             type="button"
                             onClick={() => setForm({ ...form, color: c })}
                             style={{
-                                width: 28, height: 28, borderRadius: '50%', border: '2px solid',
+                                width: 24, height: 24, borderRadius: '50%', border: '2px solid',
                                 borderColor: form.color === c ? '#fff' : 'transparent',
                                 background: c, cursor: 'pointer', transition: 'transform 0.2s',
                                 transform: form.color === c ? 'scale(1.2)' : 'none',
@@ -318,9 +296,9 @@ function AbsenceTypeForm({ tipo, onSave, onCancel }) {
                 </div>
             </div>
 
-            <div className="actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--fh-border)', paddingTop: 20 }}>
-                <button className="fh-btn ghost" onClick={onCancel}>Cancelar</button>
-                <button className="fh-btn primary" onClick={() => onSave(form)} disabled={!form.nombre || !form.codigo} style={{ minWidth: 140 }}>
+            <div className="actions">
+                <button type="button" className="fh-btn ghost" onClick={onCancel}>Cancelar</button>
+                <button type="button" className="fh-btn primary" onClick={() => onSave(form)} disabled={!form.nombre || !form.codigo}>
                     {tipo ? 'Guardar Cambios' : 'Crear Tipo'}
                 </button>
             </div>

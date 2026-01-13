@@ -48,6 +48,19 @@ export const cuotaAssignSchema = z.object({
 }).refine(o => (o.tipo_id || o.tipo_codigo), { message: 'tipo_id o tipo_codigo requerido' })
   .refine(o => (o.unidad_id || o.unidad_codigo), { message: 'unidad_id o unidad_codigo requerido' });
 
+export const cuotaAssignBatchSchema = z.object({
+  feder_ids: z.array(id).nonempty(),
+  tipo_id: id.optional(),
+  tipo_codigo: z.string().min(2).max(50).optional(),
+  unidad_id: id.optional(),
+  unidad_codigo: z.enum(['dia', 'hora']).optional(),
+  cantidad_total: z.coerce.number().positive(),
+  vigencia_desde: isoDateOnly,
+  vigencia_hasta: isoDateOnly,
+  comentario: z.string().max(2000).nullish()
+}).refine(o => (o.tipo_id || o.tipo_codigo), { message: 'tipo_id o tipo_codigo requerido' })
+  .refine(o => (o.unidad_id || o.unidad_codigo), { message: 'unidad_id o unidad_codigo requerido' });
+
 export const cuotasListQuery = z.object({
   feder_id: id.optional(),
   tipo_id: id.optional(),

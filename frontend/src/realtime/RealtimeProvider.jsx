@@ -243,14 +243,14 @@ export default function RealtimeProvider({ children }) {
         if (audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume()
         }
-        audioContextStateRef.current = audioContextRef.current.state
-        console.log('[🔊 AUDIO] Audio unlocked successfully. State:', audioContextStateRef.current)
-        ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
+        audioContextStateRef.current = audioContextRef.current.state;
+        console.log('[🔊 AUDIO] Audio unlocked successfully. State:', audioContextStateRef.current);
+        ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock));
       } catch (e) {
-        console.error('[🔊 AUDIO] Critical unlock error:', e)
+        console.error('[🔊 AUDIO] Critical unlock error:', e);
       }
     }
-    ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock))
+    ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock));
     return () => ['click', 'keydown', 'pointerdown', 'touchstart'].forEach(ev => document.removeEventListener(ev, unlock))
   }, [audioUnlocked])
 

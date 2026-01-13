@@ -3,7 +3,8 @@ import {
   listTipos, createTipo, updateTipo, getTipoBy,
   assignCuota, listCuotas, deleteCuota, saldoPorTipo,
   listAusencias, getAusenciaById, createAusencia, updateAusencia,
-  aprobarAusenciaConConsumo, getEstadoByCodigo, getFederByUser, ensureFeder
+  aprobarAusenciaConConsumo, resetAusenciaRepo, getEstadoByCodigo, getFederByUser, ensureFeder,
+  isUserRRHH, getUserById
 } from '../repositories/ausencias.repo.js';
 import { initModels } from '../../../models/registry.js';
 import { sequelize } from '../../../core/db.js';
@@ -41,6 +42,27 @@ export const cuotaAssign = async ({ feder_id, tipo_id, tipo_codigo, unidad_id, u
     ...rest,
     asignado_por_user_id: user_id
   });
+};
+
+export const cuotaAssignBatch = async ({ feder_ids, tipo_id, tipo_codigo, unidad_id, unidad_codigo, ...rest }, user_id) => {
+  const tipo = await getTipoBy({ id: tipo_id, codigo: tipo_codigo });
+  if (!tipo) throw Object.assign(new Error('Tipo inválido'), { status: 400 });
+
+  const uniId = (unidad_id || unidad_codigo)
+    ? unidad_id
+    : (await getTipoBy({ id: tipo.id })).unidad_id;
+
+  const results = [];
+  for (const fid of feder_ids) {
+    results.push(await assignCuota({
+      feder_id: fid,
+      tipo_id: tipo.id,
+      unidad_id: uniId ?? tipo.unidad_id,
+      ...rest,
+      asignado_por_user_id: user_id
+    }));
+  }
+  return results;
 };
 
 export const cuotasList = (q) => listCuotas(q);
@@ -129,6 +151,19 @@ export const ausApprove = async (id, user_id) => {
   const row = await ausDetail(id);
   if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
 
+  // 🛡️ Reglas de Seguridad
+  if (row.user_id === user_id) {
+    throw Object.assign(new Error('No puedes aprobar tu propia ausencia'), { status: 403 });
+  }
+
+  const requesterIsRRHH = await isUserRRHH(row.user_id);
+  if (requesterIsRRHH) {
+    const approver = await getUserById(user_id);
+    if (approver?.email !== 'fedechironi@fedesconsultora.com') {
+      throw Object.assign(new Error('Las ausencias de RRHH sólo pueden ser aprobadas por Federico Chironi'), { status: 403 });
+    }
+  }
+
   // Calcular requerido
   let requerido = 0;
   if (row.unidad_codigo === 'dia') {
@@ -168,11 +203,26 @@ export const ausCancel = async (id) => {
 export const ausUpdateSvc = async (id, body) => {
   const row = await ausDetail(id);
   if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
+
+  // Si sólo se está subiendo un archivo, permitimos hacerlo aunque no esté pendiente
+  const isOnlyFile = Object.keys(body).length === 1 && body.archivo_url !== undefined;
+
   const pend = await getEstadoByCodigo('pendiente');
-  if (row.estado_id !== pend.id) throw Object.assign(new Error('Sólo ausencias pendientes pueden editarse'), { status: 409 });
+  if (row.estado_id !== pend.id && !isOnlyFile) {
+    throw Object.assign(new Error('Sólo ausencias pendientes pueden editarse por completo'), { status: 409 });
+  }
+
+  if (isOnlyFile) {
+    return updateAusencia(id, { archivo_url: body.archivo_url });
+  }
 
   const { payload } = await buildPayloadSolicitud({ ...row, ...body });
   return updateAusencia(id, payload);
+};
+
+export const ausReset = async (id) => {
+  await resetAusenciaRepo(id);
+  return ausDetail(id);
 };
 
 // ===== Solicitud de Asignación (cuota extra) =====

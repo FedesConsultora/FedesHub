@@ -77,8 +77,8 @@ export function ModalProvider({ children }) {
       push({ type: 'alert', title, message, tone, okText }),
     confirm: ({ title = 'Confirmar', message = '', tone = 'info', okText = 'Aceptar', cancelText = 'Cancelar' } = {}) =>
       push({ type: 'confirm', title, message, tone, okText, cancelText }),
-    open: ({ title = 'Modal', tone = 'info', width = 720, render }) =>
-      push({ type: 'custom', title, tone, width, render }),
+    open: ({ title = 'Modal', tone = 'info', width = 720, maxHeight, render }) =>
+      push({ type: 'custom', title, tone, width, maxHeight, render }),
     prompt: ({ title = 'Ingresar dato', message = '', placeholder = '', defaultValue = '', okText = 'Aceptar', cancelText = 'Cancelar', multiline = false } = {}) =>
       push({ type: 'prompt', title, message, placeholder, defaultValue, okText, cancelText, multiline }),
   }), [push])
@@ -106,7 +106,11 @@ export function ModalProvider({ children }) {
             <div
               key={m.id}
               className={`fh-modal ${m.tone}`}
-              style={{ zIndex: 100 + idx, width: m.width ? `min(${m.width}px, 96vw)` : undefined }}
+              style={{
+                zIndex: 20000 + idx,
+                width: m.width ? `min(${m.width}px, 96vw)` : undefined,
+                maxHeight: m.maxHeight || '90vh'
+              }}
             >
               <button className="x" aria-label="Cerrar" onClick={() => closeTop(false)}><FaTimes /></button>
 

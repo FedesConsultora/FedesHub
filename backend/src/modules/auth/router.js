@@ -3,7 +3,7 @@ import { Router } from 'express';
 import {
   health, login, refresh, logout, me,
   adminCreateUser, postChangePassword,
-  listRoles, listUsers, patchUserRoles, patchUserActive, listPermissionsCtrl, listModulesCtrl, listActionsCtrl, listRoleTypesCtrl,
+  listRoles, listUsers, patchUserRoles, patchUserActive, adminDeleteUserCtrl, listPermissionsCtrl, listModulesCtrl, listActionsCtrl, listRoleTypesCtrl,
   getRoleCtrl, createRoleCtrl, updateRoleCtrl, deleteRoleCtrl, setRoleMembersCtrl,
   setRolePermissionsCtrl, addRolePermissionsCtrl, removeRolePermissionsCtrl,
   postForgotPassword,
@@ -39,6 +39,7 @@ router.get('/roles', requireAuth, requirePermission('auth', 'assign'), listRoles
 router.get('/users', requireAuth, requirePermission('auth', 'assign'), listUsers);
 router.patch('/users/:id/roles', requireAuth, requirePermission('auth', 'assign'), patchUserRoles);
 router.patch('/users/:id/active', requireAuth, requirePermission('auth', 'assign'), patchUserActive);
+router.delete('/users/:id', requireAuth, requirePermission('auth', 'assign'), adminDeleteUserCtrl);
 
 
 // ===== Admin: catálogos de permisos

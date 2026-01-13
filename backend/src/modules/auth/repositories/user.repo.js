@@ -22,6 +22,19 @@ export const setUserPassword = async (userId, password_hash) =>
 export const setUserActive = async (userId, is_activo) =>
   models.User.update({ is_activo }, { where: { id: userId } });
 
+export const deleteUser = async (userId) => {
+  return sequelize.transaction(async (t) => {
+    // Check if there is a Feder associated
+    const feder = await models.Feder.findOne({ where: { user_id: userId }, transaction: t });
+    if (feder) {
+      // If there's a Feder, we might want to handle their data. 
+      // For now, let's just delete the Feder profile first.
+      await models.Feder.destroy({ where: { id: feder.id }, transaction: t });
+    }
+    return models.User.destroy({ where: { id: userId }, transaction: t });
+  });
+};
+
 export const getUserRoles = async (userId) => {
   return sequelize.query(`
     SELECT r.id, r.nombre

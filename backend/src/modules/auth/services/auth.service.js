@@ -9,7 +9,7 @@ import { COOKIE, COOKIE_OPTS } from '../constants.js';
 import {
   getActiveEmailDomain, getUserByEmail, createUser, setUserPassword,
   getUserRoles, assignRoles, getPermisosByUserId, getUserById,
-  setUserActive, listUsersWithRoles
+  setUserActive, listUsersWithRoles, deleteUser
 } from '../repositories/user.repo.js';
 
 import { listAllRoles } from '../repositories/role.repo.js';
@@ -175,6 +175,7 @@ export const adminSetRoleMembers = async (rolId, userIds) => {
   }
 };
 export const adminSetUserActive = (userId, is_activo) => setUserActive(userId, is_activo);
+export const adminDeleteUser = (userId) => deleteUser(userId);
 
 export const adminListPermissions = (q) => listPermissions(q);
 export const adminListModules = () => listModules();

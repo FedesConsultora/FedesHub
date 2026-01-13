@@ -5,6 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 12px 20px;
   background: rgba(var(--fh-bg-rgb), 0.4);
@@ -53,6 +54,7 @@
   .r {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     flex: 1 1 auto;
     justify-content: flex-end;

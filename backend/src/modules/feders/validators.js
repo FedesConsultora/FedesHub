@@ -18,7 +18,7 @@ export const updateFederSelfSchema = z.object({
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Sin cambios' });
 
 export const listFedersQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
   q: z.string().trim().max(120).optional(),
   estado_id: z.coerce.number().int().positive().optional(),

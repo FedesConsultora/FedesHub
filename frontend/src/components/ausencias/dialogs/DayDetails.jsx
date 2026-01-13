@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiInfo, FiCalendar, FiClock, FiPaperclip } from 'react-icons/fi'
+import { useMemo, useState, useEffect } from 'react'
+import { FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiInfo, FiCalendar, FiClock, FiPaperclip, FiUpload } from 'react-icons/fi'
 import { useAuth } from '../../../context/AuthContext'
 import { ausenciasApi } from '../../../api/ausencias'
 import { useToast } from '../../toast/ToastProvider'
@@ -12,9 +12,14 @@ const initials = (txt = '') => {
 
 export default function DayDetails({ date, items = [], canApprove = false, federById = {}, onUpdated, onNew, onNewAlloc, onEdit }) {
   const [rows, setRows] = useState(items)
+
+  useEffect(() => {
+    setRows(items)
+  }, [items])
   const { success, error: toastError } = useToast?.() || {}
   const { roles, user } = useAuth()
   const isRRHH = roles.includes('RRHH') || roles.includes('NivelA')
+  const [uploadingId, setUploadingId] = useState(null)
 
   const enhanced = useMemo(() => rows.map(r => {
     const f = federById?.[r.feder_id]
@@ -57,6 +62,33 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
     } catch (e) {
       toastError?.(e.response?.data?.error || 'Error al cancelar.')
     }
+  }
+
+  async function handleUploadAttachment(id) {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/pdf,image/*,.doc,.docx'
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      setUploadingId(id)
+      try {
+        // 1. Subir archivo
+        const { url } = await ausenciasApi.upload(file)
+
+        // 2. Actualizar ausencia con la URL
+        const updated = await ausenciasApi.aus.update(id, { archivo_url: url })
+        setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+        onUpdated?.(updated)
+        success?.('Adjunto agregado correctamente')
+      } catch (e) {
+        toastError?.(e.response?.data?.error || 'Error al subir el adjunto')
+      } finally {
+        setUploadingId(null)
+      }
+    }
+    input.click()
   }
 
   return (
@@ -153,6 +185,46 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
                     )}
                   </div>
                 )}
+
+                {/* Botón para agregar adjunto si no hay ninguno y el usuario tiene permiso */}
+                {!item.archivo_url && (() => {
+                  const isOwner = item.user_id === user?.id
+                  const isDenegada = item.estado_codigo === 'denegada'
+
+                  // Si está rechazada, solo el dueño puede agregar adjunto
+                  if (isDenegada) {
+                    return isOwner && (
+                      <button
+                        className="fh-btn ghost sm"
+                        style={{ marginTop: 8, fontSize: '0.75rem', padding: '4px 8px' }}
+                        onClick={() => handleUploadAttachment(item.id)}
+                        disabled={uploadingId === item.id}
+                      >
+                        {uploadingId === item.id ? (
+                          <><FiUpload className="spin" /> Subiendo...</>
+                        ) : (
+                          <><FiUpload /> Agregar Adjunto</>
+                        )}
+                      </button>
+                    )
+                  }
+
+                  // Para cualquier otro estado (pendiente, aprobada, etc.), RRHH o el dueño pueden agregar
+                  return (isRRHH || isOwner) && (
+                    <button
+                      className="fh-btn ghost sm"
+                      style={{ marginTop: 8, fontSize: '0.75rem', padding: '4px 8px' }}
+                      onClick={() => handleUploadAttachment(item.id)}
+                      disabled={uploadingId === item.id}
+                    >
+                      {uploadingId === item.id ? (
+                        <><FiUpload className="spin" /> Subiendo...</>
+                      ) : (
+                        <><FiUpload /> Agregar Adjunto</>
+                      )}
+                    </button>
+                  )
+                })()}
               </div>
             </div>
           ))}

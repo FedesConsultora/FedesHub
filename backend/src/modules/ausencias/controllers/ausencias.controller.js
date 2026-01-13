@@ -1,15 +1,15 @@
 // /backend/src/modules/ausencias/controllers/ausencias.controller.js
 import {
   catalogQuery, tiposListQuery, tipoCreateSchema, tipoUpdateSchema,
-  cuotaAssignSchema, cuotasListQuery, saldoQuery,
+  cuotaAssignSchema, cuotaAssignBatchSchema, cuotasListQuery, saldoQuery,
   ausListQuery, ausenciaCreateSchema, ausenciaDecisionSchema, ausenciaRechazoSchema,
   asignacionSolicitudCreate, asignacionSolicitudList
 } from '../validators.js';
 
 import {
   catUnidades, catEstados, catMitadDia, tiposList, tipoCreate, tipoUpdate,
-  cuotaAssign, cuotasList, cuotaDelete, saldoTipos,
-  ausList, ausDetail, ausCreate, ausApprove, ausReject, ausCancel, ausUpdateSvc,
+  cuotaAssign, cuotaAssignBatch, cuotasList, cuotaDelete, saldoTipos,
+  ausList, ausDetail, ausCreate, ausApprove, ausReject, ausCancel, ausUpdateSvc, ausReset,
   asignacionSolicitudCreateSvc, asignacionSolicitudListSvc,
   asignacionSolicitudApproveSvc, asignacionSolicitudDenySvc, asignacionSolicitudCancelSvc,
   meFeder, svcGetCounts
@@ -37,6 +37,9 @@ export const patchTipo = async (req, res, next) => {
 // ==== Cuotas y Saldos
 export const postCuota = async (req, res, next) => {
   try { res.status(201).json(await cuotaAssign(cuotaAssignSchema.parse(req.body), req.user.id)); } catch (e) { next(e); }
+};
+export const postCuotaBatch = async (req, res, next) => {
+  try { res.status(201).json(await cuotaAssignBatch(cuotaAssignBatchSchema.parse(req.body), req.user.id)); } catch (e) { next(e); }
 };
 export const getCuotas = async (req, res, next) => {
   try { res.json(await cuotasList(cuotasListQuery.parse(req.query))); } catch (e) { next(e); }
@@ -79,6 +82,10 @@ export const cancelAus = async (req, res, next) => {
 };
 export const updateAus = async (req, res, next) => {
   try { res.json(await ausUpdateSvc(Number(req.params.id), req.body)); } catch (e) { next(e); }
+};
+
+export const resetAus = async (req, res, next) => {
+  try { res.json(await ausReset(Number(req.params.id))); } catch (e) { next(e); }
 };
 
 export const getCounts = async (req, res, next) => {

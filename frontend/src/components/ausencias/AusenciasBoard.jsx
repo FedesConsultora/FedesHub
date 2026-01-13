@@ -1,5 +1,5 @@
 // src/components/ausencias/AusenciasBoard.jsx
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import usePermission from '../../hooks/usePermissions'
 import { useAusenciasBoard, normalizeAmount } from '../../hooks/useAusencias'
 import useFeders from '../../hooks/useFeders'          // 🆕
@@ -14,6 +14,7 @@ import RrhhAusenciasTab from '../admin/AdminDrawer/RrhhAusenciasTab'
 import AbsenceTypesTab from '../admin/AdminDrawer/AbsenceTypesTab'
 import AusenciasFilters from './AusenciasFilters'
 import DayDetails from './dialogs/DayDetails'
+import MassiveAllocationForm from './dialogs/MassiveAllocationForm'
 import { FaCalendarAlt } from 'react-icons/fa'
 import { FiLoader, FiSettings } from 'react-icons/fi'
 import { useModal } from '../modal/ModalProvider.jsx'
@@ -139,6 +140,10 @@ export default function AusenciasBoard() {
   // mapa expandido por día
   const filteredByDate = useMemo(() => mapByDateFromRows(filteredRows), [filteredRows])
 
+  // 🛡️ Ref para evitar cierres (closures) viejos en openDay (arregla bug de refresco tras creación)
+  const filteredByDateRef = useRef(filteredByDate)
+  useEffect(() => { filteredByDateRef.current = filteredByDate }, [filteredByDate])
+
   const pendingVisible = useMemo(
     () => filteredRows.filter(r => r.estado_codigo === 'pendiente').length,
     [filteredRows]
@@ -192,7 +197,17 @@ export default function AusenciasBoard() {
       title: 'Nueva asignación (solicitud)',
       width: 720,
       render: (close) => (
-        <AllocationForm initDate={initDate} onCancel={() => close(false)} onDone={() => { close(true); fetchAll() }} />
+        <AllocationForm initDate={initDate} onCancel={() => close(false)} onDone={() => { close(true); board.fetchAll() }} />
+      )
+    })
+  }
+
+  const openMassiveAlloc = () => {
+    modal.open({
+      title: 'Asignación Masiva de Cupos',
+      width: 800,
+      render: (close) => (
+        <MassiveAllocationForm onCancel={() => close(false)} onDone={() => { close(true); board.fetchAll() }} />
       )
     })
   }
@@ -228,7 +243,7 @@ export default function AusenciasBoard() {
 
   // ---- detalle del día
   const openDay = (dateStr) => {
-    const items = filteredByDate.get(dateStr) || []
+    const items = filteredByDateRef.current.get(dateStr) || []
     modal.open({
       title: new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
       width: 720,
@@ -255,6 +270,7 @@ export default function AusenciasBoard() {
         canManageRrhh={canManageRrhh}
         onNewAbs={() => openNewAbs()}
         onNewAlloc={openNewAlloc}
+        onMassiveAlloc={openMassiveAlloc}
         onOpenRrhh={openRrhhModal}
         onOpenConfig={openConfigModal}
         canManageTypes={can('ausencias', 'manage')}

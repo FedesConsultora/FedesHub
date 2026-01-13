@@ -8,9 +8,9 @@ import {
   // Catálogos
   getUnidades, getEstados, getMitadDia, getTipos, postTipo, patchTipo,
   // Cuotas y saldos
-  postCuota, getCuotas, deleteCuota, getSaldoPorTipo, getSaldoMe,
+  postCuota, postCuotaBatch, getCuotas, deleteCuota, getSaldoPorTipo, getSaldoMe,
   // Ausencias
-  listAus, detailAus, createAus, meCreateAus, approveAus, rejectAus, cancelAus, updateAus,
+  listAus, detailAus, createAus, meCreateAus, approveAus, rejectAus, cancelAus, updateAus, resetAus,
   // Solicitudes de asignación
   createAsignacionSolicitud, listAsignacionSolicitud, approveAsignacionSolicitud, denyAsignacionSolicitud, cancelAsignacionSolicitud,
   postUpload, getCounts
@@ -31,6 +31,7 @@ router.patch('/tipos/:id', requireAuth, requirePermission('ausencias', 'update')
 
 // ===== Cuotas y saldos
 router.post('/cuotas', requireAuth, requirePermission('rrhh', 'manage'), postCuota);  // RRHH / Admin
+router.post('/cuotas/batch', requireAuth, requirePermission('rrhh', 'manage'), postCuotaBatch);
 router.get('/cuotas', requireAuth, requirePermission('ausencias', 'read'), getCuotas);
 router.delete('/cuotas/:id', requireAuth, requirePermission('rrhh', 'manage'), deleteCuota);
 router.get('/saldos', requireAuth, requirePermission('ausencias', 'read'), getSaldoPorTipo);
@@ -53,6 +54,7 @@ router.post('/me', requireAuth, requirePermission('ausencias', 'create'), meCrea
 router.post('/:id/approve', requireAuth, requirePermission('ausencias', 'approve'), approveAus);
 router.post('/:id/reject', requireAuth, requirePermission('ausencias', 'approve'), rejectAus);
 router.post('/:id/cancel', requireAuth, requirePermission('ausencias', 'update'), cancelAus);
+router.post('/:id/reset', requireAuth, requirePermission('ausencias', 'approve'), resetAus);
 router.patch('/:id', requireAuth, requirePermission('ausencias', 'update'), updateAus);
 
 // ===== Adjuntos

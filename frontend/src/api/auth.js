@@ -14,6 +14,7 @@ export const adminCreateUser = async (body) => { await ensureCsrf(); return api.
 export const adminListUsers = (q = '') => api.get('/auth/users', { params: { q } })
 export const adminPatchUserRoles = async (id, roles) => { await ensureCsrf(); return api.patch(`/auth/users/${id}/roles`, { roles }) }
 export const adminPatchUserActive = async (id, is_activo) => { await ensureCsrf(); return api.patch(`/auth/users/${id}/active`, { is_activo }) }
+export const adminDeleteUser = async (id) => { await ensureCsrf(); return api.delete(`/auth/users/${id}`) }
 export const adminListRoles = () => api.get('/auth/roles')
 
 // Roles CRUD

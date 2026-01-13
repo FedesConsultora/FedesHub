@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { FiTag, FiCalendar, FiClock, FiMessageCircle, FiCheckCircle, FiHash, FiPaperclip, FiX } from 'react-icons/fi'
 import { ausenciasApi } from '../../../api/ausencias'
+import { useAuth } from '../../../context/AuthContext'
 import PremiumSelect from '../../ui/PremiumSelect'
 import './Dialog.scss'
 
@@ -16,10 +17,16 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
   const [mitad, setMitad] = useState(editingItem?.mitad_dia_id || 1)
   const [horas, setHoras] = useState(editingItem?.duracion_horas || '')
   const [motivo, setMotivo] = useState(editingItem?.motivo || '')
-  const [approveNow, setApproveNow] = useState(canApprove && editingItem?.estado_codigo !== 'aprobada')
+  const [approveNow, setApproveNow] = useState(false) // Lo seteamos en un useEffect mejor o calculamos después
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
+  const { roles, user } = useAuth()
+  const isRRHH = roles.includes('RRHH')
+  const isEditingSelf = !editingItem || editingItem.user_id === user?.id
+
+  // Un RRHH no puede auto-aprobarse
+  const canFinalApprove = canApprove && !(isRRHH && isEditingSelf)
 
   const tipo = useMemo(() => tipos.find(t => t.id === Number(tipoId)) || null, [tipoId, tipos])
   const unidad = tipo?.unidad?.codigo || tipo?.unidad_codigo || null
@@ -28,6 +35,10 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
 
   const [horaDesde, setHoraDesde] = useState(editingItem?.hora_desde || '09:00')
   const [horaHasta, setHoraHasta] = useState(editingItem?.hora_hasta || '13:00')
+
+  useEffect(() => {
+    setApproveNow(canFinalApprove && editingItem?.estado_codigo !== 'aprobada')
+  }, [canFinalApprove, editingItem])
 
   // Auto-calcular horas si cambian los tiempos
   useMemo(() => {
@@ -69,6 +80,13 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
   async function submit() {
     setError(null); setSubmitting(true)
     try {
+      // Validar saldo solo para NUEVAS ausencias (no para editar)
+      if (!editingItem && exceed) {
+        setError('No tienes saldo suficiente para esta ausencia. Por favor, solicita una asignación de cupo primero.')
+        setSubmitting(false)
+        return
+      }
+
       const body = {
         tipo_id: Number(tipoId),
         fecha_desde: desde,
@@ -105,7 +123,7 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
   }
 
   const hasExistingFile = !!editingItem?.archivo_url
-  const disabled = !tipoId || !desde || (!hasta && unidad !== 'hora') || submitting || (!file && !hasExistingFile)
+  const disabled = !tipoId || !desde || (!hasta && unidad !== 'hora') || submitting || (!editingItem && exceed)
 
   const tipoOptions = useMemo(() => tipos.map(t => ({
     value: t.id,
@@ -235,8 +253,27 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
             <b>{requestedAmount()} {unidad === 'hora' ? 'horas' : 'días'}</b>
           </div>
           {exceed && (
-            <div className="warn-banner">
-              ⚠️ Saldo insuficiente para esta solicitud.
+            <div className="warn-banner" style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 8,
+              padding: '12px 16px',
+              marginTop: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#ef4444' }}>
+                ⚠️ Saldo insuficiente
+              </div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--fh-text)' }}>
+                No podrás crear esta solicitud hasta que tengas saldo disponible.
+                {!editingItem && (
+                  <strong style={{ display: 'block', marginTop: 4, color: 'var(--fh-accent)' }}>
+                    💡 Primero solicita una asignación de cupo para este tipo de ausencia.
+                  </strong>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -245,7 +282,7 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
       {error && <div className="fh-err" style={{ marginBottom: 12 }}>{error}</div>}
 
       <div className="actions">
-        {canApprove && (
+        {canFinalApprove && (
           <label className="check-row" style={{ marginRight: 'auto' }}>
             <input type="checkbox" checked={approveNow} onChange={e => setApproveNow(e.target.checked)} />
             <span><FiCheckCircle /> Aprobar ahora</span>

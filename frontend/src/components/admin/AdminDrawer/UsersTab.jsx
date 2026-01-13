@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { FiPlus, FiEdit2, FiPower, FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiPlus, FiEdit2, FiPower, FiEye, FiEyeOff, FiTrash2 } from 'react-icons/fi'
 import * as A from '../../../api/auth'
 import * as C from '../../../api/cargos'
 import { federsApi } from '../../../api/feders'
@@ -242,6 +242,25 @@ export default function UsersTab() {
             load()
         } catch (e) {
             toast?.error('Error al cambiar estado')
+        }
+    }
+
+    const handleDelete = async (user) => {
+        const ok = await modal.confirm({
+            title: 'Eliminar usuario',
+            message: `¿Estás seguro de eliminar a "${user.email}"? Esta acción no se puede deshacer y eliminará también su perfil de Feder.`,
+            tone: 'danger',
+            okText: 'Eliminar'
+        })
+        if (!ok) return
+
+        try {
+            await A.adminDeleteUser(user.id)
+            toast?.success('Usuario eliminado correctamente')
+            load()
+        } catch (e) {
+            console.error('Error deleting user:', e)
+            toast?.error(e?.response?.data?.error || 'Error al eliminar usuario')
         }
     }
 
@@ -490,6 +509,13 @@ export default function UsersTab() {
                                             title={user.is_activo ? 'Desactivar' : 'Activar'}
                                         >
                                             <FiPower size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(user)}
+                                            className="danger"
+                                            title="Eliminar permanentemente"
+                                        >
+                                            <FiTrash2 size={14} />
                                         </button>
                                     </div>
                                 </td>
