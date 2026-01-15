@@ -89,7 +89,7 @@ export const resetAus = async (req, res, next) => {
 };
 
 export const getCounts = async (req, res, next) => {
-  try { res.json(await svcGetCounts()); } catch (e) { next(e); }
+  try { res.json(await svcGetCounts(req.user.id)); } catch (e) { next(e); }
 };
 
 // ==== Solicitudes de Asignación (cupo extra)

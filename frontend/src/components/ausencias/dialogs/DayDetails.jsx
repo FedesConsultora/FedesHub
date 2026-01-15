@@ -112,7 +112,7 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
                     <span className="type">{item.tipo_nombre}</span>
                   </div>
                 </div>
-                {(isRRHH || item.user_id === user?.id) && item.motivo && (
+                {(isRRHH || String(item.user_id) === String(user?.id)) && item.motivo && (
                   <div className="motivo" style={{
                     marginTop: 8,
                     fontSize: '0.85rem',
@@ -130,15 +130,19 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
                 {/* Acciones para pendientes */}
                 {item.estado_codigo === 'pendiente' && (
                   <div style={{ display: 'flex', gap: 8, paddingLeft: 54, marginTop: 4 }}>
-                    {canApprove ? (
+                    {canApprove && String(item.user_id) !== String(user?.id) ? (
                       <>
                         <button className="fh-btn primary sm" onClick={() => approve(item.id)}><FiCheck /> Aprobar</button>
                         <button className="fh-btn danger sm" onClick={() => reject(item.id)}><FiX /> Rechazar</button>
                       </>
                     ) : (
                       <>
-                        <button className="fh-btn ghost sm" style={{ padding: '6px 12px' }} onClick={() => onEdit(item)}><FiEdit2 /> Editar</button>
-                        <button className="fh-btn danger sm" style={{ padding: '6px 12px', background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }} onClick={() => cancel(item.id)}><FiTrash2 /> Cancelar</button>
+                        {item.user_id === user?.id && (
+                          <>
+                            <button className="fh-btn ghost sm" style={{ padding: '6px 12px' }} onClick={() => onEdit(item)}><FiEdit2 /> Editar</button>
+                            <button className="fh-btn danger sm" style={{ padding: '6px 12px', background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }} onClick={() => cancel(item.id)}><FiTrash2 /> Cancelar</button>
+                          </>
+                        )}
                       </>
                     )}
                   </div>

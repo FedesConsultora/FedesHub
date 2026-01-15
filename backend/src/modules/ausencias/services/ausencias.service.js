@@ -335,20 +335,25 @@ export const meFeder = async (user_id) => {
   return me;
 };
 
-export const svcGetCounts = async () => {
+export const svcGetCounts = async (meUserId) => {
+  // Contar ausencias pendientes de OTROS (no las mías)
   const [resAus] = await sequelize.query(`
     SELECT COUNT(*)::int as count 
     FROM "Ausencia" a
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
+    JOIN "Feder" f ON f.id = a.feder_id
     WHERE e.codigo = 'pendiente'
-  `, { type: QueryTypes.SELECT });
+      AND f.user_id <> :me
+  `, { type: QueryTypes.SELECT, replacements: { me: meUserId } });
 
   const [resAsig] = await sequelize.query(`
     SELECT COUNT(*)::int as count 
     FROM "AusenciaAsignacionSolicitud" s
     JOIN "AsignacionSolicitudEstado" e ON e.id = s.estado_id
+    JOIN "Feder" f ON f.id = s.feder_id
     WHERE e.codigo = 'pendiente'
-  `, { type: QueryTypes.SELECT });
+      AND f.user_id <> :me
+  `, { type: QueryTypes.SELECT, replacements: { me: meUserId } });
 
   const aus = resAus?.count || 0;
   const asig = resAsig?.count || 0;

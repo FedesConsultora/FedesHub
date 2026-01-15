@@ -46,7 +46,7 @@ function mapByDateFromRows(rows) {
 }
 
 export default function AusenciasBoard() {
-  const { user } = useAuth()
+  const { user, roles } = useAuth()
   const now = new Date()
   const modal = useModal()
 
@@ -120,7 +120,7 @@ export default function AusenciasBoard() {
     // SOLO contar ausencias del usuario actual
     const myFederId = user?.feder_id
 
-    for (const row of board.aus.rows) {
+    for (const row of allRows) {
       // FILTRO CRÍTICO: Solo sumar si es mi ausencia
       if (myFederId && row.feder_id !== myFederId) continue
 
@@ -138,7 +138,7 @@ export default function AusenciasBoard() {
     return Array.from(map.values())
       .filter(b => b.allocated > 0 || b.approved > 0 || b.planned > 0)
       .sort((a, b) => a.tipo_nombre.localeCompare(b.tipo_nombre))
-  }, [board.saldos.saldos, board.aus.rows])
+  }, [board.saldos.saldos, allRows, user?.feder_id])
 
   // ---- filtros
   const todayISO = todayLocal()
@@ -288,7 +288,9 @@ export default function AusenciasBoard() {
         onOpenRrhh={openRrhhModal}
         onOpenConfig={openConfigModal}
         canManageTypes={can('ausencias', 'manage')}
-        pendingBadge={canApprove ? pendingVisible : 0}
+        pendingBadge={(canApprove && (roles.includes('RRHH') || roles.includes('NivelA')))
+          ? filteredRows.filter(r => r.estado_codigo === 'pendiente' && r.user_id !== user?.id).length
+          : 0}
       />
 
       {board.aus.loading && (

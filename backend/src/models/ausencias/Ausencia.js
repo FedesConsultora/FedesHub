@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
     es_medio_dia: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     mitad_dia_id: { type: DataTypes.SMALLINT },
     duracion_horas: { type: DataTypes.DECIMAL(10, 2) }, // NUEVO (para unidad=horas)
+    motivo: { type: DataTypes.TEXT },
     comentario_admin: { type: DataTypes.TEXT },
     aprobado_por_user_id: { type: DataTypes.INTEGER },
     aprobado_at: { type: DataTypes.DATE },

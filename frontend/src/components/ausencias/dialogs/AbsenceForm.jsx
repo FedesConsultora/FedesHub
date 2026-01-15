@@ -23,7 +23,7 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
   const [file, setFile] = useState(null)
   const { roles, user } = useAuth()
   const isRRHH = roles.includes('RRHH')
-  const isEditingSelf = !editingItem || editingItem.user_id === user?.id
+  const isEditingSelf = !editingItem || String(editingItem.user_id) === String(user?.id)
 
   // Un RRHH no puede auto-aprobarse
   const canFinalApprove = canApprove && !(isRRHH && isEditingSelf)

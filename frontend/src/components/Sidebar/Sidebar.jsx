@@ -28,17 +28,21 @@ export default function Sidebar() {
   const [chatHasUnread, setChatHasUnread] = useState(false)
   const [ausPendingCount, setAusPendingCount] = useState(0)
 
-  const canApproveAus = hasPerm('ausencias', 'approve')
+  const canApproveAus = hasPerm('ausencias', 'approve') && (roles.includes('RRHH') || roles.includes('NivelA'))
 
   // Verificar si es directivo (NivelB o admin)
-  const isDirectivo = roles?.includes('NivelB') || hasPerm('auth', 'assign')
+  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || hasPerm('auth', 'assign')
 
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)
     window.addEventListener('fh:chat:hasUnread', handler)
 
     const fetchCounts = async () => {
-      if (!canApproveAus) return
+      // SOLO RRHH o Admins ven el badge
+      if (!canApproveAus) {
+        setAusPendingCount(0)
+        return
+      }
       try {
         const counts = await ausenciasApi.getCounts()
         setAusPendingCount(counts.total || 0)
