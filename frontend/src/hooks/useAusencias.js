@@ -27,8 +27,15 @@ export function useSaldos(yearStr) {
 
   const fetchAll = () => {
     setData(s => ({ ...s, loading: true, error: null }))
+    const today = new Date()
+    const isCurrentYear = today.getFullYear() === Number(yearStr)
+    // Si es el año actual, pedimos saldo a HOY. Si es otro año, al 31/12 de ese año.
+    const fechaConsulta = isCurrentYear
+      ? ymd(today)
+      : `${yearStr}-12-31`
+
     Promise.all([
-      ausenciasApi.cuotas.meSaldo({ fecha: `${yearStr}-12-31` }),
+      ausenciasApi.cuotas.meSaldo({ fecha: fechaConsulta }),
       ausenciasApi.catalog.tipos()
     ])
       .then(([saldos, tipos]) => setData({ saldos, tipos, loading: false, error: null }))

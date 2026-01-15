@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
     fecha_ingreso: { type: DataTypes.DATEONLY },
     fecha_egreso: { type: DataTypes.DATEONLY },
     is_activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    is_clevel: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 
     // 👇 NUEVO — datos de identidad/ERP (encriptados donde corresponde)
     nombre_legal: { type: DataTypes.STRING(180) },

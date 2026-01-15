@@ -14,9 +14,9 @@ const path = require('path');
 
 const PEOPLE = [
   // NivelA: Directivos / C-Level
-  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedesconsultora.com', nivel: 'NivelA' },
-  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedesconsultora.com', nivel: 'NivelA' },
-  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedesconsultora.com', nivel: 'NivelA' },
+  { nombre: 'Martin', apellido: 'Spinelli', cargo: 'COO', email: 'martin@fedesconsultora.com', nivel: 'NivelA', is_clevel: true },
+  { nombre: 'Federico', apellido: 'Juan', cargo: 'Co-Founder y CGO', email: 'fedejuan@fedesconsultora.com', nivel: 'NivelA', is_clevel: true },
+  { nombre: 'Federico', apellido: 'Chironi', cargo: 'Co-Founder y CEO', email: 'fedechironi@fedesconsultora.com', nivel: 'NivelA', is_clevel: true },
   { nombre: 'Romina', apellido: 'Albanesi', cargo: 'Responsable Editorial y de Comunicación', email: 'romina@fedesconsultora.com', nivel: 'RRHH' },
   { nombre: 'Enzo', apellido: 'Pinotti', cargo: 'Analista de Sistemas', email: 'epinotti@fedesconsultora.com', nivel: 'NivelB' },
 
@@ -223,9 +223,10 @@ module.exports = {
                    estado_id = :est,
                    avatar_url = COALESCE(:avatar, avatar_url),
                    is_activo = true,
+                   is_clevel = :is_c,
                    updated_at = :now
              WHERE id = :id
-          `, { transaction: t, replacements: { id: keep.id, u: user_id, est: estFed.id, avatar: avatar_url, now } });
+          `, { transaction: t, replacements: { id: keep.id, u: user_id, est: estFed.id, avatar: avatar_url, is_c: !!p.is_clevel, now } });
 
           // borrar duplicados (dejar el primero)
           const idsToDelete = sameNameRows.slice(1).map(r => r.id);
@@ -250,9 +251,10 @@ module.exports = {
           await qi.sequelize.query(
             `UPDATE "Feder"
                 SET avatar_url = COALESCE(:avatar, avatar_url),
+                    is_clevel = :is_c,
                     updated_at = :now
               WHERE id = :id`,
-            { transaction: t, replacements: { id: f.id, avatar: avatar_url, now } }
+            { transaction: t, replacements: { id: f.id, avatar: avatar_url, is_c: !!p.is_clevel, now } }
           );
           continue;
         }
@@ -262,7 +264,9 @@ module.exports = {
           user_id, estado_id: estFed.id,
           nombre: p.nombre || '—', apellido: p.apellido || '—',
           avatar_url,
-          is_activo: true, fecha_ingreso: today, created_at: now, updated_at: now
+          is_activo: true,
+          is_clevel: !!p.is_clevel,
+          fecha_ingreso: today, created_at: now, updated_at: now
         }], { transaction: t, returning: true });
 
         let fid = ins?.id;

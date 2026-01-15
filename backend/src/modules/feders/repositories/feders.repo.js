@@ -168,6 +168,9 @@ export const createFeder = async (payload) => {
   await ensureUserExists(payload.user_id);
   await ensureUserExists(payload.user_id);
 
+  // Limpiar/asegurar booleano
+  if (payload.is_clevel !== undefined) payload.is_clevel = !!payload.is_clevel;
+
   const data = { ...payload };
   if (data.dni_numero !== undefined) {
     data.dni_numero_enc = data.dni_numero;
@@ -186,6 +189,9 @@ export const updateFeder = async (id, payload) => {
   if (payload.estado_id) await ensureEstadoExists(payload.estado_id);
   if (payload.user_id !== undefined) await ensureUserExists(payload.user_id);
   if (payload.user_id !== undefined) await ensureUserExists(payload.user_id);
+
+  // Limpiar/asegurar booleano
+  if (payload.is_clevel !== undefined) payload.is_clevel = !!payload.is_clevel;
 
   const data = { ...payload };
   if (data.dni_numero !== undefined) {
@@ -278,7 +284,7 @@ export const removeFederModalidad = async (feder_id, dia_semana_id) => {
 export const repoOverview = async ({
   prioAmbitos = ['c_level', 'direccion']
 } = {}) => {
-  // 1) C-LEVEL por RBAC (rol NivelA) + cargo principal vigente
+  // 1) C-LEVEL por flag is_clevel + cargo principal vigente
   const cLevel = await sequelize.query(`
     SELECT
       f.id     AS feder_id,
@@ -288,10 +294,8 @@ export const repoOverview = async ({
       c.cargo_nombre,
       c.ambito_codigo,
       c.ambito_nombre
-    FROM "UserRol" ur
-    JOIN "Rol"   r   ON r.id = ur.rol_id AND r.nombre = 'NivelA'
-    JOIN "User"  u   ON u.id = ur.user_id
-    JOIN "Feder" f   ON f.user_id = u.id
+    FROM "Feder" f
+    LEFT JOIN "User" u ON u.id = f.user_id
     LEFT JOIN LATERAL (
       SELECT
         c2.id      AS cargo_id,
@@ -307,8 +311,9 @@ export const repoOverview = async ({
       ORDER BY fc2.desde DESC, fc2.id DESC
       LIMIT 1
     ) AS c ON TRUE
-    WHERE f.nombre NOT ILIKE 'Admin%'
+    WHERE f.is_clevel = true
       AND f.is_activo = true
+      AND f.nombre NOT ILIKE 'Admin%'
       AND u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')
     ORDER BY f.apellido ASC, f.nombre ASC
   `, { type: QueryTypes.SELECT });
@@ -355,11 +360,7 @@ export const repoOverview = async ({
       AND f.is_activo = true
       AND f.nombre NOT ILIKE 'Admin%'
       AND u.email NOT IN ('sistemas@fedesconsultora.com', 'admin@fedesconsultora.com')
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserRol" urx
-        JOIN "Rol" rx ON rx.id = urx.rol_id
-        WHERE urx.user_id = u.id AND rx.nombre = 'NivelA'
-      )
+      AND f.is_clevel = false
     ORDER BY 
       CASE 
         WHEN c.area_codigo = 'fedes-cloud' THEN 1
