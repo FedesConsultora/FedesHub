@@ -82,9 +82,6 @@ $muted: $fh-muted;
   @extend .fh-card;
   padding: 16px;
 
-  .tm-month-name {
-    text-transform: capitalize;
-  }
 
   /* =========================
    FILA DE DÍAS DE LA SEMANA

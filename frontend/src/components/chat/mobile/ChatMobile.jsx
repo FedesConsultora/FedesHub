@@ -134,7 +134,30 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
   }, [sel, membersFull, myId, dmItems, cid])
 
   const getFid = (m) => m?.feder_id || m?.id_feder || m?.feder?.id || m?.user?.feder?.id
-  const myMember = useMemo(() => membersFull.find(m => m.user_id === myId), [membersFull, myId])
+
+  const myMember = useMemo(() =>
+    membersFull.find(m => Number(m.user_id) === Number(myId)),
+    [membersFull, myId]
+  )
+
+  const canPost = useMemo(() => {
+    if (!sel) return true
+    if (!sel.only_mods_can_post) return true
+    if (myMember) {
+      const myRol = myMember.rol?.codigo || null
+      return ['owner', 'admin', 'mod'].includes(myRol)
+    }
+    return true
+  }, [sel, myMember])
+
+  const canPin = useMemo(() => {
+    if (!sel) return false
+    if (myMember) {
+      const myRol = myMember.rol?.codigo || null
+      return ['owner', 'admin'].includes(myRol)
+    }
+    return false
+  }, [sel, myMember])
   const activeTitle = sel ? (sel.nombre ? (sel.apellido ? `${sel.nombre} ${sel.apellido}` : sel.nombre) : (sel.email || 'Chat')) : 'Chat'
 
   return (
@@ -198,10 +221,10 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
               </div>
             </div>
           </header>
-          <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} />
+          <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} canUnpin={canPin} />
           <div className="timeline-container">
             <GlobalLoader isLoading={msgs.isLoading || msgs.isPreviousData} size={60} />
-            <Timeline rows={msgs.data || []} loading={msgs.isLoading} canal_id={cid} members={membersFull} />
+            <Timeline rows={msgs.data || []} loading={msgs.isLoading} canal_id={cid} members={membersFull} canPin={canPin} canReply={canPost} />
           </div>
           {cid && (
             <div className="composer-container">

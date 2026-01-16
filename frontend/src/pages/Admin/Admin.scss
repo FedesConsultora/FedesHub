@@ -139,23 +139,26 @@ button {
     min-width: 0;
     padding: .6rem .75rem;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, .12);
-    background: #0f141b;
+    border: 1px solid rgba($fh-primary, 0.25);
+    background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
     color: $fh-text;
     outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &::placeholder {
       color: rgba(255, 255, 255, .45)
     }
 
-    transition: border-color .18s ease,
-    box-shadow .18s ease,
-    background .18s ease;
-
     &:focus {
       border-color: $fh-primary;
-      background: #0f1823;
-      box-shadow: 0 0 0 2px rgba($fh-primary, .28);
+      background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+      box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+    }
+
+    option {
+      background-color: #1a222c;
+      color: #fff;
+      padding: 10px;
     }
   }
 
@@ -229,11 +232,11 @@ textarea {
   min-width: 0;
   padding: .65rem .75rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, .12);
-  background: #0f141b;
+  border: 1px solid rgba($fh-primary, 0.25);
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
   color: $fh-text;
   outline: none;
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &::placeholder {
     color: rgba(255, 255, 255, .45)
@@ -241,8 +244,14 @@ textarea {
 
   &:focus {
     border-color: $fh-primary;
-    background: #101a25;
-    box-shadow: 0 0 0 2px rgba($fh-primary, .25)
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.25)
+  }
+
+  option {
+    background-color: #1a222c;
+    color: #fff;
+    padding: 10px;
   }
 }
 

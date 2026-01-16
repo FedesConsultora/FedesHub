@@ -135,8 +135,6 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   const canPost = useMemo(() => {
     if (!sel) return true
     if (!sel.only_mods_can_post) return true
-
-    // Si hay miembros, validamos rigurosamente
     if (sel.miembros && Array.isArray(sel.miembros)) {
       const myMember = sel.miembros.find(m => m.user_id === myId)
       if (myMember) {
@@ -144,10 +142,19 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
         return ['owner', 'admin', 'mod'].includes(myRol)
       }
     }
-
-    // Por defecto, si el canal está cargado pero no tenemos la data de membresía aún, 
-    // permitimos para no "congelar" la UI innecesariamente.
     return true
+  }, [sel, myId])
+
+  const canPin = useMemo(() => {
+    if (!sel) return false
+    if (sel.miembros && Array.isArray(sel.miembros)) {
+      const myMember = sel.miembros.find(m => m.user_id === myId)
+      if (myMember) {
+        const myRol = myMember.rol?.codigo || null
+        return ['owner', 'admin'].includes(myRol)
+      }
+    }
+    return false
   }, [sel, myId])
 
   const onZoneDragOver = (e) => { e.preventDefault(); if (!canPost) return; e.dataTransfer.dropEffect = 'copy' }
@@ -239,7 +246,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
               onStartCreateGroup={(cfg) => openCreate(cfg)}
               onSelectMessage={handleSelectMessage}
             />
-            <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} />
+            <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} canUnpin={canPin} />
             <div className="chat-dropzone" onDragOver={onZoneDragOver} onDrop={onZoneDrop}>
               <ChatActionCtx.Provider value={{ replyTo, setReplyTo }}>
                 <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -250,6 +257,8 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
                     canal_id={cid}
                     my_user_id={myId}
                     members={membersFull}
+                    canPin={canPin}
+                    canReply={canPost}
                   />
                 </div>
 

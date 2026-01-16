@@ -14,10 +14,10 @@ $fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a6b3c3);
     min-width: 0;
     padding: .65rem .65rem;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, .12);
-    background: #0f141b;
+    border: 1px solid rgba($fh-primary, 0.25);
+    background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
     color: $fh-text;
-    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
 
     .ico {
@@ -68,8 +68,8 @@ $fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a6b3c3);
 
     &:focus-within {
       border-color: $fh-primary;
-      background: #101a25;
-      box-shadow: 0 0 0 2px rgba($fh-primary, .26);
+      background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+      box-shadow: 0 0 0 3px rgba($fh-primary, .15);
     }
   }
 

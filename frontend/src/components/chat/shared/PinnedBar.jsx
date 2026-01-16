@@ -4,14 +4,14 @@ import { FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi'
 import { useChannelPins, usePinMessage } from '../../../hooks/useChat'
 import './PinnedBar.scss'
 
-export default function PinnedBar({ canal_id, onSelectMessage }) {
+export default function PinnedBar({ canal_id, onSelectMessage, canUnpin = true }) {
     const cid = Number(canal_id)
     const { data: pins = [], isLoading } = useChannelPins(cid)
     const pinMutation = usePinMessage()
     const [currentIndex, setCurrentIndex] = React.useState(0)
 
-    // Descartar pins sin mensaje
-    const activePins = useMemo(() => pins.filter(p => !!p.mensaje), [pins])
+    // Descartar pins sin mensaje o con mensaje eliminado
+    const activePins = useMemo(() => pins.filter(p => !!p.mensaje && !p.mensaje.deleted_at), [pins])
 
     if (isLoading || activePins.length === 0) return null
 
@@ -65,9 +65,11 @@ export default function PinnedBar({ canal_id, onSelectMessage }) {
                         <button onClick={handleNext} title="Siguiente"><FiChevronRight /></button>
                     </div>
                 )}
-                <button className="unpinBtn" onClick={handleUnpin} title="Desfijar" disabled={pinMutation.isPending}>
-                    <FiX />
-                </button>
+                {canUnpin && (
+                    <button className="unpinBtn" onClick={handleUnpin} title="Desfijar" disabled={pinMutation.isPending}>
+                        <FiX />
+                    </button>
+                )}
             </div>
         </div>
     )

@@ -3,7 +3,7 @@ import { FiPlay, FiPause } from 'react-icons/fi'
 import WaveSurfer from 'wavesurfer.js'
 import './AudioPlayer.scss'
 
-export default function AudioPlayer({ url, duration }) {
+export default function AudioPlayer({ url, duration, isMine = false }) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentTime, setCurrentTime] = useState(0)
     const [totalDuration, setTotalDuration] = useState(duration || 0)
@@ -15,14 +15,15 @@ export default function AudioPlayer({ url, duration }) {
         if (waveformRef.current) {
             wavesurferRef.current = WaveSurfer.create({
                 container: waveformRef.current,
-                waveColor: '#94a3b8',
-                progressColor: '#60a5fa',
-                cursorColor: '#3b82f6',
-                barWidth: 3,
-                barRadius: 3,
+                waveColor: isMine ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                progressColor: isMine ? '#1a73e8' : '#60a5fa',
+                cursorColor: 'transparent',
+                barWidth: 2,
+                barRadius: 2,
                 responsive: true,
-                height: 30,
+                height: 35,
                 normalize: true,
+                gap: 2,
             })
 
             wavesurferRef.current.load(url)

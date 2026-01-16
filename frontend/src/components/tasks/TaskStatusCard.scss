@@ -1,3 +1,5 @@
+@use '../../styles/variables' as *;
+
 .statusDropdown {
   position: relative;
   display: inline-block;
@@ -6,26 +8,44 @@
 .statusTrigger {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #121721;
+  gap: 8px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
   color: #fff;
-  padding: 6px 19px;
-  border-radius: 1rem;
+  padding: 8px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba($fh-primary, 0.25);
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+
+  &:hover {
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    border-color: rgba($fh-primary, 0.45);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $fh-primary;
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+  }
 }
 
 .statusMenu {
   position: absolute;
   top: calc(100% + 6px);
   left: -.8rem;
-  background: #0f1720;
-  border: 1px solid #2c3441;
-  border-radius: 12px;
+  background: linear-gradient(165deg, rgba(26, 34, 46, 0.98) 0%, rgba(15, 23, 32, 0.98) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 18px;
   padding: 1rem;
   width: 140px;
-  z-index: 90;
+  z-index: 900;
 
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba($fh-primary, 0.1);
   animation: fadeIn .15s ease;
 
   // Cuando está en portal (fixed positioning)
@@ -42,7 +62,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-radius: 1rem;
+  border-radius: 14px;
   cursor: pointer;
   white-space: nowrap;
 

@@ -46,19 +46,33 @@ $muted: $fh-muted;
 
 /* Helpers */
 .fh-card {
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: var(--radius);
-  box-shadow: var(--elev);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(165deg, rgba(26, 34, 46, 0.9) 0%, rgba(15, 23, 32, 0.95) 100%);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba($fh-primary, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .fh-input {
-  padding: .45rem .6rem;
-  border: 1px solid $border;
-  border-radius: 10px;
-  background: $surface-2;
+  padding: .6rem .8rem;
+  border: 1px solid rgba($fh-primary, 0.25);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
   color: $text;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: rgba($fh-primary, 0.45);
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+  }
+
+  &:focus {
+    border-color: $fh-primary;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+    outline: none;
+  }
 }
 
 .fh-skel {
@@ -430,10 +444,11 @@ $muted: $fh-muted;
 
       .search-icon {
         position: absolute;
-        left: 12px;
+        left: 14px;
         top: 50%;
         transform: translateY(-50%);
-        opacity: 0.4;
+        color: $fh-primary;
+        opacity: 0.7;
       }
 
       input {

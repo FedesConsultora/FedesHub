@@ -39,7 +39,7 @@ export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, onDa
 }
 
 function Month({ year, month, active, setActive, byDate, onDayClick }) {
-  const label = new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
+  const label = ((str) => str.charAt(0).toUpperCase() + str.slice(1))(new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }))
   const first = new Date(year, month, 1)
   const startWeekDay = (first.getDay() + 6) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()

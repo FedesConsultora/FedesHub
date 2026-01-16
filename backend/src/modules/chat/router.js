@@ -46,11 +46,11 @@ router.patch(
 )
 // Miembros
 router.get('/channels/:id/members', requireAuth, requirePermission('chat', 'read'), chat.getMiembros);
-router.post('/channels/:id/members', requireAuth, requirePermission('chat', 'update'), chat.postMiembro);
-router.patch('/channels/:id/members/:user_id', requireAuth, requirePermission('chat', 'update'), chat.patchMiembro);
-router.delete('/channels/:id/members/:user_id', requireAuth, requirePermission('chat', 'update'), chat.deleteMiembro);
-router.post('/channels/:id/join', requireAuth, requirePermission('chat', 'update'), chat.postJoin);
-router.post('/channels/:id/leave', requireAuth, requirePermission('chat', 'update'), chat.postLeave);
+router.post('/channels/:id/members', requireAuth, requirePermission('chat', 'read'), chat.postMiembro);
+router.patch('/channels/:id/members/:user_id', requireAuth, requirePermission('chat', 'read'), chat.patchMiembro);
+router.delete('/channels/:id/members/:user_id', requireAuth, requirePermission('chat', 'read'), chat.deleteMiembro);
+router.post('/channels/:id/join', requireAuth, requirePermission('chat', 'read'), chat.postJoin);
+router.post('/channels/:id/leave', requireAuth, requirePermission('chat', 'read'), chat.postLeave);
 
 // Mensajes (timeline del canal)
 router.get('/channels/:id/messages', requireAuth, requirePermission('chat', 'read'), chat.getMessages);
@@ -67,7 +67,7 @@ router.post(
 
 // Mensaje by id
 router.put('/messages/:id', requireAuth, requirePermission('chat', 'update'), chat.putMessage);
-router.delete('/messages/:id', requireAuth, requirePermission('chat', 'delete'), chat.deleteMessage);
+router.delete('/messages/:id', requireAuth, requirePermission('chat', 'update'), chat.deleteMessage);
 
 // Reacciones / Pin / Guardado / Follow hilo / Read
 router.post('/messages/:id/react', requireAuth, requirePermission('chat', 'update'), chat.postReact);

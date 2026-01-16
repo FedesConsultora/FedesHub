@@ -5,7 +5,7 @@ import { resolveMediaUrl } from '../../../utils/media'
 import { useLightbox } from '../../common/useLightbox'
 import useShare from '../share/useShare'
 
-export default function MessageAttachments({ items = [] }) {
+export default function MessageAttachments({ items = [], isMine = false }) {
   if (!items?.length) return null
 
   const images = items.filter(a => (a.mime_type || '').startsWith('image/'))
@@ -48,7 +48,7 @@ export default function MessageAttachments({ items = [] }) {
       {!!audios.length && (
         <div className="audioList">
           {audios.map((a, idx) => (
-            <AudioPlayer key={`audio-${a.id || idx}`} url={resolveMediaUrl(a.file_url)} />
+            <AudioPlayer key={`audio-${a.id || idx}`} url={resolveMediaUrl(a.file_url)} isMine={isMine} />
           ))}
         </div>
       )}

@@ -22,18 +22,62 @@
 .fh-input {
   height: 40px;
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, .3);
-  background: linear-gradient(180deg, #0b1118, #0f1720);
+  border-radius: 12px;
+  border: 1px solid rgba($fh-primary, 0.25);
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
   color: $fh-text;
   padding: 0 12px;
   font-size: .95rem;
   outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: rgba($fh-primary, 0.45);
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+  }
+
+  &:focus {
+    border-color: $fh-primary;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
 }
 
-.fh-input:focus {
-  box-shadow: 0 0 0 2px #315a71;
-  border-color: #315a71;
+/* Select */
+.fh-select {
+  height: 40px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba($fh-primary, 0.25);
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+  color: $fh-text;
+  padding: 0 12px;
+  font-size: .95rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: rgba($fh-primary, 0.45);
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+  }
+
+  &:focus {
+    border-color: $fh-primary;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+  }
+
+  option {
+    background-color: #1a222c;
+    color: #fff;
+    padding: 10px;
+  }
 }
 
 /* Modal */

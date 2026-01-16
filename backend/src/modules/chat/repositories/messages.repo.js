@@ -178,12 +178,20 @@ export async function deleteMessage(id, user, t) {
   const row = await m.ChatMensaje.findByPk(id, { include: [{ model: m.ChatCanal, as: 'canal' }], transaction: t });
   if (!row) throw Object.assign(new Error('Mensaje no encontrado'), { status: 404 });
 
-  const me = await _canalMember(row.canal_id, user.id, t);
-  const myRole = me ? await _rolCodigoById(me.rol_id, t) : null;
-  const canMod = ['owner', 'admin', 'mod'].includes(myRole);
-  if (row.user_id !== user.id && !canMod) {
+  // Estrictamente sólo el autor (por pedido del usuario)
+  if (row.user_id !== user.id) {
     throw Object.assign(new Error('No podés borrar este mensaje'), { status: 403 });
   }
+
+  // Ventana de 30 minutos (por pedido del usuario)
+  const diffMs = Date.now() - new Date(row.created_at).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins > 30) {
+    throw Object.assign(new Error('Sólo podés borrar mensajes dentro de los primeros 30 minutos'), { status: 403 });
+  }
+
+  // Eliminar pins asociados si existen
+  await m.ChatPin.destroy({ where: { mensaje_id: id }, transaction: t });
 
   await row.update({ deleted_at: new Date(), deleted_by_user_id: user.id }, { transaction: t });
   return { deleted: 1 };

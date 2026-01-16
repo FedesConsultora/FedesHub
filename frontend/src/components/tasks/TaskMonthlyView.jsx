@@ -115,7 +115,7 @@ export default function TaskMonthlyView({ rows = [], onOpenTask, filters, setFil
         <div className="TaskMonthlyView">
             <header className="calendarHeader">
                 <div className="monthInfo">
-                    <h2>{format(currentDate, "MMMM yyyy", { locale: es })}</h2>
+                    <h2>{((str) => str.charAt(0).toUpperCase() + str.slice(1))(format(currentDate, "MMMM yyyy", { locale: es }))}</h2>
                 </div>
 
                 <div className="calendarFilters">

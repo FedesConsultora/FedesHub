@@ -31,7 +31,7 @@ export default function MonthCalendar({ year, month, rows = [], onDayClick, onPr
     return m
   }, [rows, year, month])
 
-  const label = new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
+  const label = ((str) => str.charAt(0).toUpperCase() + str.slice(1))(new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }))
   const today = new Date(); const todayStr = `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`
 
   return (

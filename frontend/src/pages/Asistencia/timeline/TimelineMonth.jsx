@@ -42,7 +42,8 @@ export default function TimelineMonth({ payload, onNavigate, currentFecha }) {
     // Completar la última fila si no termina en sábado
     while (calendarCells.length % 7 !== 0) calendarCells.push(null)
 
-    const monthName = dateRef.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
+    const monthNameRaw = dateRef.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
+    const monthName = monthNameRaw.charAt(0).toUpperCase() + monthNameRaw.slice(1)
     const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
     return (
