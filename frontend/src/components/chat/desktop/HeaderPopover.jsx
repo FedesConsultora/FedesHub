@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash, FiTrash2, FiUserPlus, FiMessageSquare, FiInfo, FiChevronUp } from 'react-icons/fi'
+import { createPortal } from 'react-dom'
+import { FiPlus, FiX, FiTag, FiLock, FiCamera, FiEdit2, FiSave, FiHash, FiTrash2, FiUserPlus, FiMessageSquare, FiInfo, FiChevronUp, FiSearch, FiCheck } from 'react-icons/fi'
 import { IoRemoveCircleOutline } from "react-icons/io5";
 
 import AttachmentIcon from '../shared/AttachmentIcon'
@@ -14,9 +15,9 @@ import {
   useAddMember,
   useDeleteChannel,
   useChannelPins,
+  useDmCandidates,
 } from '../../../hooks/useChat'
 import { useModal } from '../../modal/ModalProvider'
-import { adminListUsers } from '../../../api/auth'
 import './HeaderPopover.scss'
 import { resolveMediaUrl } from '../../../utils/media'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
@@ -25,6 +26,8 @@ import GlobalLoader from '../../loader/GlobalLoader.jsx'
 
 const PRES_COL = { online: '#31c48d', away: '#f6ad55', dnd: '#ef4444', offline: '#6b7280' }
 const ROL_ES = { owner: 'propietario', admin: 'administrador', mod: 'moderador', member: 'miembro', guest: 'invitado' }
+
+const PRESENCE_RANK = { online: 3, dnd: 2, away: 1, offline: 0 }
 
 /** ---------- utils imagen (frontend) ---------- */
 async function readAsImage(file) {
@@ -118,8 +121,6 @@ export default function HeaderPopover({
 
   // modal de agregar miembro
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
-  const [availableUsers, setAvailableUsers] = useState([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   // hooks (mutateAsync para poder await)
@@ -130,6 +131,7 @@ export default function HeaderPopover({
   const { mutateAsync: addMember, isLoading: addingMember } = useAddMember()
   const { mutateAsync: deleteChannel } = useDeleteChannel()
   const { data: pins = [], isLoading: loadingPins } = useChannelPins(canal?.id)
+  const { data: candidatesRaw = [], isLoading: loadingCandidates } = useDmCandidates()
 
   const isDM = canal?.tipo?.codigo === 'dm'
   const myMember = members.find(m => Number(m.user_id) === myId) || null
@@ -141,6 +143,19 @@ export default function HeaderPopover({
     () => (isDM ? (members || []).find(m => Number(m.user_id) !== myId) || null : null),
     [isDM, members, myId]
   )
+
+  const [justAdded, setJustAdded] = useState(new Set())
+
+  const allCandidates = useMemo(() => {
+    const memberIds = new Set(members.map(m => Number(m.user_id)))
+    return (candidatesRaw || [])
+      .filter(u => !!u.user_id)
+      .map(u => ({
+        ...u,
+        id: u.user_id,
+        isMember: memberIds.has(Number(u.user_id))
+      }))
+  }, [candidatesRaw, members])
 
   // Collect all feder_ids for attendance status
   const allFederIds = useMemo(() => {
@@ -169,8 +184,8 @@ export default function HeaderPopover({
       if (fid) ids.add(fid);
     }
 
-    // Collect feder_ids from available users (for adding members)
-    for (const u of (availableUsers || [])) {
+    // Collect feder_ids from candidates (for adding members)
+    for (const u of (allCandidates || [])) {
       const fid = getFid(u);
       if (fid) ids.add(fid);
     }
@@ -182,7 +197,7 @@ export default function HeaderPopover({
     }
 
     return Array.from(ids).filter(Boolean); // Filter out any 0s from toNum
-  }, [members, availableUsers, otherUser]);
+  }, [members, allCandidates, otherUser]);
 
   const { statuses } = useAttendanceStatus(allFederIds)
 
@@ -248,10 +263,18 @@ export default function HeaderPopover({
 
   // ESC para cerrar
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        if (showAddMemberModal) {
+          setShowAddMemberModal(false)
+        } else {
+          onClose?.()
+        }
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, showAddMemberModal])
 
   // cargar adjuntos
   useEffect(() => {
@@ -348,32 +371,26 @@ export default function HeaderPopover({
   }
 
   // agregar miembro (modal)
-  const onOpenAddMember = async () => {
+  const onOpenAddMember = (e) => {
+    e?.stopPropagation()
     setShowAddMemberModal(true)
-    setLoadingUsers(true)
-    try {
-      const response = await adminListUsers({ q: '', is_activo: true })
-      const users = response?.data || []
-      // Filtrar usuarios que ya son miembros
-      const memberIds = new Set(members.map(m => Number(m.user_id)))
-      const filtered = users.filter(u => !memberIds.has(Number(u.id)))
-      setAvailableUsers(filtered)
-    } catch (e) {
-      console.error('load users', e)
-      setAvailableUsers([])
-    } finally {
-      setLoadingUsers(false)
-    }
   }
 
   const onAddMemberToChannel = async (userId) => {
     if (!canal?.id || !userId) return
+    const uid = Number(userId)
+    // Optimistic update
+    setJustAdded(prev => new Set([...prev, uid]))
     try {
-      await addMember({ canal_id: canal.id, user_id: userId, rol_codigo: 'member' })
-      setShowAddMemberModal(false)
-      setSearchQuery('')
+      await addMember({ canal_id: canal.id, user_id: uid, rol_codigo: 'member' })
+      // No cerramos el modal para permitir agregar múltiples
     } catch (e) {
       console.error('add member', e)
+      setJustAdded(prev => {
+        const next = new Set(prev)
+        next.delete(uid)
+        return next
+      })
       alert('Error al agregar el miembro')
     }
   }
@@ -383,7 +400,7 @@ export default function HeaderPopover({
   return (
     <>
       <div className="hdrPop_scrim" onClick={handleScrim} />
-      <div className="hdrPop_panel" ref={popRef}>
+      <div className="hdrPop_panel" ref={popRef} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="hdrPop_header">
           <div className="avaWrap">
@@ -644,68 +661,93 @@ export default function HeaderPopover({
       {/* Modal de confirmación para eliminar canal */}
 
       {/* Modal de agregar miembro */}
-      {showAddMemberModal && (
-        <>
-          <div className="deleteModal_scrim" onClick={() => setShowAddMemberModal(false)} />
-          <div className="deleteModal_panel addMember_panel">
-            <div className="deleteModal_header">
-              <FiUserPlus className="deleteModal_icon" style={{ color: '#fff' }} />
-              <h3>Agregar integrantes</h3>
-            </div>
-            <div className="deleteModal_body">
-              <div className="searchRow">
-                <input
-                  type="text"
-                  placeholder="Buscar usuario..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                />
+      {showAddMemberModal && createPortal(
+        <div className="ccModalWrap" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+          <div className="ccBackdrop" onClick={() => { setShowAddMemberModal(false); setJustAdded(new Set()); }} />
+          <div className="ccCard addMember_card" onClick={(e) => e.stopPropagation()}>
+            <header className="ccHeader">
+              <div className="brand">
+                <div className="logo">Agregar integrantes</div>
+                <div className="subtitle">Buscá y sumá personas a "{title}"</div>
               </div>
-              <div className="usersList">
-                {loadingUsers && (
+              <button type="button" className="close" onClick={() => { setShowAddMemberModal(false); setJustAdded(new Set()); }} aria-label="Cerrar"><FiX /></button>
+            </header>
+            <div className="ccBody">
+              <div className="searchRow" style={{ marginBottom: '16px' }}>
+                <div className="field">
+                  <FiSearch className="ico" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="usersList" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {loadingCandidates && (
                   <div style={{ position: 'relative', minHeight: 100 }}>
                     <GlobalLoader size={60} />
                   </div>
                 )}
-                {!loadingUsers && availableUsers.length === 0 && (
+                {!loadingCandidates && allCandidates.length === 0 && (
                   <div className="placeholder">No se encontraron usuarios disponibles.</div>
                 )}
-                {!loadingUsers && availableUsers
+                {!loadingCandidates && allCandidates
                   .filter(u => {
                     if (!searchQuery) return true
                     const q = searchQuery.toLowerCase()
-                    return (u.nombre || '').toLowerCase().includes(q) ||
-                      (u.email || '').toLowerCase().includes(q)
+                    const dn = (displayName(u) || '').toLowerCase()
+                    const em = (u.email || '').toLowerCase()
+                    return dn.includes(q) || em.includes(q)
                   })
-                  .slice(0, 50) // Limitar resultados
-                  .map(u => (
-                    <button
-                      key={u.id}
-                      className="userRow"
-                      onClick={() => onAddMemberToChannel(u.id)}
-                      disabled={addingMember}
-                    >
-                      <div className="avaWrapper" style={{ position: 'relative' }}>
-                        <Avatar src={u.avatar_url} name={displayName(u)} size={32} />
-                        <AttendanceBadge modalidad={getModalidad(statuses, u.id_feder || u.feder_id || u.feder?.id || u.user?.feder?.id)} size={12} />
-                      </div>
-                      <div className="meta">
-                        <div className="name">{displayName(u)}</div>
-                        <div className="email">{u.email}</div>
-                      </div>
-                      <FiPlus className="addIcon" />
-                    </button>
-                  ))}
+                  .slice(0, 50)
+                  .map(u => {
+                    const isM = u.isMember || justAdded.has(Number(u.id))
+                    return (
+                      <button
+                        key={u.id}
+                        className={`userRow ${isM ? 'isMember' : ''}`}
+                        onClick={!isM ? () => onAddMemberToChannel(u.id) : undefined}
+                        disabled={addingMember && !isM}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '12px',
+                          marginBottom: '8px',
+                          textAlign: 'left',
+                          opacity: (addingMember && !isM) ? 0.6 : 1
+                        }}
+                      >
+                        <div className="avaWrapper" style={{ position: 'relative', marginRight: '12px' }}>
+                          <Avatar src={u.avatar_url} name={displayName(u)} size={32} />
+                          <AttendanceBadge modalidad={getModalidad(statuses, u.id_feder || u.feder_id || u.feder?.id || u.user?.feder?.id)} size={12} />
+                        </div>
+                        <div className="meta" style={{ flex: 1 }}>
+                          <div className="name" style={{ fontWeight: 700, color: '#fff' }}>{displayName(u)}</div>
+                          <div className="email" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{u.email}</div>
+                        </div>
+                        {isM ? (
+                          <FiCheck className="addIcon" style={{ fontSize: '1.2rem' }} />
+                        ) : (
+                          <FiPlus className="addIcon" />
+                        )}
+                      </button>
+                    )
+                  })}
               </div>
             </div>
-            <div className="deleteModal_actions">
-              <button className="chip ghost" onClick={() => setShowAddMemberModal(false)}>
+            <footer className="ccFooter">
+              <button className="btn" onClick={() => { setShowAddMemberModal(false); setJustAdded(new Set()); }}>
                 Cerrar
               </button>
-            </div>
+            </footer>
           </div>
-        </>
+        </div>,
+        document.body
       )}
 
 
