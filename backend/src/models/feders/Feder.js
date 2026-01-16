@@ -21,6 +21,12 @@ export default (sequelize, DataTypes) => {
     fecha_nacimiento: { type: DataTypes.DATEONLY },
     domicilio_json: { type: DataTypes.JSONB },       // { calle, nro, piso, cp, ciudad, provincia, pais }
 
+    // Status fields
+    current_status_custom_id: { type: DataTypes.INTEGER },
+    status_emoji_override: { type: DataTypes.STRING(20) },
+    status_text_override: { type: DataTypes.STRING(100) },
+    status_expires_at: { type: DataTypes.DATE },
+
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
   }, {

@@ -12,18 +12,30 @@
     border-right: 1px solid rgba(255, 255, 255, .06);
     padding: 8px;
 
+    .tab-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .statusBtn,
     .addBtn {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, .1);
       background: rgba(255, 255, 255, .05);
       color: $fh-text;
       cursor: pointer;
       padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
 
       &:hover {
-        filter: brightness(1.15)
+        filter: brightness(1.25);
+        background: rgba(255, 255, 255, .1);
       }
     }
   }

@@ -11,14 +11,20 @@ import { useMessages, useDmCandidates, useChannelMembers } from '../../../hooks/
 import { useRealtime } from '../../../realtime/RealtimeProvider'
 import { chatApi } from '../../../api/chat'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
+import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import { displayName } from '../../../utils/people'
+import StatusBanner from '../shared/StatusBanner'
+import StatusPicker from '../shared/StatusPicker'
 import './ChatMobile.scss'
 
 export default function ChatMobile({ channels = [], currentId = null, onOpen }) {
+  const { user } = useAuthCtx()
+  const myId = user?.id
   const [view, setView] = useState(currentId ? 'chat' : 'list')
   const [tab, setTab] = useState(() => localStorage.getItem('fh:chat:mobileView') || 'channels')
   const [cid, setCid] = useState(currentId || null)
   const [search, setSearch] = useState('')
+  const [showStatusPicker, setShowStatusPicker] = useState(false)
 
   const { unreadByCanal, mentionByCanal, clearUnreadFor, setCurrentCanal } = useRealtime()
 
@@ -120,33 +126,38 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
     return sortedChannels.find(x => x.id === cid) || dmItems.find(u => u.dm_canal_id === cid)
   }, [cid, sortedChannels, dmItems])
 
+  const otherMember = useMemo(() => {
+    if (sel?.tipo?.codigo !== 'dm') return null
+    const candidate = dmItems.find(u => u.dm_canal_id === cid)
+    if (candidate) return candidate
+    return membersFull.find(m => m.user_id !== myId)
+  }, [sel, membersFull, myId, dmItems, cid])
+
+  const getFid = (m) => m?.feder_id || m?.id_feder || m?.feder?.id || m?.user?.feder?.id
+
+  const myMember = useMemo(() =>
+    membersFull.find(m => Number(m.user_id) === Number(myId)),
+    [membersFull, myId]
+  )
+
   const canPost = useMemo(() => {
     if (!sel) return true
     if (!sel.only_mods_can_post) return true
-    const myId = Number(localStorage.getItem('fh:user_id'))
-    if (sel.miembros && Array.isArray(sel.miembros)) {
-      const myMember = sel.miembros.find(m => Number(m.user_id) === myId)
-      if (myMember) {
-        const myRol = myMember.rol?.codigo || null
-        return ['owner', 'admin', 'mod'].includes(myRol)
-      }
+    if (myMember) {
+      const myRol = myMember.rol?.codigo || null
+      return ['owner', 'admin', 'mod'].includes(myRol)
     }
     return true
-  }, [sel])
+  }, [sel, myMember])
 
   const canPin = useMemo(() => {
     if (!sel) return false
-    const myId = Number(localStorage.getItem('fh:user_id'))
-    if (sel.miembros && Array.isArray(sel.miembros)) {
-      const myMember = sel.miembros.find(m => Number(m.user_id) === myId)
-      if (myMember) {
-        const myRol = myMember.rol?.codigo || null
-        return ['owner', 'admin'].includes(myRol)
-      }
+    if (myMember) {
+      const myRol = myMember.rol?.codigo || null
+      return ['owner', 'admin'].includes(myRol)
     }
     return false
-  }, [sel])
-
+  }, [sel, myMember])
   const activeTitle = sel ? (sel.nombre ? (sel.apellido ? `${sel.nombre} ${sel.apellido}` : sel.nombre) : (sel.email || 'Chat')) : 'Chat'
 
   return (
@@ -156,7 +167,10 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
           <header className="list-header">
             <div className="top">
               <h1>Mensajes</h1>
-              <button className="add-btn"><FiPlus /></button>
+              <div className="header-actions">
+                <button className="status-btn" onClick={() => setShowStatusPicker(true)}>😊</button>
+                <button className="add-btn"><FiPlus /></button>
+              </div>
             </div>
             <div className="search-bar">
               <FiSearch />
@@ -214,10 +228,28 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
           </div>
           {cid && (
             <div className="composer-container">
+              <div className="status-banners-container">
+                {sel?.tipo?.codigo === 'dm' && otherMember && getFid(otherMember) && (
+                  <StatusBanner
+                    feder_id={getFid(otherMember)}
+                    federName={displayName(otherMember)}
+                  />
+                )}
+                {myMember && getFid(myMember) && (!otherMember || getFid(myMember) !== getFid(otherMember)) && (
+                  <StatusBanner
+                    feder_id={getFid(myMember)}
+                    federName="Tu estado"
+                  />
+                )}
+              </div>
               <Composer canal_id={cid} canal={sel} />
             </div>
           )}
         </div>
+      )}
+
+      {showStatusPicker && (
+        <StatusPicker onClose={() => setShowStatusPicker(false)} />
       )}
     </div>
   )

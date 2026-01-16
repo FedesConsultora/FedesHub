@@ -4,6 +4,13 @@ import './DMList.scss'
 import { displayName, pickAvatar } from '../../../utils/people'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
+import { useFederStatus } from '../../../hooks/useStatus'
+
+function UserStatusSmall({ feder_id }) {
+  const { data: status } = useFederStatus(feder_id)
+  if (!status) return null
+  return <span className="status-small" title={status.text}>{status.emoji}</span>
+}
 
 export default function DMList({ items = [], selectedId = null, unreadLookup = {}, mentionLookup = {}, onOpenDm }) {
   // Collect feder_ids for attendance status
@@ -45,6 +52,7 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
                 <div className="meta">
                   <div className="name">
                     {name}
+                    <UserStatusSmall feder_id={fid} />
                     {hasMention && <span className="mentionTag">@</span>}
                   </div>
                   <div className="sub">{u.email}</div>

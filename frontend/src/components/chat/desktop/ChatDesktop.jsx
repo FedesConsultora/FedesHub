@@ -15,6 +15,8 @@ import { ChatActionCtx } from '../shared/context'
 import { useRealtime } from '../../../realtime/RealtimeProvider'
 import TypingIndicator from '../shared/TypingIndicator'
 import PinnedBar from '../shared/PinnedBar'
+import StatusBanner from '../shared/StatusBanner'
+import StatusPicker from '../shared/StatusPicker'
 import { useLoading } from '../../../context/LoadingContext.jsx'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import { displayName } from '../../../utils/people'
@@ -44,6 +46,7 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   }
 
   const [replyTo, setReplyTo] = useState(null)
+  const [showStatusPicker, setShowStatusPicker] = useState(false)
   const composerRef = useRef(null)
   const setViewPersist = (v) => { setView(v); localStorage.setItem('fh:chat:view', v) }
 
@@ -184,6 +187,17 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   const unreadLookup = unreadByCanal
   const mentionLookup = mentionByCanal
 
+  const getFid = (m) => m?.feder_id || m?.id_feder || m?.feder?.id || m?.user?.feder?.id
+
+  const otherMember = useMemo(() => {
+    if (sel?.tipo?.codigo !== 'dm') return null
+    const candidate = dmItems.find(u => u.dm_canal_id === cid)
+    if (candidate) return candidate
+    return membersFull.find(m => m.user_id !== myId)
+  }, [sel, membersFull, myId, dmItems, cid])
+
+  const myMember = useMemo(() => membersFull.find(m => m.user_id === myId), [membersFull, myId])
+
   return (
     <div className="chat-desktop">
       <aside className="dock">
@@ -191,9 +205,14 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
           tabs={tabs}
           activeKey={view}
           onChange={setViewPersist}
-          rightSlot={(view === 'channels' || view === 'groups')
-            ? <button className="addBtn" title="Nuevo canal/grupo" onClick={() => openCreate({ initialTipo: view === 'groups' ? 'grupo' : 'canal', lockTipo: false })}>+</button>
-            : null}
+          rightSlot={(
+            <div className="tab-actions">
+              <button className="statusBtn" title="Mi estado" onClick={() => setShowStatusPicker(true)}>😊</button>
+              {(view === 'channels' || view === 'groups') && (
+                <button className="addBtn" title="Nuevo canal/grupo" onClick={() => openCreate({ initialTipo: view === 'groups' ? 'grupo' : 'canal', lockTipo: false })}>+</button>
+              )}
+            </div>
+          )}
         />
 
         {(view === 'channels' || view === 'groups') && (
@@ -245,6 +264,20 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
 
                 <div className="composeArea">
                   <TypingIndicator canal_id={cid} my_user_id={myId} members={membersFull} />
+                  <div className="status-banners-container">
+                    {sel?.tipo?.codigo === 'dm' && otherMember && getFid(otherMember) && (
+                      <StatusBanner
+                        feder_id={getFid(otherMember)}
+                        federName={displayName(otherMember)}
+                      />
+                    )}
+                    {myMember && getFid(myMember) && (!otherMember || getFid(myMember) !== getFid(otherMember)) && (
+                      <StatusBanner
+                        feder_id={getFid(myMember)}
+                        federName="Tu estado"
+                      />
+                    )}
+                  </div>
                   {cid && (
                     <Composer
                       ref={composerRef}
@@ -284,6 +317,10 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
         initialNombre={createCfg.initialNombre}
         preselectUserIds={createCfg.preselectUserIds}
       />
+
+      {showStatusPicker && (
+        <StatusPicker onClose={() => setShowStatusPicker(false)} />
+      )}
     </div>
   )
 }
