@@ -4,7 +4,7 @@ import { FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi'
 import { useChannelPins, usePinMessage } from '../../../hooks/useChat'
 import './PinnedBar.scss'
 
-export default function PinnedBar({ canal_id, onSelectMessage }) {
+export default function PinnedBar({ canal_id, onSelectMessage, canUnpin = true }) {
     const cid = Number(canal_id)
     const { data: pins = [], isLoading } = useChannelPins(cid)
     const pinMutation = usePinMessage()
@@ -65,9 +65,11 @@ export default function PinnedBar({ canal_id, onSelectMessage }) {
                         <button onClick={handleNext} title="Siguiente"><FiChevronRight /></button>
                     </div>
                 )}
-                <button className="unpinBtn" onClick={handleUnpin} title="Desfijar" disabled={pinMutation.isPending}>
-                    <FiX />
-                </button>
+                {canUnpin && (
+                    <button className="unpinBtn" onClick={handleUnpin} title="Desfijar" disabled={pinMutation.isPending}>
+                        <FiX />
+                    </button>
+                )}
             </div>
         </div>
     )

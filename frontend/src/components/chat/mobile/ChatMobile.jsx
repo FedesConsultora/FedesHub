@@ -120,6 +120,33 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
     return sortedChannels.find(x => x.id === cid) || dmItems.find(u => u.dm_canal_id === cid)
   }, [cid, sortedChannels, dmItems])
 
+  const canPost = useMemo(() => {
+    if (!sel) return true
+    if (!sel.only_mods_can_post) return true
+    const myId = Number(localStorage.getItem('fh:user_id'))
+    if (sel.miembros && Array.isArray(sel.miembros)) {
+      const myMember = sel.miembros.find(m => Number(m.user_id) === myId)
+      if (myMember) {
+        const myRol = myMember.rol?.codigo || null
+        return ['owner', 'admin', 'mod'].includes(myRol)
+      }
+    }
+    return true
+  }, [sel])
+
+  const canPin = useMemo(() => {
+    if (!sel) return false
+    const myId = Number(localStorage.getItem('fh:user_id'))
+    if (sel.miembros && Array.isArray(sel.miembros)) {
+      const myMember = sel.miembros.find(m => Number(m.user_id) === myId)
+      if (myMember) {
+        const myRol = myMember.rol?.codigo || null
+        return ['owner', 'admin'].includes(myRol)
+      }
+    }
+    return false
+  }, [sel])
+
   const activeTitle = sel ? (sel.nombre ? (sel.apellido ? `${sel.nombre} ${sel.apellido}` : sel.nombre) : (sel.email || 'Chat')) : 'Chat'
 
   return (
@@ -180,10 +207,10 @@ export default function ChatMobile({ channels = [], currentId = null, onOpen }) 
               </div>
             </div>
           </header>
-          <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} />
+          <PinnedBar canal_id={cid} onSelectMessage={handleSelectMessage} canUnpin={canPin} />
           <div className="timeline-container">
             <GlobalLoader isLoading={msgs.isLoading || msgs.isPreviousData} size={60} />
-            <Timeline rows={msgs.data || []} loading={msgs.isLoading} canal_id={cid} members={membersFull} />
+            <Timeline rows={msgs.data || []} loading={msgs.isLoading} canal_id={cid} members={membersFull} canPin={canPin} canReply={canPost} />
           </div>
           {cid && (
             <div className="composer-container">

@@ -59,7 +59,7 @@
     font-size: 1.3rem;
     font-weight: 800;
     margin-bottom: 20px;
-    text-transform: capitalize;
+    // text-transform: capitalize;
     letter-spacing: .5px;
     text-align: center;
     color: #fff;
@@ -237,6 +237,7 @@
     border: none;
   }
 }
+
 @media (max-width: 768px) {
   .aus-month-view {
     padding: 10px;
@@ -267,7 +268,7 @@
       }
 
       .chip {
-        display: none; 
+        display: none;
       }
 
       .more {

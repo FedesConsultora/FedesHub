@@ -28,7 +28,7 @@ const toNum = (v) => (v === null || v === undefined || v === '' ? null : Number(
 const escapeHtml = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const linkify = (html = '') => html.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
 
-export default function Timeline({ rows = [], loading = false, canal_id = null, my_user_id = null, members = [] }) {
+export default function Timeline({ rows = [], loading = false, canal_id = null, my_user_id = null, members = [], canPin = true, canReply = true }) {
 
   const ordered = useMemo(() => {
     return [...rows].sort((a, b) => new Date(a.created_at || a.updated_at) - new Date(b.created_at || b.updated_at))
@@ -104,7 +104,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
     }
 
     // First time loading this canal: find last read or go to bottom
-    const myMember = members?.find(m => Number(m.user_id) === Number(my_user_id))
+    const myMember = members?.find(mem => Number(mem.user_id) === Number(my_user_id))
     const lastReadMsgId = Number(myMember?.last_read_msg_id ?? 0)
 
     if (lastReadMsgId > 0) {
@@ -193,6 +193,8 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
               my_user_id={my_user_id}
               members={members}
               statuses={statuses}
+              canPin={canPin}
+              canReply={canReply}
             />
           ))}
         </div>
@@ -209,7 +211,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   )
 }
 
-function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
+function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canReply }) {
   const ts = new Date(m.created_at || m.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const { setReplyTo } = useContext(ChatActionCtx)
 
@@ -235,7 +237,6 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
   const isDeleted = !!m.deleted_at
   const isEdited = !!m.is_edited
   const isPinned = m.pins && m.pins.length > 0
-  const canEditOrDelete = true // Always true for own messages as per latest request
 
   const member = memberByUserId.get(msgUserIdNum)
   const author = member ? (fullName(member) || displayName(member)) : (fullName(m?.autor) || displayName(m?.autor) || 'usuario')
@@ -386,22 +387,26 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
 
           {!isDeleted && !isEditing && (
             <>
-              <button className="alwaysVisibleReply" title="Responder" onClick={() => setReplyTo(m)}>
-                <LuReply />
-              </button>
+              {canReply && (
+                <button className="alwaysVisibleReply" title="Responder" onClick={() => setReplyTo(m)}>
+                  <LuReply />
+                </button>
+              )}
 
               <div className="msgHoverActions">
                 <button className="actionBtn" title="Reaccionar" onClick={() => setPickerOpen(true)}>
                   <CiFaceSmile />
                 </button>
-                <button
-                  className={`actionBtn ${isPinned ? 'active' : ''}`}
-                  title={isPinned ? 'Desfijar' : 'Fijar'}
-                  onClick={handleTogglePin}
-                  disabled={pinMessage.isPending}
-                >
-                  <BsPinAngle style={{ transform: isPinned ? 'rotate(45deg)' : 'none' }} />
-                </button>
+                {canPin && (
+                  <button
+                    className={`actionBtn ${isPinned ? 'active' : ''}`}
+                    title={isPinned ? 'Desfijar' : 'Fijar'}
+                    onClick={handleTogglePin}
+                    disabled={pinMessage.isPending}
+                  >
+                    <BsPinAngle style={{ transform: isPinned ? 'rotate(45deg)' : 'none' }} />
+                  </button>
+                )}
                 {isMine && (
 
                   <>
