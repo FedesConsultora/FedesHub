@@ -10,7 +10,7 @@ import {
   postNotification,
   patchSeen, patchRead, patchDismiss, patchArchive, patchPin,
   getTrackOpen,
-  postCleanupOrphans, postMarkAllRead
+  postCleanupOrphans, postMarkAllRead, patchMarkAllReadMe
 } from './controllers/notificaciones.controller.js';
 import { smtp, push as pushHealth } from './controllers/health.controller.js';
 
@@ -43,6 +43,7 @@ router.put('/preferences', requireAuth, requirePermission('notificaciones', 'upd
 router.post('/', requireAuth, requirePermission('notificaciones', 'create'), postNotification);
 
 // Marcas por usuario-destino
+router.patch('/mark-all-read', requireAuth, patchMarkAllReadMe);
 router.patch('/:id/seen', requireAuth, patchSeen);
 router.patch('/:id/read', requireAuth, patchRead);
 router.patch('/:id/dismiss', requireAuth, patchDismiss);

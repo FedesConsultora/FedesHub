@@ -96,7 +96,6 @@ export default function ChatBellPanel({ closeAll }) {
         <button className={`tab ${tab === 'dms' ? 'active' : ''}`} onClick={() => setTab('dms')}>
           Chat {dmList.some(u => !!(u.dm_canal_id && unreadLookup[u.dm_canal_id] && !suppressedCanals.has(u.dm_canal_id))) && <i className="dot" />}
         </button>
-        <button className="seeAll" onClick={() => { closeAll?.(); nav('/chat/listado') }}>Ver chat</button>
       </div>
 
       <div className="list">

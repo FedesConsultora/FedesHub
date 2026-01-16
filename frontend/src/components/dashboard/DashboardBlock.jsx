@@ -13,6 +13,7 @@ export default function DashboardBlock({
     onMove,
     canMoveUp,
     canMoveDown,
+    headerActions,
     children
 }) {
     const [canDrag, setCanDrag] = React.useState(false);
@@ -51,6 +52,7 @@ export default function DashboardBlock({
                 </div>
                 <div className="headerRight">
                     <div className="moveActions">
+                        {headerActions}
                         {canMoveUp && (
                             <button className="moveBtn" onClick={() => onMove(-1)} title="Mover arriba">
                                 <FiChevronUp />

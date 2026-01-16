@@ -12,8 +12,10 @@ $fh-muted: if(meta.global-variable-exists(fh-muted), $fh-muted, #a6b3c3);
   .barra_busqueda {
     position: relative;
     min-width: 0;
-    padding: .65rem .65rem;
-    border-radius: 12px;
+    padding: 0 14px;
+    height: 48px;
+    align-items: center;
+    border-radius: 14px;
     border: 1px solid rgba($fh-primary, 0.25);
     background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
     color: $fh-text;

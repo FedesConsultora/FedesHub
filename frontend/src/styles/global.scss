@@ -139,9 +139,10 @@ select {
   color: $fh-text !important;
   border: 1px solid rgba($fh-primary, 0.25) !important;
   border-radius: 14px !important;
-  padding: 6px 10px !important;
+  padding: 0 14px !important;
+  height: 48px !important;
   font-family: inherit !important;
-  font-size: 0.9rem !important;
+  font-size: 0.95rem !important;
   outline: none !important;
   cursor: pointer !important;
   appearance: none !important;
@@ -150,13 +151,12 @@ select {
   &:hover {
     border-color: rgba($fh-primary, 0.45) !important;
     background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   }
 
   &:focus {
     border-color: $fh-primary !important;
     background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
-    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15), 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15) !important;
   }
 
   option {
@@ -183,23 +183,44 @@ select {
 }
 
 /* Global Premium Field Utility (for inputs, triggers, etc) */
-.fh-premium-field {
-  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%) !important;
+.fh-premium-field,
+.field {
+  background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
   border: 1px solid rgba($fh-primary, 0.25) !important;
   border-radius: 14px !important;
+  min-height: 48px !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   color: $fh-text !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
 
   &:hover {
-    border-color: rgba($fh-primary, 0.45) !important;
-    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+    border-color: rgba($fh-primary, 0.5) !important;
+    background: linear-gradient(180deg, #222d3c 0%, #151d28 100%) !important;
   }
 
   &:focus-within,
-  &.is-active {
+  &.is-active,
+  &.is-open {
     border-color: $fh-primary !important;
-    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+    background: linear-gradient(180deg, #222d3c 0%, #151d28 100%) !important;
     box-shadow: 0 0 0 3px rgba($fh-primary, 0.15) !important;
+    outline: none !important;
+  }
+
+  // Ensure children also behave
+  input,
+  select,
+  textarea {
+    background: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    height: 100% !important;
+    flex: 1 !important;
   }
 }
 
@@ -279,5 +300,47 @@ select {
   .w-full.overflow-auto {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Empty States Premium */
+.fh-empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+
+  .icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba($fh-primary, 0.15) 0%, rgba($fh-primary, 0.05) 100%);
+    display: grid;
+    place-items: center;
+    color: $fh-primary;
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+    border: 1px solid rgba($fh-primary, 0.1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 850;
+    color: $fh-text;
+    letter-spacing: -0.01em;
+  }
+
+  span {
+    font-size: 0.9rem;
+    color: $fh-muted;
+    max-width: 260px;
+    line-height: 1.5;
+    opacity: 0.8;
   }
 }

@@ -10,6 +10,8 @@ import DashboardUnread from '../../components/dashboard/DashboardUnread'
 import DashboardBlock from '../../components/dashboard/DashboardBlock'
 import { tareasApi } from '../../api/tareas'
 import { notifApi } from '../../api/notificaciones'
+import { useRealtime } from '../../realtime/RealtimeProvider'
+import { FiTrash2 } from 'react-icons/fi'
 import './Dashboard.scss'
 
 const DEFAULT_LEFT_COL = ['metrics', 'urgent', 'revision']
@@ -17,6 +19,7 @@ const DEFAULT_RIGHT_COL = ['unread']
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { clearAllChatUnreads } = useRealtime() || {}
   const [showCreate, setShowCreate] = useState(false)
   const [openTaskId, setOpenTaskId] = useState(null)
   const [metrics, setMetrics] = useState(null)
@@ -112,6 +115,16 @@ export default function Dashboard() {
     if (isLeft) setLeftCol(arr)
     else setRightCol(arr)
   }
+  const handleClearNotifs = async () => {
+    try {
+      await notifApi.clearAll(null, 'read')
+      fetchData()
+      clearAllChatUnreads?.()
+      window.dispatchEvent(new Event('fh:notif:changed'))
+    } catch (err) {
+      console.error('Error clearing dashboard notifs:', err)
+    }
+  }
 
   // Drag & Drop
   const handleDragStart = (e, id, sourceCol) => {
@@ -204,7 +217,24 @@ export default function Dashboard() {
         )
       case 'unread':
         return (
-          <DashboardBlock key={id} {...blockProps} title="💬 Mensajes sin leer" count={unreadNotifs.length}>
+          <DashboardBlock
+            key={id}
+            {...blockProps}
+            title="💬 Mensajes sin leer"
+            count={unreadNotifs.length}
+            headerActions={
+              unreadNotifs.length > 0 && (
+                <button
+                  className="moveBtn clearNotifsBtn"
+                  onClick={(e) => { e.stopPropagation(); handleClearNotifs(); }}
+                  title="Marcar todos como leídos"
+                  style={{ color: '#ff5151' }}
+                >
+                  <FiTrash2 />
+                </button>
+              )
+            }
+          >
             <DashboardUnread notifications={unreadNotifs} onOpenTask={setOpenTaskId} onRefresh={() => fetchData()} />
           </DashboardBlock>
         )
