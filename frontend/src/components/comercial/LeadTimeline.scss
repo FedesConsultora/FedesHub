@@ -1,0 +1,120 @@
+// frontend/src/components/comercial/LeadTimeline.scss
+@use '../../styles/variables' as *;
+
+.LeadTimeline {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .nota-form {
+        padding: 16px;
+
+        textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            resize: none;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+
+            .btn-primary {
+                background: var(--fh-primary);
+                color: #000;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 600;
+
+                &:disabled {
+                    opacity: 0.5;
+                }
+            }
+        }
+    }
+
+    .timeline-list {
+        position: relative;
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .timeline-item {
+            position: relative;
+            display: flex;
+            gap: 20px;
+
+            .timeline-icon {
+                position: absolute;
+                left: -20px;
+                width: 16px;
+                height: 16px;
+                background: #1a222c;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1;
+
+                svg {
+                    width: 12px;
+                    height: 12px;
+                    color: var(--fh-muted);
+                }
+            }
+
+            &.nota .timeline-icon svg {
+                color: var(--fh-primary);
+            }
+
+            &.history .timeline-icon svg {
+                color: #fff;
+            }
+
+            .timeline-content {
+                flex: 1;
+                padding: 16px;
+
+                header {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+
+                    .autor {
+                        font-weight: 600;
+                        font-size: 0.9rem;
+                    }
+
+                    .fecha {
+                        color: var(--fh-muted);
+                        font-size: 0.8rem;
+                    }
+                }
+
+                .body {
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                    color: rgba(255, 255, 255, 0.9);
+                    white-space: pre-wrap;
+                }
+            }
+        }
+    }
+}

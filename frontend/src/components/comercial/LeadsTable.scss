@@ -1,0 +1,102 @@
+// frontend/src/components/comercial/LeadsTable.scss
+@use '../../styles/variables' as v;
+
+.LeadsTable {
+    overflow-x: auto;
+    padding: 0;
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th {
+            text-align: left;
+            padding: 14px 20px;
+            color: v.$fh-muted;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+
+            .lead-name {
+                display: block;
+                font-weight: 700;
+                font-size: 0.95rem;
+                margin-bottom: 2px;
+                color: v.$fh-text;
+                text-decoration: none;
+
+                &:hover {
+                    color: v.$fh-primary;
+                }
+
+                .alias {
+                    margin-left: 8px;
+                    color: v.$fh-muted;
+                    font-weight: 400;
+                    font-size: 0.85rem;
+                }
+            }
+
+            .lead-contact {
+                font-size: 0.8rem;
+                color: v.$fh-muted;
+            }
+
+            .badge-etapa {
+                background: rgba(v.$fh-primary, 0.1);
+                color: v.$fh-primary;
+                padding: 4px 10px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .badge-status {
+                padding: 4px 10px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                color: #fff;
+                font-weight: 700;
+                text-transform: uppercase;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn-view {
+                color: v.$fh-muted;
+                font-size: 0.85rem;
+                font-weight: 600;
+                padding: 6px 12px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.05);
+                text-decoration: none;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: white;
+                }
+            }
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    }
+}
+
+.leads-loading,
+.leads-empty {
+    text-align: center;
+    padding: 60px;
+    color: v.$fh-muted;
+    font-size: 1rem;
+}

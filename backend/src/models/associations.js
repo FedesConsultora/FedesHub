@@ -649,4 +649,52 @@ export const setupAssociations = (m) => {
     m.Feder.belongsTo(m.UserStatusPersonalizado, { foreignKey: 'current_status_custom_id', as: 'currentStatusCustom' })
   );
 
+
+  // ===== Módulo 13: Comercial =====
+  link(m.ComercialLead && m.ComercialLeadStatus, 'ComercialLead → ComercialLeadStatus (status_id)', () =>
+    m.ComercialLead.belongsTo(m.ComercialLeadStatus, { foreignKey: 'status_id', as: 'status' })
+  );
+  link(m.ComercialLead && m.ComercialLeadEtapa, 'ComercialLead → ComercialLeadEtapa (etapa_id)', () =>
+    m.ComercialLead.belongsTo(m.ComercialLeadEtapa, { foreignKey: 'etapa_id', as: 'etapa' })
+  );
+  link(m.ComercialLead && m.ComercialLeadFuente, 'ComercialLead → ComercialLeadFuente (fuente_id)', () =>
+    m.ComercialLead.belongsTo(m.ComercialLeadFuente, { foreignKey: 'fuente_id', as: 'fuente' })
+  );
+  link(m.ComercialLead && m.ComercialLeadMotivoPerdida, 'ComercialLead → ComercialLeadMotivoPerdida (motivo_perdida_id)', () =>
+    m.ComercialLead.belongsTo(m.ComercialLeadMotivoPerdida, { foreignKey: 'motivo_perdida_id', as: 'motivoPerdida' })
+  );
+  link(m.ComercialLead && m.Feder, 'ComercialLead → Feder (responsable_feder_id)', () =>
+    m.ComercialLead.belongsTo(m.Feder, { foreignKey: 'responsable_feder_id', as: 'responsable' })
+  );
+  link(m.ComercialLead && m.Cliente, 'ComercialLead → Cliente (cliente_id)', () =>
+    m.ComercialLead.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
+  );
+  link(m.ComercialLead && m.User, 'ComercialLead → User (created_by_user_id)', () =>
+    m.ComercialLead.belongsTo(m.User, { foreignKey: 'created_by_user_id', as: 'creador' })
+  );
+
+  link(m.ComercialLead && m.ComercialLeadNota, 'ComercialLead ↔ ComercialLeadNota', () => {
+    m.ComercialLead.hasMany(m.ComercialLeadNota, { foreignKey: 'lead_id', as: 'notas' });
+    m.ComercialLeadNota.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });
+  });
+  link(m.ComercialLeadNota && m.User, 'ComercialLeadNota → User (autor_user_id)', () =>
+    m.ComercialLeadNota.belongsTo(m.User, { foreignKey: 'autor_user_id', as: 'autor' })
+  );
+
+  link(m.ComercialLead && m.ComercialLeadAdjunto, 'ComercialLead ↔ ComercialLeadAdjunto', () => {
+    m.ComercialLead.hasMany(m.ComercialLeadAdjunto, { foreignKey: 'lead_id', as: 'adjuntos' });
+    m.ComercialLeadAdjunto.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });
+  });
+  link(m.ComercialLeadAdjunto && m.User, 'ComercialLeadAdjunto → User (autor_user_id)', () =>
+    m.ComercialLeadAdjunto.belongsTo(m.User, { foreignKey: 'autor_user_id', as: 'autor' })
+  );
+
+  link(m.ComercialLead && m.ComercialLeadHistorial, 'ComercialLead ↔ ComercialLeadHistorial', () => {
+    m.ComercialLead.hasMany(m.ComercialLeadHistorial, { foreignKey: 'lead_id', as: 'historial' });
+    m.ComercialLeadHistorial.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });
+  });
+  link(m.ComercialLeadHistorial && m.User, 'ComercialLeadHistorial → User (user_id)', () =>
+    m.ComercialLeadHistorial.belongsTo(m.User, { foreignKey: 'user_id', as: 'autor' })
+  );
+
 };

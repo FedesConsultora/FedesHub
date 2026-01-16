@@ -1,0 +1,143 @@
+// frontend/src/components/comercial/NegotiationModal.scss
+@use '../../styles/variables' as *;
+
+.NegotiationModal {
+    .modal-content {
+        width: 100%;
+        max-width: 500px;
+        padding: 24px;
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+
+            h2 {
+                margin: 0;
+                font-size: 1.4rem;
+            }
+
+            .close-btn {
+                background: transparent;
+                border: none;
+                color: var(--fh-muted);
+                font-size: 1.5rem;
+            }
+        }
+
+        &.win h2 {
+            color: var(--fh-primary);
+        }
+
+        &.lose h2 {
+            color: #ef4444;
+        }
+
+        .modal-body {
+            p {
+                color: var(--fh-muted);
+                line-height: 1.5;
+                margin-bottom: 24px;
+            }
+
+            strong {
+                color: var(--fh-text);
+            }
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            label {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.06);
+                }
+
+                &.active {
+                    border-color: var(--fh-primary);
+                    background: rgba($fh-primary, 0.05);
+                }
+
+                .opt-meta {
+                    display: flex;
+                    flex-direction: column;
+
+                    strong {
+                        display: block;
+                        margin-bottom: 2px;
+                    }
+
+                    span {
+                        font-size: 0.85rem;
+                        color: var(--fh-muted);
+                    }
+                }
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            label {
+                font-size: 0.85rem;
+                color: var(--fh-muted);
+                text-transform: uppercase;
+            }
+
+            select,
+            textarea {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 12px;
+                color: #fff;
+            }
+        }
+
+        .actions {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+
+            button {
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-weight: 600;
+                border: none;
+            }
+
+            .btn-cancel {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: var(--fh-muted);
+            }
+
+            .btn-win {
+                background: var(--fh-primary);
+                color: #000;
+            }
+
+            .btn-lose {
+                background: #ef4444;
+                color: #fff;
+            }
+        }
+    }
+}

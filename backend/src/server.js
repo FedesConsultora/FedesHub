@@ -4,6 +4,7 @@ import { sequelize } from './core/db.js';
 import { initModels } from './models/registry.js';
 import { startRevocationCleanupJob } from './modules/auth/revocationCleanup.js';
 import { startAutoCloseAttendanceJob } from './modules/asistencia/jobs/autoCloseAttendance.js';
+import { startOnboardingJob } from './modules/comercial/jobs/onboardingJob.js';
 import { storage } from './infra/storage/index.js';
 
 
@@ -27,6 +28,7 @@ const PORT = process.env.PORT || 3000;
 
     startRevocationCleanupJob();
     startAutoCloseAttendanceJob();
+    startOnboardingJob();
     app.listen(PORT, () => logger.info(`API on http://localhost:${PORT}`));
   } catch (err) {
     logger.error({ err }, 'Startup failed');

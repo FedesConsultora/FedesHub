@@ -18,6 +18,7 @@ const APPS = [
   { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
   { code: 'chat', name: 'Chat', to: '/chat' },
+  { code: 'comercial', name: 'Comercial', to: '/comercial/leads', need: { modulo: 'comercial', accion: 'read' } },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
 ]
 
@@ -69,8 +70,8 @@ export default function Sidebar() {
   const allowed = APPS.filter(a => {
     // Si requiere directivos y no lo es, ocultar
     if (a.directivosOnly && !isDirectivo) return false
-    // Si tiene permiso específico
-    if (a.need && !hasPerm(a.need.modulo, a.need.accion)) return false
+    // Si tiene permiso específico (Admin/Directivo puede ver todo)
+    if (a.need && !hasPerm(a.need.modulo, a.need.accion) && !isDirectivo) return false
     return true
   })
 

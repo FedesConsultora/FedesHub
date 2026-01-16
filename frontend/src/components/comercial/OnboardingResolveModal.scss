@@ -1,0 +1,135 @@
+// frontend/src/components/comercial/OnboardingResolveModal.scss
+@use '../../styles/variables' as *;
+
+.OnboardingResolveModal {
+    .modal-content {
+        width: 100%;
+        max-width: 550px;
+        padding: 24px;
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+
+            h2 {
+                margin: 0;
+                font-size: 1.4rem;
+            }
+
+            .close-btn {
+                background: transparent;
+                border: none;
+                color: var(--fh-muted);
+                font-size: 1.5rem;
+            }
+        }
+
+        .decision-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+
+            button {
+                flex: 1;
+                padding: 12px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                color: var(--fh-muted);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                transition: all 0.2s;
+
+                svg {
+                    font-size: 1.2rem;
+                }
+
+                &.active {
+                    &.si {
+                        background: rgba(16, 185, 129, 0.1);
+                        border-color: #10b981;
+                        color: #10b981;
+                    }
+
+                    &.extender {
+                        background: rgba(59, 130, 246, 0.1);
+                        border-color: #3b82f6;
+                        color: #3b82f6;
+                    }
+
+                    &.no {
+                        background: rgba(239, 68, 68, 0.1);
+                        border-color: #ef4444;
+                        color: #ef4444;
+                    }
+                }
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            label {
+                font-size: 0.85rem;
+                color: var(--fh-muted);
+                text-transform: uppercase;
+            }
+
+            input,
+            select,
+            textarea {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 12px;
+                color: #fff;
+            }
+        }
+
+        .actions {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+
+            button {
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-weight: 600;
+                border: none;
+            }
+
+            .btn-cancel {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: var(--fh-muted);
+            }
+
+            .btn-confirm {
+                &.si {
+                    background: #10b981;
+                    color: #000;
+                }
+
+                &.extender {
+                    background: #3b82f6;
+                    color: #fff;
+                }
+
+                &.no {
+                    background: #ef4444;
+                    color: #fff;
+                }
+            }
+        }
+    }
+}

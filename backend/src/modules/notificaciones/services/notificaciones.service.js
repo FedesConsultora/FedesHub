@@ -88,6 +88,14 @@ export const svcCreate = async (body, user) => {
   return notif;
 };
 
+/**
+ * Helper para crear notificaciones desde procesos del sistema (sin un User activo).
+ */
+export const createNotificacionGlobal = async (body) => {
+  // Simplemente llamamos a svcCreate con un user nulo
+  return svcCreate(body, { id: null });
+};
+
 // ====== Acciones de estado ======
 export const svcMarkSeen = (id, user) => setSeen(id, user.id);
 export const svcMarkRead = (id, on, user) => setRead(id, user.id, on);
