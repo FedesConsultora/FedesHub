@@ -379,7 +379,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses }) {
             ) : (
               <>
                 <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
-                <MessageAttachments items={m.adjuntos || []} />
+                <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
               </>
             )}
           </div>

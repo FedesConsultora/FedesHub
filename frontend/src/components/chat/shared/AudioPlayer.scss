@@ -1,38 +1,59 @@
+@use "sass:color";
+@use "../../../styles/variables" as v;
+
 .audio-player {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 10px 14px;
-    border-radius: 14px;
-    min-width: 220px;
-    margin-top: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    width: 122%
-    ;
+    background: transparent; // Removed background
+    padding: 2px 0; // Minimal padding as it sits inside .bubble
+    min-width: 280px;
+    max-width: 100%;
+    margin-top: 4px;
+    border: none; // Removed border
+    transition: all 0.2s ease;
+
     .play-pause-btn {
-        background: #3b82f6;
+        background: #1a73e8; // Keep Google Blue for the button as it looks premium
         border: none;
         color: white;
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         flex-shrink: 0;
-        transition: all 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+        svg {
+            width: 18px;
+            height: 18px;
+
+            &[stroke-width] {
+                margin-left: 2px;
+            }
+        }
+
         &:hover {
-            background: #2563eb;
-            transform: scale(1.08);
+            background: #1765cc;
+            transform: scale(1.05);
+        }
+
+        &:active {
+            transform: scale(0.95);
         }
     }
 
     .waveform-wrap {
         flex: 1;
         min-width: 0;
+        height: 35px;
+        display: flex;
+        align-items: center;
 
         .waveform {
             width: 100%;
@@ -40,50 +61,47 @@
     }
 
     .time-info {
-        font-size: 0.8rem;
-        font-family: 'JetBrains Mono', monospace;
-        color: #000000;
+        font-size: 0.75rem;
+        font-family: 'Google Sans', 'Roboto', sans-serif;
+        color: #628de4;
         display: flex;
-        gap: 4px;
+        gap: 2px;
         flex-shrink: 0;
         font-weight: 500;
         align-items: center;
+        min-width: 70px;
+        justify-content: flex-end;
+
         .current {
-            color: #000000;
+            color: #1a73e8;
+            font-weight: 700;
         }
-        .total{
-            color: #000000;
-        }
-        .sep{
-            color: #000000;
-            margin: 0;
-            position: relative;
-            bottom: 7px;
+
+        .sep {
+            margin: 0 2px;
+            opacity: 0.5;
         }
     }
 }
 
+// Variation for own messages - simplified as it's now transparent
 .mine .audio-player {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-
     .time-info {
-        color: #000000;
+        color: #628de4;
+        opacity: 0.9;
 
         .current {
-            color: #000000;
-        }
-        .total{
-            color: #000000;
+            color: #628de4;
+            font-weight: 800;
         }
     }
 
     .play-pause-btn {
-        background: #fff;
-        color: #3b82f6;
+        background: v.$fh-primary;
+        color: #ffffff;
 
         &:hover {
-            background: #f1f5f9;
+            background: color.adjust(v.$fh-primary, $lightness: -5%);
         }
     }
 }

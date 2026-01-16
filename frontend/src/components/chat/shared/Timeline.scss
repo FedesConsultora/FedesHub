@@ -170,9 +170,33 @@
         opacity: 0.7;
       }
     }
+
     .alwaysVisibleReply {
-      padding: 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 50%;
+      transition: all 0.2s;
+      opacity: 0.5;
+
+      &:hover {
+        background: transparent;
+        color: #ffffff;
+        opacity: 1;
+        transform: scale(1.1);
+      }
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
     }
+
     /* Acciones en hover (Desktop) o ocultas inicialmente */
     .msgHoverActions {
       position: absolute;
@@ -203,6 +227,7 @@
         color: v.$fh-muted;
         cursor: pointer;
         padding: 0;
+
         &:hover {
           background: rgba(255, 255, 255, 0.05);
           color: v.$fh-text;
@@ -219,10 +244,18 @@
       }
     }
 
-    &:hover .msgHoverActions {
+    /* Only show actions when hovering the bubble, and keep them if moving to the actions themselves */
+    .bubble:hover~.msgHoverActions,
+    .msgHoverActions:hover {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
+    }
+
+    /* Ensure hovering the reply button doesn't trigger the actions */
+    .alwaysVisibleReply:hover~.msgHoverActions {
+      opacity: 0;
+      visibility: hidden;
     }
 
     &.mine .msgHoverActions {
