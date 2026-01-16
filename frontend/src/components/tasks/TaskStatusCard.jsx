@@ -92,8 +92,8 @@ export default function TaskStatusCard({
         return false
 
       case 'revision':
-        // Solo responsables pueden pasar a revisión
-        return isResponsible
+        // Colaboradores y responsables pueden pasar a revisión
+        return isCollaborator || isResponsible
 
       case 'en_curso':
       case 'pendiente':
@@ -113,7 +113,7 @@ export default function TaskStatusCard({
       if (code === 'aprobada' || code === 'cancelada') {
         message = 'Solo usuarios NivelB pueden aprobar o cancelar tareas'
       } else if (code === 'revision') {
-        message = 'Solo los responsables pueden pasar la tarea a revisión'
+        message = 'Solo los responsables o colaboradores pueden pasar la tarea a revisión'
       } else if (!isResponsible && !isCollaborator) {
         message = 'Debés ser responsable o colaborador de la tarea'
       }
@@ -160,8 +160,8 @@ export default function TaskStatusCard({
           className="statusMenu statusMenu--portal"
           style={{
             position: 'fixed',
-            top: `${menuPosition.top} px`,
-            left: `${menuPosition.left} px`
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`
           }}
         >
           {Object.entries(MAP)
