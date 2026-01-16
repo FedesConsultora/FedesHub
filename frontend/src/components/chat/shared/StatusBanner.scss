@@ -1,0 +1,58 @@
+@use '../../../styles/variables' as *;
+
+.status-banners-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-banner {
+    padding: 10px 16px;
+    background: rgba(var(--fh-primary-rgb), 0.1);
+    border-top: 1px solid rgba(var(--fh-primary-rgb), 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    animation: slideDown 0.3s ease-out;
+
+    &.is-absence {
+        background: rgba(255, 193, 7, 0.1);
+        border-top-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        font-weight: 500;
+    }
+
+    .emoji {
+        font-size: 1.1rem;
+    }
+
+    .text {
+        flex: 1;
+
+        .name-prefix {
+            font-weight: 600;
+            color: #fff;
+            margin-right: 2px;
+        }
+
+        .expiry-text {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

@@ -73,6 +73,11 @@
       display: flex;
       align-items: center;
       gap: 6px;
+
+      .status-small {
+        font-size: 0.9rem;
+        cursor: help;
+      }
     }
 
     .mentionTag {

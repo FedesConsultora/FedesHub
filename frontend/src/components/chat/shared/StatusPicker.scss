@@ -1,0 +1,390 @@
+@use '../../../styles/variables' as *;
+
+.status-modal-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.status-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.status-card {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: #1a222d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.status-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .brand {
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+    }
+
+    .close-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.4);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+    }
+}
+
+.status-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    .lbl {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+
+        svg {
+            color: $fh-primary;
+        }
+    }
+}
+
+.expiry-section {
+    display: flex;
+    flex-direction: column;
+
+    .expiry-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: #fff;
+        padding: 10px 14px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        outline: none;
+
+        &:focus {
+            border-color: $fh-primary;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        option {
+            background: #1a222d;
+            color: #fff;
+        }
+    }
+}
+
+.status-actions {
+    .clear-btn {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        color: #fff;
+        padding: 12px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+    }
+}
+
+.custom-section {
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+
+        .muted {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+    }
+}
+
+.custom-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 4px 8px 4px 12px;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
+
+            .delete-btn {
+                opacity: 0.6;
+            }
+        }
+
+        .select-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 8px 0;
+            cursor: pointer;
+            text-align: left;
+
+            .emoji {
+                font-size: 1.2rem;
+            }
+
+            .text {
+                font-size: 0.95rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #ff5252;
+            padding: 8px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+
+            &:hover {
+                opacity: 1 !important;
+                transform: scale(1.1);
+            }
+        }
+    }
+
+    .add-trigger {
+        width: 100%;
+        background: transparent;
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 12px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+    }
+}
+
+.add-form {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $fh-primary;
+    border-radius: 12px;
+    padding: 8px;
+    margin-top: 4px;
+
+    .form-inner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .emoji-wrap {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: $fh-primary;
+
+            .smile-ico {
+                opacity: 0.8;
+            }
+        }
+
+        .current-emoji {
+            font-size: 1.4rem;
+            z-index: 1;
+        }
+
+        .smile-ico {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.75rem;
+            color: $fh-primary;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+    }
+
+    .text-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 0.95rem;
+        outline: none;
+
+        &::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 4px;
+
+        button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+
+            &.save-btn {
+                background: $fh-primary;
+                color: #fff;
+
+                &:hover {
+                    filter: brightness(1.2);
+                }
+            }
+
+            &.cancel-btn {
+                background: rgba(255, 255, 255, 0.05);
+                color: rgba(255, 255, 255, 0.5);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #fff;
+                }
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.emoji-picker-container {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.15s ease-out;
+
+    .picker-modal {
+        position: relative;
+        background: #1a222d;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+
+        // Reset properties from the common EmojiPicker.scss if needed
+        .fh-emojiPicker-pop {
+            position: relative;
+            bottom: unset;
+            right: unset;
+            box-shadow: none;
+        }
+    }
+}

@@ -638,4 +638,15 @@ export const setupAssociations = (m) => {
     m.ChatTyping.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
   );
 
+  // ===== Módulo 12: Status =====
+  link(m.UserStatusPersonalizado && m.User, 'UserStatusPersonalizado → User (user_id)', () =>
+    m.UserStatusPersonalizado.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+  link(m.User && m.UserStatusPersonalizado, 'User → UserStatusPersonalizado (hasMany)', () =>
+    m.User.hasMany(m.UserStatusPersonalizado, { foreignKey: 'user_id', as: 'customStatuses' })
+  );
+  link(m.Feder && m.UserStatusPersonalizado, 'Feder → UserStatusPersonalizado (current_status_custom_id)', () =>
+    m.Feder.belongsTo(m.UserStatusPersonalizado, { foreignKey: 'current_status_custom_id', as: 'currentStatusCustom' })
+  );
+
 };
