@@ -299,6 +299,11 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
       {
         onSuccess: () => {
           setShowDeleteConfirm(false)
+        },
+        onError: (err) => {
+          console.error('[Timeline] delete error:', err)
+          alert('Error al eliminar el mensaje: ' + (err?.response?.data?.error || err?.message || 'Error desconocido'))
+          setShowDeleteConfirm(false)
         }
       }
     )
@@ -408,14 +413,15 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
                   </button>
                 )}
                 {isMine && (
-
                   <>
                     <button className="actionBtn" title="Editar" onClick={handleEdit}>
                       <MdOutlineModeEdit />
                     </button>
-                    <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
-                      <FaRegTrashCan />
-                    </button>
+                    {(Date.now() - msgTs < 30 * 60 * 1000) && (
+                      <button className="actionBtn" title="Eliminar" onClick={() => setShowDeleteConfirm(true)}>
+                        <FaRegTrashCan />
+                      </button>
+                    )}
                   </>
                 )}
               </div>

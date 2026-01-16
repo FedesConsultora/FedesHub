@@ -67,7 +67,7 @@ router.post(
 
 // Mensaje by id
 router.put('/messages/:id', requireAuth, requirePermission('chat', 'update'), chat.putMessage);
-router.delete('/messages/:id', requireAuth, requirePermission('chat', 'delete'), chat.deleteMessage);
+router.delete('/messages/:id', requireAuth, requirePermission('chat', 'update'), chat.deleteMessage);
 
 // Reacciones / Pin / Guardado / Follow hilo / Read
 router.post('/messages/:id/react', requireAuth, requirePermission('chat', 'update'), chat.postReact);
