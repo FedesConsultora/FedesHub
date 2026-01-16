@@ -293,12 +293,32 @@
       gap: 8px;
 
       select {
-        background: #0b1218;
+        background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
         color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 6px 12px;
-        border-radius: 8px;
+        border: 1px solid rgba(v.$fh-primary, 0.25);
+        padding: 6px 14px;
+        border-radius: 14px;
         font-size: 13px;
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+          border-color: rgba(v.$fh-primary, 0.45);
+        }
+
+        &:focus {
+          border-color: v.$fh-primary;
+          box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.15);
+        }
+
+        option {
+          background-color: #1a222c;
+          color: #fff;
+          padding: 10px;
+        }
       }
     }
   }

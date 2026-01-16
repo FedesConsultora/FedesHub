@@ -133,6 +133,88 @@ input {
   }
 }
 
+/* Native Select Styling */
+select {
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%) !important;
+  color: $fh-text !important;
+  border: 1px solid rgba($fh-primary, 0.25) !important;
+  border-radius: 14px !important;
+  padding: 6px 10px !important;
+  font-family: inherit !important;
+  font-size: 0.9rem !important;
+  outline: none !important;
+  cursor: pointer !important;
+  appearance: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+  &:hover {
+    border-color: rgba($fh-primary, 0.45) !important;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  &:focus {
+    border-color: $fh-primary !important;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15), 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  option {
+    background-color: #1a222c !important;
+    color: #fff !important;
+    padding: 10px !important;
+  }
+}
+
+/* Global Dropdown/Popover Panel Class */
+.fh-dropdown-panel {
+  background: linear-gradient(165deg, rgba(26, 34, 46, 0.98) 0%, rgba(15, 23, 32, 0.98) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba($fh-primary, 0.1);
+  overflow: hidden;
+  z-index: 1000;
+
+  &.animate-fade-in {
+    animation: fhFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Global Premium Field Utility (for inputs, triggers, etc) */
+.fh-premium-field {
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%) !important;
+  border: 1px solid rgba($fh-primary, 0.25) !important;
+  border-radius: 14px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: $fh-text !important;
+
+  &:hover {
+    border-color: rgba($fh-primary, 0.45) !important;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+  }
+
+  &:focus-within,
+  &.is-active {
+    border-color: $fh-primary !important;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15) !important;
+  }
+}
+
+@keyframes fhFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Scrollbar Global Minimalista */
 * {
   scrollbar-width: thin;

@@ -34,10 +34,10 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   max-width: 980px;
   max-height: 90vh;
   max-height: 90dvh;
-  background: #0c1017;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(165deg, #111720 0%, #06090d 100%);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba($fh-primary, 0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -174,15 +174,15 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   gap: 10px;
   padding: 0 12px;
   min-height: 48px;
-  background: #11171f;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+  border: 1px solid rgba($fh-primary, 0.25);
+  border-radius: 14px;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   cursor: text;
-  transition: all .2s ease;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   .ico {
@@ -229,8 +229,8 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
 
   &:focus-within {
     border-color: $fh-primary;
-    box-shadow: 0 0 0 2px rgba($fh-primary, .15);
-    background: #111823;
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
   }
 
   &.is-error {
