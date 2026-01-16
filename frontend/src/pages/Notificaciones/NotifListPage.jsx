@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import { notifApi } from '../../api/notificaciones'
+import { FiBell } from 'react-icons/fi'
 import './NotifListPage.scss'
 
 import { useEffect } from 'react'
@@ -67,7 +68,13 @@ export default function NotifListPage({ buzonOverride }) {
 
 
       {isError && <div className="fh-err">Error cargando.</div>}
-      {!isLoading && !isError && rows.length === 0 && <div className="fh-empty">Sin resultados.</div>}
+      {!isLoading && !isError && rows.length === 0 && (
+        <div className="fh-empty-state">
+          <div className="icon"><FiBell /></div>
+          <p>Sin resultados</p>
+          <span>No encontramos notificaciones que coincidan con tu búsqueda</span>
+        </div>
+      )}
 
       {!!rows.length && (
         <div className="tableWrap">

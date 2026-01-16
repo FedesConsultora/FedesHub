@@ -163,19 +163,55 @@
     }
 
 
-    .seeAll {
+    .headActions {
       margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .clearAllBtn {
       display: inline-flex;
       gap: 6px;
       align-items: center;
       border-radius: 12px;
-      padding: 6px 10px;
-      background: rgba(v.$fh-primary, .18);
+      padding: 6px 12px;
+      background: linear-gradient(180deg, rgba(v.$fh-muted, .1) 0%, rgba(v.$fh-muted, .05) 100%);
       color: v.$fh-text;
-      border: 1px solid rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        filter: brightness(1.07)
+        background: linear-gradient(180deg, rgba(v.$fh-muted, .15) 0%, rgba(v.$fh-muted, .1) 100%);
+        border-color: rgba(v.$fh-primary, 0.3);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+        color: v.$fh-primary;
+      }
+    }
+
+    .seeAll {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border-radius: 12px;
+      padding: 6px 12px;
+      background: linear-gradient(180deg, rgba(v.$fh-primary, .25) 0%, rgba(v.$fh-primary, .15) 100%);
+      color: v.$fh-text;
+      border: 1px solid rgba(v.$fh-primary, 0.2);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        filter: brightness(1.1);
+        border-color: rgba(v.$fh-primary, 0.4);
       }
 
       svg {
@@ -203,7 +239,9 @@
     padding: 8px 10px;
 
     &.read {
-      opacity: .8;
+      opacity: .5;
+      background: rgba(255, 255, 255, 0.02);
+      border-color: rgba(255, 255, 255, 0.04);
     }
 
     .ttl {

@@ -293,10 +293,11 @@
       gap: 8px;
 
       select {
+        height: 48px;
         background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
         color: #fff;
         border: 1px solid rgba(v.$fh-primary, 0.25);
-        padding: 6px 14px;
+        padding: 0 14px;
         border-radius: 14px;
         font-size: 13px;
         outline: none;
@@ -311,6 +312,7 @@
 
         &:focus {
           border-color: v.$fh-primary;
+          background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
           box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.15);
         }
 

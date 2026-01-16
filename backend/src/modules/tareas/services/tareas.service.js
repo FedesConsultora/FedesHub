@@ -583,7 +583,7 @@ const createTask = async (payload, currentFederId) => {
     await registrarCambio({
       tarea_id: tarea.id,
       feder_id: currentFederId,
-      tipo_cambio: TIPO_CAMBIO.TAREA,
+      tipo_cambio: TIPO_CAMBIO.CREACION,
       accion: ACCION.CREATED,
       descripcion: 'Creó la tarea',
       transaction: t

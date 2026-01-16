@@ -599,7 +599,14 @@ export default function RealtimeProvider({ children }) {
       lastInteraction: lastInteractionRef.current ? new Date(lastInteractionRef.current).toISOString() : 'none',
       isWindowVisible: document.visibilityState === 'visible'
     }),
-    playTest: () => onIncoming({ type: 'chat.message.created', canal_id: 1, user_id: -1 })
+    playTest: () => onIncoming({ type: 'chat.message.created', canal_id: 1, user_id: -1 }),
+    clearAllChatUnreads: () => {
+      setUnreadByCanal(Object.create(null))
+      setMentionByCanal(Object.create(null))
+      // Opcionalmente, podríamos querer suprimir todos los canales actuales para evitar que vuelvan pronto
+      // setSuppressedCanals(prev => { ... })
+      window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: false } }))
+    }
   }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, notifPermission, audioUnlocked])
 
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>

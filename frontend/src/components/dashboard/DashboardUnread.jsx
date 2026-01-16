@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notifApi } from '../../api/notificaciones';
 import { useRealtime } from '../../realtime/RealtimeProvider';
+import { FiMessageSquare } from 'react-icons/fi';
 import './tasks.scss';
 
 export default function DashboardUnread({ notifications, onOpenTask, onRefresh }) {
@@ -9,8 +10,10 @@ export default function DashboardUnread({ notifications, onOpenTask, onRefresh }
     const { clearUnreadFor } = useRealtime();
 
     if (!notifications?.length) return (
-        <div className="unreadEmpty">
-            <p>No tienes mensajes nuevos sin leer.</p>
+        <div className="fh-empty-state" style={{ padding: '32px 16px' }}>
+            <div className="icon"><FiMessageSquare /></div>
+            <p>Bandeja limpia</p>
+            <span>No tienes mensajes nuevos sin leer por ahora.</span>
         </div>
     );
 

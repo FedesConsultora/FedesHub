@@ -577,20 +577,6 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
               )}
 
 
-              <label className="lbl" htmlFor="leader" style={{ display: 'none' }}>Líder</label>
-              <div className="field" style={{ display: 'none' }}>
-                <FiUsers className="ico" aria-hidden style={S.ico} />
-                <select id="leader" value={leaderId} onChange={(e) => setLeaderId(e.target.value)}
-                  disabled={loading || responsables.length === 0} style={S.control}>
-                  <option value="">— Ninguno —</option>
-                  {responsables.map(fid => {
-                    const f = (cat.feders || []).find(x => String(x.id) === String(fid))
-                    const name = f ? (`${f.apellido ?? ''} ${f.nombre ?? ''}`.trim() || f.alias || `Feder #${f.id}`) : `Feder #${fid}`
-                    return <option key={fid} value={String(fid)}>{name}</option>
-                  })}
-                </select>
-                <div className="addon" aria-hidden style={S.addon} />
-              </div>
 
 
               <div className={'field ' + (tituloError ? 'is-error' : '')}>
@@ -861,11 +847,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
 
 
               {/* Aprobación */}
-              <div className="field checkbox" style={{ display: 'none' }}>
-                <input id="aprob" type="checkbox" checked={requiereAprob}
-                  onChange={(e) => setRequiereAprob(e.target.checked)} disabled={loading} />
-                <label htmlFor="aprob">Requiere aprobación</label>
-              </div>
+
             </div>
           </div>
 

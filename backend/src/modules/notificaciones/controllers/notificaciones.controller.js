@@ -152,3 +152,15 @@ export const postMarkAllRead = async (req, res, next) => {
     res.json({ ok: true, ...result });
   } catch (e) { next(e); }
 };
+/**
+ * PATCH /notificaciones/mark-all-read
+ * Body: { buzon?: 'chat'|'tareas'|'calendario' }
+ * Marca todas las notificaciones del usuario actual como leídas
+ */
+export const patchMarkAllReadMe = async (req, res, next) => {
+  try {
+    const { buzon, action = 'read' } = req.body;
+    const result = await svcMarkAllRead(req.user.id, buzon || null, action);
+    res.json({ ok: true, ...result });
+  } catch (e) { next(e); }
+};

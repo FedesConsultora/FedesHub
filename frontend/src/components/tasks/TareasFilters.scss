@@ -88,12 +88,12 @@
     .searchWrapper {
       flex: 0 0 auto;
       position: relative;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
+      background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+      border: 1px solid rgba(v.$fh-primary, 0.25);
+      border-radius: 14px;
       display: flex;
       align-items: center;
-      padding: 0 4px; // Reducido para el botón colapsado
+      padding: 0 4px;
       height: 38px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
@@ -203,9 +203,9 @@
       gap: 6px;
       padding: 0 12px;
       height: 38px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
+      background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+      border: 1px solid rgba(v.$fh-primary, 0.25);
+      border-radius: 14px;
       color: v.$fh-muted;
       font-size: 12px;
       font-weight: 600;
@@ -242,9 +242,9 @@
       gap: 6px;
       padding: 0 12px;
       height: 38px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
+      background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+      border: 1px solid rgba(v.$fh-primary, 0.25);
+      border-radius: 14px;
       color: v.$fh-text;
       font-size: 12px;
       font-weight: 700;
@@ -424,13 +424,13 @@
       }
 
       select {
-        height: 44px;
+        height: 48px;
         background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
         border: 1px solid rgba(v.$fh-primary, 0.25);
         border-radius: 14px;
         width: 100%;
         color: white;
-        padding: 0 12px;
+        padding: 0 14px;
         font-size: 14px;
         outline: none;
         cursor: pointer;
@@ -487,16 +487,19 @@
 
       input {
         width: 100%;
-        height: 44px;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 10px;
+        height: 48px;
+        background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+        border: 1px solid rgba(v.$fh-primary, 0.25);
+        border-radius: 14px;
         color: white;
         padding-left: 36px;
         font-size: 13px;
+        outline: none;
 
         &:focus {
           border-color: v.$fh-primary;
+          background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+          box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.15);
         }
       }
 

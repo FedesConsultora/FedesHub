@@ -188,7 +188,7 @@ export const svcCleanupOrphans = async (userId = null) => {
  * @param {number} userId
  * @param {string|null} buzon - 'chat', 'tareas', 'calendario' o null para todos
  */
-export const svcMarkAllRead = async (userId, buzon = null) => {
+export const svcMarkAllRead = async (userId, buzon = null, action = 'read') => {
   const t = await sequelize.transaction();
   try {
     let buzonCondition = '';
@@ -205,13 +205,16 @@ export const svcMarkAllRead = async (userId, buzon = null) => {
       }
     }
 
+    const setClause = action === 'archive' ? 'archived_at = NOW()' : 'read_at = NOW()';
+    const whereClause = action === 'archive' ? 'nd.archived_at IS NULL' : 'nd.read_at IS NULL';
+
     const result = await sequelize.query(`
       UPDATE "NotificacionDestino" nd
-      SET read_at = NOW()
+      SET ${setClause}
       FROM "Notificacion" n
       WHERE nd.notificacion_id = n.id
         AND nd.user_id = :userId
-        AND nd.read_at IS NULL
+        AND ${whereClause}
         ${buzonCondition}
     `, {
       type: QueryTypes.UPDATE,
@@ -222,8 +225,8 @@ export const svcMarkAllRead = async (userId, buzon = null) => {
     await t.commit();
 
     const count = result[1] || 0;
-    log.info('notif:markAllRead:ok', { user_id: userId, buzon, count });
-    return { marked_read: count, user_id: userId, buzon };
+    log.info('notif:markAllRead:ok', { user_id: userId, buzon, action, count });
+    return { marked: count, user_id: userId, buzon, action };
 
   } catch (e) {
     await t.rollback();

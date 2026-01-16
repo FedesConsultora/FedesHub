@@ -9,7 +9,9 @@ import {
   FiExternalLink,
   FiChevronRight,
   FiEye,
-  FiEyeOff
+  FiEyeOff,
+  FiTrash2,
+  FiCheckCircle
 } from 'react-icons/fi'
 import { notifApi } from '../../api/notificaciones'
 import ChatBellPanel from './ChatBellPanel.jsx'
@@ -135,7 +137,7 @@ export default function BellCluster({ onAnyOpen }) {
     return (
       <div className="fhBellCluster grouped" ref={ref}>
         <div className={`bell ${openKey ? 'open' : ''}`}>
-          <button className="iconBtn mainBell" onClick={() => setOpenKey(k => k ? null : 'all')} aria-label="Notificaciones">
+          <button className="iconBtn mainBell" onClick={(e) => { e.stopPropagation(); setOpenKey(k => k ? null : 'all') }} aria-label="Notificaciones">
             <FiBell />
             {!!totalCount && <span className="badge">{totalCount}</span>}
           </button>
@@ -189,7 +191,7 @@ export default function BellCluster({ onAnyOpen }) {
 function BellButton({ buzon, label, count, dot = false, active, onToggle, closeAll }) {
   return (
     <div className={`bell ${active ? 'open' : ''}`}>
-      <button className="iconBtn" onClick={onToggle} aria-label={label} title={label}>
+      <button className="iconBtn" onClick={(e) => { e.stopPropagation(); onToggle(); }} aria-label={label} title={label}>
         {ICONS[buzon]}
         {!!count && <span className="badge">{count}</span>}
         {dot && !count && <span className="dot" aria-hidden />}
@@ -208,6 +210,7 @@ function BellButtonContent({ buzon, label, closeAll }) {
   const navigate = useNavigate()
   const seenOnce = useRef(false)
   const isChat = buzon === 'chat'
+  const qc = useQueryClient()
 
   const { data, isLoading, isError } = useInbox(
     buzon,
@@ -226,19 +229,43 @@ function BellButtonContent({ buzon, label, closeAll }) {
     })
   }, [list])
 
+  const { clearAllChatUnreads } = useRealtime()
+
+  const handleClearAll = async () => {
+    try {
+      await notifApi.clearAll(buzon, 'read')
+      qc.invalidateQueries({ queryKey: ['notif'] })
+      window.dispatchEvent(new Event('fh:notif:changed'))
+      // Si es chat, también invalidar chats y limpiar burbujas locales
+      if (isChat) {
+        qc.invalidateQueries({ queryKey: ['chat', 'canales'] })
+        clearAllChatUnreads?.()
+      }
+    } catch (err) {
+      console.error('Error al marcar todas como leídas:', err)
+    }
+  }
+
   return (
     <>
       <header className="panelHead">
         <span className="lbl">{ICONS[buzon]} {label}</span>
-        {buzon !== 'chat' && (
+        <div className="headActions">
+          <button
+            className="clearAllBtn"
+            onClick={handleClearAll}
+            title="Quitar todas de la vista"
+          >
+            <FiTrash2 /> Limpiar
+          </button>
           <button
             className="seeAll"
-            onClick={() => { closeAll(); navigate(`/notificaciones/${buzon}`) }}
-            title="Ver todas"
+            onClick={() => { closeAll(); navigate(isChat ? '/chat/listado' : `/notificaciones/${buzon}`) }}
+            title={isChat ? 'Ver chat' : 'Ver todas'}
           >
-            <FiExternalLink /> Ver todas
+            <FiExternalLink /> {isChat ? 'Ver chat' : 'Ver todas'}
           </button>
-        )}
+        </div>
       </header>
 
       {buzon === 'chat' ? (
@@ -247,15 +274,21 @@ function BellButtonContent({ buzon, label, closeAll }) {
         <div className="list" style={{ position: 'relative', minHeight: 100 }}>
           {isLoading && <GlobalLoader size={60} />}
           {isError && <div className="fh-err">Error cargando.</div>}
-          {!isLoading && !isError && !list.length && <div className="fh-empty">Sin notificaciones.</div>}
-          {list.map(row => <NotifItem key={row.id} row={row} />)}
+          {!isLoading && !isError && !list.length && (
+            <div className="fh-empty-state">
+              <div className="icon"><FiBell /></div>
+              <p>Sin notificaciones</p>
+              <span>Te avisaremos cuando haya novedades importantes</span>
+            </div>
+          )}
+          {list.map(row => <NotifItem key={row.id} row={row} closeAll={closeAll} />)}
         </div>
       )}
     </>
   )
 }
 
-function NotifItem({ row }) {
+function NotifItem({ row, closeAll }) {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const n = row.notificacion || {}
@@ -274,6 +307,7 @@ function NotifItem({ row }) {
   // Parsear el link_url para detectar si es una tarea
   const handleOpenLink = async (e) => {
     e.preventDefault()
+    closeAll?.()
     const url = n.link_url || ''
 
     // Marcar como leída la notificación

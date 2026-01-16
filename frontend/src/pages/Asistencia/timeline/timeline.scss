@@ -55,11 +55,15 @@ $muted: $fh-muted;
 }
 
 .fh-input {
-  padding: .6rem .8rem;
+  height: 48px;
+  width: 100%;
+  border-radius: 14px;
   border: 1px solid rgba($fh-primary, 0.25);
-  border-radius: 12px;
   background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
   color: $text;
+  padding: 0 14px;
+  font-size: .95rem;
+  outline: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
@@ -71,7 +75,6 @@ $muted: $fh-muted;
     border-color: $fh-primary;
     background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
     box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
-    outline: none;
   }
 }
 
@@ -390,14 +393,15 @@ $muted: $fh-muted;
     gap: 8px;
 
     .nav-btn {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+      border: 1px solid rgba($fh-primary, 0.15);
 
       svg {
         font-size: 1.1rem;
@@ -406,7 +410,8 @@ $muted: $fh-muted;
 
     .fh-btn-today {
       padding: 0 16px;
-      height: 40px;
+      height: 48px;
+      border-radius: 14px;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
@@ -427,12 +432,13 @@ $muted: $fh-muted;
 
     .fh-input {
       width: 100%;
-      height: 44px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      height: 48px; // Uniformed
+      background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+      border: 1px solid rgba($fh-primary, 0.25);
+      border-radius: 14px;
 
       &:focus {
-        background: rgba(255, 255, 255, 0.07);
+        background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
         border-color: $fh-primary;
       }
     }

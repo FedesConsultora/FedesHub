@@ -202,9 +202,9 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   gap: 10px;
   padding: 0 12px;
   min-height: 48px;
-  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
-  border: 1px solid rgba($fh-primary, 0.25);
-  border-radius: 14px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%) !important;
+  border: 1px solid rgba($fh-primary, 0.25) !important;
+  border-radius: 14px !important;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -337,8 +337,8 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   &:focus-within,
   &.is-open {
     border-color: $fh-primary;
-    box-shadow: 0 0 0 2px rgba($fh-primary, .15);
-    background: rgba(17, 24, 35, 0.8);
+    box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
   }
 
   &.is-error {
@@ -364,6 +364,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
       font-size: 1.2rem;
       font-weight: 600;
       text-transform: uppercase;
+      margin-top: 2rem;
       margin-bottom: 4px;
 
       @media (max-width: 600px) {

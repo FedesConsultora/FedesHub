@@ -42,9 +42,9 @@
     }
 
     &.is-open &__trigger {
-        border-color: v.$fh-accent;
-        background: rgba(17, 23, 31, 0.8);
-        box-shadow: 0 0 0 2px rgba(var(--fh-accent-rgb), 0.15);
+        border-color: v.$fh-primary;
+        background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+        box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.15);
     }
 
     &.is-disabled {

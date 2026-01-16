@@ -1331,25 +1331,27 @@ $text: $fh-text;
 /* ===== Inline TC Selects ===== */
 .inline-tc-trigger {
   @extend .fh-chip;
-  padding: .42rem .85rem;
-  background: rgba(255, 255, 255, .04);
-  border: 1px solid $border;
+  padding: 0 14px;
+  min-height: 48px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+  border: 1px solid rgba($fh-primary, 0.25);
+  border-radius: 14px;
   color: $text;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: auto;
   min-width: 140px;
   text-align: left;
   justify-content: space-between;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: $fh-primary;
+    background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    border-color: rgba($fh-primary, 0.45);
     transform: translateY(-1px);
   }
 
@@ -1366,16 +1368,16 @@ $text: $fh-text;
 }
 
 .inline-tc-multi-trigger {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 6px;
-  min-height: 42px;
+  background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+  border: 1px solid rgba($fh-primary, 0.25);
+  border-radius: 14px;
+  padding: 6px 14px;
+  min-height: 48px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   align-items: center;
 
   &:hover {
