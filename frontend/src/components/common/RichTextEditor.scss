@@ -13,8 +13,7 @@
         color: $fh-text;
         transition: border-color 0.2s ease;
         max-width: 100%;
-        width: 100%;
-        overflow: hidden;
+        overflow: visible;
         display: flex;
         flex-direction: column;
 
@@ -25,14 +24,17 @@
     }
 
     .toolbar {
+        position: sticky !important;
+        top: 80px !important; // Accounts for the sticky header height
+        z-index: 10 !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         gap: 2px !important;
         padding: 4px 6px !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: #121820 !important; // Darker and more opaque to cover text
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 8px 8px 0 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;

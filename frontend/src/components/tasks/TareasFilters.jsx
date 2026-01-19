@@ -127,6 +127,8 @@ export function TareasActiveChips({ value, catalog, onChange }) {
       upd({ vencimiento_from: '', vencimiento_to: '' });
     } else if (key === 'orden') {
       upd({ orden_by: 'prioridad', sort: 'desc' });
+    } else if (key === 'estado_id' || key === 'include_finalizadas') {
+      upd({ [key]: undefined, include_finalizadas: false });
     } else {
       upd({ [key]: undefined });
     }
@@ -145,6 +147,7 @@ export function TareasActiveChips({ value, catalog, onChange }) {
     sort: 'desc',
     solo_mias: v.solo_mias,
     include_archivadas: v.include_archivadas,
+    include_finalizadas: false,
   })
 
   if (chips.length === 0) return null;
@@ -198,15 +201,7 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     }
   };
 
-  const removeChip = (key) => {
-    if (key === 'vencimiento') {
-      upd({ vencimiento_from: '', vencimiento_to: '' });
-    } else if (key === 'orden') {
-      upd({ orden_by: 'prioridad', sort: 'desc' });
-    } else {
-      upd({ [key]: undefined });
-    }
-  }
+
 
   const clear = () => onChange?.({
     q: '',
@@ -230,6 +225,18 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     inamovible: undefined,
     solo_leads: undefined
   })
+
+  const removeChip = (key) => {
+    if (key === 'vencimiento') {
+      upd({ vencimiento_from: '', vencimiento_to: '' });
+    } else if (key === 'orden') {
+      upd({ orden_by: 'prioridad', sort: 'desc' });
+    } else if (key === 'estado_id' || key === 'include_finalizadas') {
+      upd({ [key]: undefined, include_finalizadas: false });
+    } else {
+      upd({ [key]: undefined });
+    }
+  }
 
   useEffect(() => {
     if (!open) return
@@ -501,6 +508,7 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                   <div className="checkmark" />
                   <span className="label">Mostrar archivadas</span>
                 </label>
+
               </div>
             </div>
           </div>

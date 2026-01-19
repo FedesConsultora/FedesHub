@@ -21,7 +21,7 @@ const stageFromDue = (iso) => {
  * p.ej.: { solo_mias:true, include_archivadas:false, q, cliente_id, estado_id, limit, orden_by, sort }
  */
 export default function useTasksBoard(
-  params = { solo_mias: true, include_archivadas: false, limit: 200, orden_by: 'prioridad', sort: 'desc' }
+  params = { solo_mias: true, include_archivadas: false, include_finalizadas: false, limit: 200, orden_by: 'prioridad', sort: 'desc' }
 ) {
   const [loading, setLoading] = useState(true)
   const [columns, setColumns] = useState(emptyColumns())

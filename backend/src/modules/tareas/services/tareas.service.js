@@ -106,7 +106,7 @@ const buildListSQL = (params = {}, currentUser) => {
     // TC specific multi
     tc_red_social_ids = [], tc_formato_ids = [],
     // flags
-    solo_mias, include_archivadas, is_favorita, is_seguidor,
+    solo_mias, include_archivadas, include_finalizadas, is_favorita, is_seguidor,
     solo_leads,
     lead_id,
     // fechas
@@ -242,8 +242,8 @@ const buildListSQL = (params = {}, currentUser) => {
   addIn('t.cliente_id', cliente_ids, 'cids_');
   addIn('t.estado_id', estado_ids, 'eids_');
 
-  // Si no se especifica estado, excluir por defecto aprobadas y canceladas
-  if (!estado_id && !estado_codigo && !estado_ids?.length) {
+  // Si no se especifica estado Y NO se pide incluirlas expresamente, excluir por defecto aprobadas y canceladas
+  if (!estado_id && !estado_codigo && !estado_ids?.length && !include_finalizadas) {
     where.push(`te.codigo NOT IN ('aprobada', 'cancelada')`);
   }
 
