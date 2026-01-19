@@ -601,10 +601,9 @@ export default function RealtimeProvider({ children }) {
     }),
     playTest: () => onIncoming({ type: 'chat.message.created', canal_id: 1, user_id: -1 }),
     clearAllChatUnreads: () => {
-      setUnreadByCanal(Object.create(null))
-      setMentionByCanal(Object.create(null))
-      // Opcionalmente, podríamos querer suprimir todos los canales actuales para evitar que vuelvan pronto
-      // setSuppressedCanals(prev => { ... })
+      setUnreadByCanal({})
+      setMentionByCanal({})
+      setSuppressedCanals(new Set())
       window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: false } }))
     }
   }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, notifPermission, audioUnlocked])

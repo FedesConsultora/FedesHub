@@ -9,7 +9,7 @@ import {
 
 import {
   listMessages, createMessage, editMessage, deleteMessage,
-  toggleReaction, togglePin, toggleSaved, followThread, setRead, listPins
+  toggleReaction, togglePin, toggleSaved, followThread, setRead, setReadAll, listPins
 } from '../repositories/messages.repo.js';
 
 import { setPresence, setTyping } from '../repositories/presence.repo.js';
@@ -404,6 +404,15 @@ export const svcSetRead = async (canal_id, last_read_msg_id, user) => {
   try { await publishRead(canal_id, user.id, last_read_msg_id); } catch (err) { console.error('sse read', err); }
 
   return r;
+};
+
+export const svcSetReadAll = async (user) => {
+  const t = await sequelize.transaction();
+  try {
+    await setReadAll(user.id, t);
+    await t.commit();
+  } catch (e) { await t.rollback(); throw e; }
+  return { ok: true };
 };
 
 // -------- Presencia / Typing

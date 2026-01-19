@@ -13,7 +13,7 @@ import {
   svcCatalogos, svcListCanales, svcUpsertCanal, svcArchiveCanal, svcUpdateCanalSettings, svcDeleteCanal,
   svcListMiembros, svcAddOrUpdateMiembro, svcRemoveMiembro, svcJoin, svcLeave,
   svcListMessages, svcSearchMessages, svcListPins, svcPostMessage, svcEditMessage, svcDeleteMessage,
-  svcReact, svcPin, svcSave, svcFollowThread, svcSetRead,
+  svcReact, svcPin, svcSave, svcFollowThread, svcSetRead, svcSetReadAll,
   svcSetPresence, svcTyping,
   svcInvite, svcAcceptInvitation, svcDeclineInvitation,
   svcScheduleMeeting, svcListDmCandidates
@@ -23,8 +23,6 @@ import { saveUploadedFiles } from '../../../infra/storage/index.js'
 
 import { listChannelAttachments } from '../repositories/attachments.repo.js'
 const m = await initModels();
-
-await initModels();
 
 export const health = (_req, res) => res.json({ module: 'chat', ok: true });
 
@@ -254,6 +252,12 @@ export const postRead = async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const { last_read_msg_id } = readChannelSchema.parse(req.body);
     res.json(await svcSetRead(id, last_read_msg_id, req.user));
+  } catch (e) { next(e); }
+};
+
+export const postReadAll = async (req, res, next) => {
+  try {
+    res.json(await svcSetReadAll(req.user));
   } catch (e) { next(e); }
 };
 

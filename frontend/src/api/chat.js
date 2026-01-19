@@ -54,7 +54,8 @@ export const chatApi = {
   },
 
   read: {
-    set: (canal_id, last_read_msg_id) => api.post(`${base}/channels/${canal_id}/read`, { last_read_msg_id }).then(r => r.data)
+    set: (canal_id, last_read_msg_id) => api.post(`${base}/channels/${canal_id}/read`, { last_read_msg_id }).then(r => r.data),
+    all: () => api.post(`${base}/read-all`).then(r => r.data)
   },
 
   presence: {

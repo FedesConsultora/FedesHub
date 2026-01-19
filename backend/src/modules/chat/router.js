@@ -75,6 +75,7 @@ router.post('/messages/:id/pin', requireAuth, requirePermission('chat', 'update'
 router.post('/messages/:id/save', requireAuth, requirePermission('chat', 'update'), chat.postSave);
 router.post('/threads/:root_id/follow', requireAuth, requirePermission('chat', 'update'), chat.postFollowThread);
 router.post('/channels/:id/read', requireAuth, requirePermission('chat', 'update'), chat.postRead);
+router.post('/read-all', requireAuth, requirePermission('chat', 'update'), chat.postReadAll);
 
 // Presencia / Typing
 router.post('/presence', requireAuth, requirePermission('chat', 'update'), chat.postPresence);

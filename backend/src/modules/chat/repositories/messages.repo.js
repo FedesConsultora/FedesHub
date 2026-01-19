@@ -301,6 +301,19 @@ export async function markDelivered(mensaje_ids, user_id, t) {
   return mensaje_ids.length;
 }
 
+export async function setReadAll(user_id, t) {
+  await sequelize.query(`
+    UPDATE "ChatCanalMiembro" cm
+    SET 
+      last_read_msg_id = (SELECT MAX(id) FROM "ChatMensaje" m WHERE m.canal_id = cm.canal_id),
+      last_read_at = NOW()
+    WHERE cm.user_id = :user_id
+  `, {
+    replacements: { user_id },
+    transaction: t
+  });
+}
+
 export function extractUrls(text) {
   if (!text) return [];
   const re = /\bhttps?:\/\/[^\s<>"']+/gi;
