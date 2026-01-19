@@ -1,3 +1,4 @@
+// Forced sync comment
 import storageConfig from './config.js'
 import { GoogleDriveProvider } from './providers/GoogleDriveProvider.js'
 import { LocalStorageProvider } from './providers/LocalStorageProvider.js'
@@ -9,15 +10,15 @@ function makeProviderByName(name) {
   }
   // local por defecto
   return new LocalStorageProvider({
-    baseDir:   storageConfig.baseDir,
-    publicBase:storageConfig.publicBase
+    baseDir: storageConfig.baseDir,
+    publicBase: storageConfig.publicBase
   })
 }
 
 const providers = {
   default: makeProviderByName(storageConfig.driverDefault),
-  chat:    makeProviderByName(storageConfig.chatDriver),
-  tareas:  makeProviderByName(storageConfig.tareasDriver),
+  chat: makeProviderByName(storageConfig.chatDriver),
+  tareas: makeProviderByName(storageConfig.tareasDriver),
 }
 
 export function getProvider(domain = 'default') {
@@ -49,8 +50,8 @@ export const storage = {
     // si no, el default, si no, el de chat.
     const preferred =
       storageConfig.tareasDriver === 'drive' ? 'tareas' :
-      storageConfig.driverDefault === 'drive' ? 'default' :
-      'chat'
+        storageConfig.driverDefault === 'drive' ? 'default' :
+          'chat'
 
     const prov = getProvider(preferred)
     if (typeof prov.checkAccess === 'function') {

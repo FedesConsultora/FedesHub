@@ -14,6 +14,7 @@ import {
   FiCheckCircle
 } from 'react-icons/fi'
 import { notifApi } from '../../api/notificaciones'
+import { chatApi } from '../../api/chat'
 import ChatBellPanel from './ChatBellPanel.jsx'
 import { useRealtime } from '../../realtime/RealtimeProvider'
 import GlobalLoader from '../loader/GlobalLoader.jsx'
@@ -238,7 +239,9 @@ function BellButtonContent({ buzon, label, closeAll }) {
       window.dispatchEvent(new Event('fh:notif:changed'))
       // Si es chat, también invalidar chats y limpiar burbujas locales
       if (isChat) {
-        qc.invalidateQueries({ queryKey: ['chat', 'canales'] })
+        await chatApi.read.all().catch(() => { })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
         clearAllChatUnreads?.()
       }
     } catch (err) {

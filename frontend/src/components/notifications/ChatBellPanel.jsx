@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { useChannels, useDmCandidates } from '../../hooks/useChat'
 import { useRealtime } from '../../realtime/RealtimeProvider'
 import './ChatBellPanel.scss'
@@ -103,21 +104,33 @@ export default function ChatBellPanel({ closeAll }) {
           const unreadCount = suppressedCanals.has(c.id) ? 0 : ((unreadByCanal[c.id] | 0) || (unreadLookup[c.id] ? 1 : 0))
           const hasMention = suppressedCanals.has(c.id) ? false : ((mentionByCanal[c.id] | 0) > 0)
           return (
-            <button key={c.id} className="row" onClick={() => openChat(c.id)}>
-              <span className="avatar">
-                {(c.slug || c.nombre || '?').slice(0, 2).toUpperCase()}
-                {unreadCount > 0 && (
-                  <span className={`badge${hasMention ? ' mention' : ''}`}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </span>
-              <div className="meta">
-                <div className="name">{c.nombre || c.slug || `Canal #${c.id}`}</div>
-                {c.topic && <div className="sub">{c.topic}</div>}
-              </div>
-              <span className="ago">{formatAgo(c.updated_at)}</span>
-            </button>
+            <div key={c.id} className="row-wrapper">
+              <button className="row" onClick={() => openChat(c.id)}>
+                <span className="avatar">
+                  {(c.slug || c.nombre || '?').slice(0, 2).toUpperCase()}
+                  {unreadCount > 0 && (
+                    <span className={`badge${hasMention ? ' mention' : ''}`}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </span>
+                <div className="meta">
+                  <div className="name">{c.nombre || c.slug || `Canal #${c.id}`}</div>
+                  {c.topic && <div className="sub">{c.topic}</div>}
+                </div>
+                <span className="ago">{formatAgo(c.updated_at)}</span>
+              </button>
+              <button
+                className={`markReadBtn ${unreadCount === 0 ? 'is-read' : ''}`}
+                title={unreadCount > 0 ? "Marcar como leído" : "Visto"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (unreadCount > 0) clearUnreadFor(c.id);
+                }}
+              >
+                {unreadCount > 0 ? <FiEye /> : <FiEyeOff />}
+              </button>
+            </div>
           )
         })}
 
@@ -126,21 +139,33 @@ export default function ChatBellPanel({ closeAll }) {
           const unreadCount = suppressedCanals.has(cid) ? 0 : ((unreadByCanal[cid] | 0) || (unreadLookup[cid] ? 1 : 0))
           const hasMention = suppressedCanals.has(cid) ? false : ((mentionByCanal[cid] | 0) > 0)
           return (
-            <button key={u.user_id} className="row" onClick={() => openChat(cid)}>
-              <span className="avatar">
-                {initialsFrom(`${u.nombre || ''} ${u.apellido || ''}`.trim(), u.email)}
-                {unreadCount > 0 && (
-                  <span className={`badge${hasMention ? ' mention' : ''}`}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </span>
-              <div className="meta">
-                <div className="name">{u.nombre ? `${u.nombre} ${u.apellido}` : u.email}</div>
-                <div className="sub">{u.email}</div>
-              </div>
-              <span className="ago">{formatAgo(u.last_msg_at)}</span>
-            </button>
+            <div key={u.user_id} className="row-wrapper">
+              <button className="row" onClick={() => openChat(cid)}>
+                <span className="avatar">
+                  {initialsFrom(`${u.nombre || ''} ${u.apellido || ''}`.trim(), u.email)}
+                  {unreadCount > 0 && (
+                    <span className={`badge${hasMention ? ' mention' : ''}`}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </span>
+                <div className="meta">
+                  <div className="name">{u.nombre ? `${u.nombre} ${u.apellido}` : u.email}</div>
+                  <div className="sub">{u.email}</div>
+                </div>
+                <span className="ago">{formatAgo(u.last_msg_at)}</span>
+              </button>
+              <button
+                className={`markReadBtn ${unreadCount === 0 ? 'is-read' : ''}`}
+                title={unreadCount > 0 ? "Marcar como leído" : "Visto"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (unreadCount > 0) clearUnreadFor(cid);
+                }}
+              >
+                {unreadCount > 0 ? <FiEye /> : <FiEyeOff />}
+              </button>
+            </div>
           )
         })}
       </div>
