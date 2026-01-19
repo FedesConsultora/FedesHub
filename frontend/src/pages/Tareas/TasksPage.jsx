@@ -201,7 +201,7 @@ export default function TasksPage() {
   }, [filters, setSearchParams]);
 
   // data
-  const { board, rows, loading, moveTask, refetch } = useTasksBoard(filters);
+  const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(filters);
 
   // Recolectar todos los feder_ids únicos de la vista actual para el estado de asistencia
   const allFederIds = useMemo(() => {
@@ -382,6 +382,7 @@ export default function TasksPage() {
           <KanbanBoard
             board={board}
             moveTask={moveTask}
+            canChangeTo={canChangeTo}
             onOpenTask={setOpenTaskId}
             onDelete={handleDeleteTask}
             canDelete={isDirectivo}

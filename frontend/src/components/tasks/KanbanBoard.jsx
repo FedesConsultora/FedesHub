@@ -15,11 +15,13 @@ export default function KanbanBoard({
   onOpenTask,
   onDelete,
   canDelete = false,
-  attendanceStatuses = null
+  attendanceStatuses = null,
+  canChangeTo: extCanChangeTo
 }) {
   const internal = extBoard ? null : useTasksBoard(params)
   const board = extBoard ?? internal?.board ?? { columns: Object.fromEntries(STAGES.map(s => [s.code, []])) }
   const moveTask = extMove ?? internal?.moveTask ?? (() => { })
+  const canChangeTo = extCanChangeTo ?? internal?.canChangeTo ?? (() => true)
 
   const columns = board.columns
   const boardRef = useRef(null)
@@ -107,6 +109,18 @@ export default function KanbanBoard({
     }
     drag.current.curCol = targetCol
 
+    // Cambio de cursor según permisos
+    const task = board.columns[drag.current.fromCol]?.[drag.current.fromIndexVis]
+    if (task && targetCol !== drag.current.fromCol) {
+      if (!canChangeTo(task, targetCol)) {
+        document.body.style.cursor = 'not-allowed'
+      } else {
+        document.body.style.cursor = ''
+      }
+    } else {
+      document.body.style.cursor = ''
+    }
+
     placePlaceholder(targetCol, drag.current.ptY)
     autoScroll()
   }
@@ -136,6 +150,7 @@ export default function KanbanBoard({
       drag.current.originEl && (drag.current.originEl.style.visibility = '')
       drag.current.placeholder && drag.current.placeholder.remove()
       drag.current.ghost && drag.current.ghost.remove()
+      document.body.style.cursor = ''
     } catch { }
   }
 
@@ -193,6 +208,10 @@ export default function KanbanBoard({
     drag.current.active = false
     drag.current.id = null
 
+    // Marcar que acabamos de draguear para evitar que el click abra el detalle
+    drag.current.justDragged = true
+    setTimeout(() => { drag.current.justDragged = false }, 100)
+
     if (payload.fromCol === payload.toCol && payload.fromIndex === payload.toIndex) return
     moveTask(payload)
   }
@@ -208,7 +227,14 @@ export default function KanbanBoard({
       drag.current.active = false
       drag.current.id = null
       drag.current.maybe = null
+      drag.current.justDragged = false
     }
+  }
+
+  // Wrapper para onOpenTask que evita abrir si hubo drag
+  const handleOpenTask = (id) => {
+    if (drag.current.justDragged || drag.current.active) return
+    onOpenTask?.(id)
   }
 
   // --- era tu startDrag original; ahora lo llamamos sólo tras el threshold ---
@@ -284,7 +310,7 @@ export default function KanbanBoard({
     <div className={`fh-k-board ${compact ? 'is-compact' : ''}`} ref={boardRef}>
       {cols.map(c => (
         <KanbanColumn
-          onOpenTask={onOpenTask}
+          onOpenTask={handleOpenTask}
           key={c.code}
           code={c.code}
           title={c.name}
