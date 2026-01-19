@@ -35,10 +35,25 @@ export default function useTasksBoard(
     try {
       const { rows: r } = await tareasApi.list(params)
 
-      const mappedRows = r.map(t => ({
-        ...t,
-        estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre
-      }));
+      const now = new Date();
+      const mappedRows = r.map(t => {
+        // La tarea es vencida si:
+        // 1. Tiene fecha de vencimiento
+        // 2. (No está finalizada Y el vencimiento ya pasó) O (Está finalizada pero el vencimiento fue ANTES de la finalización)
+        const vDate = t.vencimiento ? new Date(t.vencimiento) : null;
+        const fDate = t.finalizada_at ? new Date(t.finalizada_at) : null;
+
+        const isVencida = vDate && (
+          (!fDate && vDate < now) ||
+          (fDate && vDate < fDate)
+        );
+
+        return {
+          ...t,
+          estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
+          vencida: !!isVencida
+        }
+      });
 
       tasksRef.current = new Map(mappedRows.map(t => [t.id, t]))
       setRows(mappedRows)
@@ -76,7 +91,8 @@ export default function useTasksBoard(
           status: { code: t.estado_codigo, name: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre },
           responsables,
           colaboradores,
-          kanbanOrder: Number.isFinite(t.kanban_orden) ? t.kanban_orden : Number.MAX_SAFE_INTEGER
+          kanbanOrder: Number.isFinite(t.kanban_orden) ? t.kanban_orden : Number.MAX_SAFE_INTEGER,
+          vencida: t.vencida
         }
 
         if (cols[stage]) {
