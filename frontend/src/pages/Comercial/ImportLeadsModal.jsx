@@ -85,6 +85,26 @@ export default function ImportLeadsModal({ onClose, onImported }) {
         }
     }
 
+    const downloadTemplate = () => {
+        const templateData = [
+            {
+                Nombre: 'Juan',
+                Apellido: 'Pérez',
+                Empresa: 'Empresa S.A.',
+                Email: 'juan@ejemplo.com',
+                Telefono: '+54 11 1234 5678',
+                Fuente: 'WhatsApp',
+                Ubicacion: 'Buenos Aires, AR',
+                Alias: 'Juan de Empresa',
+                'Sitio Web': 'www.empresa.com'
+            }
+        ]
+        const ws = XLSX.utils.json_to_sheet(templateData)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Plantilla de Leads')
+        XLSX.writeFile(wb, 'plantilla_leads_fedes.xlsx')
+    }
+
     const validCount = data.filter(r => r.__isValid).length
     const invalidCount = data.length - validCount
 
@@ -92,11 +112,24 @@ export default function ImportLeadsModal({ onClose, onImported }) {
         <div className="ImportLeadsModal">
             <div className="modal-card">
                 <header className="modal-header">
-                    <h2>Importar Leads desde Excel</h2>
+                    <div className="title-group">
+                        <h2>Importar Leads</h2>
+                        <p>Subí tus contactos de forma masiva vía Excel o CSV</p>
+                    </div>
                     <button className="close-btn" onClick={onClose}><FiX /></button>
                 </header>
 
                 <div className="modal-body">
+                    <div className="import-info">
+                        <div className="info-card">
+                            <FiCheckCircle className="icon" />
+                            <div>
+                                <strong>Formatos aceptados</strong>
+                                <p>Excel (.xlsx, .xls) y CSV. ¡También aceptamos archivos de <strong>Cliengo</strong>!</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {!file ? (
                         <div
                             className={`dropzone ${dragging ? 'dragging' : ''}`}
@@ -105,9 +138,11 @@ export default function ImportLeadsModal({ onClose, onImported }) {
                             onDrop={onDrop}
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            <i className="fi fi-rr-cloud-upload"></i>
-                            <p>Arrastrá tu archivo Excel aquí</p>
-                            <span>o haz clic para buscarlo en tu computadora</span>
+                            <div className="dz-icon">
+                                <FiUpload />
+                            </div>
+                            <p>Arrastrá tu archivo aquí</p>
+                            <span>o haz clic para buscarlo</span>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -118,30 +153,30 @@ export default function ImportLeadsModal({ onClose, onImported }) {
                         </div>
                     ) : (
                         <div className="preview-section">
-                            <div className="stats">
-                                <div className="stat-item">
-                                    <span className="label">Total Filas</span>
-                                    <span className="value">{data.length}</span>
-                                </div>
-                                <div className="stat-item success">
-                                    <span className="label">Listas para importar</span>
-                                    <span className="value">{validCount}</span>
-                                </div>
-                                {invalidCount > 0 && (
-                                    <div className="stat-item error">
-                                        <span className="label">Con errores</span>
-                                        <span className="value">{invalidCount}</span>
+                            <div className="stats-header">
+                                <h3>Vista previa de los datos</h3>
+                                <div className="stats-badges">
+                                    <div className="stat-badge total">
+                                        {data.length} filas
                                     </div>
-                                )}
+                                    <div className="stat-badge success">
+                                        {validCount} válidas
+                                    </div>
+                                    {invalidCount > 0 && (
+                                        <div className="stat-badge error">
+                                            {invalidCount} errores
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="preview-table-wrap">
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Estado</th>
+                                            <th style={{ width: '40px' }}></th>
                                             <th>Nombre</th>
-                                            <th>Email</th>
+                                            <th>Email / Tel</th>
                                             <th>Empresa</th>
                                         </tr>
                                     </thead>
@@ -155,43 +190,54 @@ export default function ImportLeadsModal({ onClose, onImported }) {
                                                         <FiAlertCircle style={{ color: '#f87171' }} title={row.__errors.join(', ')} />
                                                     )}
                                                 </td>
-                                                <td>{row.nombre || row.Nombre || '-'}</td>
-                                                <td>{row.email || row.Email || '-'}</td>
-                                                <td>{row.empresa || row.Empresa || '-'}</td>
+                                                <td>
+                                                    <div className="lead-main-info">
+                                                        <strong>{row.nombre || row.Nombre || row['Full Name'] || '-'}</strong>
+                                                        <span>{row.apellido || row.Apellido || ''}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="lead-contact-info">
+                                                        <span>{row.email || row.Email || row['Email address'] || '-'}</span>
+                                                        <small>{row.telefono || row.Telefono || row['Phone Number'] || '-'}</small>
+                                                    </div>
+                                                </td>
+                                                <td>{row.empresa || row.Empresa || row.Company || '-'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                                 {data.length > 10 && (
-                                    <div style={{ padding: '10px', textAlign: 'center', fontSize: '0.8rem', color: '#888' }}>
-                                        Mostrando las primeras 10 filas de {data.length}
+                                    <div className="more-rows">
+                                        Mostrando 10 de {data.length} filas detectadas
                                     </div>
                                 )}
                             </div>
 
                             <button
-                                className="btn-secondary"
-                                style={{ marginTop: '16px', borderRadius: '8px' }}
+                                className="change-file-btn"
                                 onClick={() => { setFile(null); setData([]) }}
                             >
-                                Cambiar archivo
+                                Seleccionar otro archivo
                             </button>
                         </div>
                     )}
 
-                    <a href="#" className="template-link" onClick={(e) => e.preventDefault()}>
-                        <FiDownload /> Descargar plantilla ejemplo
-                    </a>
+                    <div className="actions-footer">
+                        <button className="template-download" onClick={downloadTemplate}>
+                            <FiDownload /> Descargar plantilla ejemplo
+                        </button>
+                    </div>
                 </div>
 
                 <footer className="modal-footer">
-                    <button className="btn-secondary" onClick={onClose}>Cancelar</button>
+                    <button className="btn-cancel" onClick={onClose}>Cancelar</button>
                     <button
-                        className="btn-primary"
+                        className="btn-import"
                         disabled={!file || validCount === 0 || importing}
                         onClick={handleImport}
                     >
-                        {importing ? <><FiLoader className="spin" /> Procesando...</> : `Importar ${validCount} leads`}
+                        {importing ? <><FiLoader className="spin" /> Procesando...</> : `Confirmar Importación`}
                     </button>
                 </footer>
             </div>

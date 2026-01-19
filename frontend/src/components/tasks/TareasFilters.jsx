@@ -1,7 +1,7 @@
 // frontend/src/components/tasks/TareasFilters.jsx
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FaRegCalendarAlt, FaFilter, FaSearch, FaTimes, FaUser, FaArchive } from 'react-icons/fa'
-import { FiLock, FiUnlock, FiCheckCircle, FiClock } from 'react-icons/fi'
+import { FiLock, FiUnlock, FiCheckCircle, FiClock, FiBriefcase } from 'react-icons/fi'
 import './TareasFilters.scss'
 
 function Field({ id, label, children, className = '' }) {
@@ -105,6 +105,12 @@ export function useActiveChips(v, catalog) {
 
       chips.push({ key: 'tc_estado_publicacion_id', label: ep?.nombre || v.tc_estado_publicacion_id, icon });
     }
+    if (v.solo_leads !== undefined && v.solo_leads !== '') {
+      chips.push({
+        key: 'solo_leads',
+        label: v.solo_leads === 'true' ? 'Solo Leads' : 'Solo Clientes'
+      });
+    }
 
     return chips;
   }, [v, catalog]);
@@ -192,6 +198,16 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     }
   };
 
+  const removeChip = (key) => {
+    if (key === 'vencimiento') {
+      upd({ vencimiento_from: '', vencimiento_to: '' });
+    } else if (key === 'orden') {
+      upd({ orden_by: 'prioridad', sort: 'desc' });
+    } else {
+      upd({ [key]: undefined });
+    }
+  }
+
   const clear = () => onChange?.({
     q: '',
     cliente_id: undefined,
@@ -211,7 +227,8 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     tc_formato_id: undefined,
     tc_objetivo_negocio_id: undefined,
     tc_objetivo_marketing_id: undefined,
-    inamovible: undefined
+    inamovible: undefined,
+    solo_leads: undefined
   })
 
   useEffect(() => {
@@ -270,18 +287,15 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
             <span>Mis tareas</span>
           </button>
 
-          {/*
           <button
             type="button"
-            className={`toggleBtn ${v.include_archivadas ? 'active' : ''}`}
-            onClick={() => upd({ include_archivadas: !v.include_archivadas })}
-            title="Incluir tareas archivadas"
+            className={`toggleBtn ${v.solo_leads === 'true' ? 'active' : ''}`}
+            onClick={() => upd({ solo_leads: v.solo_leads === 'true' ? undefined : 'true', cliente_id: undefined })}
+            title="Ver solo tareas de Leads"
           >
-            <FaArchive className="icon" />
-            <span>Archivadas</span>
+            <FiBriefcase className="icon" />
+            <span>Leads</span>
           </button>
-          */}
-
         </div>
 
         {/* BOTÓN FILTROS AVANZADOS */}
@@ -340,10 +354,21 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                   <Field label="Cliente">
                     <select
                       value={v.cliente_id ?? ''}
-                      onChange={e => upd({ cliente_id: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      onChange={e => upd({ cliente_id: e.target.value === '' ? undefined : Number(e.target.value), solo_leads: undefined })}
                     >
                       <option value="">Todos los clientes</option>
                       {catalog.clientes?.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    </select>
+                  </Field>
+
+                  <Field label="Relación">
+                    <select
+                      value={v.solo_leads ?? ''}
+                      onChange={e => upd({ solo_leads: e.target.value === '' ? undefined : e.target.value, cliente_id: undefined })}
+                    >
+                      <option value="">Todos</option>
+                      <option value="false">Solo Clientes</option>
+                      <option value="true">Solo Leads</option>
                     </select>
                   </Field>
 
@@ -475,16 +500,6 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                   />
                   <div className="checkmark" />
                   <span className="label">Mostrar archivadas</span>
-                </label>
-
-                <label className="toggleCheck">
-                  <input
-                    type="checkbox"
-                    checked={!!v.include_finalizadas}
-                    onChange={e => upd({ include_finalizadas: e.target.checked })}
-                  />
-                  <div className="checkmark" />
-                  <span className="label">Mostrar aprobadas/canceladas</span>
                 </label>
               </div>
             </div>

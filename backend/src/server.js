@@ -5,6 +5,7 @@ import { initModels } from './models/registry.js';
 import { startRevocationCleanupJob } from './modules/auth/revocationCleanup.js';
 import { startAutoCloseAttendanceJob } from './modules/asistencia/jobs/autoCloseAttendance.js';
 import { startOnboardingJob } from './modules/comercial/jobs/onboardingJob.js';
+import { startRecordatoriosJob } from './modules/tareas/jobs/recordatoriosJob.js';
 import { storage } from './infra/storage/index.js';
 
 
@@ -29,6 +30,7 @@ const PORT = process.env.PORT || 3000;
     startRevocationCleanupJob();
     startAutoCloseAttendanceJob();
     startOnboardingJob();
+    startRecordatoriosJob();
     app.listen(PORT, () => logger.info(`API on http://localhost:${PORT}`));
   } catch (err) {
     logger.error({ err }, 'Startup failed');

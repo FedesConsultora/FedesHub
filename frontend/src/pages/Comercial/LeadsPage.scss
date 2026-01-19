@@ -23,42 +23,48 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        flex-wrap: wrap;
         margin-bottom: 8px;
         overflow: visible;
 
         .left {
             display: flex;
             flex-direction: column;
-            gap: 0px;
-            min-width: fit-content;
+            gap: 2px;
+            min-width: 140px;
             flex-shrink: 0;
-            padding-right: 4px;
 
             h1 {
                 margin: 0;
-                font-size: 20px;
+                font-size: 1.5rem;
                 line-height: 1.1;
                 color: v.$fh-text;
                 white-space: nowrap;
-                margin-left: 12px;
+                font-weight: 800;
             }
 
             .counter {
                 color: v.$fh-muted;
                 font-size: .75rem;
                 white-space: nowrap;
-                margin-left: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 700;
             }
+        }
+
+        .center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            min-width: 0;
         }
 
         .right {
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            gap: 8px;
+            gap: 12px;
             flex-shrink: 0;
-            flex-wrap: nowrap;
         }
     }
 
@@ -107,8 +113,9 @@
         cursor: pointer;
         white-space: nowrap;
 
-        i {
+        svg {
             margin-right: 6px !important;
+            vertical-align: middle;
         }
 
         &:not(.active):hover {
@@ -120,36 +127,116 @@
             color: white;
             box-shadow: inset 0 8px 20px rgba(68, 113, 141, .35);
         }
+
+        &:focus-visible {
+            outline: 2px solid rgba(v.$fh-accent, .7);
+            outline-offset: -2px;
+        }
     }
 }
 
-// Botones de acción
-.btn-primary,
+// Botón Nuevo Lead (matches .submit from Tareas)
+.submit {
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+    font-weight: 800;
+    border-radius: 12px !important;
+    background: v.$fh-primary;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &:hover {
+        filter: brightness(1.1);
+    }
+}
+
 .btn-secondary {
     padding: 10px 18px !important;
     font-size: 14px !important;
     font-weight: 800;
     border-radius: 12px !important;
-    cursor: pointer;
-    border: none;
-}
-
-.btn-primary {
-    background: v.$fh-primary;
-    color: white;
-}
-
-.btn-secondary {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: v.$fh-text;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
     &:hover {
         background: rgba(255, 255, 255, 0.1);
     }
 }
 
-// Responsive adaptions (similar to Tareas)
+// Responsive adaptions (matches TareasPage.scss)
+@media (max-width: 1280px) {
+    .LeadsPage {
+        .segmented button {
+            font-size: 13px;
+            padding: 6px 9px;
+        }
+    }
+}
+
+@media (max-width: 1200px) {
+    .LeadsPage {
+        .toolbar {
+            .left h1 {
+                font-size: 18px;
+            }
+
+            .right {
+                gap: 4px;
+            }
+        }
+
+        .segmented button {
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+    }
+}
+
+@media (max-width: 1250px) and (min-width: 1081px) {
+    .LeadsPage {
+        .toolbar {
+            gap: 4px;
+            padding: 8px 12px;
+
+            .left {
+                min-width: unset;
+
+                h1 {
+                    font-size: 16px;
+                }
+
+                .counter {
+                    font-size: 0.65rem;
+                }
+            }
+
+            .right {
+                gap: 4px;
+
+                .submit,
+                .btn-secondary {
+                    padding: 6px 10px !important;
+                    font-size: 12px;
+                }
+            }
+
+            .segmented button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+        }
+    }
+}
+
 @media (max-width: 1080px) {
     .LeadsPage {
         .toolbar {
@@ -163,6 +250,18 @@
                 align-items: center;
                 justify-content: space-between;
                 padding: 0;
+
+                h1 {
+                    font-size: 22px;
+                }
+
+                .counter {
+                    display: block;
+                }
+            }
+
+            .center {
+                width: 100%;
             }
 
             .right {
@@ -179,8 +278,48 @@
                     }
                 }
 
-                button {
+                .submit,
+                .btn-secondary {
                     width: 100% !important;
+                    padding: 12px !important;
+                    font-size: 1rem;
+                    justify-content: center;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .LeadsPage {
+        .toolbar {
+            .right {
+                .segmented {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    border-radius: 12px;
+                    width: 100%;
+
+                    button {
+                        flex: 1;
+                        padding: 8px 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        svg {
+                            margin-right: 0 !important;
+                            font-size: 16px;
+                        }
+
+                        span {
+                            display: none;
+                        }
+
+                        &:not(:last-child) {
+                            border-right: 1px solid rgba(255, 255, 255, 0.05);
+                        }
+                    }
                 }
             }
         }

@@ -135,6 +135,25 @@ export default function TasksPage() {
         setSearchParams(newParams, { replace: true });
       }
     }
+
+    // Manejar creación desde Lead
+    const createFromLead = searchParams.get("createFromLead");
+    if (createFromLead) {
+      const leadName = searchParams.get("leadName") || 'Lead';
+      setInitialData({
+        lead_id: parseInt(createFromLead, 10),
+        leadName: decodeURIComponent(leadName),
+        fromLead: true,
+        titulo: `Seguimiento: ${decodeURIComponent(leadName)}`,
+        vencimiento: new Date().toISOString().split('T')[0]
+      });
+      setShowCreate(true);
+      // Limpiar params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("createFromLead");
+      newParams.delete("leadName");
+      setSearchParams(newParams, { replace: true });
+    }
   }, [searchParams, setSearchParams]);
 
   // Listener para creación rápida desde calendario

@@ -1,102 +1,123 @@
-// frontend/src/components/comercial/LeadsTable.scss
 @use '../../styles/variables' as v;
 
 .LeadsTable {
-    overflow-x: auto;
-    padding: 0;
+    .leads-loading {
+        padding: 4rem;
+        text-align: center;
+        color: v.$fh-muted;
+        font-size: 1.1rem;
+    }
 
-    table {
+    .fh-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
 
         th {
             text-align: left;
-            padding: 14px 20px;
-            color: v.$fh-muted;
-            font-weight: 800;
+            padding: 12px 16px;
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 1px;
+            color: v.$fh-muted;
+            font-weight: 800;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        td {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            vertical-align: middle;
+        tr.clickable-row {
+            cursor: pointer;
+            transition: all 0.2s;
 
-            .lead-name {
-                display: block;
-                font-weight: 700;
-                font-size: 0.95rem;
-                margin-bottom: 2px;
-                color: v.$fh-text;
-                text-decoration: none;
+            &:hover {
+                background: rgba(255, 255, 255, 0.03);
 
-                &:hover {
-                    color: v.$fh-primary;
-                }
-
-                .alias {
-                    margin-left: 8px;
-                    color: v.$fh-muted;
-                    font-weight: 400;
-                    font-size: 0.85rem;
+                .actions-cell .go-ico {
+                    opacity: 1;
+                    transform: translateX(4px);
                 }
             }
 
-            .lead-contact {
-                font-size: 0.8rem;
-                color: v.$fh-muted;
+            td {
+                padding: 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+                vertical-align: middle;
             }
-
-            .badge-etapa {
-                background: rgba(v.$fh-primary, 0.1);
-                color: v.$fh-primary;
-                padding: 4px 10px;
-                border-radius: 8px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                text-transform: uppercase;
-            }
-
-            .badge-status {
-                padding: 4px 10px;
-                border-radius: 8px;
-                font-size: 0.75rem;
-                color: #fff;
-                font-weight: 700;
-                text-transform: uppercase;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            }
-
-            .btn-view {
-                color: v.$fh-muted;
-                font-size: 0.85rem;
-                font-weight: 600;
-                padding: 6px 12px;
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
-                text-decoration: none;
-                transition: all 0.2s;
-
-                &:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    color: white;
-                }
-            }
-        }
-
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
         }
     }
-}
 
-.leads-loading,
-.leads-empty {
-    text-align: center;
-    padding: 60px;
-    color: v.$fh-muted;
-    font-size: 1rem;
+    .lead-main-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .lead-empresa {
+            font-weight: 700;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        .lead-sub {
+            font-size: 0.8rem;
+            color: v.$fh-muted;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+
+            svg {
+                font-size: 0.75rem;
+            }
+        }
+
+        .lead-contact {
+            font-size: 0.8rem;
+            color: v.$fh-primary;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+    }
+
+    .responsable-cell {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .badge-etapa {
+        display: inline-block;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .date-cell {
+        font-size: 0.8rem;
+        color: v.$fh-muted;
+    }
+
+    .actions-cell {
+        text-align: right;
+        width: 40px;
+
+        .go-ico {
+            color: v.$fh-muted;
+            font-size: 1.25rem;
+            opacity: 0.3;
+            transition: all 0.2s;
+        }
+    }
 }

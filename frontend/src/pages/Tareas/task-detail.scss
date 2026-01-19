@@ -117,15 +117,45 @@ $text: $fh-text;
   /* ===== sticky header ===== */
   .taskHeader {
     position: sticky;
+    top: 0;
     z-index: 7;
     width: 100%;
     max-width: 100%;
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    overflow-x: hidden;
-    overflow-y: visible;
+    gap: 16px;
+    background: rgba(14, 18, 26, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px 20px;
+
+    .back-to-list-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: $fh-muted;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateX(-4px);
+      }
+
+      svg {
+        font-size: 1.1rem;
+      }
+    }
   }
 
   .titleWrap {
@@ -147,14 +177,14 @@ $text: $fh-text;
       min-width: 0; // Permite que flex funcione correctamente
       max-width: 100%; // No exceder contenedor
       position: relative;
-      overflow: hidden; // Evita que el contenido empuje
+      // overflow: hidden; // Cortaba el tooltip
 
       .ttl {
         font-weight: 600;
         font-size: 1.5rem;
         letter-spacing: .2px;
-        width: 100%;
-        max-width: 100%;
+        flex: 1;
+        min-width: 0;
         word-wrap: break-word;
         overflow-wrap: break-word;
         line-height: 1.3;

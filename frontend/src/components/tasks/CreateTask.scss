@@ -211,7 +211,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   min-width: 0; // Prevent pushing
   cursor: text;
   transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  // overflow: hidden;
 
   &:hover {
     border-color: rgba($fh-primary, 0.45);

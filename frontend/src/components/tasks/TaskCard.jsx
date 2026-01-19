@@ -65,8 +65,8 @@ export default function TaskCard({ t, onPointerDown, onOpenTask, onDelete, canDe
         aria-label={`Abrir tarea #${t.id}: ${t.title}`}
       >
         <div className="fh-k-row">
-          <div className="fh-k-client" title={t.client?.name ?? '—'}>
-            {t.client?.name ?? '—'}
+          <div className="fh-k-client" title={t.client?.name || t.lead_empresa || t.lead_nombre || '—'}>
+            {t.client?.name || (t.lead_id ? `Lead: ${t.lead_empresa || t.lead_nombre}` : '—')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div

@@ -191,7 +191,7 @@ function CustomSelect({
 /* ====== Estilos inline mínimos ====== */
 const S = {
   ico: { flex: '0 0 20px', width: 20, height: 20, opacity: .7 },
-  control: { flex: '1 1 auto', minWidth: 0, width: '100%' },
+  control: { flex: '1 1 auto', minWidth: 0 },
   addon: { flex: '0 0 22px', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   datesRow: { display: 'flex', gap: 6, width: '100%' },
   dateCell: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
@@ -208,6 +208,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
   const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB')
 
   const [clienteId, setClienteId] = useState('')
+  const [leadId, setLeadId] = useState('')
   const [hitoId, setHitoId] = useState('')
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -246,6 +247,8 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
     if (initialData?.vencimiento) setVencimiento(initialData.vencimiento);
     if (initialData?.tipo) setTipo(initialData.tipo);
     if (initialData?.cliente_id) setClienteId(initialData.cliente_id);
+    if (initialData?.lead_id) setLeadId(initialData.lead_id);
+    if (initialData?.titulo) setTitulo(initialData.titulo);
     // Si no hay responsables y tenemos nuestro ID, nos ponemos nosotros
     if (responsables.length === 0 && myId) {
       setResponsables([String(myId)])
@@ -277,12 +280,21 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
   const fechaError = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayTime = today.getTime();
 
-    if (fechaInicio && new Date(fechaInicio) < today) {
-      return 'La fecha de inicio no puede ser anterior a hoy';
+    if (fechaInicio) {
+      const fechaInicioDate = new Date(fechaInicio);
+      fechaInicioDate.setHours(0, 0, 0, 0);
+      if (fechaInicioDate.getTime() < todayTime) {
+        return 'La fecha de inicio no puede ser anterior a hoy';
+      }
     }
-    if (vencimiento && new Date(vencimiento) < today) {
-      return 'El vencimiento no puede ser anterior a hoy';
+    if (vencimiento) {
+      const vencimientoDate = new Date(vencimiento);
+      vencimientoDate.setHours(0, 0, 0, 0);
+      if (vencimientoDate.getTime() < todayTime) {
+        return 'El vencimiento no puede ser anterior a hoy';
+      }
     }
     if (fechaInicio && vencimiento && new Date(vencimiento) < new Date(fechaInicio)) {
       return 'El vencimiento no puede ser anterior al inicio';
@@ -290,7 +302,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
     return null;
   }, [fechaInicio, vencimiento])
 
-  const canSubmit = !!clienteId && !!titulo.trim() && !tituloError && !fechaError && !loading
+  const canSubmit = (!!clienteId || !!leadId) && !!titulo.trim() && !tituloError && !fechaError && !loading
 
   // No enviar por Enter (evitar cierre accidental)
 
@@ -327,7 +339,8 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
     const colabsPayload = colaboradores.map(fid => ({ feder_id: Number(fid), rol: null }))
 
     const body = {
-      cliente_id: Number(clienteId),
+      cliente_id: clienteId ? Number(clienteId) : null,
+      lead_id: leadId ? Number(leadId) : null,
       hito_id: parseNumOrNull(hitoId),
       titulo: titulo.trim(),
       descripcion: descripcion?.trim() || null,
@@ -485,22 +498,38 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
             {/* Columna izquierda */}
             <div className="col">
 
+              {/* Cliente selector - solo si NO viene de Lead */}
+              {!initialData?.fromLead && (
+                <CustomSelect
+                  id="ms-cliente"
+                  labelId={lblClienteId}
+                  leftIcon={<FiBriefcase className="ico" aria-hidden style={S.ico} />}
+                  options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
+                  value={clienteId ? [String(clienteId)] : []}
+                  onChange={(next) => {
+                    const first = (next && next.length) ? String(next[next.length - 1]) : ''
+                    setClienteId(first)
+                    if (first) setLeadId('')
+                  }}
+                  placeholder="Clientes"
+                  disabled={loading || !!leadId}
+                  multi={false}
+                />
+              )}
 
-
-              <CustomSelect
-                id="ms-cliente"
-                labelId={lblClienteId}
-                leftIcon={<FiBriefcase className="ico" aria-hidden style={S.ico} />}
-                options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
-                value={clienteId ? [String(clienteId)] : []}
-                onChange={(next) => {
-                  const first = (next && next.length) ? String(next[next.length - 1]) : ''
-                  setClienteId(first)
-                }}
-                placeholder="Clientes"
-                disabled={loading}
-                multi={false}
-              />
+              {/* Lead info - si viene de Lead */}
+              {initialData?.fromLead && leadId && (
+                <div className="field" style={{ background: 'rgba(255, 171, 0, 0.08)', border: '1px solid rgba(255, 171, 0, 0.2)' }}>
+                  <FiBriefcase className="ico" aria-hidden style={{ ...S.ico, color: '#ffab00' }} />
+                  <div className="msDisplay selected-labels" style={{ flex: 1 }}>
+                    <div className="selected-tags">
+                      <div className="single-val" style={{ color: '#ffab00', fontWeight: 600 }}>
+                        Lead: {initialData.leadName || 'Vinculado'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
 
 

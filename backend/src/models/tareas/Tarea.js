@@ -2,7 +2,8 @@
 export default (sequelize, DataTypes) => {
   const Tarea = sequelize.define('Tarea', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    cliente_id: { type: DataTypes.INTEGER, allowNull: false },
+    cliente_id: { type: DataTypes.INTEGER, allowNull: true },
+    lead_id: { type: DataTypes.INTEGER, allowNull: true },
     hito_id: { type: DataTypes.INTEGER },
     tarea_padre_id: { type: DataTypes.INTEGER },
     titulo: { type: DataTypes.STRING(200), allowNull: false },
@@ -38,7 +39,7 @@ export default (sequelize, DataTypes) => {
     paranoid: true, // Enables soft delete
     createdAt: 'created_at', updatedAt: 'updated_at', deletedAt: 'deleted_at',
     indexes: [
-      { fields: ['cliente_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
+      { fields: ['cliente_id'] }, { fields: ['lead_id'] }, { fields: ['estado_id'] }, { fields: ['hito_id'] },
       { fields: ['vencimiento'] }, { fields: ['prioridad_num'] }, { fields: ['tarea_padre_id'] },
       { fields: ['deleted_at'] }, { fields: ['tipo'] }
     ]

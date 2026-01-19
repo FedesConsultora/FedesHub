@@ -23,22 +23,30 @@ export const svcUpdateLead = async (id, data, userId) => {
     await leadRepo.updateLead(id, data);
 
     // Registrar cambios importantes en historial
-    if (data.status_id && data.status_id !== oldLead.status_id) {
+    if (data.status_id && Number(data.status_id) !== Number(oldLead.status_id)) {
+        const statuses = await leadRepo.listStatuses();
+        const oldStatus = statuses.find(s => Number(s.id) === Number(oldLead.status_id))?.nombre || oldLead.status_id;
+        const newStatus = statuses.find(s => Number(s.id) === Number(data.status_id))?.nombre || data.status_id;
+
         await leadRepo.addHistorial({
             lead_id: id,
             user_id: userId,
             tipo_evento: 'cambio_estado',
-            descripcion: `Estado cambiado de ${oldLead.status_id} a ${data.status_id}`,
+            descripcion: `Estado cambiado de "${oldStatus}" a "${newStatus}"`,
             data_json: { old: oldLead.status_id, next: data.status_id }
         });
     }
 
-    if (data.etapa_id && data.etapa_id !== oldLead.etapa_id) {
+    if (data.etapa_id && Number(data.etapa_id) !== Number(oldLead.etapa_id)) {
+        const etapas = await leadRepo.listEtapas();
+        const oldEtapa = etapas.find(e => Number(e.id) === Number(oldLead.etapa_id))?.nombre || oldLead.etapa_id;
+        const newEtapa = etapas.find(e => Number(e.id) === Number(data.etapa_id))?.nombre || data.etapa_id;
+
         await leadRepo.addHistorial({
             lead_id: id,
             user_id: userId,
             tipo_evento: 'cambio_etapa',
-            descripcion: `Etapa cambiada de ${oldLead.etapa_id} a ${data.etapa_id}`,
+            descripcion: `Etapa cambiada de "${oldEtapa}" a "${newEtapa}"`,
             data_json: { old: oldLead.etapa_id, next: data.etapa_id }
         });
     }

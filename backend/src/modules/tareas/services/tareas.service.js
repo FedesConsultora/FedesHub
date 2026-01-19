@@ -107,6 +107,8 @@ const buildListSQL = (params = {}, currentUser) => {
     tc_red_social_ids = [], tc_formato_ids = [],
     // flags
     solo_mias, include_archivadas, is_favorita, is_seguidor,
+    solo_leads,
+    lead_id,
     // fechas
     vencimiento_from, vencimiento_to,
     inicio_from, inicio_to,
@@ -135,6 +137,7 @@ const buildListSQL = (params = {}, currentUser) => {
       h.nombre AS hito_nombre,
       fa.nombre AS autor_nombre, fa.apellido AS autor_apellido,
       fa.avatar_url AS autor_avatar_url,
+      lead.empresa AS lead_empresa, lead.nombre AS lead_nombre,
 
       -- Datos específicos de TC (si existen)
       (SELECT json_build_object(
@@ -196,6 +199,7 @@ const buildListSQL = (params = {}, currentUser) => {
     LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
     LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "ComercialLead" lead ON lead.id = t.lead_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
     LEFT JOIN "Feder" fa ON fa.id = t.creado_por_feder_id
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
@@ -226,6 +230,7 @@ const buildListSQL = (params = {}, currentUser) => {
   if (urgencia_id) { where.push(`t.urgencia_id = :urgencia_id`); repl.urgencia_id = urgencia_id; }
   if (aprobacion_estado_id) { where.push(`t.aprobacion_estado_id = :aprob_id`); repl.aprob_id = aprobacion_estado_id; }
   if (tipo) { where.push(`t.tipo = :tipo`); repl.tipo = tipo; }
+  if (lead_id) { where.push(`t.lead_id = :lead_id`); repl.lead_id = lead_id; }
 
   // Filtros TC específicos
   if (tc_objetivo_negocio_id) { where.push(`EXISTS(SELECT 1 FROM "TareaTC" ttc WHERE ttc.tarea_id=t.id AND ttc.objetivo_negocio_id = :ton_id)`); repl.ton_id = tc_objetivo_negocio_id; }
@@ -269,6 +274,8 @@ const buildListSQL = (params = {}, currentUser) => {
   if (include_archivadas !== true) where.push(`t.is_archivada = false`);
   if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);
   if (is_seguidor === true) where.push(`EXISTS(SELECT 1 FROM "TareaSeguidor" ts WHERE ts.tarea_id=t.id AND ts.user_id=:uid)`);
+  if (solo_leads === true || solo_leads === 'true') where.push(`t.lead_id IS NOT NULL`);
+  if (solo_leads === false || solo_leads === 'false') where.push(`t.lead_id IS NULL`);
 
   // Scoping personal
   if (solo_mias === true && currentUser) {
@@ -356,6 +363,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
       it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
       tkp.stage_code AS kanban_stage, tkp.pos AS kanban_orden,
       c.id AS cliente_id, c.nombre AS cliente_nombre, c.color AS cliente_color,
+      lead.id AS lead_id, lead.empresa AS lead_empresa, lead.nombre AS lead_nombre,
       h.id AS hito_id, h.nombre AS hito_nombre,
 
       -- Datos específicos de TC (si existen)
@@ -505,6 +513,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
     LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
     LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+    LEFT JOIN "ComercialLead" lead ON lead.id = t.lead_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
     WHERE t.id = :id AND t.deleted_at IS NULL
@@ -529,6 +538,7 @@ const createTask = async (payload, currentFederId) => {
   return sequelize.transaction(async (t) => {
     const {
       cliente_id,
+      lead_id,
       hito_id,
       tarea_padre_id,
       titulo,
@@ -546,13 +556,14 @@ const createTask = async (payload, currentFederId) => {
       adjuntos = []
     } = payload;
 
-    await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
+    if (cliente_id) await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
+    if (lead_id) await ensureExists(models.ComercialLead, lead_id, 'Lead no encontrado');
     if (hito_id) await ensureExists(models.ClienteHito, hito_id, 'Hito no encontrado');
     if (tarea_padre_id) await ensureExists(models.Tarea, tarea_padre_id, 'Tarea padre no encontrada');
 
     const [puntos, ponderacion] = await Promise.all([
       getPuntos(impacto_id, urgencia_id),
-      getClientePonderacion(cliente_id)
+      cliente_id ? getClientePonderacion(cliente_id) : 3 // Default if lead
     ]);
     const prioridad_num = calcPrioridad(ponderacion, puntos.impacto, puntos.urgencia);
 
@@ -570,7 +581,7 @@ const createTask = async (payload, currentFederId) => {
     const aprobacion_estado_id = aprobRow?.id ?? (requiere_aprobacion ? 2 : 1);
 
     const tarea = await models.Tarea.create({
-      cliente_id, hito_id, tarea_padre_id, titulo, descripcion,
+      cliente_id, lead_id, hito_id, tarea_padre_id, titulo, descripcion,
       estado_id: estado, creado_por_feder_id: currentFederId,
       requiere_aprobacion, aprobacion_estado_id,
       impacto_id, urgencia_id, prioridad_num,
@@ -686,6 +697,7 @@ const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
     }
 
     if (payload.cliente_id) await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
+    if (payload.lead_id) await ensureExists(models.ComercialLead, payload.lead_id, 'Lead no encontrado');
     if (payload.hito_id) await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
     if (payload.tarea_padre_id) await ensureExists(models.Tarea, payload.tarea_padre_id, 'Tarea padre no encontrada');
 

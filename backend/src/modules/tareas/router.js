@@ -101,6 +101,12 @@ router.delete('/:id/relaciones/:relId', requireAuth, requirePermission('tareas',
 router.post('/:id/favorite', requireAuth, requirePermission('tareas', 'read'), postFavorito);
 router.post('/:id/follow', requireAuth, requirePermission('tareas', 'read'), postSeguidor);
 
+// Recordatorios
+import { getRecordatorios, postRecordatorio, deleteRecordatorio } from './controllers/tareas.controller.js';
+router.get('/:id/recordatorios', requireAuth, requirePermission('tareas', 'read'), getRecordatorios);
+router.post('/:id/recordatorios', requireAuth, requirePermission('tareas', 'read'), postRecordatorio);
+router.delete('/:id/recordatorios/:remId', requireAuth, requirePermission('tareas', 'read'), deleteRecordatorio);
+
 // Drive Image Proxy (for displaying private Drive images)
 router.get('/drive/image/:fileId', requireAuth, getDriveImage);
 

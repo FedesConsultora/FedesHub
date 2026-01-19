@@ -1,37 +1,45 @@
-// frontend/src/components/comercial/LeadsTable.jsx
 import React from 'react'
-import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import { FiChevronRight, FiUser } from 'react-icons/fi'
 import './LeadsTable.scss'
 
-export default function LeadsTable({ rows, loading }) {
+export default function LeadsTable({ leads = [], loading, onRowClick }) {
     if (loading) return <div className="leads-loading">Cargando leads...</div>
-    if (!rows?.length) return <div className="leads-empty">No se encontraron leads.</div>
 
     return (
-        <div className="LeadsTable card">
-            <table>
+        <div className="LeadsTable">
+            <table className="fh-table">
                 <thead>
                     <tr>
-                        <th>Lead / Empresa</th>
+                        <th>Empresa / Contacto</th>
                         <th>Responsable</th>
                         <th>Etapa</th>
                         <th>Estado</th>
-                        <th>Última actividad</th>
+                        <th>Actualizado</th>
                         <th />
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map(lead => (
-                        <tr key={lead.id}>
+                    {leads.map(lead => (
+                        <tr key={lead.id} onClick={() => onRowClick?.(lead.id)} className="clickable-row">
                             <td>
-                                <Link to={`/comercial/leads/${lead.id}`} className="lead-name">
-                                    {lead.empresa || `${lead.nombre} ${lead.apellido || ''}`}
-                                    {lead.alias && <span className="alias">({lead.alias})</span>}
-                                </Link>
-                                <div className="lead-contact">{lead.email || lead.telefono}</div>
+                                <div className="lead-main-info">
+                                    <span className="lead-empresa">
+                                        {lead.empresa || `${lead.nombre} ${lead.apellido || ''}`}
+                                    </span>
+                                    {(lead.nombre && lead.empresa) && (
+                                        <span className="lead-sub">
+                                            <FiUser /> {lead.nombre} {lead.apellido}
+                                        </span>
+                                    )}
+                                    <span className="lead-contact">{lead.email || lead.telefono || 'Sin contacto'}</span>
+                                </div>
                             </td>
-                            <td>{lead.responsable?.nombre || 'Sin asignar'}</td>
+                            <td>
+                                <div className="responsable-cell">
+                                    {lead.responsable?.nombre || '—'}
+                                </div>
+                            </td>
                             <td>
                                 <span className="badge-etapa">{lead.etapa?.nombre}</span>
                             </td>
@@ -40,9 +48,13 @@ export default function LeadsTable({ rows, loading }) {
                                     {lead.status?.nombre}
                                 </span>
                             </td>
-                            <td>{format(new Date(lead.updated_at), 'dd/MM/yyyy HH:mm')}</td>
                             <td>
-                                <Link to={`/comercial/leads/${lead.id}`} className="btn-view">Ver</Link>
+                                <span className="date-cell">
+                                    {format(new Date(lead.updated_at), 'dd/MM/yy HH:mm')}
+                                </span>
+                            </td>
+                            <td className="actions-cell">
+                                <FiChevronRight className="go-ico" />
                             </td>
                         </tr>
                     ))}

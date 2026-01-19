@@ -1,0 +1,345 @@
+// frontend/src/components/tasks/TaskReminders.scss
+@use '../../styles/variables' as v;
+
+.TaskReminders {
+    display: inline-flex;
+    align-items: center;
+
+    .reminder-btn {
+        background: transparent;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.4);
+        transition: color 0.2s ease, transform 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        &:hover {
+            color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.1);
+        }
+
+        &.is-open {
+            color: v.$fh-primary;
+        }
+
+        &.has-reminders {
+            color: #ffab00;
+        }
+
+        .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ffab00;
+            color: #000;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 10px;
+            font-weight: 800;
+            min-width: 14px;
+            text-align: center;
+            border: 1px solid #000;
+        }
+    }
+}
+
+// Estilos del Popover (con Portal para que no se corte)
+.reminder-popover {
+    width: 320px;
+    background: rgba(15, 23, 32, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: inherit;
+
+    .pop-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+        .ttl-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: white;
+            font-size: 0.95rem;
+
+            .ico {
+                color: #ffab00;
+                font-size: 1.1rem;
+            }
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+        }
+    }
+
+    .pop-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+        }
+    }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: white;
+            padding: 8px 0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(v.$fh-primary, 0.15);
+                border-color: v.$fh-primary;
+                transform: translateY(-1px);
+            }
+        }
+    }
+
+    .custom-row {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            color: white;
+
+            .input-with-icon {
+                flex: 1;
+                position: relative;
+                display: flex;
+                align-items: center;
+
+                .field-icon {
+                    position: absolute;
+                    right: 12px;
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 16px;
+                    pointer-events: none;
+                }
+
+                input {
+                    width: 100%;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 12px 38px 12px 14px; // Espacio a la derecha para el icono
+                    color: white;
+                    font-size: 14px;
+                    outline: none;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                    color-scheme: dark;
+
+                    &:focus {
+                        border-color: v.$fh-primary;
+                        background: rgba(255, 255, 255, 0.08);
+                        box-shadow: 0 0 0 3px rgba(v.$fh-primary, 0.2);
+
+                        +.field-icon {
+                            color: v.$fh-primary;
+                        }
+                    }
+
+                    // Ocultamos los indicadores nativos completamente
+                    &::-webkit-calendar-picker-indicator {
+                        position: absolute;
+                        right: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        opacity: 0; // Invisible pero clickeable
+                        cursor: pointer;
+                    }
+
+                    &::-webkit-clear-button,
+                    &::-webkit-inner-spin-button {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+
+    .add-custom-btn {
+        background: v.$fh-primary;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover:not(:disabled) {
+            filter: brightness(1.2);
+            box-shadow: 0 4px 12px rgba(v.$fh-primary, 0.3);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.tipo-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .tab {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        svg {
+            font-size: 14px;
+        }
+
+        &.active {
+            background: v.$fh-primary;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        &:hover:not(.active) {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+    }
+}
+
+.rem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .rem-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 10px 14px;
+
+        .rem-info {
+            display: flex;
+            flex-direction: column;
+
+            .d {
+                color: white;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .t {
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 11px;
+                text-transform: uppercase;
+                margin-top: 2px;
+            }
+        }
+
+        .del-btn {
+            background: rgba(255, 82, 82, 0.1);
+            border: none;
+            color: #ff5252;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+
+            &:hover {
+                background: #ff5252;
+                color: white;
+            }
+        }
+    }
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

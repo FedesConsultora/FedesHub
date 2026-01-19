@@ -16,7 +16,7 @@ import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
-import { FiLock, FiCheckCircle, FiClock } from "react-icons/fi";
+import { FiLock, FiCheckCircle, FiClock, FiArrowLeft } from "react-icons/fi";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -26,6 +26,7 @@ import { useTaskAttachments } from '../../pages/Tareas/hooks/useTaskAttachments'
 import ContentGallery from '../../components/tasks/ContentGallery.jsx'
 import ImageFullscreen from '../../components/common/ImageFullscreen.jsx'
 import GlobalLoader from '../../components/loader/GlobalLoader.jsx'
+import TaskReminders from '../../components/tasks/TaskReminders.jsx'
 import './task-detail.scss'
 
 /* === helpers normalization === */
@@ -519,13 +520,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const estadoCodigo = task?.estado?.codigo || task?.estado_codigo || 'pendiente'
   const aprobLabel = task?.aprobacionEstado?.nombre || task?.aprobacion_estado_nombre || null
   const etiquetas = task?.etiquetas || []
-  const clienteNombre = task?.cliente?.nombre || task?.cliente_nombre || '—'
+
+  // Detectar si es tarea de Lead o Cliente
+  const isLeadTask = !!task?.lead_id
+  const clienteNombre = isLeadTask
+    ? `Lead: ${task?.lead_empresa || task?.lead_nombre || 'Vinculado'}`
+    : (task?.cliente?.nombre || task?.cliente_nombre || '—')
   const hitoNombre = task?.hito?.nombre || task?.hito_nombre || null
   const vencimientoISO = task?.vencimiento || null
   const progreso = Number(task?.progreso_pct) || 0
   const prioridad = task?.prioridad_num
   const boostManual = task?.boost_manual || 0
-  const clienteColor = task?.cliente?.color || task?.cliente_color || null
+  const clienteColor = isLeadTask ? '#ffab00' : (task?.cliente?.color || task?.cliente_color || null)
 
   const responsables = mapResp(task?.Responsables || task?.responsables || [])
   const colaboradores = mapCol(task?.Colaboradores || task?.colaboradores || [])
@@ -608,12 +614,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       {/* === Estados + Volver === */}
 
 
-      {/* === Header sticky === */}
+
       <div className="taskHeader">
 
         <div className="titleWrap">
           {/* Título con truncamiento visual */}
-          <div className="titleSection" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="titleSection" title={form.titulo} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {task?.tipo === 'TC' && <span className="fh-chip primary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>TC</span>}
             {task?.tipo === 'IT' && <span className="fh-chip secondary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>IT</span>}
             <div
@@ -703,9 +709,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 valueColor={clienteColor}
                 options={catalog?.clientes || catalog?.clients || []}
                 onChange={handleClientChange}
-                disabled={!isResponsible && !isNivelB}
+                disabled={isLeadTask || (!isResponsible && !isNivelB)}
               />
             </span>
+
+            <TaskReminders taskId={taskId} />
 
             <button
               className={`favBtn ${isFavorita ? 'active' : ''}`}

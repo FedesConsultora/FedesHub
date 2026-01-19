@@ -1,7 +1,10 @@
-// frontend/src/components/comercial/LeadTimeline.jsx
 import React, { useState } from 'react'
 import { format } from 'date-fns'
-import { FiMessageSquare, FiFileText, FiRefreshCw, FiCheckCircle, FiXCircle, FiTrendingUp } from 'react-icons/fi'
+import { es } from 'date-fns/locale'
+import {
+    FiMessageSquare, FiClock, FiPlusCircle, FiRepeat, FiCheckCircle,
+    FiXCircle, FiArrowRight, FiUser, FiActivity
+} from 'react-icons/fi'
 import './LeadTimeline.scss'
 
 export default function LeadTimeline({ lead, onAddNota }) {
@@ -27,38 +30,64 @@ export default function LeadTimeline({ lead, onAddNota }) {
 
     return (
         <div className="LeadTimeline">
-            <form className="nota-form card" onSubmit={handleSubmitNota}>
-                <textarea
-                    placeholder="Escribe una nota sobre este lead..."
-                    value={nota}
-                    onChange={e => setNota(e.target.value)}
-                    rows={3}
-                />
-                <div className="form-actions">
-                    <button type="submit" className="btn-primary" disabled={submitting || !nota.trim()}>
-                        {submitting ? 'Guardando...' : 'Postear Nota'}
-                    </button>
+            <div className="timeline-header">
+                <h3>Actividad y Notas</h3>
+            </div>
+
+            <form className="nota-input-area" onSubmit={handleSubmitNota}>
+                <div className="input-box">
+                    <textarea
+                        placeholder="Agregar una nota o comentario..."
+                        value={nota}
+                        onChange={e => setNota(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmitNota(e)
+                        }}
+                    />
+                    <div className="input-footer">
+                        <span className="hint">Ctrl + Enter para postear</span>
+                        <button type="submit" className="btn-post" disabled={submitting || !nota.trim()}>
+                            {submitting ? 'Guardando...' : 'Postear Nota'}
+                        </button>
+                    </div>
                 </div>
             </form>
 
-            <div className="timeline-list">
-                {events.map((ev, i) => (
-                    <div key={ev.id || i} className={`timeline-item ${ev.timelineType}`}>
-                        <div className="timeline-icon">
-                            {ev.timelineType === 'nota' && <FiMessageSquare />}
-                            {ev.timelineType === 'history' && <HistoryIcon type={ev.tipo_evento} />}
-                        </div>
-                        <div className="timeline-content card">
-                            <header>
-                                <span className="autor">{ev.autor?.nombre || 'Sistema'}</span>
-                                <span className="fecha">{format(new Date(ev.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                            </header>
-                            <div className="body">
-                                {ev.timelineType === 'nota' ? ev.contenido : ev.descripcion}
+            <div className="timeline-items">
+                {events.length === 0 ? (
+                    <div className="empty-history">
+                        <FiActivity />
+                        <p>No hay actividad registrada aún.</p>
+                    </div>
+                ) : (
+                    events.map((ev, i) => (
+                        <div key={ev.id || i} className={`event-card ${ev.timelineType}`}>
+                            <div className="event-icon">
+                                {ev.timelineType === 'nota' ? <FiMessageSquare /> : <HistoryIcon type={ev.tipo_evento} />}
+                            </div>
+                            <div className="event-content">
+                                <header>
+                                    <div className="user-info">
+                                        <div className="avatar">
+                                            {ev.autor?.nombre?.charAt(0) || 'S'}
+                                        </div>
+                                        <span className="name">{ev.autor?.nombre || 'Sistema'}</span>
+                                    </div>
+                                    <span className="date">
+                                        {format(new Date(ev.created_at), "d 'de' MMMM, HH:mm", { locale: es })}
+                                    </span>
+                                </header>
+                                <div className="body">
+                                    {ev.timelineType === 'nota' ? (
+                                        <div className="nota-text">{ev.contenido}</div>
+                                    ) : (
+                                        <div className="history-desc">{ev.descripcion}</div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     )
@@ -66,11 +95,12 @@ export default function LeadTimeline({ lead, onAddNota }) {
 
 function HistoryIcon({ type }) {
     switch (type) {
-        case 'cambio_estado': return <FiRefreshCw />
-        case 'cambio_etapa': return <FiTrendingUp />
+        case 'creacion': return <FiPlusCircle style={{ color: '#10b981' }} />
+        case 'cambio_estado': return <FiRepeat style={{ color: '#3b82f6' }} />
+        case 'cambio_etapa': return <FiArrowRight style={{ color: '#8b5cf6' }} />
         case 'negociacion_ganada': return <FiCheckCircle style={{ color: '#10b981' }} />
         case 'negociacion_perdida': return <FiXCircle style={{ color: '#ef4444' }} />
         case 'conversion_cliente': return <FiCheckCircle style={{ color: '#8b5cf6' }} />
-        default: return <FiFileText />
+        default: return <FiClock />
     }
 }

@@ -136,6 +136,19 @@ export const createUserWithRoles = async ({ email, password, roles, is_activo })
   const password_hash = await hashPassword(password);
   const user = await createUser({ email: email.toLowerCase(), password_hash, email_dominio_id: domRow.id, is_activo: !!is_activo });
   await assignRoles(user.id, roles);
+
+  // Agregar estados por defecto para que el usuario pueda editar/borrar
+  try {
+    await models.UserStatusPersonalizado.bulkCreate([
+      { user_id: user.id, emoji: '🔴', texto: 'Ocupado' },
+      { user_id: user.id, emoji: '🤝', texto: 'En Reunión' },
+      { user_id: user.id, emoji: '🥪', texto: 'Almorzando' }
+    ]);
+  } catch (e) {
+    console.error('[AuthService] Error creating default user statuses:', e.message);
+    // No bloqueamos el registro por esto
+  }
+
   const userRoles = await getUserRoles(user.id);
   return { user: { id: user.id, email: user.email, is_activo: user.is_activo }, roles: userRoles };
 };

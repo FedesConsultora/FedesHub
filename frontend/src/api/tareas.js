@@ -115,4 +115,9 @@ export const tareasApi = {
   // Métricas
   getMetrics: (params = {}) => api.get(`${base}/metrics`, { params }).then(r => r.data),
   getUrgent: () => api.get(`${base}/urgent`).then(r => r.data),
+
+  // Recordatorios
+  getRecordatorios: (id) => api.get(`${base}/${id}/recordatorios`).then(r => r.data),
+  addRecordatorio: (id, body) => api.post(`${base}/${id}/recordatorios`, body).then(r => r.data),
+  deleteRecordatorio: (id, remId) => api.delete(`${base}/${id}/recordatorios/${remId}`).then(r => r.data),
 }

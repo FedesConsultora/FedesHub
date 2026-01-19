@@ -1,0 +1,104 @@
+@use '../../styles/variables' as v;
+
+.LeadStatusCard {
+    position: relative;
+    display: inline-flex;
+
+    .statusTrigger {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: white;
+
+        &:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        &.disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        .etapa-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: v.$fh-muted;
+            font-weight: 700;
+        }
+
+        .current-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .arrow {
+            font-size: 1rem;
+            color: v.$fh-muted;
+            transition: transform 0.2s;
+
+            &.open {
+                transform: rotate(180deg);
+            }
+        }
+    }
+}
+
+.statusMenu--portal {
+    background: #0B0F15;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    padding: 6px;
+    overflow: hidden;
+    animation: menu-pop 0.2s ease-out;
+
+    .menu-header {
+        padding: 8px 12px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: v.$fh-muted;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .item {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: rgba(255, 255, 255, 0.8);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        &.active {
+            color: v.$fh-primary;
+            background: rgba(v.$fh-primary, 0.1);
+            font-weight: 600;
+        }
+    }
+}
+
+@keyframes menu-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

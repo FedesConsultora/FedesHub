@@ -6,19 +6,25 @@
     margin-left: 0.5rem;
 
     .infoIcon {
-        font-size: 1.1rem;
-        color: rgba(255, 255, 255, 0.4);
+        font-size: 1.2rem;
+        color: #fff !important;
         cursor: help;
-        transition: color 0.2s ease;
+        transition: all 0.2s ease;
+        opacity: 0.8;
+        background: rgba($fh-primary, 0.2);
+        border-radius: 50%;
+        padding: 2px;
 
         &:hover {
-            color: $fh-primary;
+            opacity: 1;
+            background: rgba($fh-primary, 0.4);
+            transform: scale(1.1);
         }
     }
 }
 
 .titleTooltipContent {
-    z-index: 9999;
+    z-index: 150000;
     min-width: 280px;
     max-width: calc(100vw - 32px); // Don't overflow screen
     background: rgba(0, 0, 0, 0.98);

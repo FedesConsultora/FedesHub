@@ -23,6 +23,7 @@ export const listTasksQuerySchema = z.object({
 
   // filtros unitarios
   cliente_id: intId.optional(),
+  lead_id: intId.optional(),
   hito_id: intId.optional(),
   estado_id: intId.optional(),
   estado_codigo: z.string().trim().optional(),
@@ -45,6 +46,7 @@ export const listTasksQuerySchema = z.object({
   include_finalizadas: boolish,
   is_favorita: boolish,
   is_seguidor: boolish,
+  solo_leads: boolish,
 
   // rangos de fechas (TODOS opcionales)
   vencimiento_from: dateOpt,
@@ -107,7 +109,8 @@ const tcUpdateDataSchema = z.object({
 
 export const createTaskSchema = z.object({
   tipo: z.enum(['STD', 'TC', 'IT']).optional().default('STD'),
-  cliente_id: intId,
+  cliente_id: intId.nullish(),
+  lead_id: intId.nullish(),
   hito_id: intId.nullish(),
   tarea_padre_id: intId.nullish(),
   titulo: z.string().min(3).max(200),
@@ -134,7 +137,8 @@ export const createTaskSchema = z.object({
 });
 
 export const updateTaskSchema = z.object({
-  cliente_id: intId.optional(),
+  cliente_id: intId.nullish(),
+  lead_id: intId.nullish(),
   hito_id: intId.nullish().optional(),
   tarea_padre_id: intId.nullish().optional(),
   titulo: z.string().min(3).max(200).optional(),

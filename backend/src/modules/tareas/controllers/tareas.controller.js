@@ -682,6 +682,61 @@ export const patchBoostManual = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// ---- Recordatorios ----
+export const getRecordatorios = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const recordatorios = await models.TareaRecordatorio.findAll({
+      where: { tarea_id: id },
+      include: [{ model: models.User, as: 'user', attributes: ['id', 'email'] }],
+      order: [['fecha_recordatorio', 'ASC']]
+    });
+    res.json(recordatorios);
+  } catch (e) { next(e); }
+};
+
+export const postRecordatorio = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const { fecha_recordatorio, tipo = 'hub' } = req.body;
+
+    if (!fecha_recordatorio) {
+      return res.status(400).json({ error: 'fecha_recordatorio is required' });
+    }
+
+    const recordatorio = await models.TareaRecordatorio.create({
+      tarea_id: id,
+      user_id: req.user.id,
+      fecha_recordatorio: new Date(fecha_recordatorio),
+      tipo,
+      enviado: false
+    });
+
+    res.status(201).json(recordatorio);
+  } catch (e) { next(e); }
+};
+
+export const deleteRecordatorio = async (req, res, next) => {
+  try {
+    const { id, remId } = req.params;
+    const recordatorio = await models.TareaRecordatorio.findOne({
+      where: { id: remId, tarea_id: id }
+    });
+
+    if (!recordatorio) {
+      return res.status(404).json({ error: 'Recordatorio no encontrado' });
+    }
+
+    // Solo el usuario que lo creó puede eliminarlo
+    if (recordatorio.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'No podés eliminar un recordatorio de otro usuario' });
+    }
+
+    await recordatorio.destroy();
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
 // ---- Drive Image Proxy (for displaying private Drive images)
 export const getDriveImage = async (req, res, next) => {
   try {

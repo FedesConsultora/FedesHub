@@ -170,7 +170,7 @@ export default function TaskList({
                       )}
                     </div>
                   </td>
-                  <td className={`px-3 ${RowPad} font-medium cursor-pointer col-title`}>
+                  <td className={`px-3 ${RowPad} font-medium cursor-pointer col-title`} title={t.titulo || t.title}>
                     {t.titulo || t.title}
                   </td>
                   {cols.cliente && (

@@ -168,6 +168,9 @@ export const setupAssociations = (m) => {
   link(m.Tarea && m.Cliente, 'Tarea → Cliente (cliente_id)', () =>
     m.Tarea.belongsTo(m.Cliente, { foreignKey: 'cliente_id', as: 'cliente' })
   );
+  link(m.Tarea && m.ComercialLead, 'Tarea → ComercialLead (lead_id)', () =>
+    m.Tarea.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' })
+  );
   link(m.Tarea && m.ClienteHito, 'Tarea → ClienteHito (hito_id)', () =>
     m.Tarea.belongsTo(m.ClienteHito, { foreignKey: 'hito_id', as: 'hito' })
   );
@@ -194,6 +197,16 @@ export const setupAssociations = (m) => {
   link(m.Tarea && m.UrgenciaTipo, 'Tarea → UrgenciaTipo (urgencia_id)', () =>
     m.Tarea.belongsTo(m.UrgenciaTipo, { foreignKey: 'urgencia_id', as: 'urgencia' })
   );
+
+  // Recordatorios de tarea
+  link(m.TareaRecordatorio && m.Tarea, 'TareaRecordatorio → Tarea', () => {
+    m.TareaRecordatorio.belongsTo(m.Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+    m.Tarea.hasMany(m.TareaRecordatorio, { foreignKey: 'tarea_id', as: 'recordatorios' });
+  });
+  link(m.TareaRecordatorio && m.User, 'TareaRecordatorio → User', () => {
+    m.TareaRecordatorio.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' });
+    m.User.hasMany(m.TareaRecordatorio, { foreignKey: 'user_id', as: 'recordatorios' });
+  });
 
   link(m.Tarea && m.TareaResponsable && m.Feder, 'Tarea ↔ Feder (Responsables)', () => {
     m.Tarea.belongsToMany(m.Feder, { as: 'Responsables', through: m.TareaResponsable, foreignKey: 'tarea_id', otherKey: 'feder_id' });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FiInfo } from 'react-icons/fi';
 import './TitleTooltip.scss';
 
 export default function TitleTooltip() {
@@ -22,8 +22,9 @@ export default function TitleTooltip() {
                 className="titleTooltipWrap"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={() => setShow(false)}
+                title="Ayuda de formato"
             >
-                <FaInfoCircle className="infoIcon" />
+                <FiInfo className="infoIcon" />
             </div>
 
             {show && createPortal(
