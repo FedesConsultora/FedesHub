@@ -98,7 +98,7 @@ $text: $fh-text;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow: visible;
 
   /* ===== Estados + botón Volver ===== */
   .stateRow {
@@ -117,8 +117,8 @@ $text: $fh-text;
   /* ===== sticky header ===== */
   .taskHeader {
     position: sticky;
-    top: 0;
-    z-index: 7;
+    top: -1rem; // Accounts for .taskDetail padding
+    z-index: 100;
     width: 100%;
     max-width: 100%;
     display: flex;

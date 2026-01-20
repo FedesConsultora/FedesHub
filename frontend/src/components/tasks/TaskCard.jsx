@@ -56,7 +56,7 @@ export default function TaskCard({ t, onPointerDown, onOpenTask, onDelete, canDe
   return (
     <ContextMenu items={menuItems}>
       <article
-        className={`fh-k-task ${prioClass}`}
+        className={`fh-k-task ${prioClass} ${t.vencida ? 'is-vencida' : ''}`}
         onPointerDown={onPointerDown}
         onClick={open}
         role="button"
@@ -86,6 +86,25 @@ export default function TaskCard({ t, onPointerDown, onOpenTask, onDelete, canDe
             >
               {t.status?.name || '—'}
             </div>
+            {t.vencida && (
+              <div
+                className="fh-k-status-badge"
+                style={{
+                  fontSize: '0.65rem',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  backgroundColor: `#9F1B1B15`,
+                  color: '#9F1B1B',
+                  border: `1px solid #9F1B1B30`,
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3px',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Vencida
+              </div>
+            )}
             <div className="fh-k-date" title="Vencimiento">{dueTxt}</div>
             {boltIcon}
           </div>

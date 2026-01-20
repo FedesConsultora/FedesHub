@@ -145,6 +145,7 @@ export default function TaskList({
                 <tr
                   key={t.id}
                   className={`border-t ${clickable ? "hover:bg-muted/30 cursor-pointer" : ""}`}
+                  style={t.vencida ? { backgroundColor: 'rgba(159, 27, 27, 0.08)' } : {}}
                   onClick={() => {
                     if (typeof onRowClick === "function") onRowClick(t);
                     if (typeof onOpenTask === "function") onOpenTask(t.id);
@@ -185,23 +186,41 @@ export default function TaskList({
                   )}
                   {cols.estado && (
                     <td className={`px-3 cursor-pointer  ${RowPad} col-status`}>
-                      <Badge
-                        variant="secondary"
-                        style={{
-                          backgroundColor: `${statusColor}20`,
-                          color: statusColor,
-                          borderColor: `${statusColor}40`,
-                          borderWidth: '1px',
-                          borderStyle: 'solid'
-                        }}
-                      >
-                        {t.estado_nombre || t.stage || "—"}
-                      </Badge>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Badge
+                          variant="secondary"
+                          style={{
+                            backgroundColor: `${statusColor}20`,
+                            color: statusColor,
+                            borderColor: `${statusColor}40`,
+                            borderWidth: '1px',
+                            borderStyle: 'solid'
+                          }}
+                        >
+                          {t.estado_nombre || t.stage || "—"}
+                        </Badge>
+                        {t.vencida && (
+                          <Badge
+                            variant="destructive"
+                            style={{
+                              fontSize: '0.62rem',
+                              padding: '1px 4px',
+                              backgroundColor: '#9F1B1B',
+                              color: 'white',
+                              fontWeight: '900',
+                              border: 'none'
+                            }}
+                          >
+                            VENCIDA
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                   )}
                   {cols.vence && (
                     <td
-                      className={`px-3 cursor-pointer  ${RowPad} text-muted-foreground hidden-mobile`}
+                      className={`px-3 cursor-pointer  ${RowPad} hidden-mobile`}
+                      style={t.vencida ? { color: '#ff5252', fontWeight: 'bold' } : { color: 'var(--fh-muted)' }}
                     >
                       {dueTxt}
                     </td>

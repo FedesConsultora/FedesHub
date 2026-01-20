@@ -26,6 +26,9 @@ export const tareasApi = {
     if (typeof serializedParams.include_archivadas === 'boolean') {
       serializedParams.include_archivadas = serializedParams.include_archivadas ? 'true' : 'false';
     }
+    if (typeof serializedParams.include_finalizadas === 'boolean') {
+      serializedParams.include_finalizadas = serializedParams.include_finalizadas ? 'true' : 'false';
+    }
     if (typeof serializedParams.is_favorita === 'boolean') {
       serializedParams.is_favorita = serializedParams.is_favorita ? 'true' : 'false';
     }

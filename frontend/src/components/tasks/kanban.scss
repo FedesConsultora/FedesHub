@@ -138,6 +138,21 @@
     border-left: 8px solid #4caf50;
   }
 
+  &.is-vencida {
+    background: rgba(159, 27, 27, 0.15) !important;
+    border-color: rgba(159, 27, 27, 0.3);
+
+    &:hover {
+      background: rgba(159, 27, 27, 0.22) !important;
+      border-color: rgba(159, 27, 27, 0.5);
+    }
+
+    .fh-k-date {
+      color: #ff5252;
+      font-weight: 800;
+    }
+  }
+
   .fh-k-row {
     display: flex;
     gap: 8px;
