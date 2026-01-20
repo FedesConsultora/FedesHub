@@ -128,6 +128,7 @@ $text: $fh-text;
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding: 10px 20px;
+    overflow: visible !important;
 
     .back-to-list-btn {
       background: rgba(255, 255, 255, 0.05);
@@ -169,8 +170,7 @@ $text: $fh-text;
     max-width: 100%;
     min-height: 60px;
     box-sizing: border-box;
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: visible; // Avoid clipping dropdowns or causing scrollbars
 
     .titleSection {
       flex: 1 1 auto; // Crece para llenar espacio disponible
@@ -221,6 +221,7 @@ $text: $fh-text;
       align-items: center;
       gap: 0.75rem;
       flex-wrap: nowrap; // NO wrap en desktop
+      overflow: visible;
 
       >* {
         flex-shrink: 0;
@@ -1607,5 +1608,144 @@ $text: $fh-text;
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Family Button ===== */
+.familyBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  svg {
+    font-size: 1rem;
+  }
+}
+
+/* ===== Family Dropdown ===== */
+.family-dropdown-wrapper {
+  position: relative;
+  z-index: 1000; // Increased to ensure it's above other elements
+}
+
+.family-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 200px;
+  background: #1a222d;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 6px;
+  z-index: 999999; // Absolute maximum to stay above everything
+  animation: popDown 0.18s ease-out;
+  overflow: hidden; // Clip the hover states to the rounded corners
+  user-select: none;
+
+  .dropdown-item {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    text-align: left;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    svg {
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+
+    &:hover svg {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Parent Task Banner ===== */
+.parent-task-banner {
+  background: rgba($fh-primary, 0.08);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 0 12px 12px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-out;
+
+  .banner-label {
+    color: $fh-primary;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+
+    svg {
+      font-size: 1rem;
+    }
+  }
+
+  .banner-link {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: white;
+      text-decoration: underline;
+    }
   }
 }

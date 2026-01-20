@@ -198,7 +198,7 @@ const S = {
   fileName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' },
 }
 
-export default function CreateTaskModal({ onClose, onCreated, initialData = {} }) {
+export default function CreateTaskModal({ onClose, onCreated, initialData = {}, modalTitle = 'Nueva tarea', parentTaskId = null }) {
   const { data: cat, loading, error } = useTaskCatalog()
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef(null)
@@ -253,7 +253,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
     if (responsables.length === 0 && myId) {
       setResponsables([String(myId)])
     }
-  }, [initialData, myId])
+  }, [initialData, myId, parentTaskId])
 
   // Attendance status hook
   const allFederIds = useMemo(() => (cat.feders || []).map(f => f.id), [cat.feders])
@@ -342,6 +342,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
       cliente_id: clienteId ? Number(clienteId) : null,
       lead_id: leadId ? Number(leadId) : null,
       hito_id: parseNumOrNull(hitoId),
+      tarea_padre_id: parentTaskId ? Number(parentTaskId) : null,
       titulo: titulo.trim(),
       descripcion: descripcion?.trim() || null,
       impacto_id: parseNumOrNull(impactoId) || undefined,
@@ -456,7 +457,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {} }
       <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="tcHeader">
           <div className="brand">
-            <div className="logo">Nueva tarea</div>
+            <div className="logo">{modalTitle}</div>
 
           </div>
           <button type="button" className="close" onClick={onClose} aria-label="Cerrar"><FiX /></button>

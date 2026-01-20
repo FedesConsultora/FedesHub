@@ -11,12 +11,14 @@ import TaskChecklist from '../../components/tasks/TaskChecklist.jsx'
 import RichTextEditor from '../../components/common/RichTextEditor.jsx'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
 import SubtasksPanel from '../../components/tasks/SubtasksPanel.jsx'
+import TaskFamilyModal from '../../components/tasks/TaskFamilyModal.jsx'
+import CreateTaskModal from '../../components/tasks/CreateTaskModal.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
-import { FiLock, FiCheckCircle, FiClock, FiArrowLeft } from "react-icons/fi";
+import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye } from "react-icons/fi";
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -103,8 +105,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     responsables: [],
     colaboradores: []
   });
-  const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+  const [showCommentsPopup, setShowCommentsPopup] = useState(false)
+  const [showFamilyModal, setShowFamilyModal] = useState(false)
+  const [createSubtaskParentId, setCreateSubtaskParentId] = useState(null)
+  const [showFamilyDropdown, setShowFamilyDropdown] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const familyDropdownRef = useRef(null)
 
   const [isResponsible, setIsResponsible] = useState(false)
   const [isCollaborator, setIsCollaborator] = useState(false)
@@ -441,6 +447,17 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }, [dirty, form.descripcion, task, taskId, flushDescriptionOnBlur])
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (familyDropdownRef.current && !familyDropdownRef.current.contains(e.target)) {
+        setShowFamilyDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const handleBack = async () => {
     if (dirty) {
       const ok = await modal.confirm({
@@ -741,6 +758,40 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
+            {/* Botón de familia de tareas con dropdown */}
+            <div className="family-dropdown-wrapper" ref={familyDropdownRef} style={{ position: 'relative' }}>
+              <button
+                className="familyBtn"
+                onClick={() => setShowFamilyDropdown(!showFamilyDropdown)}
+                title="Opciones de familia"
+              >
+                <FiGitBranch />
+              </button>
+
+              {showFamilyDropdown && (
+                <div className="family-dropdown">
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setCreateSubtaskParentId(id)
+                      setShowFamilyDropdown(false)
+                    }}
+                  >
+                    <FiPlus /> Crear Subtarea
+                  </button>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowFamilyModal(true)
+                      setShowFamilyDropdown(false)
+                    }}
+                  >
+                    <FiEye /> Ver Familia
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
 
@@ -753,10 +804,32 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           <div className="card" style={{ minHeight: '300px' }}>
             <div className="cardHeader">
               <div className="desc">
-                <p>Descripción</p>
-                {/* <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button> */}
+                <button
+                  className={`fh-chip ${tab === 'desc' ? 'primary' : ''}`}
+                  onClick={() => setTab('desc')}
+                >
+                  Descripción
+                </button>
+                <button
+                  className={`fh-chip ${tab === 'childs' ? 'primary' : ''}`}
+                  onClick={() => setTab('childs')}
+                >
+                  Subtareas
+                </button>
               </div>
             </div>
+
+            {/* Mostrar tarea padre si existe */}
+            {task?.tarea_padre_id && (
+              <div className="parent-task-banner">
+                <div className="banner-label">
+                  <FiGitBranch /> Tarea Padre:
+                </div>
+                <div className="banner-link" onClick={() => navigate(`/tareas/${task.tarea_padre_id}`)}>
+                  {task.tareaPadre?.titulo || `Tarea #${task.tarea_padre_id}`}
+                </div>
+              </div>
+            )}
 
             {estadoCodigo === 'cancelada' && task?.cancelacion_motivo && (
               <div className="cancelReasonBanner">
@@ -782,6 +855,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 parentId={Number(id)}
                 defaultClienteId={task?.cliente_id || task?.cliente?.id || null}
                 catalog={catalog}
+                onNewSubtask={() => setCreateSubtaskParentId(id)}
+                onNavigate={(subId) => navigate(`/tareas/${subId}`)}
               />
             )}
           </div>
@@ -1147,6 +1222,41 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
       </div>
 
+      {/* Modal de creación de subtarea */}
+      {createSubtaskParentId && (
+        <CreateTaskModal
+          modalTitle="Nueva Subtarea"
+          parentTaskId={Number(createSubtaskParentId)}
+          initialData={{
+            cliente_id: task?.cliente_id || task?.cliente?.id || null
+          }}
+          onClose={() => setCreateSubtaskParentId(null)}
+          onCreated={(newTask) => {
+            setCreateSubtaskParentId(null)
+            toast?.success('Subtarea creada')
+            // Recargar la tarea actual para actualizar la lista de subtareas
+            tareasApi.get(id).then(setTask)
+            onUpdated?.()
+          }}
+        />
+      )}
+
+      {/* Modal de familia de tareas */}
+      {showFamilyModal && (
+        <TaskFamilyModal
+          taskId={Number(id)}
+          currentTask={task}
+          onClose={() => setShowFamilyModal(false)}
+          onNavigate={(newId) => {
+            setShowFamilyModal(false)
+            navigate(`/tareas/${newId}`)
+          }}
+          onNewSubtask={(parentId) => {
+            setShowFamilyModal(false)
+            setCreateSubtaskParentId(parentId || id)
+          }}
+        />
+      )}
 
     </div >
   )
