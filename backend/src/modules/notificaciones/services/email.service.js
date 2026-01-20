@@ -57,6 +57,10 @@ export const renderEmail = async ({ tipo_id, idioma = 'es', payload = {}, link_u
       subject = 'Tu tarea está por vencer';
       html = templates.tarea_vencimiento({ tarea: payload?.tarea, link: link_url });
       break;
+    case 'tarea_recordatorio':
+      subject = `Recordatorio: ${payload?.tarea?.titulo || 'Tarea'}`;
+      html = templates.tarea_recordatorio({ tarea: payload?.tarea, link: link_url });
+      break;
     case 'tarea_eliminada':
       subject = `Tarea eliminada: ${payload?.tarea?.titulo || ''}`;
       html = templates.tarea_eliminada({

@@ -36,27 +36,26 @@ export async function procesarRecordatorios() {
                     continue;
                 }
 
-                // 1. Notificación Hub (in-app / push)
-                if (rec.tipo === 'hub' || rec.tipo === 'both') {
-                    await notifCreate({
-                        tipo_codigo: 'tarea_recordatorio',
-                        titulo: `Recordatorio: ${tarea.titulo}`,
-                        mensaje: `Tenés un recordatorio para la tarea: ${tarea.titulo}`,
-                        data: { tarea_id: tarea.id },
-                        link_url: `/tareas?open=${tarea.id}`,
-                        tarea_id: tarea.id,
-                        destinos: [{ user_id: user.id }],
-                        canales: ['in_app', 'push']
-                    }, { id: null, system: true }); // Autor sistema
-                }
+                // Definir canales según el tipo
+                const canales = [];
+                if (rec.tipo === 'hub' || rec.tipo === 'both') canales.push('in_app', 'push');
+                if (rec.tipo === 'email' || rec.tipo === 'both') canales.push('email');
 
-                // 2. Email (si se requiere)
-                if (rec.tipo === 'email' || rec.tipo === 'both') {
-                    // Aquí integraríamos con su servicio de email existente
-                    // Por ahora asumo que hay un mediador o servicio global de correos
-                    console.log(`[Recordatorios] Enviando email a ${user.email} para tarea ${tarea.id}`);
-                    // await emailService.send(...)
-                }
+                // Base URL para el link (necesario para emails)
+                const baseUrl = (process.env.PUBLIC_BASE_URL || 'https://hub.fedesconsultora.com').replace(/\/+$/, '');
+                const linkUrl = `${baseUrl}/tareas?open=${tarea.id}`;
+
+                // Crear notificación centralizada (esto maneja Hub, Push y Email automáticamente)
+                await notifCreate({
+                    tipo_codigo: 'tarea_recordatorio',
+                    titulo: `Recordatorio: ${tarea.titulo}`,
+                    mensaje: `Tenés un recordatorio para la tarea: ${tarea.titulo}`,
+                    data: { tarea_id: tarea.id },
+                    link_url: linkUrl,
+                    tarea_id: tarea.id,
+                    destinos: [{ user_id: user.id }],
+                    canales: canales
+                }, { id: null, system: true });
 
                 // Marcar como enviado
                 rec.enviado = true;

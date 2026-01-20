@@ -9,14 +9,14 @@ export function startRecordatoriosJob() {
 
     logger.info('Task reminders job started (runs every minute)');
 
-    // Correr cada 1 minuto
+    // Correr cada 20 segundos para mayor precisión (evita el delay de 1m)
     intervalId = setInterval(async () => {
         try {
             await procesarRecordatorios();
         } catch (err) {
             logger.error({ err }, 'Error in recordatoriosJob');
         }
-    }, 60000);
+    }, 20000);
 }
 
 export function stopRecordatoriosJob() {
