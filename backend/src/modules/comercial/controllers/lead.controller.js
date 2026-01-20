@@ -44,7 +44,9 @@ export const updateLead = async (req, res) => {
 export const addNota = async (req, res) => {
     try {
         const userId = req.user.id;
-        const data = await leadSvc.svcAddNota(req.params.id, req.body.contenido, userId);
+        const { contenido } = req.body;
+        const files = req.files || []; // Viene de multer .any() o .array()
+        const data = await leadSvc.svcAddNota(req.params.id, contenido, userId, files);
         res.status(201).json(data);
     } catch (e) {
         res.status(500).json({ error: e.message });

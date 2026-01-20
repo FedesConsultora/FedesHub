@@ -54,13 +54,36 @@ export const svcUpdateLead = async (id, data, userId) => {
     return leadRepo.getLeadById(id);
 };
 
-export const svcAddNota = async (leadId, contenido, userId) => {
+import { saveUploadedFiles } from '../../../infra/storage/index.js';
+
+export const svcAddNota = async (leadId, contenido, userId, files = []) => {
     const nota = await leadRepo.addNota({ lead_id: leadId, contenido, autor_user_id: userId });
+
+    if (files && files.length > 0) {
+        // Guardar archivos en storage (usamos dominio 'default' o 'tareas' si queremos Drive explícito)
+        // El pathParts ayuda a organizar en Drive: Comercial / Leads / {leadId}
+        const pathParts = ['Comercial', 'Leads', String(leadId)];
+        const saved = await saveUploadedFiles(files, pathParts, 'tareas');
+
+        for (const f of saved) {
+            await leadRepo.addAdjunto({
+                lead_id: leadId,
+                nota_id: nota.id,
+                autor_user_id: userId,
+                nombre_original: f.name,
+                mimetype: f.mime,
+                size: f.size,
+                key: f.drive_file_id || f.key || f.name,
+                url: f.webViewLink || f.url
+            });
+        }
+    }
+
     await leadRepo.addHistorial({
         lead_id: leadId,
         user_id: userId,
         tipo_evento: 'nota_agregada',
-        descripcion: 'Se agregó una nota'
+        descripcion: 'Se agregó una nota' + (files?.length ? ` con ${files.length} adjuntos` : '')
     });
     return nota;
 };

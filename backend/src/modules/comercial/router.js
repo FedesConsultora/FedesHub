@@ -18,7 +18,7 @@ router.post('/leads', requireAuth, requirePermission('comercial', 'create'), lea
 router.patch('/leads/:id', requireAuth, requirePermission('comercial', 'update'), leadCtrl.updateLead);
 
 // Interactions
-router.post('/leads/:id/notes', requireAuth, requirePermission('comercial', 'update'), leadCtrl.addNota);
+router.post('/leads/:id/notes', requireAuth, requirePermission('comercial', 'update'), upload.array('files'), leadCtrl.addNota);
 
 // Negotiation
 router.post('/leads/:id/win', requireAuth, requirePermission('comercial', 'update'), leadCtrl.winNegotiation);

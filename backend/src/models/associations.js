@@ -702,6 +702,11 @@ export const setupAssociations = (m) => {
     m.ComercialLeadAdjunto.belongsTo(m.User, { foreignKey: 'autor_user_id', as: 'autor' })
   );
 
+  link(m.ComercialLeadAdjunto && m.ComercialLeadNota, 'ComercialLeadAdjunto → ComercialLeadNota (nota_id)', () => {
+    m.ComercialLeadAdjunto.belongsTo(m.ComercialLeadNota, { foreignKey: 'nota_id', as: 'nota' });
+    m.ComercialLeadNota.hasMany(m.ComercialLeadAdjunto, { foreignKey: 'nota_id', as: 'adjuntos' });
+  });
+
   link(m.ComercialLead && m.ComercialLeadHistorial, 'ComercialLead ↔ ComercialLeadHistorial', () => {
     m.ComercialLead.hasMany(m.ComercialLeadHistorial, { foreignKey: 'lead_id', as: 'historial' });
     m.ComercialLeadHistorial.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });

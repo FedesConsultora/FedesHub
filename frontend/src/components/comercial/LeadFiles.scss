@@ -1,0 +1,122 @@
+@use '../../styles/variables' as v;
+
+.LeadFiles {
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+
+    &-empty {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: v.$fh-muted;
+        gap: 1rem;
+        text-align: center;
+        padding: 2rem;
+
+        svg {
+            opacity: 0.1;
+        }
+
+        span {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            max-width: 250px;
+        }
+    }
+
+    .files-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .file-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: all 0.2s;
+
+        &:hover {
+            border-color: rgba(v.$fh-primary, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: v.$fh-muted;
+        }
+
+        .file-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+
+            h4 {
+                margin: 0;
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: white;
+            }
+
+            .file-meta {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.75rem;
+                color: v.$fh-muted;
+            }
+        }
+
+        .file-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .author {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.75rem;
+                color: v.$fh-muted;
+            }
+
+            .btn-download {
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.05);
+                color: v.$fh-muted;
+                transition: all 0.2s;
+                text-decoration: none;
+
+                &:hover {
+                    background: v.$fh-primary;
+                    color: white;
+                }
+            }
+        }
+    }
+}

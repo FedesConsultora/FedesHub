@@ -252,9 +252,70 @@
 
         .timeline-panel {
             background: #0B0F15;
-            overflow-y: auto;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
+
+            .lead-tabs {
+                display: flex;
+                padding: 0 2rem;
+                gap: 2rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                background: rgba(255, 255, 255, 0.01);
+
+                .tab-btn {
+                    background: none;
+                    border: none;
+                    color: v.$fh-muted;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 1.25rem 0;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    position: relative;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        color: white;
+                    }
+
+                    &.active {
+                        color: white;
+
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            bottom: -1px;
+                            left: 0;
+                            right: 0;
+                            height: 2px;
+                            background: v.$fh-primary;
+                            box-shadow: 0 0 12px rgba(v.$fh-primary, 0.6);
+                        }
+                    }
+
+                    svg {
+                        font-size: 1rem;
+                        opacity: 0.7;
+                    }
+
+                    &.active svg {
+                        color: v.$fh-primary;
+                        opacity: 1;
+                    }
+                }
+            }
+
+            .tab-content {
+                flex: 1;
+                overflow: hidden; // Content like LeadTimeline or LeadFiles will handle internal scroll
+                display: flex;
+                flex-direction: column;
+            }
         }
     }
 }

@@ -45,7 +45,10 @@ export const getLeadById = async (id) => {
             {
                 model: models.ComercialLeadNota,
                 as: 'notas',
-                include: [{ model: models.User, as: 'autor' }],
+                include: [
+                    { model: models.User, as: 'autor' },
+                    { model: models.ComercialLeadAdjunto, as: 'adjuntos' }
+                ],
                 order: [['created_at', 'DESC']]
             },
             {

@@ -17,23 +17,67 @@
         }
     }
 
+    .notas-header {
+        padding: 0 2rem 1.5rem 2rem;
+        display: flex;
+        justify-content: flex-end;
+
+        .btn-add-note {
+            background: rgba(v.$fh-primary, 0.1);
+            border: 1px solid rgba(v.$fh-primary, 0.2);
+            color: v.$fh-primary;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: v.$fh-primary;
+                color: white;
+            }
+        }
+
+        .btn-cancel-note {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: v.$fh-muted;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+
+            &:hover {
+                color: white;
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+    }
+
     .nota-input-area {
         padding: 0 2rem 1.5rem 2rem;
 
         .input-box {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(11, 15, 21, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 12px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             transition: all 0.2s;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
             &:focus-within {
                 border-color: rgba(v.$fh-primary, 0.4);
-                background: rgba(255, 255, 255, 0.05);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                background: rgba(255, 255, 255, 0.03);
             }
 
             textarea {
@@ -50,10 +94,70 @@
                 }
             }
 
+            .selected-files {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+                .file-tag {
+                    background: rgba(v.$fh-primary, 0.1);
+                    border: 1px solid rgba(v.$fh-primary, 0.2);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 0.75rem;
+                    color: v.$fh-primary;
+                    max-width: 200px;
+
+                    button {
+                        background: none;
+                        border: none;
+                        color: v.$fh-primary;
+                        cursor: pointer;
+                        display: flex;
+                        padding: 2px;
+                        border-radius: 4px;
+
+                        &:hover {
+                            background: rgba(v.$fh-primary, 0.1);
+                        }
+                    }
+                }
+            }
+
             .input-footer {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+
+                .footer-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+
+                    .btn-attach {
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        color: v.$fh-muted;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        font-size: 0.8rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+
+                        &:hover {
+                            background: rgba(255, 255, 255, 0.1);
+                            color: white;
+                        }
+                    }
+                }
 
                 .hint {
                     font-size: 0.75rem;
@@ -81,8 +185,46 @@
                 }
             }
         }
-    }
 
+        
+    }
+    .history-filters-bar {
+            padding: 0.5rem 2rem 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .history-count {
+                font-size: 0.8rem;
+                color: v.$fh-muted;
+                font-weight: 500;
+            }
+
+            .btn-full-history {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                color: v.$fh-muted;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: white;
+                    border-color: rgba(255, 255, 255, 0.15);
+                }
+
+                svg {
+                    color: v.$fh-primary;
+                    font-size: 0.8rem;
+                }
+            }
+        }
     .timeline-items {
         flex: 1;
         overflow-y: auto;
@@ -92,11 +234,11 @@
         gap: 1.5rem;
 
         &::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         &::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
         }
 
@@ -123,6 +265,11 @@
     .event-card {
         display: flex;
         gap: 16px;
+
+        &.history {
+            gap: 0;
+            display: block; // history takes full width as line
+        }
 
         .event-icon {
             flex-shrink: 0;
@@ -197,11 +344,67 @@
                     line-height: 1.5;
                 }
 
-                .history-desc {
-                    color: v.$fh-muted;
-                    font-size: 0.9rem;
-                    font-style: italic;
+                .nota-attachments {
+                    margin-top: 12px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    padding-top: 12px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+                    .attachment-link {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 6px 10px;
+                        background: rgba(255, 255, 255, 0.03);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        border-radius: 6px;
+                        color: v.$fh-muted;
+                        font-size: 0.8rem;
+                        text-decoration: none;
+                        transition: all 0.2s;
+
+                        &:hover {
+                            background: rgba(v.$fh-primary, 0.1);
+                            color: v.$fh-primary;
+                            border-color: rgba(v.$fh-primary, 0.2);
+                        }
+
+                        svg {
+                            font-size: 0.9rem;
+                        }
+                    }
                 }
+            }
+        }
+
+        .history-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            color: v.$fh-muted;
+
+            .name {
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.9);
+                white-space: nowrap;
+                font-size: 0.8rem;
+            }
+
+            .description {
+                flex: 1;
+                color: v.$fh-muted;
+                font-size: 0.75rem;
+            }
+
+            .timestamp {
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.3);
+                white-space: nowrap;
+                margin-left: auto;
             }
         }
     }

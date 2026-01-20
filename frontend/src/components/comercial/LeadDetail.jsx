@@ -8,10 +8,12 @@ import {
 } from 'react-icons/fi'
 import LeadStatusCard from './LeadStatusCard'
 import LeadTimeline from './LeadTimeline'
+import LeadFiles from './LeadFiles'
 import NegotiationModal from './NegotiationModal'
 import OnboardingResolveModal from './OnboardingResolveModal'
 import { useModal } from '../../components/modal/ModalProvider'
 import useContentEditable from '../../hooks/useContentEditable'
+import { FiMessageSquare, FiFile, FiActivity } from 'react-icons/fi'
 import './LeadDetail.scss'
 
 export default function LeadDetail({ leadId, onClose, onUpdated }) {
@@ -24,6 +26,8 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     const [saving, setSaving] = useState(false)
     const [showNegotiation, setShowNegotiation] = useState(null)
     const [showResolveOnboarding, setShowResolveOnboarding] = useState(false)
+
+    const [activeTab, setActiveTab] = useState('notas') // 'notas' | 'files' | 'history'
 
     const reload = useCallback(async () => {
         try {
@@ -214,7 +218,38 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                 </div>
 
                 <div className="timeline-panel">
-                    <LeadTimeline lead={lead} onAddNota={handleAddNota} />
+                    <div className="lead-tabs">
+                        <button
+                            className={`tab-btn ${activeTab === 'notas' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('notas')}
+                        >
+                            <FiMessageSquare /> Notas
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'files' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('files')}
+                        >
+                            <FiFile /> Archivos
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('history')}
+                        >
+                            <FiActivity /> Historial
+                        </button>
+                    </div>
+
+                    <div className="tab-content">
+                        {activeTab === 'notas' && (
+                            <LeadTimeline lead={lead} onAddNota={handleAddNota} showOnly="notas" />
+                        )}
+                        {activeTab === 'history' && (
+                            <LeadTimeline lead={lead} showOnly="history" />
+                        )}
+                        {activeTab === 'files' && (
+                            <LeadFiles lead={lead} />
+                        )}
+                    </div>
                 </div>
             </div>
 
