@@ -57,7 +57,7 @@ export default function Header() {
     <>
       <header className={`fhHeader ${open ? 'user-menu-open' : ''}`}>
         <Link to="/" className="brand">FedesHub</Link>
-        <span className='sys-version'>BETA v2.1</span>
+        <span className='sys-version'>BETA v3</span>
         <div className="spacer" />
         <div className="rightCluster">
           <button

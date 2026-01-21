@@ -90,7 +90,17 @@ export const importLeads = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
         const userId = req.user.id;
-        const result = await svcImportLeads(req.file.buffer, userId);
+
+        let mapping = null;
+        if (req.body.mapping) {
+            try {
+                mapping = JSON.parse(req.body.mapping);
+            } catch (e) {
+                console.error("Error parsing import mapping:", e);
+            }
+        }
+
+        const result = await svcImportLeads(req.file.buffer, userId, mapping);
         res.json(result);
     } catch (e) {
         res.status(500).json({ error: e.message });

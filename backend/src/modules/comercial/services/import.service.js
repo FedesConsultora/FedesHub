@@ -2,7 +2,7 @@
 import * as XLSX from 'xlsx';
 import * as leadRepo from '../repositories/lead.repo.js';
 
-export const svcImportLeads = async (buffer, userId) => {
+export const svcImportLeads = async (buffer, userId, mapping = null) => {
     const wb = XLSX.read(buffer, { type: 'buffer' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws);
@@ -31,9 +31,15 @@ export const svcImportLeads = async (buffer, userId) => {
 
     for (const row of data) {
         try {
-            const email = findValue(row, 'email', 'e-mail', 'Email address', 'Correo');
-            const telefono = findValue(row, 'telefono', 'teléfono', 'tel', 'phone', 'phone number', 'celular');
-            const nombreCompleto = findValue(row, 'nombre', 'name', 'full name', 'nombre completo');
+            // Mapping is an object where { fedesField: excelHeader }
+            const getVal = (field, ...fallbacks) => {
+                if (mapping && mapping[field]) return row[mapping[field]];
+                return findValue(row, ...fallbacks);
+            };
+
+            const email = getVal('email', 'email', 'e-mail', 'Email address', 'Correo');
+            const telefono = getVal('telefono', 'telefono', 'teléfono', 'tel', 'phone', 'phone number', 'celular');
+            const nombreCompleto = getVal('nombre', 'nombre', 'name', 'full name', 'nombre completo', 'client', 'cliente');
 
             let existing = null;
             if (email) existing = await leadRepo.getLeadByEmail(email);
@@ -41,14 +47,14 @@ export const svcImportLeads = async (buffer, userId) => {
 
             const payload = {
                 nombre: nombreCompleto || 'Sin nombre',
-                apellido: findValue(row, 'apellido', 'last name'),
-                empresa: findValue(row, 'empresa', 'company', 'organization'),
-                alias: findValue(row, 'alias', 'main goal', 'página title', 'interés'),
+                apellido: getVal('apellido', 'apellido', 'last name'),
+                empresa: getVal('empresa', 'empresa', 'company', 'organization'),
+                alias: getVal('alias', 'alias', 'main goal', 'página title', 'interés'),
                 email: email,
                 telefono: telefono,
-                sitio_web: findValue(row, 'sitio web', 'website', 'sitio', 'url'),
-                ubicacion: findValue(row, 'ubicacion', 'ubicación', 'location', 'city', 'provincia'),
-                responsable_feder_id: findValue(row, 'responsable_id', 'id responsable', 'feder_id') || 1,
+                sitio_web: getVal('sitio_web', 'sitio web', 'website', 'sitio', 'url'),
+                ubicacion: getVal('ubicacion', 'ubicacion', 'ubicación', 'location', 'city', 'provincia'),
+                responsable_feder_id: getVal('responsable_feder_id', 'responsable_id', 'id responsable', 'feder_id') || 1,
                 status_id: defaultStatus,
                 etapa_id: defaultEtapa,
                 created_by_user_id: userId
