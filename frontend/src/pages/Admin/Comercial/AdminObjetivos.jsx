@@ -105,8 +105,19 @@ export default function AdminObjetivos() {
         setShowHelp(prev => ({ ...prev, [key]: !prev[key] }))
     }
 
+    const getStartMonth = () => {
+        const eecc = eeccList.find(e => Number(e.id) === Number(selectedEecc))
+        if (!eecc) return 1
+        return new Date(eecc.start_at).getUTCMonth() + 1
+    }
+
     const getMonthsForQ = (q) => {
-        return [(q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3]
+        const startMonth = getStartMonth()
+        return [
+            ((startMonth - 1 + (q - 1) * 3) % 12) + 1,
+            ((startMonth - 1 + (q - 1) * 3 + 1) % 12) + 1,
+            ((startMonth - 1 + (q - 1) * 3 + 2) % 12) + 1
+        ]
     }
 
     if (!selectedEecc && eeccList.length === 0) return (
@@ -158,13 +169,13 @@ export default function AdminObjetivos() {
                                     <div className="input-with-symbol">
                                         <span className="symbol">$</span>
                                         <input
+                                            key={`${selectedEecc}-${qNum}-${obj?.monto_presupuestacion_ars}`}
                                             type="text"
-                                            inputMode="decimal"
-                                            defaultValue={obj?.monto_presupuestacion_ars ? parseFloat(obj.monto_presupuestacion_ars).toLocaleString('es-AR') : ''}
-                                            placeholder="0,00"
-                                            onBlur={e => handleSaveQ(qNum, e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                                            readOnly
+                                            className="read-only-input"
+                                            value={obj?.monto_presupuestacion_ars ? parseFloat(obj.monto_presupuestacion_ars).toLocaleString('es-AR') : '0'}
                                         />
+                                        <span className="auto-badge">Auto</span>
                                     </div>
                                 </div>
                             )
@@ -197,13 +208,13 @@ export default function AdminObjetivos() {
                                     <div className="input-with-symbol">
                                         <span className="symbol">$</span>
                                         <input
+                                            key={`${selectedEecc}-cap-${qNum}-${cap?.monto_maximo_ars}`}
                                             type="text"
-                                            inputMode="decimal"
-                                            defaultValue={cap?.monto_maximo_ars ? parseFloat(cap.monto_maximo_ars).toLocaleString('es-AR') : ''}
-                                            placeholder="0,00"
-                                            onBlur={e => handleSaveCap(qNum, e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                                            readOnly
+                                            className="read-only-input"
+                                            value={cap?.monto_maximo_ars ? parseFloat(cap.monto_maximo_ars).toLocaleString('es-AR') : '0'}
                                         />
+                                        <span className="auto-badge">Auto</span>
                                     </div>
                                 </div>
                             )

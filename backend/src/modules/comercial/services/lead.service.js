@@ -3,7 +3,8 @@ import * as leadRepo from '../repositories/lead.repo.js';
 import * as adminRepo from '../repositories/admin_comercial.repo.js';
 import { svcCreate as svcCreateCliente } from '../../clientes/services/clientes.service.js';
 import { createNotificacionGlobal } from '../../notificaciones/services/notificaciones.service.js';
-import { addDays, format, differenceInMonths } from 'date-fns';
+import { addDays, format } from 'date-fns';
+import { getFiscalStatus } from '../utils/fiscal.js';
 
 export const svcListLeads = (q) => leadRepo.listLeads(q);
 export const svcGetLead = (id) => leadRepo.getLeadById(id);
@@ -146,10 +147,8 @@ export const svcNegociacionGanada = async (id, ruta, onboardingData, userId) => 
     const activeEECC = await adminRepo.getActiveEECC();
     if (!activeEECC) throw new Error('No hay un Ejercicio Contable (EECC) activo para registrar la venta.');
 
-    // Calcular Q y Mes Fiscal
-    const monthsDiff = differenceInMonths(new Date(), new Date(activeEECC.start_at));
-    const fiscalQ = Math.floor(monthsDiff / 3) + 1;
-    const fiscalMonth = monthsDiff + 1;
+    // Calcular Q y Mes Fiscal usando el utilitario
+    const { fiscalQ, fiscalMonth } = getFiscalStatus(new Date(), activeEECC.start_at);
 
     const statuses = await leadRepo.listStatuses();
     const etapas = await leadRepo.listEtapas();

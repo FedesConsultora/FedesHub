@@ -1,7 +1,7 @@
 // backend/src/modules/comercial/services/stats.service.js
 import * as statsRepo from '../repositories/stats.repo.js';
 import * as adminRepo from '../repositories/admin_comercial.repo.js';
-import { differenceInMonths } from 'date-fns';
+import { getFiscalStatus, getCalendarMonthsOfQuarter } from '../utils/fiscal.js';
 
 export const svcGetDashboardStats = async (filters = {}) => {
     const activeEECC = await adminRepo.getActiveEECC();
@@ -11,9 +11,8 @@ export const svcGetDashboardStats = async (filters = {}) => {
         return { pipeline, quotedGauge: null, monthlyBilling: [], quarterlySummary: null, historical: [] };
     }
 
-    const monthsDiff = differenceInMonths(new Date(), new Date(activeEECC.start_at));
-    const fiscalQ = Math.floor(monthsDiff / 3) + 1;
-    const qMonths = [(fiscalQ - 1) * 3 + 1, (fiscalQ - 1) * 3 + 2, (fiscalQ - 1) * 3 + 3];
+    const { fiscalQ, startMonth } = getFiscalStatus(new Date(), activeEECC.start_at);
+    const qMonths = getCalendarMonthsOfQuarter(fiscalQ, startMonth);
 
     const [pipeline, quotedGauge, monthlyBilling, quarterlySummary, historical] = await Promise.all([
         statsRepo.getPipelineStats(filters),

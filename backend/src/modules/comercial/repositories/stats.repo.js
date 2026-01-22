@@ -1,6 +1,7 @@
 // backend/src/modules/comercial/repositories/stats.repo.js
 import { initModels } from '../../../models/registry.js';
 import { Op, fn, col, literal } from 'sequelize';
+import { getCalendarMonthsOfQuarter } from '../utils/fiscal.js';
 
 const models = await initModels();
 
@@ -110,7 +111,9 @@ export const getQuarterlySummary = async (eecc_id, q, filters = {}) => {
         raw: true
     });
 
-    const qMonths = [(q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3];
+    const eecc = await models.ComercialEECC.findByPk(eecc_id);
+    const startMonth = eecc ? new Date(eecc.start_at).getMonth() + 1 : 1;
+    const qMonths = getCalendarMonthsOfQuarter(q, startMonth);
     const objectiveQ = await models.ComercialObjetivoMes.sum('total_objetivo_ars', {
         where: { eecc_id, mes_calendario: { [Op.in]: qMonths } }
     });
@@ -153,8 +156,12 @@ export const getEeccStackedStats = async (eecc_id) => {
             raw: true
         });
 
+        const eecc = await models.ComercialEECC.findByPk(eecc_id);
+        const startMonth = eecc ? new Date(eecc.start_at).getMonth() + 1 : 1;
+        const qMonths = getCalendarMonthsOfQuarter(qNum, startMonth);
+
         const objectiveQ = await models.ComercialObjetivoMes.sum('total_objetivo_ars', {
-            where: { eecc_id, mes_calendario: { [Op.in]: [(qNum - 1) * 3 + 1, (qNum - 1) * 3 + 2, (qNum - 1) * 3 + 3] } }
+            where: { eecc_id, mes_calendario: { [Op.in]: qMonths } }
         });
 
         return {
