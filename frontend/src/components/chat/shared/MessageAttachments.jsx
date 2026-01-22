@@ -29,13 +29,26 @@ export default function MessageAttachments({ items = [], isMine = false }) {
     <div className="attWrap">
       {!!images.length && (
         <>
-          <div className={'imgBlock ' + (images.length === 1 ? 'cols-1' : images.length === 2 ? 'cols-2' : 'cols-3')}>
-            {images.map((a, idx) => {
+          <div className={`imgBlock count-${Math.min(images.length, 4)}`}>
+            {images.slice(0, 4).map((a, idx) => {
               const url = resolveMediaUrl(a.file_url)
               const alt = a.file_name || 'imagen'
+              const isLast = idx === 3 && images.length > 4
+              const remaining = images.length - 4
+
               return (
-                <button key={`img-${a.id || idx}`} className="imgCell" onClick={() => openLb(media, idx)} title="Ver imagen">
+                <button
+                  key={`img-${a.id || idx}`}
+                  className={`imgCell ${isLast ? 'has-more' : ''}`}
+                  onClick={() => openLb(media, idx)}
+                  title={isLast ? `Ver ${remaining} más` : 'Ver imagen'}
+                >
                   <img src={url} alt={alt} loading="lazy" />
+                  {isLast && (
+                    <div className="moreOverlay">
+                      <span>+{remaining + 1}</span>
+                    </div>
+                  )}
                 </button>
               )
             })}

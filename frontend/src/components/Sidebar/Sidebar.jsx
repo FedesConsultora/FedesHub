@@ -18,7 +18,7 @@ const APPS = [
   { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
   { code: 'chat', name: 'Chat', to: '/chat' },
-  { code: 'comercial', name: 'Comercial', to: '/comercial/leads', need: { modulo: 'comercial', accion: 'read' } },
+  { code: 'comercial', name: 'Comercial', to: '/comercial/leads', directivosOnly: true },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
 ]
 
@@ -32,7 +32,7 @@ export default function Sidebar() {
   const canApproveAus = hasPerm('ausencias', 'approve') && (roles.includes('RRHH') || roles.includes('NivelA'))
 
   // Verificar si es directivo (NivelB o admin)
-  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || hasPerm('auth', 'assign')
+  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || roles?.includes('Directivo') || hasPerm('auth', 'assign')
 
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)

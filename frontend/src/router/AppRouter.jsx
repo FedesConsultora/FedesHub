@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import PrivateRoute from '../components/guards/PrivateRoute.jsx'
 import PublicRoute from '../components/guards/PublicRoute.jsx'
 import RequirePerm from '../components/guards/RequirePerm.jsx'
+import RequireDirectivo from '../components/guards/RequireDirectivo.jsx'
 import AppLayout from '../layouts/AppLayout.jsx'
 
 // Pages
@@ -111,8 +112,8 @@ export default function AppRouter() {
           />
 
 
-          <Route path="/comercial/leads" element={<RequirePerm modulo="comercial" accion="read"><LeadsPage /></RequirePerm>} />
-          <Route path="/comercial/leads/:id" element={<RequirePerm modulo="comercial" accion="read"><LeadDetailPage /></RequirePerm>} />
+          <Route path="/comercial/leads" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadsPage /></RequirePerm></RequireDirectivo>} />
+          <Route path="/comercial/leads/:id" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadDetailPage /></RequirePerm></RequireDirectivo>} />
 
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />
@@ -125,7 +126,7 @@ export default function AppRouter() {
             <Route path="roles/:id" element={<RoleDetail />} />
             <Route path="cargos" element={<RequirePerm modulo="cargos" accion="read"><AdminCargos /></RequirePerm>} />
             <Route path="catalogos" element={<RequirePerm modulo="auth" accion="assign"><AdminCatalogos /></RequirePerm>} />
-            <Route path="comercial" element={<RequirePerm modulo="comercial" accion="admin"><AdminComercial /></RequirePerm>} />
+            <Route path="comercial" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="admin"><AdminComercial /></RequirePerm></RequireDirectivo>} />
           </Route>
         </Route>
       </Route>
