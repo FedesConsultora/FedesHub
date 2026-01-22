@@ -5,7 +5,7 @@ import { comercialApi } from '../../api/comercial.js'
 import { useToast } from '../../components/toast/ToastProvider'
 import {
     FiArrowLeft, FiEdit2, FiMail, FiPhone, FiGlobe, FiMapPin,
-    FiUser, FiTrendingUp, FiCheckCircle, FiXCircle, FiClock
+    FiUser, FiTrendingUp, FiCheckCircle, FiXCircle, FiClock, FiDollarSign
 } from 'react-icons/fi'
 import LeadTimeline from '../../components/comercial/LeadTimeline'
 import NegotiationModal from '../../components/comercial/NegotiationModal'
@@ -120,6 +120,28 @@ export default function LeadDetailPage() {
                             </div>
                         </div>
                     </section>
+
+                    {lead.presupuesto_ars > 0 && (
+                        <section className="budget-card card">
+                            <h3><FiDollarSign /> Presupuesto</h3>
+                            <div className="budget-value">
+                                ${parseFloat(lead.presupuesto_ars).toLocaleString()}
+                            </div>
+                            {lead.etapa?.codigo === 'presupuesto' && (
+                                <button className="btn-edit-budget" onClick={async () => {
+                                    const val = window.prompt('Nuevo monto:', lead.presupuesto_ars);
+                                    if (val) {
+                                        try {
+                                            await comercialApi.updateLead(lead.id, { presupuesto_ars: parseFloat(val) });
+                                            reload();
+                                        } catch (e) { toast.error('Error al actualizar'); }
+                                    }
+                                }}>
+                                    <FiEdit2 /> Cambiar
+                                </button>
+                            )}
+                        </section>
+                    )}
 
                     {lead.onboarding_status && (
                         <section className="onboarding-card card">

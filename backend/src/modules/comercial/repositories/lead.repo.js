@@ -21,6 +21,20 @@ export const listLeads = async ({ status_id, etapa_id, responsable_feder_id, q, 
 
     return models.ComercialLead.findAndCountAll({
         where,
+        attributes: {
+            include: [
+                [
+                    sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM "Tarea" AS t
+                        WHERE t.lead_id = "ComercialLead".id
+                        AND t.deleted_at IS NULL
+                        AND t.estado_id NOT IN (SELECT id FROM "TareaEstado" WHERE codigo IN ('aprobada', 'cancelada'))
+                    )`),
+                    'open_tasks_count'
+                ]
+            ]
+        },
         include: [
             { model: models.ComercialLeadStatus, as: 'status' },
             { model: models.ComercialLeadEtapa, as: 'etapa' },
@@ -72,6 +86,23 @@ export const updateLead = async (id, data) => models.ComercialLead.update(data, 
 
 export const deleteLead = async (id) => models.ComercialLead.destroy({ where: { id } });
 
+export const listTrash = async () => {
+    return models.ComercialLead.findAll({
+        where: { deleted_at: { [Op.ne]: null } },
+        paranoid: false,
+        include: [
+            { model: models.ComercialLeadStatus, as: 'status' },
+            { model: models.ComercialLeadEtapa, as: 'etapa' },
+            { model: models.Feder, as: 'responsable' }
+        ],
+        order: [['deleted_at', 'DESC']]
+    });
+};
+
+export const restoreLead = async (id) => {
+    return models.ComercialLead.restore({ where: { id } });
+};
+
 // Catalogs
 export const listStatuses = async () => models.ComercialLeadStatus.findAll({ order: [['id', 'ASC']] });
 export const listEtapas = async () => models.ComercialLeadEtapa.findAll({ order: [['orden', 'ASC']] });
@@ -85,3 +116,33 @@ export const addHistorial = async (data) => models.ComercialLeadHistorial.create
 
 export const getLeadByEmail = async (email) => models.ComercialLead.findOne({ where: { email } });
 export const getLeadByTelefono = async (telefono) => models.ComercialLead.findOne({ where: { telefono } });
+
+// Sales vNext
+export const createVenta = async (data) => models.ComercialVenta.create(data);
+export const createVentaLinea = async (data) => models.ComercialVentaLinea.create(data);
+
+export const getSumBonificadoByQ = async (eecc_id, q) => {
+    const result = await models.ComercialVentaLinea.sum('bonificado_ars', {
+        include: [{
+            model: models.ComercialVenta,
+            as: 'venta',
+            where: { eecc_id, q }
+        }]
+    });
+    return result || 0;
+};
+
+// Onboarding Management
+export const listOnboardingLeads = async () => {
+    return models.ComercialLead.findAll({
+        where: {
+            ruta_post_negociacion: 'onboarding',
+            onboarding_status: { [Op.notIn]: ['completado', 'cancelado'] }
+        },
+        include: [
+            { model: models.ComercialLeadStatus, as: 'status' },
+            { model: models.Feder, as: 'responsable' }
+        ],
+        order: [['onboarding_due_at', 'ASC']]
+    });
+};

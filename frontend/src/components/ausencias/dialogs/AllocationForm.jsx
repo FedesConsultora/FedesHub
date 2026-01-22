@@ -4,8 +4,8 @@ import { ausenciasApi } from '../../../api/ausencias'
 import PremiumSelect from '../../ui/PremiumSelect'
 import './Dialog.scss'
 
-export default function AllocationForm({ onCancel, onDone, initDate = null }) {
-  const [tipos, setTipos] = useState([])
+export default function AllocationForm({ onCancel, onDone, initDate = null, tipos: initialTipos = [] }) {
+  const [tipos, setTipos] = useState(initialTipos)
   const [tipoId, setTipoId] = useState('')
   const [cantidad, setCantidad] = useState('')
   const [desde, setDesde] = useState(initDate || new Date().toISOString().slice(0, 10))
@@ -16,16 +16,21 @@ export default function AllocationForm({ onCancel, onDone, initDate = null }) {
   const [file, setFile] = useState(null)
 
   useEffect(() => {
-    ausenciasApi.catalog.tipos().then(setTipos).catch(() => { })
-  }, [])
+    if (!tipos || tipos.length === 0) {
+      ausenciasApi.catalog.tipos().then(setTipos).catch(() => { })
+    }
+  }, [tipos])
 
   async function submit() {
     setSubmitting(true); setError(null)
     try {
       const t = tipos.find(x => x.id === Number(tipoId))
+      if (!t) throw new Error('Debes seleccionar un tipo de ausencia')
+
       const body = {
         tipo_id: Number(tipoId),
-        unidad_id: t?.unidad?.id,
+        unidad_id: t.unidad_id || t.unidad?.id,
+        unidad_codigo: t.unidad_codigo || t.unidad?.codigo,
         cantidad_solicitada: Number(cantidad),
         vigencia_desde: desde,
         vigencia_hasta: hasta,
@@ -40,14 +45,18 @@ export default function AllocationForm({ onCancel, onDone, initDate = null }) {
       await ausenciasApi.asignacion.create(body)
       window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'ausencia_asignacion' } }))
       onDone?.()
-    } catch (e) { setError(e?.fh?.message || e?.message || 'Error') }
-    finally { setSubmitting(false) }
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.fh?.message || e?.message || 'Error'
+      setError(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const selectedTipo = tipos.find(x => x.id === Number(tipoId))
   const isHora = (selectedTipo?.unidad?.codigo || selectedTipo?.unidad_codigo) === 'hora'
 
-  const disabled = !tipoId || !cantidad || submitting || !file
+  const disabled = !tipoId || !cantidad || submitting
 
   const tipoOptions = useMemo(() => tipos.map(t => ({
     value: t.id,

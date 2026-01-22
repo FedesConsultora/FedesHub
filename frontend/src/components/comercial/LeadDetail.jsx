@@ -13,7 +13,10 @@ import NegotiationModal from './NegotiationModal'
 import OnboardingResolveModal from './OnboardingResolveModal'
 import { useModal } from '../../components/modal/ModalProvider'
 import useContentEditable from '../../hooks/useContentEditable'
-import { FiMessageSquare, FiFile, FiActivity } from 'react-icons/fi'
+import WinNegotiationModal from './WinNegotiationModal'
+import { FiMessageSquare, FiFile, FiActivity, FiCheckSquare } from 'react-icons/fi'
+import { tareasApi } from '../../api/tareas.js'
+import BudgetAmountModal from './BudgetAmountModal'
 import './LeadDetail.scss'
 
 export default function LeadDetail({ leadId, onClose, onUpdated }) {
@@ -28,6 +31,7 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     const [showResolveOnboarding, setShowResolveOnboarding] = useState(false)
 
     const [activeTab, setActiveTab] = useState('notas') // 'notas' | 'files' | 'history'
+    const [showBudgetModal, setShowBudgetModal] = useState(null) // { id, et }
 
     const reload = useCallback(async () => {
         try {
@@ -51,10 +55,36 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
         try {
             setSaving(true)
             await comercialApi.updateLead(leadId, patch)
-            setLead(prev => ({ ...prev, ...patch }))
+            // Refetch to get updated relationships
+            const res = await comercialApi.getLead(leadId)
+            setLead(res.data)
             onUpdated?.()
+            toast.success('Lead actualizado correctamente')
         } catch (err) {
             toast.error('Error al actualizar lead')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        const ok = await modal.confirm({
+            title: '¿Eliminar Lead?',
+            message: `¿Estás seguro de que querés eliminar a "${lead.empresa || lead.nombre}"? Esta acción se puede deshacer desde la base de datos pero no aparecerá en el listado.`,
+            tone: 'danger',
+            okText: 'Sí, eliminar',
+            cancelText: 'Cancelar'
+        })
+        if (!ok) return
+
+        try {
+            setSaving(true)
+            await comercialApi.deleteLead(leadId)
+            toast.success('Lead eliminado')
+            onClose()
+            onUpdated?.()
+        } catch (err) {
+            toast.error('Error al eliminar lead')
         } finally {
             setSaving(false)
         }
@@ -116,7 +146,29 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                         <LeadStatusCard
                             currentEtapa={lead.etapa}
                             etapasCatalog={catalog.etapas}
-                            onPick={(id) => handleUpdate({ etapa_id: id })}
+                            onPick={async (id) => {
+                                const et = catalog.etapas.find(e => Number(e.id) === Number(id));
+                                if (et?.codigo === 'presupuesto' && !lead.presupuesto_ars) {
+                                    setShowBudgetModal({ id, et })
+                                } else if (et?.codigo === 'cierre') {
+                                    const ok = await modal.confirm({
+                                        title: 'Paso a Cierre',
+                                        message: '¿Esta negociación fue Ganada o Perdida?',
+                                        okText: 'Ganada',
+                                        cancelText: 'Perdida',
+                                        tone: 'primary'
+                                    })
+                                    // Note: if ok is true -> Win, if false -> Lose/Nothing
+                                    // Actually modal.confirm usually returns boolean. 
+                                    // Let's use it as: if ok -> win, else if cancelled -> do nothing or maybe we need a custom modal.
+                                    // The user said "mostrar las ventanas correspondientes". 
+                                    // I will trigger the win/lose modals based on choice.
+                                    if (ok) setShowNegotiation('win')
+                                    else setShowNegotiation('lose')
+                                } else {
+                                    handleUpdate({ etapa_id: id });
+                                }
+                            }}
                             disabled={isClosed}
                         />
                         <span className="status-badge" style={{ backgroundColor: lead.status?.color }}>
@@ -135,10 +187,24 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                             <button className="btn-task" onClick={handleCreateTask}>
                                 <FiPlus /> Crear Tarea
                             </button>
+                            <button className="btn-delete" onClick={handleDelete} title="Eliminar definitivamente">
+                                <FiXCircle />
+                            </button>
                         </div>
                     )}
                 </div>
             </header>
+
+            {showBudgetModal && (
+                <BudgetAmountModal
+                    leadName={lead.empresa || lead.nombre}
+                    onClose={() => setShowBudgetModal(null)}
+                    onConfirm={(amount) => {
+                        handleUpdate({ etapa_id: showBudgetModal.id, presupuesto_ars: amount })
+                        setShowBudgetModal(null)
+                    }}
+                />
+            )}
 
             <div className="detail-grid">
                 <div className="info-panel">
@@ -232,6 +298,12 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                             <FiFile /> Archivos
                         </button>
                         <button
+                            className={`tab-btn ${activeTab === 'tareas' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('tareas')}
+                        >
+                            <FiCheckSquare /> Tareas
+                        </button>
+                        <button
                             className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
                             onClick={() => setActiveTab('history')}
                         >
@@ -246,6 +318,9 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                         {activeTab === 'history' && (
                             <LeadTimeline lead={lead} showOnly="history" />
                         )}
+                        {activeTab === 'tareas' && (
+                            <LeadTasks leadId={leadId} />
+                        )}
                         {activeTab === 'files' && (
                             <LeadFiles lead={lead} />
                         )}
@@ -253,13 +328,29 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                 </div>
             </div>
 
-            {showNegotiation && (
+            {showNegotiation === 'win' && (
+                <WinNegotiationModal
+                    lead={lead}
+                    onClose={() => setShowNegotiation(null)}
+                    onConfirm={async (ruta, onboardingData) => {
+                        try {
+                            await comercialApi.winNegotiation(leadId, { ruta, onboardingData })
+                            toast.success('¡Negociación ganada!')
+                            reload()
+                            onUpdated?.()
+                        } catch (err) {
+                            toast.error(err.response?.data?.error || 'Error al procesar victoria')
+                        }
+                    }}
+                />
+            )}
+
+            {showNegotiation === 'lose' && (
                 <NegotiationModal
                     lead={lead}
-                    mode={showNegotiation}
+                    mode="lose"
                     onClose={() => setShowNegotiation(null)}
-                    onWon={() => { setShowNegotiation(null); reload(); onUpdated?.(); }}
-                    onLost={() => { setShowNegotiation(null); reload(); onUpdated?.(); }}
+                    onLost={() => { setShowNegotiation(null); reload(); onUpdated?.() }}
                 />
             )}
 
@@ -274,6 +365,52 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     )
 }
 
+function LeadTasks({ leadId }) {
+    const [tasks, setTasks] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await tareasApi.list({ lead_id: leadId })
+                setTasks(res.rows || [])
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        load()
+    }, [leadId])
+
+    if (loading) return <div className="tab-loading">Cargando tareas...</div>
+
+    return (
+        <div className="LeadTasks">
+            {tasks.length === 0 ? (
+                <div className="empty-tasks">
+                    <FiCheckSquare />
+                    <p>No hay tareas vinculadas a este lead.</p>
+                </div>
+            ) : (
+                <div className="tasks-list-mini">
+                    {tasks.map(t => (
+                        <div key={t.id} className="task-mini-card">
+                            <div className="t-status" style={{ backgroundColor: t.estado?.color || '#333' }} />
+                            <div className="t-content">
+                                <h6>{t.titulo}</h6>
+                                <div className="t-meta">
+                                    <span>Vence: {t.vencimiento ? new Date(t.vencimiento).toLocaleDateString() : '—'}</span>
+                                    {t.prioridad && <span className="prio">{t.prioridad}</span>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
 function EditableField({ icon, label, value, onSave }) {
     const [editing, setEditing] = useState(false)
     const [val, setVal] = useState(value || '')

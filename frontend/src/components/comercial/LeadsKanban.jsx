@@ -1,13 +1,22 @@
-import React, { useMemo, useRef, useEffect } from 'react'
+import React, { useMemo, useRef, useEffect, useState } from 'react'
 import LeadsKanbanColumn from './LeadsKanbanColumn'
 import { comercialApi } from '../../api/comercial'
 import { useToast } from '../../components/toast/ToastProvider'
+import { useModal } from '../../components/modal/ModalProvider'
+import BudgetAmountModal from './BudgetAmountModal'
+import WinNegotiationModal from './WinNegotiationModal'
+import NegotiationModal from './NegotiationModal'
 import './LeadsKanban.scss'
 
 const DRAG_THRESHOLD = 6
 
 export default function LeadsKanban({ leads = [], stages = [], loading, onCardClick, onUpdated }) {
     const toast = useToast()
+    const modal = useModal()
+    const [budgetPrompt, setBudgetPrompt] = useState(null) // { id, toCol, leadName }
+    const [winPrompt, setWinPrompt] = useState(null) // { id, toCol, lead }
+    const [losePrompt, setLosePrompt] = useState(null) // { id, toCol, lead }
+
     const columns = useMemo(() => {
         if (!stages.length) return {}
         const cols = {}
@@ -20,13 +29,6 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
     const boardRef = useRef(null)
     const bodyRefs = useRef({})
 
-    // Initialize bodyRefs for each stage
-    useEffect(() => {
-        stages.forEach(s => {
-            if (!bodyRefs.current[s.id]) bodyRefs.current[s.id] = { body: null }
-        })
-    }, [stages])
-
     const drag = useRef({
         active: false, id: null,
         fromCol: null, fromIndexVis: -1,
@@ -34,6 +36,13 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
         offsetX: 0, offsetY: 0, ptX: 0, ptY: 0, af: 0,
         maybe: null
     })
+
+    // Initialize bodyRefs for each stage
+    useEffect(() => {
+        stages.forEach(s => {
+            if (!bodyRefs.current[s.id]) bodyRefs.current[s.id] = { body: null }
+        })
+    }, [stages])
 
     const getBodiesRects = () => {
         const out = {}
@@ -58,7 +67,14 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
         }
 
         if (ph && ph.parentElement !== body) body.appendChild(ph)
-        if (ph && items[idx] !== ph) body.insertBefore(ph, items[idx] || null)
+        if (ph && items[idx] !== ph) {
+            // Ensure the reference node is still a child of body
+            if (items[idx] && items[idx].parentElement === body) {
+                body.insertBefore(ph, items[idx])
+            } else if (!items[idx]) {
+                body.appendChild(ph)
+            }
+        }
     }
 
     const autoScroll = () => {
@@ -137,17 +153,35 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
 
         const toCol = drag.current.curCol
         const id = drag.current.id
+        const fromCol = drag.current.fromCol
 
         cleanupDom()
         if (drag.current.af) cancelAnimationFrame(drag.current.af)
 
-        if (toCol && toCol !== String(drag.current.fromCol)) {
-            try {
-                await comercialApi.updateLead(id, { etapa_id: toCol })
-                toast.success('Etapa actualizada')
-                onUpdated?.()
-            } catch (err) {
-                toast.error('Error al mover el lead')
+        if (toCol && String(toCol) !== String(fromCol)) {
+            const targetStage = stages.find(s => String(s.id) === String(toCol))
+            const lead = leads.find(l => l.id === id)
+
+            if (targetStage?.codigo === 'presupuesto' && !lead?.presupuesto_ars) {
+                setBudgetPrompt({ id, toCol, leadName: lead?.empresa || lead?.nombre })
+            } else if (targetStage?.codigo === 'cierre' || targetStage?.codigo === 'ganado') {
+                const ok = await modal.confirm({
+                    title: 'Paso a Cierre',
+                    message: '¿Esta negociación fue Ganada o Perdida?',
+                    okText: 'Ganada',
+                    cancelText: 'Perdida',
+                    tone: 'primary'
+                })
+                if (ok) setWinPrompt({ id, toCol, lead })
+                else setLosePrompt({ id, toCol, lead })
+            } else {
+                try {
+                    await comercialApi.updateLead(id, { etapa_id: toCol })
+                    toast.success('Etapa actualizada')
+                    onUpdated?.()
+                } catch (err) {
+                    toast.error(err.response?.data?.message || 'Error al mover el lead')
+                }
             }
         }
 
@@ -218,6 +252,52 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
                     onCardClick={onCardClick}
                 />
             ))}
+
+            {budgetPrompt && (
+                <BudgetAmountModal
+                    leadName={budgetPrompt.leadName}
+                    onClose={() => setBudgetPrompt(null)}
+                    onConfirm={async (amount) => {
+                        try {
+                            await comercialApi.updateLead(budgetPrompt.id, { etapa_id: budgetPrompt.toCol, presupuesto_ars: amount })
+                            toast.success('Etapa y monto actualizados')
+                            onUpdated?.()
+                        } catch (err) {
+                            toast.error(err.response?.data?.message || 'Error al actualizar etapa')
+                        } finally {
+                            setBudgetPrompt(null)
+                        }
+                    }}
+                />
+            )}
+            {winPrompt && (
+                <WinNegotiationModal
+                    lead={winPrompt.lead}
+                    onClose={() => setWinPrompt(null)}
+                    onConfirm={async (ruta, onboardingData) => {
+                        try {
+                            await comercialApi.winNegotiation(winPrompt.id, { ruta, onboardingData })
+                            toast.success('¡Negociación ganada!')
+                            onUpdated?.()
+                        } catch (err) {
+                            toast.error(err.response?.data?.error || 'Error al procesar victoria')
+                        } finally {
+                            setWinPrompt(null)
+                        }
+                    }}
+                />
+            )}
+            {losePrompt && (
+                <NegotiationModal
+                    lead={losePrompt.lead}
+                    mode="lose"
+                    onClose={() => setLosePrompt(null)}
+                    onLost={() => {
+                        setLosePrompt(null)
+                        onUpdated?.()
+                    }}
+                />
+            )}
         </div>
     )
 }

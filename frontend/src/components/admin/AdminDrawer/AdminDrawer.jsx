@@ -9,11 +9,13 @@ import RolesTab from './RolesTab.jsx'
 import CargosTab from './CargosTab.jsx'
 import RrhhAusenciasTab from './RrhhAusenciasTab.jsx'
 import AbsenceTypesTab from './AbsenceTypesTab.jsx'
+import AdminComercial from '../../../pages/Admin/Comercial/AdminComercial.jsx'
 import './AdminDrawer.scss'
 
 const TABS_CONFIG = [
     { id: 'users', label: 'Usuarios', icon: FiUsers, permission: { mod: 'auth', act: 'read' } },
     { id: 'roles', label: 'Roles', icon: FiShield, permission: { mod: 'auth', act: 'manage' } },
+    { id: 'comercial', label: 'Comercial', icon: FiTag, permission: { mod: 'comercial', act: 'admin' } },
     { id: 'cargos', label: 'Cargos', icon: FiBriefcase, permission: { mod: 'cargos', act: 'manage' } },
     { id: 'backups', label: 'Mantenimiento', icon: FiDatabase, permission: { mod: 'auth', act: 'manage' } },
     { id: 'ausencia_tipos', label: 'Tipos de Ausencia', icon: FiTag, permission: { mod: 'ausencias', act: 'manage' } },
@@ -74,6 +76,7 @@ export default function AdminDrawer({ open = false, onClose }) {
             case 'roles': return <RolesTab {...props} />
             case 'cargos': return <CargosTab {...props} />
             case 'backups': return <BackupTab {...props} />
+            case 'comercial': return <AdminComercial {...props} />
             case 'ausencia_tipos': return <AbsenceTypesTab {...props} />
             case 'rrhh': return <RrhhAusenciasTab {...props} />
             default: return null

@@ -92,7 +92,7 @@ $fh-muted: if(variable-exists(fh-muted), $fh-muted, #a9b7c7);
             border-radius: 10px;
             display: flex;
             transition: all 0.2s;
-
+            padding: 0;
             &:hover {
                 background: rgba(255, 255, 255, 0.05);
                 color: #fff;
@@ -205,8 +205,61 @@ $fh-muted: if(variable-exists(fh-muted), $fh-muted, #a9b7c7);
                 }
 
                 span {
-                    font-size: 0.82rem;
+                    font-size: 0.8rem;
                     color: $fh-muted;
+                }
+            }
+
+            .choice-extra {
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px dashed rgba(255, 255, 255, 0.08);
+            }
+        }
+    }
+
+    .conversion-details {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 20px;
+    }
+
+    .price-summary-box {
+        background: #11151c;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+
+            span:first-child {
+                color: $fh-muted;
+                font-size: 0.9rem;
+            }
+
+            span:last-child {
+                font-weight: 700;
+                color: white;
+            }
+
+            &.discount span:last-child {
+                color: #f87171;
+            }
+
+            &.total {
+                margin-top: 6px;
+                padding-top: 10px;
+                border-top: 1px dashed rgba(255, 255, 255, 0.1);
+
+                span:last-child {
+                    color: $fh-primary;
+                    font-size: 1.25rem;
                 }
             }
         }

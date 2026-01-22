@@ -146,6 +146,26 @@
                             color: white;
                         }
                     }
+
+                    &.btn-delete {
+                        background: rgba(v.$fh-danger, 0.05);
+                        color: v.$fh-danger;
+                        border-color: rgba(v.$fh-danger, 0.1);
+                        width: 36px;
+                        height: 36px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.1rem;
+
+                        &:hover {
+                            background: v.$fh-danger;
+                            color: white;
+                            border-color: v.$fh-danger;
+                            transform: scale(1.05);
+                        }
+                    }
                 }
             }
         }
@@ -315,6 +335,80 @@
                 overflow: hidden; // Content like LeadTimeline or LeadFiles will handle internal scroll
                 display: flex;
                 flex-direction: column;
+
+                .LeadTasks {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 24px;
+
+                    .empty-tasks {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 16px;
+                        color: v.$fh-muted;
+                        height: 200px;
+                        opacity: 0.6;
+
+                        svg {
+                            font-size: 3rem;
+                        }
+                    }
+
+                    .tasks-list-mini {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+
+                        .task-mini-card {
+                            background: rgba(255, 255, 255, 0.03);
+                            border: 1px solid rgba(255, 255, 255, 0.05);
+                            border-radius: 12px;
+                            padding: 12px;
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            transition: all 0.2s;
+
+                            &:hover {
+                                background: rgba(255, 255, 255, 0.06);
+                                border-color: rgba(255, 255, 255, 0.1);
+                                transform: translateX(4px);
+                            }
+
+                            .t-status {
+                                width: 4px;
+                                height: 30px;
+                                border-radius: 2px;
+                            }
+
+                            .t-content {
+                                flex: 1;
+
+                                h6 {
+                                    margin: 0 0 4px 0;
+                                    font-size: 0.95rem;
+                                    font-weight: 700;
+                                    color: white;
+                                }
+
+                                .t-meta {
+                                    display: flex;
+                                    gap: 12px;
+                                    font-size: 0.75rem;
+                                    color: v.$fh-muted;
+
+                                    .prio {
+                                        color: v.$fh-primary;
+                                        font-weight: 800;
+                                        text-transform: uppercase;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

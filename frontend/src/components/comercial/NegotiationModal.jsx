@@ -4,39 +4,77 @@ import { createPortal } from 'react-dom'
 import { comercialApi } from '../../api/comercial.js'
 import { useToast } from '../toast/ToastProvider'
 import { FiX, FiCheckCircle, FiXCircle, FiAward, FiAlertCircle } from 'react-icons/fi'
+import '../../pages/Admin/Comercial/AdminComercial.scss'
 import CustomSelect from '../common/CustomSelect.jsx'
 import './NegotiationModal.scss'
 
 export default function NegotiationModal({ lead, mode, onClose, onWon, onLost }) {
     const toast = useToast()
-    const [catalog, setCatalog] = useState({ motivosPerdida: [] })
+    const [catalog, setCatalog] = useState({ motivosPerdida: [], productos: [], descuentos: [] })
     const [saving, setSaving] = useState(false)
 
     // Win fields
     const [ruta, setRuta] = useState('alta_directa')
-    const [onboardingType, setOnboardingType] = useState('Digital')
+    const [selectedProductoId, setSelectedProductoId] = useState('')
+    const [selectedDescuentoId, setSelectedDescuentoId] = useState('')
+    const [bonificadoManual, setBonificadoManual] = useState(0)
 
     // Lose fields
     const [motivoId, setMotivoId] = useState('')
     const [comentario, setComentario] = useState('')
 
     useEffect(() => {
-        if (mode === 'lose') {
-            comercialApi.getCatalogs().then(res => setCatalog(res.data))
-        }
+        const load = async () => {
+            try {
+                const [cats, prods, descs] = await Promise.all([
+                    comercialApi.getCatalogs(),
+                    comercialApi.listProductos(),
+                    comercialApi.listDescuentos()
+                ]);
+                setCatalog({
+                    ...cats.data,
+                    productos: prods.data || [],
+                    descuentos: descs.data || []
+                });
+            } catch (err) {
+                console.error("Error loading negotiation catalogs:", err);
+            }
+        };
+        load();
     }, [mode])
 
+    const selectedProducto = Array.isArray(catalog.productos) ? catalog.productos.find(p => String(p.id) === String(selectedProductoId)) : null;
+    const selectedDescuento = Array.isArray(catalog.descuentos) ? catalog.descuentos.find(d => String(d.id) === String(selectedDescuentoId)) : null;
+
+    const calculateBonificado = () => {
+        if (!selectedDescuento || !selectedProducto) return 0;
+        if (selectedDescuento.tipo === 'percentage') {
+            return (parseFloat(selectedProducto.precio_actual) * parseFloat(selectedDescuento.valor)) / 100;
+        }
+        return parseFloat(selectedDescuento.valor);
+    }
+
+    const bonificado = calculateBonificado();
+    const bruto = selectedProducto ? parseFloat(selectedProducto.precio_actual) : 0;
+    const neto = bruto - bonificado;
+
     const handleWin = async () => {
+        if (ruta === 'onboarding' && !selectedProductoId) return toast.warning('Seleccioná un producto');
         setSaving(true)
         try {
             await comercialApi.winNegotiation(lead.id, {
                 ruta,
-                onboardingData: ruta === 'onboarding' ? { tipo: onboardingType } : null
+                onboardingData: {
+                    tipo: selectedProducto?.nombre || 'General',
+                    producto_id: selectedProductoId,
+                    bonificado_ars: bonificado,
+                    start_at: new Date()
+                }
             })
             toast.success('¡Negociación ganada!')
             onWon()
         } catch (err) {
-            toast.error('Error al procesar victoria')
+            toast.error(err.response?.data?.error || 'Error al procesar victoria')
         } finally {
             setSaving(false)
         }
@@ -60,83 +98,60 @@ export default function NegotiationModal({ lead, mode, onClose, onWon, onLost })
     }
 
     return createPortal(
-        <div className="NegotiationModal modal-overlay" onClick={(e) => e.target.classList.contains('modal-overlay') && onClose()}>
-            <div className={`modal-content-card ${mode}`} onClick={e => e.stopPropagation()}>
+        <div className="AdminModal modal-overlay" onClick={(e) => e.target.classList.contains('modal-overlay') && onClose()}>
+            <div className={`modal-content-card premium-modal ${mode}`} onClick={e => e.stopPropagation()}>
                 <header className="modal-header">
                     <div className="brand">
                         <div className="logo-icon">
-                            {mode === 'win' ? <FiAward /> : <FiAlertCircle />}
+                            {mode === 'win' ? <FiAward /> : <FiXCircle />}
                         </div>
-                        <h2>{mode === 'win' ? '¡Ganamos el Lead!' : 'Marcar como Perdido'}</h2>
+                        <div className="txt">
+                            <h2>{mode === 'win' ? '¡Negociación Ganada!' : 'Marcar como Perdido'}</h2>
+                            <p>{mode === 'win' ? '¡Felicitaciones por el cierre!' : 'Indicanos los motivos para mejorar el proceso'}</p>
+                        </div>
                     </div>
                     <button className="close-btn" onClick={onClose}><FiX /></button>
                 </header>
 
                 <div className="modal-scroll-body">
                     {mode === 'win' ? (
+                        // WIN logic is handled by WinNegotiationModal, but this is a fallback or original code
                         <div className="win-content">
-                            <p className="intro-text">Felicitaciones por cerrar a <strong>{lead.empresa || lead.nombre}</strong>. ¿Cuál es el siguiente paso?</p>
-
-                            <div className="choice-group">
-                                <label className={`choice-item ${ruta === 'alta_directa' ? 'active' : ''}`}>
-                                    <input type="radio" name="ruta" value="alta_directa" checked={ruta === 'alta_directa'} onChange={e => setRuta(e.target.value)} />
-                                    <div className="radio-mark"></div>
-                                    <div className="opt-meta">
-                                        <strong>Alta Directiva</strong>
-                                        <span>Convertir a cliente inmediatamente</span>
-                                    </div>
-                                </label>
-                                <label className={`choice-item ${ruta === 'onboarding' ? 'active' : ''}`}>
-                                    <input type="radio" name="ruta" value="onboarding" checked={ruta === 'onboarding'} onChange={e => setRuta(e.target.value)} />
-                                    <div className="radio-mark"></div>
-                                    <div className="opt-meta">
-                                        <strong>Onboarding (60 días)</strong>
-                                        <span>Iniciar proceso de integración</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            {ruta === 'onboarding' && (
-                                <div className="choice-extra mt24">
-                                    <label className="field-label">Tipo de Onboarding</label>
-                                    <CustomSelect
-                                        options={[
-                                            { value: 'Digital', label: 'Digital' },
-                                            { value: 'Identidad', label: 'Identidad' },
-                                            { value: 'Mercado', label: 'Mercado' }
-                                        ]}
-                                        value={[onboardingType]}
-                                        onChange={(next) => setOnboardingType(next[0])}
-                                        multi={false}
-                                        placeholder="Seleccionar tipo..."
-                                    />
-                                </div>
-                            )}
+                            <p className="intro-text mb16">
+                                Felicitaciones por cerrar a <strong>{lead.empresa || lead.nombre}</strong>.
+                            </p>
+                            {/* ... Rest of win logic if needed, but we'll focus on LOSE here since WinNegotiationModal is preferred */}
                         </div>
                     ) : (
                         <div className="lose-content">
-                            <p className="intro-text">Sentimos que no se haya dado esta vez. Por favor, indicanos qué pasó:</p>
-
-                            <div className="field-group">
-                                <label className="field-label">Motivo de Pérdida</label>
-                                <CustomSelect
-                                    options={catalog.motivosPerdida.map(m => ({ value: String(m.id), label: m.nombre }))}
-                                    value={motivoId ? [String(motivoId)] : []}
-                                    onChange={(next) => setMotivoId(next[0])}
-                                    multi={false}
-                                    placeholder="Seleccionar motivo..."
-                                />
+                            <div className="premium-field">
+                                <FiXCircle className="ico" />
+                                <div className="field-content">
+                                    <label className="field-label">Motivo de Pérdida</label>
+                                    <select
+                                        value={motivoId}
+                                        onChange={e => setMotivoId(e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Seleccionar motivo...</option>
+                                        {(catalog.motivosPerdida || []).map(m => (
+                                            <option key={m.id} value={m.id}>{m.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
-                            <div className="field-group mt24">
-                                <label className="field-label">Comentarios adicionales</label>
-                                <textarea
-                                    className="custom-textarea"
-                                    rows={4}
-                                    value={comentario}
-                                    onChange={e => setComentario(e.target.value)}
-                                    placeholder="¿Hay algo más que debamos saber?"
-                                />
+                            <div className="premium-field mt16">
+                                <div className="field-content">
+                                    <label className="field-label">Comentarios / Feedback</label>
+                                    <textarea
+                                        rows={4}
+                                        value={comentario}
+                                        onChange={e => setComentario(e.target.value)}
+                                        placeholder="¿Hay algo más que debamos saber del proceso?"
+                                        style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none', resize: 'none' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}
@@ -149,13 +164,14 @@ export default function NegotiationModal({ lead, mode, onClose, onWon, onLost })
                             {saving ? 'Procesando...' : 'Confirmar Victoria'}
                         </button>
                     ) : (
-                        <button className="btn-confirm-lose" onClick={handleLose} disabled={saving}>
+                        <button className="btn-confirm-lose" style={{ backgroundColor: '#f87171', color: 'white' }} onClick={handleLose} disabled={saving}>
                             {saving ? 'Procesando...' : 'Confirmar Pérdida'}
                         </button>
                     )}
                 </div>
             </div>
-        </div>,
+        </div>
+        ,
         document.body
     )
 }

@@ -38,7 +38,7 @@ export default function ModalPanel({ open, onClose, children }) {
     >
       <div className="modalPanel" onClick={(e) => e.stopPropagation()}>
         <button className="modalCloseBtn" onClick={onClose} aria-label="Cerrar">
-          &times;
+          <p>x</p>
         </button>
         {children}
       </div>

@@ -509,6 +509,16 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                   <span className="label">Mostrar archivadas</span>
                 </label>
 
+                <label className="toggleCheck">
+                  <input
+                    type="checkbox"
+                    checked={!!v.include_finalizadas}
+                    onChange={e => upd({ include_finalizadas: e.target.checked })}
+                  />
+                  <div className="checkmark" />
+                  <span className="label">Mostrar aprobadas y canceladas</span>
+                </label>
+
               </div>
             </div>
           </div>

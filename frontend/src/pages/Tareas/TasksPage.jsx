@@ -41,28 +41,31 @@ export default function TasksPage() {
   // Verificar si es directivo
   const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB');
 
-  // catálogo (selects)
   const [catalog, setCatalog] = useState({
     clientes: [],
     estados: [],
     impactos: [],
     urgencias: [],
-    // TC
     tc_redes: [],
     tc_formatos: [],
     tc_obj_negocio: [],
     tc_obj_marketing: [],
     tc_estados_pub: []
   });
+  const [trashCount, setTrashCount] = useState(0);
+
   useEffect(() => {
     tareasApi.catalog().then(c => {
-      // Mapear nombre de estado "Revisión" -> "En Revisión" solo en el front
       if (c.estados) {
         c.estados = c.estados.map(s => s.nombre === 'Revisión' ? { ...s, nombre: 'En Revisión' } : s);
       }
       setCatalog(c);
     }).catch(console.error);
-  }, []);
+
+    if (isDirectivo) {
+      tareasApi.listTrash().then(tasks => setTrashCount(tasks.length || 0)).catch(() => { });
+    }
+  }, [isDirectivo]);
 
   // filtros (compat con backend)
   const [filters, setFilters] = useState({
@@ -358,6 +361,7 @@ export default function TasksPage() {
               >
                 <i className="fi fi-rr-trash" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
                 <span>Papelera</span>
+                {trashCount > 0 && <span className="tab-badge" style={{ marginLeft: '6px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', padding: '1px 5px', borderRadius: '10px' }}>{trashCount}</span>}
               </button>
             )}
           </div>

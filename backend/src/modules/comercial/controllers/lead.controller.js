@@ -41,6 +41,35 @@ export const updateLead = async (req, res) => {
     }
 };
 
+export const deleteLead = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await leadSvc.svcDeleteLead(req.params.id, userId);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const listTrash = async (req, res) => {
+    try {
+        const data = await leadSvc.svcListTrash();
+        res.json(data);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const restoreLead = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await leadSvc.svcRestoreLead(req.params.id, userId);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const addNota = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -111,6 +140,15 @@ export const getCatalogs = async (req, res) => {
     try {
         const catalogs = await leadSvc.svcGetCatalogs();
         res.json(catalogs);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const listOnboarding = async (req, res) => {
+    try {
+        const data = await leadSvc.svcListOnboarding();
+        res.json(data);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

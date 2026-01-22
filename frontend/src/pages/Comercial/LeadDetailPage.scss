@@ -193,6 +193,41 @@
                 }
             }
 
+            .budget-card {
+                h3 {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: $fh-primary;
+                    margin-bottom: 12px;
+                }
+
+                .budget-value {
+                    font-size: 2rem;
+                    font-weight: 800;
+                    color: white;
+                    margin-bottom: 16px;
+                }
+
+                .btn-edit-budget {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: $fh-muted;
+                    padding: 8px 16px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                        color: white;
+                    }
+                }
+            }
+
             .onboarding-card {
                 padding: 20px;
                 border: 1px solid rgba($fh-primary, 0.2);

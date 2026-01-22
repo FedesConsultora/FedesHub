@@ -56,7 +56,8 @@ export default function LeadStatusCard({
                         position: 'fixed',
                         top: `${menuPosition.top}px`,
                         left: `${menuPosition.left}px`,
-                        zIndex: 200000
+                        zIndex: 200000,
+                        pointerEvents: 'auto'
                     }}
                 >
                     <div className="menu-header">Cambiar Etapa</div>
@@ -64,8 +65,11 @@ export default function LeadStatusCard({
                         <div
                             key={et.id}
                             className={`item ${et.id === currentEtapa.id ? 'active' : ''}`}
-                            onClick={() => {
-                                if (et.id !== currentEtapa.id) onPick(et.id)
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (et.id !== currentEtapa.id) {
+                                    onPick(et.id)
+                                }
                                 setOpen(false)
                             }}
                         >

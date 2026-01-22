@@ -15,6 +15,7 @@ import Users from '../pages/Admin/Users.jsx'
 import Roles from '../pages/Admin/Roles.jsx'
 import AdminCargos from '../pages/Admin/Cargos.jsx'
 import AdminCatalogos from '../pages/Admin/Catalogos.jsx'
+import AdminComercial from '../pages/Admin/Comercial/AdminComercial.jsx'
 import RoleDetail from '../pages/Admin/RoleDetail.jsx'
 import Diag from '../pages/Diag.jsx'
 import TasksPage from '../pages/Tareas/TasksPage.jsx'
@@ -124,6 +125,7 @@ export default function AppRouter() {
             <Route path="roles/:id" element={<RoleDetail />} />
             <Route path="cargos" element={<RequirePerm modulo="cargos" accion="read"><AdminCargos /></RequirePerm>} />
             <Route path="catalogos" element={<RequirePerm modulo="auth" accion="assign"><AdminCatalogos /></RequirePerm>} />
+            <Route path="comercial" element={<RequirePerm modulo="comercial" accion="admin"><AdminComercial /></RequirePerm>} />
           </Route>
         </Route>
       </Route>

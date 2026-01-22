@@ -5,10 +5,10 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "migrate": "sequelize db:migrate",
-    "migrate:status": "sequelize db:migrate:status",
-    "seed": "sequelize db:seed:all",
-    "db:reset": "sequelize db:migrate:undo:all && sequelize db:migrate && sequelize db:seed:all"
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:status": "sequelize-cli db:migrate:status",
+    "seed": "sequelize-cli db:seed:all",
+    "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all"
   },
   "dependencies": {
     "@googleapis/calendar": "^11.0.1",
