@@ -31,8 +31,8 @@ export default function Sidebar() {
 
   const canApproveAus = hasPerm('ausencias', 'approve') && (roles.includes('RRHH') || roles.includes('NivelA'))
 
-  // Verificar si es directivo (NivelB o admin)
-  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || roles?.includes('Directivo') || hasPerm('auth', 'assign')
+  // Verificar si es directivo (NivelB o admin) o si tiene acceso comercial
+  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || roles?.includes('Directivo') || hasPerm('auth', 'assign') || hasPerm('comercial', 'read')
 
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)

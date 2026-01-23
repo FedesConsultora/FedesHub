@@ -180,8 +180,11 @@ export const svcNegociacionGanada = async (id, ruta, onboardingData, userId) => 
             // Si se pasa un precio_final explícito, recalculamos el bonificado
             if (onboardingData.precio_final != null) {
                 const final = parseFloat(onboardingData.precio_final);
+                if (isNaN(final)) throw new Error('El precio final no es un número válido');
                 bonificado = bruto - final;
             }
+
+            if (isNaN(bonificado)) bonificado = 0;
 
             // 1. Validar Descuento Máximo por Producto
             const maxDescPorc = parseFloat(producto.max_descuento_porc || 0);

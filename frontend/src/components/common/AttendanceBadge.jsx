@@ -10,7 +10,6 @@ import './AttendanceBadge.scss'
  * @param {number} size - Icon size in px (default: 14)
  */
 export default function AttendanceBadge({ modalidad, plan, size = 14, inline = false }) {
-    console.log('[AttendanceBadge] Rendering:', { modalidad, plan, size, inline });
 
     const isActive = !!modalidad
     const effectiveModalidad = modalidad || plan

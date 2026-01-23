@@ -2,14 +2,19 @@
 
 .ImportLeadsModal {
     position: fixed;
-    inset: 0;
-    z-index: 5000;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     background: rgba(11, 15, 21, 0.85);
     backdrop-filter: blur(8px);
-    padding: 20px;
+    padding: 5rem 20px 20px;
 
     .modal-card {
         background: #1a1f26;
@@ -57,6 +62,7 @@
 
                     &.active {
                         color: v.$fh-primary;
+
                         &::after {
                             content: '';
                             position: absolute;
@@ -83,6 +89,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            padding: 0;
             &:hover {
                 background: rgba(255, 255, 255, 0.1);
                 color: white;
@@ -97,6 +104,7 @@
 
         .import-info {
             margin-bottom: 24px;
+
             .info-card {
                 background: rgba(v.$fh-primary, 0.08);
                 border: 1px solid rgba(v.$fh-primary, 0.2);
@@ -106,9 +114,22 @@
                 gap: 16px;
                 align-items: center;
 
-                .icon { font-size: 1.5rem; color: v.$fh-primary; }
-                strong { display: block; font-size: 0.95rem; color: v.$fh-primary; }
-                p { margin: 2px 0 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); }
+                .icon {
+                    font-size: 1.5rem;
+                    color: v.$fh-primary;
+                }
+
+                strong {
+                    display: block;
+                    font-size: 0.95rem;
+                    color: v.$fh-primary;
+                }
+
+                p {
+                    margin: 2px 0 0;
+                    font-size: 0.85rem;
+                    color: rgba(255, 255, 255, 0.7);
+                }
             }
         }
 
@@ -121,29 +142,55 @@
             background: rgba(255, 255, 255, 0.02);
             transition: all 0.2s;
 
-            &:hover, &.dragging {
+            &:hover,
+            &.dragging {
                 border-color: v.$fh-primary;
                 background: rgba(v.$fh-primary, 0.04);
             }
 
             .dz-icon {
-                width: 64px; height: 64px;
+                width: 64px;
+                height: 64px;
                 background: rgba(v.$fh-primary, 0.1);
                 border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 margin: 0 auto 20px;
-                font-size: 1.75rem; color: v.$fh-primary;
+                font-size: 1.75rem;
+                color: v.$fh-primary;
             }
 
-            p { margin: 0; color: white; font-size: 1.1rem; font-weight: 700; }
-            span { display: block; margin-top: 10px; color: v.$fh-muted; font-size: 0.95rem; }
+            p {
+                margin: 0;
+                color: white;
+                font-size: 1.1rem;
+                font-weight: 700;
+            }
+
+            span {
+                display: block;
+                margin-top: 10px;
+                color: v.$fh-muted;
+                font-size: 0.95rem;
+            }
         }
 
         .mapping-section {
             .section-header {
                 margin-bottom: 24px;
-                h3 { margin: 0; font-size: 1.1rem; color: white; }
-                p { margin: 4px 0 0; font-size: 0.9rem; color: v.$fh-muted; }
+
+                h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: white;
+                }
+
+                p {
+                    margin: 4px 0 0;
+                    font-size: 0.9rem;
+                    color: v.$fh-muted;
+                }
             }
 
             .mapping-container {
@@ -172,16 +219,22 @@
 
                         .field-info {
                             flex: 1;
+
                             label {
                                 font-size: 0.95rem;
                                 color: rgba(255, 255, 255, 0.9);
                                 font-weight: 500;
-                                .req { color: #f87171; margin-left: 2px; }
+
+                                .req {
+                                    color: #f87171;
+                                    margin-left: 2px;
+                                }
                             }
                         }
 
                         .header-select {
                             width: 300px;
+
                             select {
                                 width: 100%;
                                 background: #11151c;
@@ -192,7 +245,10 @@
                                 font-size: 0.9rem;
                                 cursor: pointer;
                                 outline: none;
-                                &:focus { border-color: v.$fh-primary; }
+
+                                &:focus {
+                                    border-color: v.$fh-primary;
+                                }
                             }
                         }
                     }
@@ -202,37 +258,85 @@
 
         .preview-section {
             .stats-header {
-                display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
-                h3 { margin: 0; font-size: 1.1rem; color: white; }
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+
+                h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: white;
+                }
+
                 .stats-badges {
                     .stat-badge {
-                        padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 800;
-                        background: rgba(v.$fh-primary, 0.1); color: v.$fh-primary;
+                        padding: 4px 12px;
+                        border-radius: 100px;
+                        font-size: 0.75rem;
+                        font-weight: 800;
+                        background: rgba(v.$fh-primary, 0.1);
+                        color: v.$fh-primary;
                     }
                 }
             }
 
             .preview-table-wrap {
-                background: #11151c; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden;
+                background: #11151c;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                overflow: hidden;
+
                 table {
-                    width: 100%; border-collapse: collapse;
+                    width: 100%;
+                    border-collapse: collapse;
+
                     th {
-                        background: rgba(255, 255, 255, 0.03); padding: 12px 16px; text-align: left;
-                        font-size: 0.75rem; font-weight: 800; color: v.$fh-muted; text-transform: uppercase;
+                        background: rgba(255, 255, 255, 0.03);
+                        padding: 12px 16px;
+                        text-align: left;
+                        font-size: 0.75rem;
+                        font-weight: 800;
+                        color: v.$fh-muted;
+                        text-transform: uppercase;
                         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                     }
+
                     td {
-                        padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                        font-size: 0.85rem; color: rgba(255, 255, 255, 0.8);
-                        strong { display: block; color: white; }
-                        span { font-size: 0.8rem; color: v.$fh-muted; }
+                        padding: 14px 16px;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                        font-size: 0.85rem;
+                        color: rgba(255, 255, 255, 0.8);
+
+                        strong {
+                            display: block;
+                            color: white;
+                        }
+
+                        span {
+                            font-size: 0.8rem;
+                            color: v.$fh-muted;
+                        }
+
                         .extra-info {
-                            display: flex; flex-direction: column;
-                            small { font-size: 0.75rem; color: v.$fh-muted; }
+                            display: flex;
+                            flex-direction: column;
+
+                            small {
+                                font-size: 0.75rem;
+                                color: v.$fh-muted;
+                            }
                         }
                     }
                 }
-                .more-rows { padding: 12px; text-align: center; font-size: 0.8rem; color: v.$fh-muted; background: rgba(0, 0, 0, 0.1); }
+
+                .more-rows {
+                    padding: 12px;
+                    text-align: center;
+                    font-size: 0.8rem;
+                    color: v.$fh-muted;
+                    background: rgba(0, 0, 0, 0.1);
+                }
             }
         }
     }
@@ -253,44 +357,92 @@
             transition: all 0.2s;
         }
 
-        .footer-left { flex: 1; }
-        .spacer { flex: 1; }
+        .footer-left {
+            flex: 1;
+        }
+
+        .spacer {
+            flex: 1;
+        }
 
         .template-download {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: v.$fh-primary;
-            display: flex; align-items: center; gap: 8px;
-            &:hover { background: rgba(v.$fh-primary, 0.1); border-color: v.$fh-primary; }
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            &:hover {
+                background: rgba(v.$fh-primary, 0.1);
+                border-color: v.$fh-primary;
+            }
         }
 
         .btn-cancel {
-            background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: v.$fh-muted;
-            &:hover { border-color: white; color: white; }
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: v.$fh-muted;
+
+            &:hover {
+                border-color: white;
+                color: white;
+            }
         }
 
         .btn-back {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white;
-            &:hover { background: rgba(255, 255, 255, 0.1); }
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
         }
 
-        .btn-next, .btn-import {
-            background: v.$fh-primary; border: none; color: white;
+        .btn-next,
+        .btn-import {
+            background: v.$fh-primary;
+            border: none;
+            color: white;
             box-shadow: 0 4px 15px rgba(v.$fh-primary, 0.3);
-            &:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
-            &:disabled { opacity: 0.4; cursor: not-allowed; }
+
+            &:hover:not(:disabled) {
+                transform: translateY(-2px);
+                filter: brightness(1.1);
+            }
+
+            &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
         }
 
-        .spin { animation: fa-spin 1s infinite linear; margin-right: 8px; }
+        .spin {
+            animation: fa-spin 1s infinite linear;
+            margin-right: 8px;
+        }
     }
 }
 
 @keyframes modal-in {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 @keyframes fa-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }

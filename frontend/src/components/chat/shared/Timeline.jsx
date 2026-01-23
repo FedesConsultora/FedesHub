@@ -61,7 +61,6 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   }, [ordered, members])
 
   const { statuses } = useAttendanceStatus(authorFederIds)
-  console.log('[Timeline] statuses:', statuses)
 
   const groups = useMemo(() => {
     const g = {}

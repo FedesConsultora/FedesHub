@@ -47,13 +47,13 @@ router.patch('/admin/eecc/:id', requireAuth, requirePermission('comercial', 'adm
 router.delete('/admin/eecc/:id', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.deleteEECC);
 
 // Products
-router.get('/admin/products', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.listProductos);
+router.get('/admin/products', requireAuth, requirePermission('comercial', 'read'), adminCtrl.listProductos);
 router.post('/admin/products', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.createProducto);
 router.patch('/admin/products/:id', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.updateProducto);
 router.delete('/admin/products/:id', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.deleteProducto);
 
 // Discounts
-router.get('/admin/discounts', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.listDescuentos);
+router.get('/admin/discounts', requireAuth, requirePermission('comercial', 'read'), adminCtrl.listDescuentos);
 router.post('/admin/discounts', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.createDescuento);
 router.patch('/admin/discounts/:id', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.updateDescuento);
 router.delete('/admin/discounts/:id', requireAuth, requirePermission('comercial', 'admin'), adminCtrl.deleteDescuento);

@@ -45,11 +45,12 @@ export default function WinNegotiationModal({ lead, onClose, onConfirm }) {
         if (selectedProduct) {
             let price = parseFloat(selectedProduct.precio_actual)
             if (selectedDiscount) {
-                const desc = parseFloat(selectedDiscount.porcentaje)
-                price = price * (1 - desc / 100)
+                const desc = parseFloat(selectedDiscount.valor)
+                if (!isNaN(desc)) {
+                    price = price * (1 - desc / 100)
+                }
             }
-            // Use comma as default display for ES locale if desired, but here we just set the string
-            setFinalPrice(price.toFixed(2).replace('.', ','))
+            setFinalPrice(isNaN(price) ? '' : price.toFixed(2).replace('.', ','))
         }
     }, [selectedProduct, selectedDiscount])
 
@@ -128,7 +129,7 @@ export default function WinNegotiationModal({ lead, onClose, onConfirm }) {
                                     <option value="">Sin descuento adicional...</option>
                                     {discounts.map(d => (
                                         <option key={d.id} value={d.id}>
-                                            {d.nombre} ({parseFloat(d.porcentaje)}%)
+                                            {d.nombre} ({parseFloat(d.valor)}%)
                                         </option>
                                     ))}
                                 </select>
@@ -156,12 +157,33 @@ export default function WinNegotiationModal({ lead, onClose, onConfirm }) {
                         {stats?.quarterlySummary && (
                             <div className="info-box mt16" style={{ background: 'rgba(52, 211, 153, 0.05)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
                                 <FiActivity style={{ color: '#34d399' }} />
-                                <div style={{ fontSize: '0.85rem' }}>
-                                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.7)' }}>Presupuesto Q{stats.fiscalQ} (Bonificaciones):</p>
-                                    <div style={{ fontWeight: 600 }}>
-                                        Utilizado: <span style={{ color: '#ef4444' }}>${parseFloat(stats.quarterlySummary.bon).toLocaleString()}</span>
-                                        {/* Aquí podríamos calcular el restante si tuviéramos el cap total en este objeto */}
+                                <div style={{ fontSize: '0.85rem', flex: 1 }}>
+                                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                                        Presupuesto Q{stats.fiscalQ} (Bonificaciones):
+                                    </p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                        <span>
+                                            Utilizado: <strong style={{ color: stats.quarterlySummary.bon > 0 ? '#ef4444' : '#34d399' }}>
+                                                ${parseFloat(stats.quarterlySummary.bon).toLocaleString()}
+                                            </strong>
+                                        </span>
+                                        {stats.quarterlySummary.discount_cap > 0 && (
+                                            <span>
+                                                Restante: <strong style={{ color: (stats.quarterlySummary.discount_cap - stats.quarterlySummary.bon) > 0 ? '#34d399' : '#ef4444' }}>
+                                                    ${Math.max(0, stats.quarterlySummary.discount_cap - stats.quarterlySummary.bon).toLocaleString()}
+                                                </strong>
+                                            </span>
+                                        )}
                                     </div>
+                                    {stats.quarterlySummary.discount_cap > 0 && (
+                                        <div className="progress-mini" style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+                                            <div style={{
+                                                height: '100%',
+                                                background: (stats.quarterlySummary.bon / stats.quarterlySummary.discount_cap) > 0.9 ? '#ef4444' : '#34d399',
+                                                width: `${Math.min(100, (stats.quarterlySummary.bon / stats.quarterlySummary.discount_cap) * 100)}%`
+                                            }} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -170,7 +192,7 @@ export default function WinNegotiationModal({ lead, onClose, onConfirm }) {
                             <div className="info-box mt16">
                                 <FiActivity />
                                 <p>
-                                    El presupuesto estimado original era de <strong>${parseFloat(lead.budget_ars).toLocaleString()}</strong>.
+                                    El presupuesto estimado original era de <strong>${parseFloat(lead.presupuesto_ars).toLocaleString()}</strong>.
                                 </p>
                             </div>
                         )}

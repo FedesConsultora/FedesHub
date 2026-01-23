@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { FiX, FiCheckCircle, FiDollarSign } from 'react-icons/fi'
 import { parseLocaleAmount, cleanPriceInput } from '../../utils/format'
 import './BudgetAmountModal.scss'

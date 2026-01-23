@@ -19,7 +19,7 @@ export function useTypingEmitter(
     if (now - st.current.last < throttleMs) return
     st.current.last = now
     st.current.on = true
-    console.log('[typing][emit] -> on:true', { canal_id, ttl, at: new Date().toISOString() })
+
 
     // server
     mut.mutate({ canal_id, on:true, ttl_seconds: ttl })
@@ -36,12 +36,12 @@ export function useTypingEmitter(
   const stop = useCallback(() => {
     if (!canal_id || !st.current.on) return
     st.current.on = false
-    console.log('[typing][emit] -> on:false', { canal_id, at: new Date().toISOString() })
+
     // server
     mut.mutate({ canal_id, on:false })
     // eco local (sólo dev)
     if (debugSelf && my_user_id) {
-      console.log('[typing][local-echo] fh:typing-local on:false', { canal_id, my_user_id })
+
       window.dispatchEvent(new CustomEvent('fh:typing-local', {
         detail: { canal_id, user_id: Number(my_user_id), on: false }
       }))

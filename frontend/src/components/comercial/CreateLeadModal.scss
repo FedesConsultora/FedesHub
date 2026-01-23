@@ -3,14 +3,19 @@
 
 .CreateLeadModal {
     position: fixed;
-    inset: 0;
-    z-index: 5000;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
-    padding: 20px;
+    padding: 5rem 20px 20px;
 
     .tcCard {
         background: #111821;
@@ -54,7 +59,7 @@
             display: flex;
             padding: 8px;
             border-radius: 50%;
-
+            width: fit-content;
             &:hover {
                 background: rgba(255, 255, 255, 0.05);
                 color: white;

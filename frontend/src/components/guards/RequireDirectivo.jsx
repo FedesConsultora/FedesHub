@@ -10,7 +10,8 @@ export default function RequireDirectivo({ children }) {
         roles?.includes('NivelB') ||
         roles?.includes('NivelA') ||
         roles?.includes('Directivo') ||
-        hasPerm('auth', 'assign')
+        hasPerm('auth', 'assign') ||
+        hasPerm('comercial', 'read')
 
     if (!isDirectivo) {
         return (

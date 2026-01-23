@@ -118,11 +118,16 @@ export const getQuarterlySummary = async (eecc_id, q, filters = {}) => {
         where: { eecc_id, mes_calendario: { [Op.in]: qMonths } }
     });
 
+    const capRow = await models.ComercialDescuentoCap.findOne({
+        where: { eecc_id, q }
+    });
+
     return {
         pac: parseFloat(summary?.pac || 0),
         bon: parseFloat(summary?.bon || 0),
         net: parseFloat(summary?.net || 0),
-        objective: parseFloat(objectiveQ || 0)
+        objective: parseFloat(objectiveQ || 0),
+        discount_cap: parseFloat(capRow?.monto_maximo_ars || 0)
     };
 };
 

@@ -185,7 +185,6 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
           feders={feders}
           disabled={disabled}
           placeholder="Escribí un mensaje… (@ para mencionar)"
-          onPaste={addClipboardImages}
         />
 
         {!!files.length && (
