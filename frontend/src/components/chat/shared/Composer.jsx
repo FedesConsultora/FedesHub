@@ -2,6 +2,7 @@ import React, { forwardRef, useContext, useImperativeHandle, useRef, useState } 
 import { useSendMessage, useChannelMembers } from '../../../hooks/useChat'
 import { useTypingEmitter } from '../../../hooks/useTypingEmitter'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
+import { useToast } from '../../toast/ToastProvider'
 import { FiSend, FiSmile, FiX, FiMic } from 'react-icons/fi'
 import { FaRegFile } from 'react-icons/fa'
 import EmojiPicker from '../../common/EmojiPicker'
@@ -44,6 +45,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const [openAudio, setOpenAudio] = useState(false)
   const [files, setFiles] = useState([])
   const send = useSendMessage()
+  const toast = useToast()
   const fileRef = useRef(null)
   const { replyTo, setReplyTo } = useContext(ChatActionCtx)
 
@@ -112,6 +114,14 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
 
     try {
       if (files.length) {
+        // Validación de tamaño (ej: 50MB total)
+        const MAX_SIZE = 50 * 1024 * 1024
+        const totalSize = files.reduce((acc, f) => acc + f.size, 0)
+        if (totalSize > MAX_SIZE) {
+          toast?.error('El tamaño total de los archivos supera los 50MB')
+          return
+        }
+
         const fd = new FormData()
         fd.append('body_text', bodyText)
         if (replyTo?.id) fd.append('parent_id', String(replyTo.id))
@@ -125,6 +135,10 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
       setText(''); setFiles([]); setOpenEmoji(false); setReplyTo(null)
     } catch (err) {
       console.error('send failed', err)
+      const msg = err.response?.status === 413
+        ? 'El archivo es demasiado grande para el servidor'
+        : (err.fh?.message || 'Error al enviar el mensaje')
+      toast?.error(msg)
     } finally {
       typing.stop()
     }

@@ -162,26 +162,49 @@ export default function WinNegotiationModal({ lead, onClose, onConfirm }) {
                                         Presupuesto Q{stats.fiscalQ} (Bonificaciones):
                                     </p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                        <span>
-                                            Utilizado: <strong style={{ color: stats.quarterlySummary.bon > 0 ? '#ef4444' : '#34d399' }}>
-                                                ${parseFloat(stats.quarterlySummary.bon).toLocaleString()}
-                                            </strong>
-                                        </span>
-                                        {stats.quarterlySummary.discount_cap > 0 && (
-                                            <span>
-                                                Restante: <strong style={{ color: (stats.quarterlySummary.discount_cap - stats.quarterlySummary.bon) > 0 ? '#34d399' : '#ef4444' }}>
-                                                    ${Math.max(0, stats.quarterlySummary.discount_cap - stats.quarterlySummary.bon).toLocaleString()}
-                                                </strong>
-                                            </span>
-                                        )}
+                                        {(() => {
+                                            const currentBruto = selectedProduct ? parseFloat(selectedProduct.precio_actual) : 0
+                                            const currentNet = finalPrice ? parseLocaleAmount(finalPrice) : currentBruto
+                                            const currentBon = Math.max(0, currentBruto - currentNet)
+                                            const totalUtilized = (parseFloat(stats.quarterlySummary.bon) || 0) + currentBon
+                                            const remaining = Math.max(0, (stats.quarterlySummary.discount_cap || 0) - totalUtilized)
+
+                                            return (
+                                                <>
+                                                    <span>
+                                                        Proyectado: <strong style={{ color: totalUtilized > (stats.quarterlySummary.discount_cap || Infinity) ? '#ef4444' : '#34d399' }}>
+                                                            ${totalUtilized.toLocaleString()}
+                                                        </strong>
+                                                        {currentBon > 0 && <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: '4px' }}>(+${currentBon.toLocaleString()})</span>}
+                                                    </span>
+                                                    {stats.quarterlySummary.discount_cap > 0 && (
+                                                        <span>
+                                                            Restante: <strong style={{ color: remaining > 0 ? '#34d399' : '#ef4444' }}>
+                                                                ${remaining.toLocaleString()}
+                                                            </strong>
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )
+                                        })()}
                                     </div>
                                     {stats.quarterlySummary.discount_cap > 0 && (
                                         <div className="progress-mini" style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
-                                            <div style={{
-                                                height: '100%',
-                                                background: (stats.quarterlySummary.bon / stats.quarterlySummary.discount_cap) > 0.9 ? '#ef4444' : '#34d399',
-                                                width: `${Math.min(100, (stats.quarterlySummary.bon / stats.quarterlySummary.discount_cap) * 100)}%`
-                                            }} />
+                                            {(() => {
+                                                const currentBruto = selectedProduct ? parseFloat(selectedProduct.precio_actual) : 0
+                                                const currentNet = finalPrice ? parseLocaleAmount(finalPrice) : currentBruto
+                                                const currentBon = Math.max(0, currentBruto - currentNet)
+                                                const totalUtilized = (parseFloat(stats.quarterlySummary.bon) || 0) + currentBon
+                                                const percent = (totalUtilized / stats.quarterlySummary.discount_cap) * 100
+                                                return (
+                                                    <div style={{
+                                                        height: '100%',
+                                                        background: percent > 90 ? '#ef4444' : '#34d399',
+                                                        width: `${Math.min(100, percent)}%`,
+                                                        transition: 'width 0.3s ease'
+                                                    }} />
+                                                )
+                                            })()}
                                         </div>
                                     )}
                                 </div>
