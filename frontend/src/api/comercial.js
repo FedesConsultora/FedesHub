@@ -15,7 +15,7 @@ export const comercialApi = {
     importLeads: (formData) => api.post('/comercial/import', formData),
     listTrash: () => api.get('/comercial/leads/trash'),
     restoreLead: (id) => api.post(`/comercial/leads/${id}/restore`),
-    listOnboarding: () => api.get('/comercial/leads/onboarding'),
+    listOnboarding: (params) => api.get('/comercial/leads/onboarding', { params }),
 
     // Admin
     listEECC: () => api.get('/comercial/admin/eecc'),

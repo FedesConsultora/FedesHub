@@ -35,6 +35,7 @@ import AusenciasPage from '../pages/Ausencias/AusenciasPage.jsx'
 import CalendarioPage from '../pages/Calendario/CalendarioPage.jsx'
 import LeadsPage from '../pages/Comercial/LeadsPage.jsx'
 import LeadDetailPage from '../pages/Comercial/LeadDetailPage.jsx'
+import OnboardingListPage from '../pages/Onboarding/OnboardingListPage.jsx'
 
 import NotificacionesTabs from '../pages/Notificaciones/NotificacionesTabs.jsx'
 import NotifListPage from '../pages/Notificaciones/NotifListPage.jsx'
@@ -114,6 +115,8 @@ export default function AppRouter() {
 
           <Route path="/comercial/leads" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadsPage /></RequirePerm></RequireDirectivo>} />
           <Route path="/comercial/leads/:id" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadDetailPage /></RequirePerm></RequireDirectivo>} />
+
+          <Route path="/onboarding" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><OnboardingListPage /></RequirePerm></RequireDirectivo>} />
 
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />

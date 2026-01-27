@@ -310,3 +310,25 @@
     }
   }
 }
+
+.filters-and-bubbles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 2rem;
+  margin-top: 0.5rem;
+
+  .TareasActiveChips {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+  }
+
+  .FederBubblesFilter {
+    margin-bottom: 0;
+    width: auto;
+    flex-shrink: 0;
+    margin-left: auto; // Always push to the right
+  }
+}

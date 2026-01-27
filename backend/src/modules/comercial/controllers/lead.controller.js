@@ -147,7 +147,7 @@ export const getCatalogs = async (req, res) => {
 
 export const listOnboarding = async (req, res) => {
     try {
-        const data = await leadSvc.svcListOnboarding();
+        const data = await leadSvc.svcListOnboarding(req.query);
         res.json(data);
     } catch (e) {
         res.status(500).json({ error: e.message });

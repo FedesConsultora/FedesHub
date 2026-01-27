@@ -235,7 +235,7 @@ export default function LeadsKanban({ leads = [], stages = [], loading, onCardCl
 
     useEffect(() => () => { try { cleanupDom() } catch { } }, [])
 
-    if (loading) return <div className="kanban-loading">Cargando pipeline...</div>
+    if (loading) return <GlobalLoader size={80} />
 
     return (
         <div className="LeadsKanban fh-k-board" ref={boardRef}>

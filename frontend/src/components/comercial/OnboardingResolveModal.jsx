@@ -50,13 +50,13 @@ export default function OnboardingResolveModal({ lead, onClose, onResolved }) {
                         <div className="logo-icon">
                             <FiClock />
                         </div>
-                        <h2>Resolver Onboarding Vencido</h2>
+                        <h2>Resolver Onboarding</h2>
                     </div>
                     <button className="close-btn" onClick={onClose}><FiX /></button>
                 </header>
 
                 <div className="modal-scroll-body">
-                    <p className="intro-text">El periodo de onboarding para <strong>{lead.empresa || lead.nombre}</strong> ha vencido. ¿Cómo procedemos?</p>
+                    <p className="intro-text">Gestión de onboarding para <strong>{lead.empresa || lead.nombre}</strong>. ¿Cómo deseás proceder?</p>
 
                     <div className="decision-chips">
                         <button
@@ -92,10 +92,12 @@ export default function OnboardingResolveModal({ lead, onClose, onResolved }) {
 
                         {decision === 'extender' && (
                             <div className="field-group">
-                                <label className="field-label">Nueva fecha de vencimiento</label>
+                                <label htmlFor="new-due-date" className="field-label">Nueva fecha de vencimiento</label>
                                 <div className="custom-input-wrapper">
                                     <FiCalendar className="input-icon" />
                                     <input
+                                        id="new-due-date"
+                                        name="new_due_at"
                                         type="date"
                                         className="custom-input"
                                         value={newDueAt}
@@ -118,8 +120,10 @@ export default function OnboardingResolveModal({ lead, onClose, onResolved }) {
                                     />
                                 </div>
                                 <div className="field-group mt16">
-                                    <label className="field-label">Comentarios</label>
+                                    <label htmlFor="lose-comment" className="field-label">Comentarios</label>
                                     <textarea
+                                        id="lose-comment"
+                                        name="comentario"
                                         className="custom-textarea"
                                         rows={3}
                                         value={comentario}

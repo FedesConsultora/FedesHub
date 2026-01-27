@@ -522,3 +522,24 @@ export const getFederByUserId = async (user_id) => {
   if (!row[0]?.id) return null;
   return getFederById(row[0].id); // reuse del SELECT detallado
 };
+
+export const listFedersWithTaskCounts = async () => {
+  const sql = `
+    SELECT 
+      f.id, f.nombre, f.apellido, f.avatar_url,
+      (
+        SELECT COUNT(*) FROM "TareaResponsable" tr 
+        JOIN "Tarea" t ON t.id = tr.tarea_id
+        WHERE tr.feder_id = f.id AND t.deleted_at IS NULL AND t.is_archivada = false
+      ) + (
+        SELECT COUNT(*) FROM "TareaColaborador" tc 
+        JOIN "Tarea" t ON t.id = tc.tarea_id
+        WHERE tc.feder_id = f.id AND t.deleted_at IS NULL AND t.is_archivada = false
+      ) AS task_count
+    FROM "Feder" f
+    WHERE f.is_activo = true
+      AND f.nombre NOT ILIKE 'Admin%'
+    ORDER BY task_count DESC, f.nombre ASC
+  `;
+  return sequelize.query(sql, { type: QueryTypes.SELECT });
+};

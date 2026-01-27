@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useRealtime } from '../../realtime/RealtimeProvider'
+import { useAuth } from '../../context/AuthContext'
 import { useDmCandidates, useChannels } from '../../hooks/useChat'
-import { displayName } from '../../utils/people'
+import { displayName, pickAvatar } from '../../utils/people'
 import './UnreadDmBubbles.scss'
 
 function initialsFromUser(u) {
@@ -29,14 +30,22 @@ function deriveDmUnreadFromChannels(channels = []) {
     const mm = c?.miembros?.[0] || {}
     const lastRead = Number(mm.last_read_msg_id ?? 0)
     const lastMsg = Number(c.last_msg_id ?? c.ultimo_msg_id ?? 0)
-    if (lastMsg > lastRead) out.set(Number(c.id), Math.min(99, Math.max(1, lastMsg - lastRead)))
+
+    // Si el backend nos da el unread_count lo usamos, sino simplemente marcamos 1 
+    // para evitar que la resta de IDs (que pueden no ser correlativos) de números enormes.
+    if (c.unread_count !== undefined && c.unread_count !== null) {
+      if (c.unread_count > 0) out.set(Number(c.id), c.unread_count)
+    } else if (lastMsg > lastRead) {
+      out.set(Number(c.id), 1)
+    }
   })
   return out
 }
 
-export default function UnreadDmBubbles({ limit = 8 }) {
-  const nav = useNavigate()
+export default function UnreadDmBubbles({ limit = 1 }) {
   const { pathname } = useLocation()
+  const nav = useNavigate()
+  const { user: me, booted } = useAuth()
   const { unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, clearUnreadFor } = useRealtime()
 
   // Para nombres / emails del otro extremo del DM
@@ -51,18 +60,41 @@ export default function UnreadDmBubbles({ limit = 8 }) {
     return m
   }, [chQ.data])
 
-  // canal_id -> user del DM
+  // canal_id -> user del DM (el OTRO, no yo)
   const dmByCanal = useMemo(() => {
     const map = new Map()
-      ; (dmQ.data || []).forEach(u => { if (u.dm_canal_id) map.set(Number(u.dm_canal_id), u) })
+    const myId = Number(me?.id || 0)
+
+      // Usamos los candidatos de DM que traen la info limpia del "otro"
+      ; (dmQ.data || []).forEach(u => {
+        const cid = Number(u.dm_canal_id)
+        if (cid && Number(u.id) !== myId) {
+          map.set(cid, u)
+        }
+      })
+
+      // Fallback: si no está en candidatos, buscar en la lista de miembros de los canales
+      ; (chQ.data || []).forEach(c => {
+        const cid = Number(c.id)
+        if (c?.tipo?.codigo === 'dm' && !map.has(cid)) {
+          const other = c.miembros?.find(m => {
+            const uid = Number(m.user_id || m.user?.id || m.id)
+            return uid !== myId
+          })
+          if (other) map.set(cid, other)
+        }
+      })
+
     return map
-  }, [dmQ.data])
+  }, [dmQ.data, chQ.data, me?.id])
 
   // Lista final: unión de realtime (con conteo exacto) + derivado de canales (persistencia tras reload).
   const items = useMemo(() => {
     const arr = []
     // Usamos todos los posibles canal_id (de DMs) que conozcamos
     const allDmIds = new Set([...dmByCanal.keys(), ...Array.from(derivedUnread.keys())])
+
+    console.log('[Sidebar] allDmIds:', Array.from(allDmIds), 'unreadByCanal:', unreadByCanal)
 
     allDmIds.forEach(cid => {
       const cidNum = Number(cid)
@@ -78,7 +110,8 @@ export default function UnreadDmBubbles({ limit = 8 }) {
       if (!count) return
 
       const u = dmByCanal.get(cidNum)
-      if (!u) return // necesitamos usuario para avatar/iniciales
+      // Si no encontramos al "otro" usuario, no podemos mostrar una burbuja coherente
+      if (!u || Number(u.id || u.user_id) === Number(me?.id)) return
 
       const ch = chById.get(cidNum)
       const last = u?.last_msg_at || ch?.updated_at || null
@@ -87,15 +120,18 @@ export default function UnreadDmBubbles({ limit = 8 }) {
         canal_id: cidNum,
         user: u,
         label: initialsFromUser(u),
+        avatar: pickAvatar(u),
         last: last ? new Date(last).getTime() : 0,
         hasMention: (mentionByCanal?.[cidNum] | 0) > 0,
         unreadCount: Math.min(99, count)
       })
     })
 
-    console.log('[Sidebar] Final items:', arr.map(i => ({ id: i.canal_id, count: i.unreadCount })))
+
     arr.sort((a, b) => b.last - a.last)
-    return arr.slice(0, limit)
+    // "debe marcar solo el ultimo": mostramos solo la notificación/burbuja más reciente 
+    // para no saturar el sidebar si hay muchos DMs pendientes.
+    return arr.slice(0, 1)
   }, [dmByCanal, derivedUnread, unreadByCanal, mentionByCanal, suppressedCanals, currentCanal, chById, limit])
 
   // Animación sutil al aparecer
@@ -124,7 +160,7 @@ export default function UnreadDmBubbles({ limit = 8 }) {
     prevIdsRef.current = nowIds
   }, [items])
 
-  if (!items.length) return null
+  if (!booted || !items.length) return null
 
   return (
     <div className="sbBubbles" aria-label="DMs no leídos">
@@ -147,8 +183,9 @@ export default function UnreadDmBubbles({ limit = 8 }) {
               nav(`/chat/c/${it.canal_id}`)
             }}
             aria-label={`Abrir DM con ${title}. ${countTxt} sin leer`}
+            style={it.avatar ? { backgroundImage: `url(${it.avatar})`, backgroundSize: 'cover', backgroundPosition: 'center', color: 'transparent' } : {}}
           >
-            {it.label}
+            {!it.avatar && it.label}
             <i className="dot" aria-hidden="true" />
             <span className="mini" aria-hidden="true">{countTxt}</span>
           </button>

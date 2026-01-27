@@ -1,0 +1,117 @@
+@use '../../../styles/variables' as v;
+
+.OnboardingFilters {
+    position: relative;
+    z-index: 100;
+
+    .FilterToolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+
+        .searchWrapper {
+            flex: 0 0 auto;
+            position: relative;
+            background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+            border: 1px solid rgba(v.$fh-primary, 0.25);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            height: 38px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+
+            &.collapsed {
+                width: 38px;
+                background: transparent;
+                border-color: transparent;
+
+                input {
+                    width: 0;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+            }
+
+            &.expanded {
+                width: 180px;
+                background: rgba(255, 255, 255, 0.05);
+                border-color: v.$fh-primary;
+                box-shadow: 0 0 0 4px rgba(v.$fh-primary, 0.15);
+                padding: 0 10px;
+
+                input {
+                    width: 100%;
+                    opacity: 1;
+                }
+            }
+
+            .searchToggle {
+                background: transparent;
+                border: none;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                cursor: pointer;
+                color: v.$fh-muted;
+                flex-shrink: 0;
+
+                &:hover {
+                    color: white;
+                }
+            }
+
+            input {
+                flex: 1;
+                min-width: 0;
+                background: transparent;
+                border: none;
+                color: v.$fh-text;
+                font-size: 14px;
+                outline: none;
+
+                &::placeholder {
+                    color: v.$fh-muted;
+                    opacity: 0.5;
+                }
+            }
+
+            .clearSearch {
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                color: v.$fh-text;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 9px;
+                cursor: pointer;
+                flex-shrink: 0;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+            }
+        }
+
+        .quickFilters {
+            display: flex;
+            align-items: center;
+
+            .premium-select__trigger {
+                height: 38px;
+                border-radius: 12px;
+                background: linear-gradient(180deg, #161d26 0%, #0f1720 100%);
+                border: 1px solid rgba(v.$fh-primary, 0.25);
+                min-width: 180px;
+            }
+        }
+    }
+}

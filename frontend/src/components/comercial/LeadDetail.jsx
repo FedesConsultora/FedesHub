@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { comercialApi } from '../../api/comercial.js'
+import { federsApi } from '../../api/feders.js'
 import { useToast } from '../../components/toast/ToastProvider'
+import PremiumSelect from '../ui/PremiumSelect'
 import {
     FiX, FiMail, FiPhone, FiGlobe, FiMapPin, FiUser, FiCalendar,
     FiBriefcase, FiTag, FiCheckCircle, FiXCircle, FiTrendingUp, FiCopy, FiArrowLeft, FiPlus
@@ -17,6 +19,7 @@ import WinNegotiationModal from './WinNegotiationModal'
 import { FiMessageSquare, FiFile, FiActivity, FiCheckSquare } from 'react-icons/fi'
 import { tareasApi } from '../../api/tareas.js'
 import BudgetAmountModal from './BudgetAmountModal'
+import GlobalLoader from '../loader/GlobalLoader'
 import './LeadDetail.scss'
 
 export default function LeadDetail({ leadId, onClose, onUpdated }) {
@@ -25,6 +28,7 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     const navigate = useNavigate()
     const [lead, setLead] = useState(null)
     const [catalog, setCatalog] = useState({ statuses: [], etapas: [], fuentes: [], motivosPerdida: [] })
+    const [feders, setFeders] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [showNegotiation, setShowNegotiation] = useState(null)
@@ -36,12 +40,18 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     const reload = useCallback(async () => {
         try {
             setLoading(true)
-            const [leadRes, catRes] = await Promise.all([
+            const [leadRes, catRes, fedRes] = await Promise.all([
                 comercialApi.getLead(leadId),
-                comercialApi.getCatalogs()
+                comercialApi.getCatalogs(),
+                federsApi.list({ is_activo: true })
             ])
             setLead(leadRes.data)
             setCatalog(catRes.data)
+
+            const filteredFeders = (fedRes.rows || []).filter(f =>
+                f.roles?.includes('NivelB') || f.roles?.includes('Comercial')
+            )
+            setFeders(filteredFeders)
         } catch (err) {
             toast.error('Error al cargar lead')
         } finally {
@@ -111,7 +121,7 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
         navigate(`/tareas?createFromLead=${leadId}&leadName=${encodeURIComponent(leadName)}`)
     }
 
-    if (loading && !lead) return <div className="LeadDetail-loading">Cargando...</div>
+    if (loading && !lead) return <GlobalLoader size={100} />
     if (!lead) return <div className="LeadDetail-error">No se encontró el lead</div>
 
     const isClosed = lead.status?.codigo === 'cerrado' || lead.status?.codigo === 'perdido'
@@ -250,13 +260,25 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                     <section className="info-group">
                         <h3>Detalles de Lead</h3>
                         <div className="fields">
-                            <div className="static-field">
-                                <label><FiUser /> Responsable</label>
-                                <span>{lead.responsable?.nombre || 'Sin asignar'}</span>
+                            <div className="editable-select-field">
+                                <PremiumSelect
+                                    label="Responsable"
+                                    icon={FiUser}
+                                    options={feders.map(f => ({ value: f.id, label: `${f.nombre} ${f.apellido}` }))}
+                                    value={lead.responsable_feder_id}
+                                    onChange={val => handleUpdate({ responsable_feder_id: val })}
+                                    placeholder="Sin asignar"
+                                />
                             </div>
-                            <div className="static-field">
-                                <label><FiTrendingUp /> Fuente</label>
-                                <span>{lead.fuente?.nombre || 'Desconocida'}</span>
+                            <div className="editable-select-field">
+                                <PremiumSelect
+                                    label="Fuente"
+                                    icon={FiTrendingUp}
+                                    options={catalog.fuentes.map(f => ({ value: f.id, label: f.nombre }))}
+                                    value={lead.fuente_id}
+                                    onChange={val => handleUpdate({ fuente_id: val })}
+                                    placeholder="Desconocida"
+                                />
                             </div>
                             <div className="static-field">
                                 <label><FiCalendar /> Creado el</label>
@@ -274,11 +296,19 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                                 </span>
                             </header>
                             <p className="onb-meta">Vence: {new Date(lead.onboarding_due_at).toLocaleDateString()}</p>
-                            {lead.onboarding_status === 'revision_pendiente' && (
-                                <button className="btn-resolve" onClick={() => setShowResolveOnboarding(true)}>
-                                    Resolver Pendiente
-                                </button>
-                            )}
+
+                            <div className="onb-actions">
+                                {lead.onboarding_status === 'revision_pendiente' && (
+                                    <button className="btn-resolve" onClick={() => setShowResolveOnboarding(true)}>
+                                        Resolver Pendiente
+                                    </button>
+                                )}
+                                {(lead.onboarding_status === 'activo' || lead.onboarding_status === 'vencido') && (
+                                    <button className="btn-resolve success" onClick={() => setShowResolveOnboarding(true)}>
+                                        <FiCheckCircle /> Finalizar y Convertir
+                                    </button>
+                                )}
+                            </div>
                         </section>
                     )}
                 </div>
@@ -383,7 +413,7 @@ function LeadTasks({ leadId }) {
         load()
     }, [leadId])
 
-    if (loading) return <div className="tab-loading">Cargando tareas...</div>
+    if (loading) return <GlobalLoader size={40} />
 
     return (
         <div className="LeadTasks">

@@ -11,12 +11,15 @@ export default function PremiumSelect({
     onChange,
     placeholder = 'Seleccionar...',
     disabled = false,
-    renderOption = null
+    renderOption = null,
+    id: propId,
+    name
 }) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
     const containerRef = useRef(null)
-    const id = useId()
+    const internalId = useId()
+    const id = propId || internalId
 
     const selectedOption = options.find(o => String(o.value) === String(value))
 
@@ -37,13 +40,14 @@ export default function PremiumSelect({
     return (
         <div className={`premium-select ${open ? 'is-open' : ''} ${disabled ? 'is-disabled' : ''}`} ref={containerRef}>
             {label && (
-                <label className="premium-select__label">
+                <label className="premium-select__label" htmlFor={id}>
                     {Icon && <Icon className="premium-select__label-icon" />}
                     {label}
                 </label>
             )}
 
             <div
+                id={id}
                 className="premium-select__trigger"
                 onClick={() => !disabled && setOpen(!open)}
             >

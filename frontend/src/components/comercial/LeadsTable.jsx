@@ -1,10 +1,11 @@
 import React from 'react'
 import { format } from 'date-fns'
 import { FiChevronRight, FiUser } from 'react-icons/fi'
+import GlobalLoader from '../loader/GlobalLoader'
 import './LeadsTable.scss'
 
 export default function LeadsTable({ leads = [], loading, onRowClick }) {
-    if (loading) return <div className="leads-loading">Cargando leads...</div>
+    if (loading) return <GlobalLoader size={60} />
 
     return (
         <div className="LeadsTable">

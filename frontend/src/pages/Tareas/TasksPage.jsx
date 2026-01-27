@@ -1,8 +1,10 @@
 // /frontend/src/pages/tareas/TasksPage.jsx
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { federsApi } from "../../api/feders";
 import useTasksBoard from "../../hooks/useTasksBoard";
 import { tareasApi } from "../../api/tareas";
+import FederBubblesFilter from "../../components/common/FederBubblesFilter";
 import TareasFilters, { TareasActiveChips } from "../../components/tasks/TareasFilters";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
 import TaskList from "../../components/tasks/TaskList";
@@ -27,6 +29,7 @@ export default function TasksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
   const [initialData, setInitialData] = useState({});
+  const [rankedFeders, setRankedFeders] = useState([]);
 
   const handleSetView = (v) => {
     setView(v);
@@ -65,6 +68,7 @@ export default function TasksPage() {
     if (isDirectivo) {
       tareasApi.listTrash().then(tasks => setTrashCount(tasks.length || 0)).catch(() => { });
     }
+    federsApi.getRankingTasks().then(setRankedFeders).catch(console.error);
   }, [isDirectivo]);
 
   // filtros (compat con backend)
@@ -78,6 +82,7 @@ export default function TasksPage() {
     vencimiento_from: undefined,
     vencimiento_to: undefined,
     solo_mias: true,
+    feder_ids: [],
     include_archivadas: false,
     include_finalizadas: false,
     sort: "desc",
@@ -87,6 +92,9 @@ export default function TasksPage() {
     tc_formato_id: undefined,
     tc_objetivo_negocio_id: undefined,
     inamovible: undefined,
+    // Feders
+    responsable_feder_ids: undefined,
+    colaborador_feder_ids: undefined,
     limit: 500,
     orden_by: "prioridad",
   });
@@ -375,11 +383,18 @@ export default function TasksPage() {
         </div>
       </header>
 
-      <TareasActiveChips
-        value={filters}
-        catalog={catalog}
-        onChange={setFilters}
-      />
+      <div className="filters-and-bubbles">
+        <TareasActiveChips
+          value={filters}
+          catalog={catalog}
+          onChange={setFilters}
+        />
+        <FederBubblesFilter
+          feders={rankedFeders}
+          selectedIds={filters.feder_ids || []}
+          onChange={ids => setFilters({ ...filters, feder_ids: ids, solo_mias: ids.length === 0 })}
+        />
+      </div>
 
       <section className="results" data-view={view}>
         {view === "kanban" ? (

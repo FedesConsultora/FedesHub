@@ -9,7 +9,9 @@ export const listLeads = async ({ status_id, etapa_id, responsable_feder_id, q, 
     const where = {};
     if (status_id) where.status_id = status_id;
     if (etapa_id) where.etapa_id = etapa_id;
-    if (responsable_feder_id) where.responsable_feder_id = responsable_feder_id;
+    if (responsable_feder_id) {
+        where.responsable_feder_id = Array.isArray(responsable_feder_id) ? { [Op.in]: responsable_feder_id } : responsable_feder_id;
+    }
     if (q) {
         where[Op.or] = [
             { nombre: { [Op.iLike]: `%${q}%` } },
@@ -133,14 +135,36 @@ export const getSumBonificadoByQ = async (eecc_id, q) => {
 };
 
 // Onboarding Management
-export const listOnboardingLeads = async () => {
+export const listOnboardingLeads = async ({ status, responsable_feder_id, q } = {}) => {
+    const where = {
+        ruta_post_negociacion: 'onboarding'
+    };
+
+    if (status) {
+        where.onboarding_status = status;
+    } else {
+        // Por defecto omitir completados/cancelados si no se pide un status específico
+        where.onboarding_status = { [Op.notIn]: ['completado', 'cancelado'] };
+    }
+
+    if (responsable_feder_id) {
+        where.responsable_feder_id = Array.isArray(responsable_feder_id) ? { [Op.in]: responsable_feder_id } : responsable_feder_id;
+    }
+
+    if (q) {
+        where[Op.or] = [
+            { nombre: { [Op.iLike]: `%${q}%` } },
+            { apellido: { [Op.iLike]: `%${q}%` } },
+            { empresa: { [Op.iLike]: `%${q}%` } }
+        ];
+    }
+
     return models.ComercialLead.findAll({
-        where: {
-            ruta_post_negociacion: 'onboarding',
-            onboarding_status: { [Op.notIn]: ['completado', 'cancelado'] }
-        },
+        where,
         include: [
             { model: models.ComercialLeadStatus, as: 'status' },
+            { model: models.ComercialLeadEtapa, as: 'etapa' },
+            { model: models.ComercialLeadFuente, as: 'fuente' },
             { model: models.Feder, as: 'responsable' }
         ],
         order: [['onboarding_due_at', 'ASC']]

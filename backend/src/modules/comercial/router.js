@@ -18,6 +18,7 @@ router.get('/stats/eecc/:id', requireAuth, statsController.getEeccStats);
 // Leads CRUD
 router.get('/leads', requireAuth, requirePermission('comercial', 'read'), leadCtrl.listLeads);
 router.get('/leads/trash', requireAuth, requirePermission('comercial', 'admin'), leadCtrl.listTrash);
+router.get('/leads/onboarding', requireAuth, requirePermission('comercial', 'read'), leadCtrl.listOnboarding);
 router.get('/leads/:id', requireAuth, requirePermission('comercial', 'read'), leadCtrl.getLead);
 router.post('/leads', requireAuth, requirePermission('comercial', 'create'), leadCtrl.createLead);
 router.patch('/leads/:id', requireAuth, requirePermission('comercial', 'update'), leadCtrl.updateLead);
@@ -32,7 +33,6 @@ router.post('/leads/:id/win', requireAuth, requirePermission('comercial', 'updat
 router.post('/leads/:id/lose', requireAuth, requirePermission('comercial', 'update'), leadCtrl.loseNegotiation);
 
 // Onboarding
-router.get('/leads/onboarding', requireAuth, requirePermission('comercial', 'read'), leadCtrl.listOnboarding);
 router.post('/leads/:id/resolve-onboarding', requireAuth, requirePermission('comercial', 'update'), leadCtrl.resolveOnboarding);
 
 // Import

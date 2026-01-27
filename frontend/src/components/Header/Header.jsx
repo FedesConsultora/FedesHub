@@ -4,6 +4,7 @@ import { useAuthCtx } from '../../context/AuthContext.jsx'
 import AsistenciaDot from '../asistencia/AsistenciaDot.jsx'
 import { useState, useEffect } from 'react'
 import { FiHeadphones, FiChevronDown, FiBell } from 'react-icons/fi'
+import { useMemo } from 'react'
 import BellCluster from '../notifications/BellCluster.jsx'
 import AdminDrawer from '../admin/AdminDrawer/AdminDrawer.jsx'
 import Avatar from '../Avatar.jsx'
@@ -26,6 +27,33 @@ function NotifRequestBtn({ onOpenHealth }) {
     >
       <FiBell />
       <span className="dot" />
+    </button>
+  )
+}
+
+function AudioStatusIndicator({ onClick }) {
+  const { notifPermission, audioUnlocked, isMasterTab } = useRealtime()
+
+  const status = useMemo(() => {
+    if (notifPermission !== 'granted') return 'no-permission' // 🔴 Rojo
+    if (!audioUnlocked) return 'audio-locked' // 🟠 Naranja
+    return 'ready' // 🟢 Verde
+  }, [notifPermission, audioUnlocked])
+
+  const title = useMemo(() => {
+    if (status === 'no-permission') return '⚠️ Notificaciones desactivadas - Click para habilitar'
+    if (status === 'audio-locked') return '🔊 Audio bloqueado - Click para desbloquear'
+    return `✅ Notificaciones activas${isMasterTab ? ' (Master)' : ''}`
+  }, [status, isMasterTab])
+
+  return (
+    <button
+      className={`audioStatusIndicator status-${status}`}
+      onClick={onClick}
+      title={title}
+    >
+      <FiBell />
+      <span className="status-dot" />
     </button>
   )
 }
@@ -67,6 +95,7 @@ export default function Header() {
           >
             <FiHeadphones />
           </button>
+          <AudioStatusIndicator onClick={() => setHealthOpen(true)} />
           <NotifRequestBtn onOpenHealth={() => setHealthOpen(true)} />
           <BellCluster onAnyOpen={() => setOpen(false)} />
           <AsistenciaDot />

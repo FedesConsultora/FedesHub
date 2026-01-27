@@ -23,22 +23,30 @@ messaging.onBackgroundMessage(async (payload) => {
   const body = payload?.notification?.body || ''
   const data = payload?.data || {}
 
-  await self.registration.showNotification(title, {
-    body,
-    data,
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    vibrate: [200, 100, 200], // Vibración en móviles
-    requireInteraction: false,
-    silent: false
-  })
-
   // Eco a todas las ventanas abiertas (tiempo real in-app)
   const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
+  const anyFocused = clientsList.some(c => c.focused)
+
+  // Solo mostramos banner de background si NO hay ninguna ventana en foco
+  if (!anyFocused) {
+    // Intentar sacar icono del payload o data
+    const icon = payload?.notification?.icon || payload?.notification?.image || data?.fcm_icon || data?.author_avatar || data?.avatar_url || '/favicon.ico'
+
+    await self.registration.showNotification(title, {
+      body,
+      data,
+      icon,
+      badge: '/favicon.ico',
+      vibrate: [200, 100, 200], // Vibración en móviles
+      requireInteraction: false,
+      silent: true // 🔊 SIEMPRE SILENCIO: La app (si está viva) pitará.
+    })
+  }
+
   clientsList.forEach(c => c.postMessage({
     type: 'fh:push',
     data,
-    notification: payload?.notification, // NUEVO: Pasamos el objeto rico
+    notification: payload?.notification,
     messageId: payload?.messageId
   }))
 })
@@ -61,7 +69,7 @@ self.addEventListener('message', (event) => {
 
         await self.registration.showNotification(title, {
           ...options,
-          silent: false,
+          silent: options.silent !== undefined ? options.silent : true,
           renotify: !!options.tag
         })
       } catch (err) {

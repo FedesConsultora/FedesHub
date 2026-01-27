@@ -12,8 +12,10 @@ import LeadsKanban from '../../components/comercial/LeadsKanban'
 import CreateLeadModal from '../../components/comercial/CreateLeadModal'
 import LeadsFilters from '../../components/comercial/LeadsFilters'
 import ImportLeadsModal from './ImportLeadsModal'
+import FederBubblesFilter from '../../components/common/FederBubblesFilter'
 import ModalPanel from '../Tareas/components/ModalPanel.jsx'
-import { FiPlus, FiGrid, FiList, FiDownload, FiSearch, FiChevronLeft, FiChevronRight, FiTrash2 } from 'react-icons/fi'
+import { FiSearch, FiFilter, FiUser, FiBriefcase, FiList, FiGrid, FiTrash2, FiPlus, FiChevronDown, FiDownload } from 'react-icons/fi'
+import GlobalLoader from '../../components/loader/GlobalLoader'
 import './LeadsPage.scss'
 
 const PAGE_SIZE = 50
@@ -40,8 +42,9 @@ export default function LeadsPage() {
         q: '',
         status_id: '',
         etapa_id: '',
-        responsable_feder_id: ''
+        responsable_feder_ids: []
     })
+    const [rankedFeders, setRankedFeders] = useState([])
 
     const fetchLeads = useCallback(async (isLoadMore = false) => {
         try {
@@ -56,11 +59,12 @@ export default function LeadsPage() {
             const [leadsRes, catRes, federsRes] = await Promise.all([
                 comercialApi.listLeads({
                     ...filters,
+                    responsable_feder_id: filters.responsable_feder_ids.length ? filters.responsable_feder_ids : undefined,
                     limit: PAGE_SIZE,
                     offset: currentPage * PAGE_SIZE
                 }),
                 isLoadMore ? Promise.resolve(null) : comercialApi.getCatalogs(),
-                isLoadMore ? Promise.resolve(null) : federsApi.list({ is_activo: true })
+                isLoadMore ? Promise.resolve(null) : federsApi.getRankingTasks()
             ])
 
             if (isLoadMore) {
@@ -72,8 +76,9 @@ export default function LeadsPage() {
                 if (catRes) {
                     setCatalog({
                         ...catRes.data,
-                        feders: federsRes?.rows || []
+                        feders: federsRes || []
                     })
+                    setRankedFeders(federsRes || [])
                 }
             }
 
@@ -169,6 +174,14 @@ export default function LeadsPage() {
                 </div>
             </header>
 
+            <div className="bubbles-section">
+                <FederBubblesFilter
+                    feders={rankedFeders}
+                    selectedIds={filters.responsable_feder_ids}
+                    onChange={ids => setFilters({ ...filters, responsable_feder_ids: ids })}
+                />
+            </div>
+
             <main className="leads-content">
                 <ComercialDashboards
                     filters={filters}
@@ -204,7 +217,7 @@ export default function LeadsPage() {
                                             onClick={() => fetchLeads(true)}
                                             disabled={loadingMore}
                                         >
-                                            {loadingMore ? 'Cargando...' : 'Ver más leads'}
+                                            {loadingMore ? <GlobalLoader size={24} /> : 'Ver más leads'}
                                         </button>
                                     </div>
                                 )}

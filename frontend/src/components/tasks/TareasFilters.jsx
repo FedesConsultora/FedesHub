@@ -112,6 +112,14 @@ export function useActiveChips(v, catalog) {
       });
     }
 
+    if (v.feder_ids?.length) {
+      const labels = v.feder_ids.map(id => {
+        const f = (catalog.feders || []).find(f => Number(f.id) === Number(id));
+        return f ? f.nombre : `Feder #${id}`;
+      });
+      chips.push({ key: 'feder_ids', label: `Feders: ${labels.join(', ')}` });
+    }
+
     return chips;
   }, [v, catalog]);
 }
@@ -129,6 +137,8 @@ export function TareasActiveChips({ value, catalog, onChange }) {
       upd({ orden_by: 'prioridad', sort: 'desc' });
     } else if (key === 'estado_id' || key === 'include_finalizadas') {
       upd({ [key]: undefined, include_finalizadas: false });
+    } else if (key === 'feder_ids') {
+      upd({ feder_ids: [], solo_mias: true });
     } else {
       upd({ [key]: undefined });
     }
@@ -223,7 +233,8 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
     tc_objetivo_negocio_id: undefined,
     tc_objetivo_marketing_id: undefined,
     inamovible: undefined,
-    solo_leads: undefined
+    solo_leads: undefined,
+    feder_ids: []
   })
 
   const removeChip = (key) => {
@@ -233,6 +244,8 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
       upd({ orden_by: 'prioridad', sort: 'desc' });
     } else if (key === 'estado_id' || key === 'include_finalizadas') {
       upd({ [key]: undefined, include_finalizadas: false });
+    } else if (key === 'feder_ids') {
+      upd({ feder_ids: [], solo_mias: true });
     } else {
       upd({ [key]: undefined });
     }

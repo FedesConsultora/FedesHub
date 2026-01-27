@@ -5,6 +5,7 @@ import { svcCreate as svcCreateCliente } from '../../clientes/services/clientes.
 import { createNotificacionGlobal } from '../../notificaciones/services/notificaciones.service.js';
 import { addDays, format } from 'date-fns';
 import { getFiscalStatus } from '../utils/fiscal.js';
+import { initModels } from '../../../models/registry.js';
 
 export const svcListLeads = (q) => leadRepo.listLeads(q);
 export const svcGetLead = (id) => leadRepo.getLeadById(id);
@@ -28,15 +29,23 @@ export const svcUpdateLead = async (id, data, userId) => {
 
     // Notificación si cambia el responsable
     if (data.responsable_feder_id && Number(data.responsable_feder_id) !== Number(oldLead.responsable_feder_id)) {
-        await createNotificacionGlobal({
-            tipo_codigo: 'comercial_lead_asignado',
-            buzon_id: 2, // Tareas/Comercial
-            destinos: [data.responsable_feder_id],
-            titulo: 'Nuevo Lead Asignado',
-            descripcion: `Se te ha asignado el lead "${oldLead.empresa || oldLead.nombre}".`,
-            tarea_id: null,
-            lead_id: id
-        });
+        try {
+            const models = await initModels();
+            const feder = await models.Feder.findByPk(data.responsable_feder_id, { attributes: ['id', 'user_id'] });
+
+            if (feder?.user_id) {
+                await createNotificacionGlobal({
+                    tipo_codigo: 'comercial_lead_asignado',
+                    destinos: [{ user_id: feder.user_id, feder_id: feder.id }],
+                    titulo: 'Nuevo Lead Asignado',
+                    mensaje: `Se te ha asignado el lead "${oldLead.empresa || oldLead.nombre}".`,
+                    lead_id: id
+                });
+            }
+        } catch (err) {
+            // Log but don't break the update
+            console.error('[svcUpdateLead] Error enviando notificación:', err);
+        }
 
         await leadRepo.addHistorial({
             lead_id: id,
@@ -356,4 +365,4 @@ export const svcRestoreLead = async (id, userId) => {
     });
 };
 
-export const svcListOnboarding = () => leadRepo.listOnboardingLeads();
+export const svcListOnboarding = (q = {}) => leadRepo.listOnboardingLeads(q);

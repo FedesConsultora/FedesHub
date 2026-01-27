@@ -6,7 +6,7 @@ import {
   listFeders, countFeders, getFederById, createFeder, updateFeder, setFederActive, deleteFeder,
   hasFederUsage,
   listFederModalidad, upsertFederModalidad, bulkSetFederModalidad, removeFederModalidad, repoOverview,
-
+  listFedersWithTaskCounts,
   getFirmaPerfil, upsertFirmaPerfil,
   listBancos, createBanco, updateBanco, deleteBanco,
   listEmergencias, createEmergencia, updateEmergencia, deleteEmergencia, getFederByUserId as repoGetFederByUserId
@@ -59,6 +59,7 @@ export const svcUpsertFederModalidad = (federId, body) => upsertFederModalidad(f
 export const svcBulkSetFederModalidad = (federId, items) => bulkSetFederModalidad(federId, items);
 export const svcRemoveFederModalidad = (federId, diaId) => removeFederModalidad(federId, diaId);
 export const svcOverview = (opts = {}) => repoOverview(opts);
+export const svcListFedersWithTaskCounts = () => listFedersWithTaskCounts();
 
 // ---- Firma de perfil
 export const svcGetFirmaPerfil = (federId) => getFirmaPerfil(federId);

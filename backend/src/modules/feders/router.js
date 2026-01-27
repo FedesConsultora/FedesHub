@@ -11,7 +11,8 @@ import {
   getFederModalidad, putFederModalidadBulk, patchFederModalidad, deleteFederModalidad, overview,
   getFirmaPerfil, upsertFirmaPerfil,
   listBancos, createBanco, patchBanco, deleteBanco, getFederSelf,
-  listEmergencias, createEmergencia, patchEmergencia, deleteEmergencia, uploadAvatar, getFederByUserIdCtrl, patchFederSelf
+  listEmergencias, createEmergencia, patchEmergencia, deleteEmergencia, uploadAvatar, getFederByUserIdCtrl, patchFederSelf,
+  rankFedersByTasks
 } from './controllers/feders.controller.js';
 
 const router = Router();
@@ -20,6 +21,7 @@ const router = Router();
 router.get('/health', health);
 
 router.get('/overview', requireAuth, requirePermission('feders', 'read'), overview);
+router.get('/ranking-tasks', requireAuth, rankFedersByTasks);
 router.get('/self', requireAuth, getFederSelf);
 router.get('/by-user/:userId', requireAuth, requirePermission('feders', 'read'), getFederByUserIdCtrl);
 router.patch('/self', requireAuth, patchFederSelf);

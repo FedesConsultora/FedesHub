@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { comercialApi } from '../../api/comercial'
 import { FiTrendingUp, FiTarget, FiFilter, FiAward, FiCalendar, FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import GlobalLoader from '../loader/GlobalLoader'
 import EeccStatsModal from '../../pages/Admin/Comercial/EeccStatsModal'
 import './ComercialDashboards.scss'
 
@@ -25,7 +26,7 @@ export default function ComercialDashboards({ filters = {}, isExpanded, onToggle
         load()
     }, [filters, refreshKey])
 
-    if (loading) return <div className="ComercialDashboards loading">Cargando métricas...</div>
+    if (loading) return <div className="ComercialDashboards loading"><GlobalLoader size={60} /></div>
     if (!stats) return null
 
     return (
