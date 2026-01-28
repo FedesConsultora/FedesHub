@@ -41,7 +41,7 @@ export const getCalendarMonthsOfQuarter = (q, startMonth) => {
  */
 export const getFiscalStatus = (date, startAt) => {
     const startDate = new Date(startAt);
-    const startMonth = startDate.getMonth() + 1;
+    const startMonth = startDate.getUTCMonth() + 1;
 
     // Usamos differenceInMonths para saber cuántos meses completos pasaron desde el inicio
     const monthsDiff = differenceInMonths(date, startDate);

@@ -1,7 +1,7 @@
 // backend/src/modules/comercial/repositories/stats.repo.js
 import { initModels } from '../../../models/registry.js';
 import { Op, fn, col, literal } from 'sequelize';
-import { getCalendarMonthsOfQuarter } from '../utils/fiscal.js';
+import { getCalendarMonthsOfQuarter, getFiscalMonth } from '../utils/fiscal.js';
 
 const models = await initModels();
 
@@ -56,10 +56,15 @@ export const getMonthlyBillingVsGoal = async (eecc_id, qMonths, filters = {}) =>
     // Nombres de meses en español
     const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+    const eecc = await models.ComercialEECC.findByPk(eecc_id);
+    const startMonth = eecc ? new Date(eecc.start_at).getUTCMonth() + 1 : 1;
+
     const results = await Promise.all(qMonths.map(async (m) => {
         const objective = await models.ComercialObjetivoMes.findOne({
             where: { eecc_id, mes_calendario: m }
         });
+
+        const fMonth = getFiscalMonth(m, startMonth);
 
         const actualResult = await models.ComercialVentaLinea.findOne({
             attributes: [[fn('SUM', col('precio_neto_snapshot')), 'total']],
@@ -67,7 +72,7 @@ export const getMonthlyBillingVsGoal = async (eecc_id, qMonths, filters = {}) =>
                 model: models.ComercialVenta,
                 as: 'venta',
                 attributes: [],
-                where: { eecc_id, mes_fiscal: m },
+                where: { eecc_id, mes_fiscal: fMonth },
                 include: [{
                     model: models.ComercialLead,
                     as: 'lead',
@@ -112,7 +117,7 @@ export const getQuarterlySummary = async (eecc_id, q, filters = {}) => {
     });
 
     const eecc = await models.ComercialEECC.findByPk(eecc_id);
-    const startMonth = eecc ? new Date(eecc.start_at).getMonth() + 1 : 1;
+    const startMonth = eecc ? new Date(eecc.start_at).getUTCMonth() + 1 : 1;
     const qMonths = getCalendarMonthsOfQuarter(q, startMonth);
     const objectiveQ = await models.ComercialObjetivoMes.sum('total_objetivo_ars', {
         where: { eecc_id, mes_calendario: { [Op.in]: qMonths } }
@@ -162,7 +167,7 @@ export const getEeccStackedStats = async (eecc_id) => {
         });
 
         const eecc = await models.ComercialEECC.findByPk(eecc_id);
-        const startMonth = eecc ? new Date(eecc.start_at).getMonth() + 1 : 1;
+        const startMonth = eecc ? new Date(eecc.start_at).getUTCMonth() + 1 : 1;
         const qMonths = getCalendarMonthsOfQuarter(qNum, startMonth);
 
         const objectiveQ = await models.ComercialObjetivoMes.sum('total_objetivo_ars', {

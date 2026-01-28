@@ -76,7 +76,7 @@ async function recalculateQObjectives(eecc_id, qNum, startMonth) {
     }, 0);
 
     // Presupuestación Proyectada = Onboarding del Q * 3
-    const proyectado = totalOnboardingQ * 3;
+    const proyectado = (totalOnboardingQ || 0) * 3;
 
     // Tope de Descuento = 20% del Proyectado
     const cap = proyectado * 0.2;
@@ -85,12 +85,12 @@ async function recalculateQObjectives(eecc_id, qNum, startMonth) {
         repo.upsertObjetivoQ({
             eecc_id,
             q: qNum,
-            monto_presupuestacion_ars: proyectado
+            monto_presupuestacion_ars: isNaN(proyectado) ? 0 : proyectado
         }),
         repo.upsertDescuentoCap({
             eecc_id,
             q: qNum,
-            monto_maximo_ars: cap
+            monto_maximo_ars: isNaN(cap) ? 0 : cap
         })
     ]);
 }
