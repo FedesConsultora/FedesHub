@@ -1,6 +1,6 @@
 import {
   listUnidades, listEstados, listMitadDia,
-  listTipos, createTipo, updateTipo, getTipoBy,
+  listTipos, createTipo, updateTipo, getTipoBy, getUnidadBy,
   assignCuota, listCuotas, deleteCuota, saldoPorTipo,
   listAusencias, getAusenciaById, createAusencia, updateAusencia,
   aprobarAusenciaConConsumo, resetAusenciaRepo, getEstadoByCodigo, getFederByUser, ensureFeder,
@@ -227,7 +227,7 @@ export const ausReset = async (id) => {
 
 // ===== Solicitud de Asignación (cuota extra) =====
 export const asignacionSolicitudCreateSvc = async (body, meUserId) => {
-  const { feder_id, tipo_id, tipo_codigo, unidad_id, unidad_codigo, cantidad_solicitada, vigencia_desde, vigencia_hasta, motivo } = body;
+  const { feder_id, tipo_id, tipo_codigo, unidad_id, unidad_codigo, cantidad_solicitada, vigencia_desde, vigencia_hasta, motivo, archivo_url } = body;
   const fid = feder_id ?? (await (async () => {
     const me = await getFederByUser(meUserId);
     if (!me) throw Object.assign(new Error('El usuario no tiene Feder activo'), { status: 404 });
@@ -247,13 +247,18 @@ export const asignacionSolicitudCreateSvc = async (body, meUserId) => {
 
   const pend = await getEstadoByCodigo('pendiente');
 
+  // Si no vienen fechas, default al año actual
+  const currentYear = new Date().getFullYear();
+  const vDesde = vigencia_desde || `${currentYear}-01-01`;
+  const vHasta = vigencia_hasta || `${currentYear}-12-31`;
+
   const row = await (await initModels()).AusenciaAsignacionSolicitud.create({
     feder_id: fid,
     tipo_id: tipo.id,
     unidad_id: unidad.id,
     cantidad_solicitada,
-    vigencia_desde,
-    vigencia_hasta,
+    vigencia_desde: vDesde,
+    vigencia_hasta: vHasta,
     archivo_url: archivo_url ?? null,
     motivo: motivo ?? null,
     estado_id: pend.id

@@ -5,7 +5,7 @@ import { initModels } from '../../../models/registry.js';
 
 const m = await initModels();
 
-const getUnidadBy = async ({ id, codigo }) => {
+export const getUnidadBy = async ({ id, codigo }) => {
   if (id) return m.AusenciaUnidadTipo.findByPk(id);
   if (codigo) return m.AusenciaUnidadTipo.findOne({ where: { codigo } });
   return null;

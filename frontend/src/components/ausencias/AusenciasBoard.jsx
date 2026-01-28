@@ -211,7 +211,8 @@ export default function AusenciasBoard() {
     })
   }
 
-  const openNewAlloc = (initDate = null) => {
+  const openNewAlloc = (d = null) => {
+    const initDate = (d && typeof d === 'string') ? d : null;
     modal.open({
       title: 'Nueva asignación (solicitud)',
       width: 720,
