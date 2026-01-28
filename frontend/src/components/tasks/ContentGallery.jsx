@@ -462,6 +462,7 @@ export default function ContentGallery({
                     src={getProxyUrl(fullscreenImage)}
                     alt={fullscreenImage.nombre || 'Media'}
                     type={getFileType(fullscreenImage)}
+                    driveId={fullscreenImage.drive_file_id}
                     onClose={() => setFullscreenImage(null)}
                 />
             )}

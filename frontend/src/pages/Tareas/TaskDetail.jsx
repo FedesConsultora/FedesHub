@@ -1121,7 +1121,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                           onClick={() => setRawFullscreen({
                             url: getFileUrl(file),
                             name: file.nombre || 'Archivo',
-                            type: type
+                            type: type,
+                            driveId: file.drive_file_id
                           })}
                         >
                           Ver
@@ -1141,6 +1142,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               src={rawFullscreen.url}
               alt={rawFullscreen.name}
               type={rawFullscreen.type}
+              driveId={rawFullscreen.driveId}
               onClose={() => setRawFullscreen(null)}
             />
           )}

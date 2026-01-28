@@ -4,7 +4,7 @@ import { MdClose, MdDownload, MdContentCopy } from 'react-icons/md';
 import { FaFileWord, FaFileExcel, FaFileArchive, FaFileAlt } from 'react-icons/fa';
 import './ImageFullscreen.scss';
 
-export default function ImageFullscreen({ src, alt, type = 'image', onClose }) {
+export default function ImageFullscreen({ src, alt, type = 'image', driveId = null, onClose }) {
     const [copied, setCopied] = useState(false);
 
     // Close on ESC key
@@ -32,6 +32,7 @@ export default function ImageFullscreen({ src, alt, type = 'image', onClose }) {
 
     const handleDownload = async () => {
         try {
+            // Si tenemos driveId, podemos intentar usar la URL de Drive directa para descargar
             const response = await fetch(src);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -76,6 +77,18 @@ export default function ImageFullscreen({ src, alt, type = 'image', onClose }) {
     };
 
     const renderMedia = () => {
+        // Si es un archivo de Drive y es tipo Word, Excel o ZIP, usamos el visor de Drive
+        if (driveId && (['word', 'excel', 'zip'].includes(type))) {
+            return (
+                <iframe
+                    src={`https://drive.google.com/file/d/${driveId}/preview`}
+                    title={alt}
+                    className="preview-iframe"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            );
+        }
+
         switch (type) {
             case 'video':
                 return (
