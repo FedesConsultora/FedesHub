@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MdClose, MdDownload, MdContentCopy } from 'react-icons/md';
+import { FaFileWord, FaFileExcel, FaFileArchive, FaFileAlt } from 'react-icons/fa';
 import './ImageFullscreen.scss';
 
-export default function ImageFullscreen({ src, alt, isVideo = false, onClose }) {
+export default function ImageFullscreen({ src, alt, type = 'image', onClose }) {
     const [copied, setCopied] = useState(false);
 
     // Close on ESC key
@@ -43,53 +44,41 @@ export default function ImageFullscreen({ src, alt, isVideo = false, onClose }) 
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Error downloading:', err);
+            // Fallback: abrir en nueva pestaña
+            window.open(src, '_blank');
         }
     };
 
     const handleCopy = async () => {
         try {
-            if (isVideo) {
-                // Para videos copiamos la URL
-                await navigator.clipboard.writeText(window.location.origin + src);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            } else {
+            if (type === 'image') {
                 // Para imágenes copiamos la imagen al portapapeles
                 const response = await fetch(src);
                 const blob = await response.blob();
                 await navigator.clipboard.write([
                     new ClipboardItem({ [blob.type]: blob })
                 ]);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+            } else {
+                // Para otros copiamos la URL
+                await navigator.clipboard.writeText(window.location.origin + src);
             }
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Error copying:', err);
             // Fallback: copiar URL
-            await navigator.clipboard.writeText(window.location.origin + src);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            try {
+                await navigator.clipboard.writeText(window.location.origin + src);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (e) { }
         }
     };
 
-    return createPortal(
-        <div className="image-fullscreen-overlay" onClick={handleBackdropClick}>
-            {/* Action buttons */}
-            <div className="action-buttons">
-                <button className="action-btn" onClick={handleCopy} title={copied ? "¡Copiado!" : "Copiar"}>
-                    <MdContentCopy size={22} />
-                    {copied && <span className="tooltip">¡Copiado!</span>}
-                </button>
-                <button className="action-btn" onClick={handleDownload} title="Descargar">
-                    <MdDownload size={22} />
-                </button>
-                <button className="action-btn close" onClick={onClose} title="Cerrar">
-                    <MdClose size={24} />
-                </button>
-            </div>
-
-            <div className="media-container">
-                {isVideo ? (
+    const renderMedia = () => {
+        switch (type) {
+            case 'video':
+                return (
                     <video
                         src={src}
                         controls
@@ -97,13 +86,72 @@ export default function ImageFullscreen({ src, alt, isVideo = false, onClose }) 
                         loop
                         onClick={(e) => e.stopPropagation()}
                     />
-                ) : (
+                );
+            case 'pdf':
+            case 'html':
+                return (
+                    <iframe
+                        src={src}
+                        title={alt}
+                        className="preview-iframe"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                );
+            case 'image':
+                return (
                     <img
                         src={src}
                         alt={alt || 'Imagen en pantalla completa'}
                         onClick={(e) => e.stopPropagation()}
                     />
-                )}
+                );
+            default: {
+                // Iconos para otros tipos sin preview directo
+                const Icon = type === 'word' ? FaFileWord :
+                    type === 'excel' ? FaFileExcel :
+                        type === 'zip' ? FaFileArchive : FaFileAlt;
+
+                const iconColor = type === 'word' ? '#2b579a' :
+                    type === 'excel' ? '#217346' :
+                        type === 'zip' ? '#fb8c00' : '#94a3b8';
+
+                return (
+                    <div className="no-preview-container" onClick={(e) => e.stopPropagation()}>
+                        <Icon size={120} style={{ color: iconColor }} />
+                        <h3>{alt}</h3>
+                        <p>Previsualización no disponible para este tipo de archivo.</p>
+                        <button className="download-btn" onClick={handleDownload}>
+                            <MdDownload /> Descargar para ver
+                        </button>
+                    </div>
+                );
+            }
+        }
+    };
+
+    return createPortal(
+        <div className="image-fullscreen-overlay" onClick={handleBackdropClick}>
+            {/* Header bar to avoid overlap */}
+            <header className="fullscreen-header">
+                <div className="file-info">
+                    <span className="file-name">{alt}</span>
+                </div>
+                <div className="action-buttons">
+                    <button className="action-btn" onClick={handleCopy} title={copied ? "¡Copiado!" : "Copiar"}>
+                        <MdContentCopy size={22} />
+                        {copied && <span className="tooltip">¡Copiado!</span>}
+                    </button>
+                    <button className="action-btn" onClick={handleDownload} title="Descargar">
+                        <MdDownload size={22} />
+                    </button>
+                    <button className="action-btn close" onClick={onClose} title="Cerrar">
+                        <MdClose size={24} />
+                    </button>
+                </div>
+            </header>
+
+            <div className={`media-container type-${type}`}>
+                {renderMedia()}
             </div>
         </div>,
         document.body

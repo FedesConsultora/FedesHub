@@ -19,6 +19,7 @@ import { useToast } from '../../components/toast/ToastProvider.jsx'
 import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
 import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye } from "react-icons/fi";
+import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt } from 'react-icons/fa';
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -70,6 +71,23 @@ const getFileUrl = (file) => {
   // Fallback a url o drive_url
   return file.url || file.drive_url || null
 }
+
+// Helper para detectar el tipo de archivo
+const getFileType = (file) => {
+  if (!file) return 'other';
+  const mime = (file.mime || file.mimeType || '').toLowerCase();
+  const name = (file.nombre || file.name || file.originalname || '').toLowerCase();
+
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/') || name.match(/\.(mp4|webm|mov|avi)$/)) return 'video';
+  if (mime === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+  if (name.match(/\.(doc|docx)$/) || mime.includes('word')) return 'word';
+  if (name.match(/\.(xls|xlsx)$/) || mime.includes('excel') || mime.includes('spreadsheet')) return 'excel';
+  if (name.match(/\.(zip|rar|7z|tar|gz)$/) || mime.includes('zip') || mime.includes('compressed')) return 'zip';
+  if (name.match(/\.(html|htm)$/) || mime === 'text/html') return 'html';
+
+  return 'other';
+};
 
 // Límite de tamaño de archivo (50GB - se suben a Google Drive)
 const MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024
@@ -993,13 +1011,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                         </div>
                       </div>
                     ))}
-                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                   </div>
                 ) : (
                   <>
                     <div className="spinner"></div>
                     <p>Subiendo archivo...</p>
-                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                   </>
                 )}
               </div>
@@ -1077,18 +1095,33 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
               <div className="raw-files-list">
                 {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
-                  const isVideoFile = file.mime?.startsWith('video/') ||
-                    file.nombre?.toLowerCase().match(/\.(mp4|webm|mov|avi)$/);
+                  const type = getFileType(file);
+                  const Icon = type === 'pdf' ? FaFilePdf :
+                    type === 'word' ? FaFileWord :
+                      type === 'excel' ? FaFileExcel :
+                        type === 'zip' ? FaFileArchive :
+                          type === 'html' ? FaFileCode :
+                            type === 'video' ? FiEye : FaFileAlt;
+
+                  const iconColor = type === 'pdf' ? '#ff3d00' :
+                    type === 'word' ? '#2b579a' :
+                      type === 'excel' ? '#217346' :
+                        type === 'zip' ? '#fb8c00' :
+                          type === 'html' ? '#e44d26' : '#94a3b8';
+
                   return (
                     <div key={file.id} className="raw-file-item">
-                      <span className="file-name">{file.nombre || 'Archivo'}</span>
+                      <div className="file-info-icon">
+                        <Icon style={{ color: iconColor }} />
+                        <span className="file-name">{file.nombre || 'Archivo'}</span>
+                      </div>
                       <div className="file-actions">
                         <button
                           className="view-btn"
                           onClick={() => setRawFullscreen({
                             url: getFileUrl(file),
                             name: file.nombre || 'Archivo',
-                            isVideo: !!isVideoFile
+                            type: type
                           })}
                         >
                           Ver
@@ -1107,7 +1140,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             <ImageFullscreen
               src={rawFullscreen.url}
               alt={rawFullscreen.name}
-              isVideo={rawFullscreen.isVideo}
+              type={rawFullscreen.type}
               onClose={() => setRawFullscreen(null)}
             />
           )}
