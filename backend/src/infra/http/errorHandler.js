@@ -19,6 +19,7 @@ export function errorHandler(err, req, res, _next) {
 
   if (isZodError(err)) {
     payload.validation = err.issues?.map(i => ({ path: i.path, code: i.code, msg: i.message })).slice(0, 50);
+    payload.message = 'Error de validación: ' + err.issues.map(i => i.message).join(', ');
   }
 
   const ctx = {

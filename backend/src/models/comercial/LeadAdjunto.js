@@ -10,6 +10,7 @@ export default (sequelize, DataTypes) => {
         size: { type: DataTypes.BIGINT },
         key: { type: DataTypes.STRING(255), allowNull: false },
         url: { type: DataTypes.STRING(512) },
+        nota_id: { type: DataTypes.INTEGER },
         created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
     }, {

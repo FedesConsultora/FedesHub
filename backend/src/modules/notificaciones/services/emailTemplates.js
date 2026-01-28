@@ -205,6 +205,29 @@ export const templates = {
     <a href="${link}" style="${buttonStyle(colors.warning)}">Ver detalles en FedesHub</a>
   `),
 
+  tarea_recordatorio: ({ tarea, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.primary}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">⏰ Recordatorio de Tarea</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Tenés un recordatorio pendiente</h2>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, rgba(77, 208, 225, 0.1) 0%, rgba(77, 208, 225, 0.05) 100%); border: 1px solid ${colors.primary}33; border-radius: 16px; padding: 24px; margin: 24px 0;">
+      <h3 style="margin: 0 0 16px; font-size: 20px; color: ${colors.text}; font-weight: 700;">${tarea?.titulo || 'Tarea'}</h3>
+      <div style="display: flex; gap: 24px;">
+        <div>
+          <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Cliente</div>
+          <div style="color: ${colors.text}; font-weight: 600;">📋 ${tarea?.cliente?.nombre || 'General'}</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Estado</div>
+          <div style="color: ${colors.primary}; font-weight: 700;">📌 ${tarea?.estado_nombre || 'Pendiente'}</div>
+        </div>
+      </div>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle()}">Abrir Tarea</a>
+  `),
+
   asistencia_recordatorio: ({ feder, link }) => baseLayout(`
     <div style="margin-bottom: 24px;">
       <div style="font-size: 13px; color: ${colors.success}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">⏰ Recordatorio Diario</div>

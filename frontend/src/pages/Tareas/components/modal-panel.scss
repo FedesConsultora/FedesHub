@@ -39,6 +39,11 @@
   z-index: 1010;
   transition: all 0.2s;
   line-height: 1;
+  padding: 0;
+  p {
+    position: relative;
+    bottom: 2.5px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);

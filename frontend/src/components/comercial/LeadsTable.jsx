@@ -1,10 +1,11 @@
 import React from 'react'
 import { format } from 'date-fns'
 import { FiChevronRight, FiUser } from 'react-icons/fi'
+import GlobalLoader from '../loader/GlobalLoader'
 import './LeadsTable.scss'
 
 export default function LeadsTable({ leads = [], loading, onRowClick }) {
-    if (loading) return <div className="leads-loading">Cargando leads...</div>
+    if (loading) return <GlobalLoader size={60} />
 
     return (
         <div className="LeadsTable">
@@ -44,9 +45,27 @@ export default function LeadsTable({ leads = [], loading, onRowClick }) {
                                 <span className="badge-etapa">{lead.etapa?.nombre}</span>
                             </td>
                             <td>
-                                <span className="badge-status" style={{ backgroundColor: lead.status?.color }}>
-                                    {lead.status?.nombre}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className="badge-status" style={{ backgroundColor: lead.status?.color }}>
+                                        {lead.status?.nombre}
+                                    </span>
+                                    {lead.open_tasks_count > 0 && (
+                                        <span
+                                            title={`${lead.open_tasks_count} tareas pendientes`}
+                                            style={{
+                                                fontSize: '0.65rem',
+                                                padding: '2px 6px',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                color: 'rgba(255, 255, 255, 0.6)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                fontWeight: '800'
+                                            }}
+                                        >
+                                            {lead.open_tasks_count}
+                                        </span>
+                                    )}
+                                </div>
                             </td>
                             <td>
                                 <span className="date-cell">

@@ -32,6 +32,7 @@ export default (sequelize, DataTypes) => {
         notif_3d_sent_at: { type: DataTypes.DATE },
         notif_expired_sent_at: { type: DataTypes.DATE },
         cliente_id: { type: DataTypes.INTEGER },
+        presupuesto_ars: { type: DataTypes.DECIMAL(15, 2) },
         created_by_user_id: { type: DataTypes.INTEGER },
         created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

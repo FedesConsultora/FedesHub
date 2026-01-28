@@ -12,7 +12,8 @@ import {
   svcListFederModalidad, svcUpsertFederModalidad, svcBulkSetFederModalidad, svcRemoveFederModalidad, svcOverview,
   svcGetFirmaPerfil, svcUpsertFirmaPerfil,
   svcListBancos, svcCreateBanco, svcUpdateBanco, svcDeleteBanco,
-  svcListEmergencias, svcCreateEmergencia, svcUpdateEmergencia, svcDeleteEmergencia, svcUploadAvatar, svcGetFederByUserId
+  svcListEmergencias, svcCreateEmergencia, svcUpdateEmergencia, svcDeleteEmergencia, svcUploadAvatar, svcGetFederByUserId,
+  svcListFedersWithTaskCounts
 } from '../services/feders.service.js';
 import { z } from 'zod';
 const userIdParam = z.object({ userId: z.coerce.number().int().positive() });
@@ -254,5 +255,11 @@ export const deleteEmergencia = async (req, res, next) => {
     const { federId } = federIdRouteSchema.parse(req.params);
     const { contactoId } = contactoIdParamSchema.parse(req.params);
     res.json(await svcDeleteEmergencia(federId, contactoId));
+  } catch (e) { next(e); }
+};
+
+export const rankFedersByTasks = async (req, res, next) => {
+  try {
+    res.json(await svcListFedersWithTaskCounts());
   } catch (e) { next(e); }
 };

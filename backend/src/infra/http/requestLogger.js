@@ -10,7 +10,8 @@ export function requestLogger(req, res, next) {
   const requestId = req.get('x-request-id') || rid();
   const route = `${req.method} ${req.originalUrl || req.url}`;
   req.requestId = requestId;
-  req.log = makeReqLogger({ requestId, user: req.user || null, route });
+  // Pasamos el objeto req para que el logger pueda leer req.user de forma dinámica en cada log
+  req.log = makeReqLogger({ requestId, req, route });
 
   req.log.info('REQ', {
     ip: req.ip,

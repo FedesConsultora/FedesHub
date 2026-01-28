@@ -211,7 +211,7 @@ export default function AusenciasBoard() {
       title: 'Nueva asignación (solicitud)',
       width: 720,
       render: (close) => (
-        <AllocationForm initDate={initDate} onCancel={() => close(false)} onDone={() => { close(true); board.fetchAll() }} />
+        <AllocationForm initDate={initDate} tipos={board.saldos.tipos} onCancel={() => close(false)} onDone={() => { close(true); board.fetchAll() }} />
       )
     })
   }

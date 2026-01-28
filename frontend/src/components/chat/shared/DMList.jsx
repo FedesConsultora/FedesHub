@@ -18,9 +18,7 @@ export default function DMList({ items = [], selectedId = null, unreadLookup = {
     items.map(u => u.feder_id || u.id_feder).filter(Boolean),
     [items]
   )
-  console.log('[DMList] federIds:', federIds)
   const { statuses } = useAttendanceStatus(federIds)
-  console.log('[DMList] statuses:', statuses)
 
   return (
     <div className="chat-dms">

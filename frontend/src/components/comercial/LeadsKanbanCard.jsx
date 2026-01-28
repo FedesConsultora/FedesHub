@@ -1,6 +1,6 @@
 // /frontend/src/components/comercial/LeadsKanbanCard.jsx
 import React from 'react'
-import { FiUser, FiClock, FiExternalLink } from 'react-icons/fi'
+import { FiUser, FiClock, FiExternalLink, FiCheckCircle } from 'react-icons/fi'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import ContextMenu from '../common/ContextMenu'
@@ -48,6 +48,25 @@ export default function LeadsKanbanCard({ lead, onPointerDown, onClick }) {
                         >
                             {lead.status?.nombre || '—'}
                         </div>
+                        {lead.open_tasks_count > 0 && (
+                            <div
+                                title={`${lead.open_tasks_count} tareas pendientes`}
+                                style={{
+                                    fontSize: '0.65rem',
+                                    padding: '1px 5px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                    color: 'white',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    fontWeight: '800',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                }}
+                            >
+                                <FiCheckCircle style={{ fontSize: '0.7rem' }} /> {lead.open_tasks_count}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -76,6 +95,6 @@ export default function LeadsKanbanCard({ lead, onPointerDown, onClick }) {
                     </div>
                 </div>
             </article>
-        </ContextMenu>
+        </ContextMenu >
     )
 }

@@ -103,6 +103,7 @@ const buildListSQL = (params = {}, currentUser) => {
     tc_objetivo_negocio_id, tc_objetivo_marketing_id, tc_estado_publicacion_id, tc_inamovible,
     // múltiples
     cliente_ids = [], estado_ids = [], etiqueta_ids = [],
+    feder_ids = [],
     // TC specific multi
     tc_red_social_ids = [], tc_formato_ids = [],
     // flags
@@ -297,6 +298,15 @@ const buildListSQL = (params = {}, currentUser) => {
   if (colaborador_feder_id) {
     where.push(`EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:cf)`);
     repl.cf = colaborador_feder_id;
+  }
+
+  if (feder_ids?.length) {
+    const keys = feder_ids.map((_, i) => `fidb${i}`);
+    where.push(`(
+        EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id IN (${keys.map(k => ':' + k).join(',')}))
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id IN (${keys.map(k => ':' + k).join(',')}))
+    )`);
+    keys.forEach((k, i) => { repl[k] = feder_ids[i]; });
   }
 
   // Rangos de fechas

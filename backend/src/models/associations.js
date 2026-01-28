@@ -702,12 +702,48 @@ export const setupAssociations = (m) => {
     m.ComercialLeadAdjunto.belongsTo(m.User, { foreignKey: 'autor_user_id', as: 'autor' })
   );
 
+  link(m.ComercialLeadAdjunto && m.ComercialLeadNota, 'ComercialLeadAdjunto → ComercialLeadNota (nota_id)', () => {
+    m.ComercialLeadAdjunto.belongsTo(m.ComercialLeadNota, { foreignKey: 'nota_id', as: 'nota' });
+    m.ComercialLeadNota.hasMany(m.ComercialLeadAdjunto, { foreignKey: 'nota_id', as: 'adjuntos' });
+  });
+
   link(m.ComercialLead && m.ComercialLeadHistorial, 'ComercialLead ↔ ComercialLeadHistorial', () => {
     m.ComercialLead.hasMany(m.ComercialLeadHistorial, { foreignKey: 'lead_id', as: 'historial' });
     m.ComercialLeadHistorial.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });
   });
   link(m.ComercialLeadHistorial && m.User, 'ComercialLeadHistorial → User (user_id)', () =>
     m.ComercialLeadHistorial.belongsTo(m.User, { foreignKey: 'user_id', as: 'autor' })
+  );
+
+  // New in vNext
+  link(m.ComercialDescuentoCap && m.ComercialEECC, 'ComercialDescuentoCap → ComercialEECC', () =>
+    m.ComercialDescuentoCap.belongsTo(m.ComercialEECC, { foreignKey: 'eecc_id', as: 'eecc' })
+  );
+
+  link(m.ComercialVenta && m.ComercialEECC, 'ComercialVenta → ComercialEECC', () =>
+    m.ComercialVenta.belongsTo(m.ComercialEECC, { foreignKey: 'eecc_id', as: 'eecc' })
+  );
+
+  link(m.ComercialVenta && m.ComercialLead, 'ComercialVenta → ComercialLead', () => {
+    m.ComercialVenta.belongsTo(m.ComercialLead, { foreignKey: 'lead_id', as: 'lead' });
+    m.ComercialLead.hasOne(m.ComercialVenta, { foreignKey: 'lead_id', as: 'venta' });
+  });
+
+  link(m.ComercialVenta && m.ComercialVentaLinea, 'ComercialVenta ↔ ComercialVentaLinea', () => {
+    m.ComercialVenta.hasMany(m.ComercialVentaLinea, { foreignKey: 'venta_id', as: 'lineas' });
+    m.ComercialVentaLinea.belongsTo(m.ComercialVenta, { foreignKey: 'venta_id', as: 'venta' });
+  });
+
+  link(m.ComercialVentaLinea && m.ComercialProducto, 'ComercialVentaLinea → ComercialProducto', () =>
+    m.ComercialVentaLinea.belongsTo(m.ComercialProducto, { foreignKey: 'producto_id', as: 'producto' })
+  );
+
+  link(m.ComercialObjetivoQ && m.ComercialEECC, 'ComercialObjetivoQ → ComercialEECC', () =>
+    m.ComercialObjetivoQ.belongsTo(m.ComercialEECC, { foreignKey: 'eecc_id', as: 'eecc' })
+  );
+
+  link(m.ComercialObjetivoMes && m.ComercialEECC, 'ComercialObjetivoMes → ComercialEECC', () =>
+    m.ComercialObjetivoMes.belongsTo(m.ComercialEECC, { foreignKey: 'eecc_id', as: 'eecc' })
   );
 
 };

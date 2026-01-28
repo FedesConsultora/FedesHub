@@ -25,6 +25,7 @@ export const federsApi = {
   get: (id) => get(`/feders/${id}`),
   getMine: () => get('/feders/self'),
   getByUserId: (userId) => get(`/feders/by-user/${userId}`),
+  getRankingTasks: () => get('/feders/ranking-tasks'),
 
   // ---------- Create (admin)
   create: (payload) => post('/feders', payload),

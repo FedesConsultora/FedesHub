@@ -1,0 +1,133 @@
+.LeadsTrash {
+    padding: 32px;
+    color: white;
+
+    .trash-header {
+        margin-bottom: 32px;
+
+        h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #ef4444;
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+        }
+    }
+
+    .empty-trash-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        color: rgba(255, 255, 255, 0.2);
+        gap: 16px;
+
+        svg {
+            font-size: 3rem;
+        }
+    }
+
+    .trash-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+
+        .trash-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.04);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .lead-info {
+                .top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+
+                    .id {
+                        font-family: monospace;
+                        color: rgba(255, 255, 255, 0.3);
+                        font-size: 0.8rem;
+                    }
+
+                    .status {
+                        font-size: 0.65rem;
+                        font-weight: 800;
+                        text-transform: uppercase;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        color: white;
+                    }
+                }
+
+                .empresa {
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                }
+
+                .meta {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    font-size: 0.85rem;
+                    color: rgba(255, 255, 255, 0.5);
+
+                    span {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                }
+            }
+
+            .actions {
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding-top: 16px;
+
+                .btn-restore {
+                    width: 100%;
+                    padding: 10px;
+                    background: rgba(16, 185, 129, 0.1);
+                    border: 1px solid rgba(16, 185, 129, 0.2);
+                    color: #10b981;
+                    border-radius: 10px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background: #10b981;
+                        color: white;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.trash-loading {
+    padding: 60px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+}

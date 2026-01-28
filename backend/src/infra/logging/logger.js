@@ -36,19 +36,28 @@ function baseLog(level, msg, ctx) {
   console.log(JSON.stringify(line));
 }
 
-export function makeReqLogger({ requestId, user, route }) {
-  const common = { requestId, user_id: user?.id ?? null, feder_id: user?.feder_id ?? user?.feder?.id ?? null, route };
+export function makeReqLogger({ requestId, req, route }) {
+  const getCommon = () => {
+    const user = req?.user || null;
+    return {
+      requestId,
+      user_id: user?.id ?? null,
+      feder_id: user?.feder_id ?? user?.feder?.id ?? null,
+      route
+    };
+  };
+
   return {
-    info:  (msg, ctx={}) => baseLog('info',  msg, { ...common, ...sanitize(ctx) }),
-    warn:  (msg, ctx={}) => baseLog('warn',  msg, { ...common, ...sanitize(ctx) }),
-    error: (msg, ctx={}) => baseLog('error', msg, { ...common, ...sanitize(ctx) }),
-    debug: (msg, ctx={}) => baseLog('debug', msg, { ...common, ...sanitize(ctx) }),
+    info: (msg, ctx = {}) => baseLog('info', msg, { ...getCommon(), ...sanitize(ctx) }),
+    warn: (msg, ctx = {}) => baseLog('warn', msg, { ...getCommon(), ...sanitize(ctx) }),
+    error: (msg, ctx = {}) => baseLog('error', msg, { ...getCommon(), ...sanitize(ctx) }),
+    debug: (msg, ctx = {}) => baseLog('debug', msg, { ...getCommon(), ...sanitize(ctx) }),
   };
 }
 
 export const log = {
-  info:  (msg, ctx={}) => baseLog('info',  msg, sanitize(ctx)),
-  warn:  (msg, ctx={}) => baseLog('warn',  msg, sanitize(ctx)),
-  error: (msg, ctx={}) => baseLog('error', msg, sanitize(ctx)),
-  debug: (msg, ctx={}) => baseLog('debug', msg, sanitize(ctx)),
+  info: (msg, ctx = {}) => baseLog('info', msg, sanitize(ctx)),
+  warn: (msg, ctx = {}) => baseLog('warn', msg, sanitize(ctx)),
+  error: (msg, ctx = {}) => baseLog('error', msg, sanitize(ctx)),
+  debug: (msg, ctx = {}) => baseLog('debug', msg, sanitize(ctx)),
 };

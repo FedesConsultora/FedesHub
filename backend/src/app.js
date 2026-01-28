@@ -39,8 +39,17 @@ app.use('/uploads', express.static(uploadsDir, {
 // También servimos la carpeta public (donde están los avatars)
 app.use(express.static(path.resolve('public')))
 
-// seguridad básica
-app.use(helmet());
+// seguridad básica - relajamos políticas para permitir servir imágenes/archivos correctamente
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "blob:", "https:", "http:"],
+      "media-src": ["'self'", "data:", "blob:", "https:", "http:"],
+    },
+  },
+}));
 
 // body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
 app.use(express.json({ limit: '50gb' }));

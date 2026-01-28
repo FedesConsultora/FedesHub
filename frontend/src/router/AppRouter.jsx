@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import PrivateRoute from '../components/guards/PrivateRoute.jsx'
 import PublicRoute from '../components/guards/PublicRoute.jsx'
 import RequirePerm from '../components/guards/RequirePerm.jsx'
+import RequireDirectivo from '../components/guards/RequireDirectivo.jsx'
 import AppLayout from '../layouts/AppLayout.jsx'
 
 // Pages
@@ -15,6 +16,7 @@ import Users from '../pages/Admin/Users.jsx'
 import Roles from '../pages/Admin/Roles.jsx'
 import AdminCargos from '../pages/Admin/Cargos.jsx'
 import AdminCatalogos from '../pages/Admin/Catalogos.jsx'
+import AdminComercial from '../pages/Admin/Comercial/AdminComercial.jsx'
 import RoleDetail from '../pages/Admin/RoleDetail.jsx'
 import Diag from '../pages/Diag.jsx'
 import TasksPage from '../pages/Tareas/TasksPage.jsx'
@@ -33,6 +35,7 @@ import AusenciasPage from '../pages/Ausencias/AusenciasPage.jsx'
 import CalendarioPage from '../pages/Calendario/CalendarioPage.jsx'
 import LeadsPage from '../pages/Comercial/LeadsPage.jsx'
 import LeadDetailPage from '../pages/Comercial/LeadDetailPage.jsx'
+import OnboardingListPage from '../pages/Onboarding/OnboardingListPage.jsx'
 
 import NotificacionesTabs from '../pages/Notificaciones/NotificacionesTabs.jsx'
 import NotifListPage from '../pages/Notificaciones/NotifListPage.jsx'
@@ -110,8 +113,10 @@ export default function AppRouter() {
           />
 
 
-          <Route path="/comercial/leads" element={<RequirePerm modulo="comercial" accion="read"><LeadsPage /></RequirePerm>} />
-          <Route path="/comercial/leads/:id" element={<RequirePerm modulo="comercial" accion="read"><LeadDetailPage /></RequirePerm>} />
+          <Route path="/comercial/leads" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadsPage /></RequirePerm></RequireDirectivo>} />
+          <Route path="/comercial/leads/:id" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><LeadDetailPage /></RequirePerm></RequireDirectivo>} />
+
+          <Route path="/onboarding" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="read"><OnboardingListPage /></RequirePerm></RequireDirectivo>} />
 
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />
@@ -124,6 +129,7 @@ export default function AppRouter() {
             <Route path="roles/:id" element={<RoleDetail />} />
             <Route path="cargos" element={<RequirePerm modulo="cargos" accion="read"><AdminCargos /></RequirePerm>} />
             <Route path="catalogos" element={<RequirePerm modulo="auth" accion="assign"><AdminCatalogos /></RequirePerm>} />
+            <Route path="comercial" element={<RequireDirectivo><RequirePerm modulo="comercial" accion="admin"><AdminComercial /></RequirePerm></RequireDirectivo>} />
           </Route>
         </Route>
       </Route>

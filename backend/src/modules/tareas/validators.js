@@ -39,6 +39,7 @@ export const listTasksQuerySchema = z.object({
   cliente_ids: z.array(intId).optional(),
   estado_ids: z.array(intId).optional(),
   etiqueta_ids: z.array(intId).optional(),
+  feder_ids: z.preprocess(v => Array.isArray(v) ? v : (v ? [v] : []), z.array(intId)).optional(),
 
   // flags
   solo_mias: boolish,

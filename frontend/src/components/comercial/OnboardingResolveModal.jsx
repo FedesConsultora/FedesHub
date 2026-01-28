@@ -1,8 +1,10 @@
 // frontend/src/components/comercial/OnboardingResolveModal.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { comercialApi } from '../../api/comercial.js'
 import { useToast } from '../toast/ToastProvider'
-import { FiX, FiCheckCircle, FiXCircle, FiCalendar } from 'react-icons/fi'
+import { FiX, FiCheckCircle, FiXCircle, FiCalendar, FiClock } from 'react-icons/fi'
+import CustomSelect from '../common/CustomSelect.jsx'
 import './OnboardingResolveModal.scss'
 
 export default function OnboardingResolveModal({ lead, onClose, onResolved }) {
@@ -40,66 +42,108 @@ export default function OnboardingResolveModal({ lead, onClose, onResolved }) {
         }
     }
 
-    return (
-        <div className="OnboardingResolveModal modal-overlay">
-            <div className="modal-content card">
-                <header>
-                    <h2>Resolver Onboarding Vencido</h2>
+    return createPortal(
+        <div className="OnboardingResolveModal modal-overlay" onClick={(e) => e.target.classList.contains('modal-overlay') && onClose()}>
+            <div className="modal-content-card" onClick={e => e.stopPropagation()}>
+                <header className="modal-header">
+                    <div className="brand">
+                        <div className="logo-icon">
+                            <FiClock />
+                        </div>
+                        <h2>Resolver Onboarding</h2>
+                    </div>
                     <button className="close-btn" onClick={onClose}><FiX /></button>
                 </header>
 
-                <div className="modal-body">
-                    <p>El periodo de onboarding para <strong>{lead.empresa || lead.nombre}</strong> ha vencido. ¿Cómo procedemos?</p>
+                <div className="modal-scroll-body">
+                    <p className="intro-text">Gestión de onboarding para <strong>{lead.empresa || lead.nombre}</strong>. ¿Cómo deseás proceder?</p>
 
-                    <div className="decision-tabs">
-                        <button className={decision === 'si' ? 'active si' : ''} onClick={() => setDecision('si')}>
-                            <FiCheckCircle /> Convertir a Cliente
+                    <div className="decision-chips">
+                        <button
+                            className={`decision-chip si ${decision === 'si' ? 'active' : ''}`}
+                            onClick={() => setDecision('si')}
+                        >
+                            <FiCheckCircle />
+                            <span>Convertir a Cliente</span>
                         </button>
-                        <button className={decision === 'extender' ? 'active extender' : ''} onClick={() => setDecision('extender')}>
-                            <FiCalendar /> Extender Plazo
+                        <button
+                            className={`decision-chip extender ${decision === 'extender' ? 'active' : ''}`}
+                            onClick={() => setDecision('extender')}
+                        >
+                            <FiCalendar />
+                            <span>Extender Plazo</span>
                         </button>
-                        <button className={decision === 'no' ? 'active no' : ''} onClick={() => setDecision('no')}>
-                            <FiXCircle /> Perder Post-Onboarding
+                        <button
+                            className={`decision-chip no ${decision === 'no' ? 'active' : ''}`}
+                            onClick={() => setDecision('no')}
+                        >
+                            <FiXCircle />
+                            <span>Perder Post-Onboarding</span>
                         </button>
                     </div>
 
                     <div className="decision-content mt24">
                         {decision === 'si' && (
-                            <p className="hint">Se creará el registro de cliente y se archivará este lead.</p>
+                            <div className="hint-box">
+                                <FiCheckCircle className="hint-icon" />
+                                <p>Se creará el registro de cliente y se archivará este lead automáticamente.</p>
+                            </div>
                         )}
 
                         {decision === 'extender' && (
-                            <div className="field">
-                                <label>Nueva fecha de vencimiento</label>
-                                <input type="date" value={newDueAt} onChange={e => setNewDueAt(e.target.value)} />
+                            <div className="field-group">
+                                <label htmlFor="new-due-date" className="field-label">Nueva fecha de vencimiento</label>
+                                <div className="custom-input-wrapper">
+                                    <FiCalendar className="input-icon" />
+                                    <input
+                                        id="new-due-date"
+                                        name="new_due_at"
+                                        type="date"
+                                        className="custom-input"
+                                        value={newDueAt}
+                                        onChange={e => setNewDueAt(e.target.value)}
+                                    />
+                                </div>
                             </div>
                         )}
 
                         {decision === 'no' && (
-                            <div className="lose-fields">
-                                <div className="field">
-                                    <label>Motivo de Pérdida</label>
-                                    <select value={motivoId} onChange={e => setMotivoId(e.target.value)}>
-                                        <option value="">Seleccionar motivo...</option>
-                                        {catalog.motivosPerdida.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-                                    </select>
+                            <div className="lose-fields-group">
+                                <div className="field-group">
+                                    <label className="field-label">Motivo de Pérdida</label>
+                                    <CustomSelect
+                                        options={catalog.motivosPerdida.map(m => ({ value: String(m.id), label: m.nombre }))}
+                                        value={motivoId ? [String(motivoId)] : []}
+                                        onChange={(next) => setMotivoId(next[0])}
+                                        multi={false}
+                                        placeholder="Seleccionar motivo..."
+                                    />
                                 </div>
-                                <div className="field mt16">
-                                    <label>Comentarios</label>
-                                    <textarea rows={3} value={comentario} onChange={e => setComentario(e.target.value)} />
+                                <div className="field-group mt16">
+                                    <label htmlFor="lose-comment" className="field-label">Comentarios</label>
+                                    <textarea
+                                        id="lose-comment"
+                                        name="comentario"
+                                        className="custom-textarea"
+                                        rows={3}
+                                        value={comentario}
+                                        onChange={e => setComentario(e.target.value)}
+                                        placeholder="Explicación breve de la pérdida..."
+                                    />
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="actions">
-                    <button className="btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button className={`btn-confirm ${decision}`} onClick={handleResolve} disabled={saving}>
+                <div className="modal-actions">
+                    <button className="btn-secondary" onClick={onClose}>Cancelar</button>
+                    <button className={`btn-confirm-resolve ${decision}`} onClick={handleResolve} disabled={saving}>
                         {saving ? 'Guardando...' : 'Confirmar Decisión'}
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

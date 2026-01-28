@@ -116,6 +116,15 @@ export default function LeadsFilters({ value, catalog, onChange }) {
                                     {catalog.fuentes?.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
                                 </select>
                             </Field>
+
+                            <Field label="Responsable">
+                                <select value={v.responsable_feder_id ?? ''} onChange={e => upd({ responsable_feder_id: e.target.value })}>
+                                    <option value="">Todos los responsables</option>
+                                    {catalog.feders?.map(f => (
+                                        <option key={f.id} value={f.id}>{f.nombre}</option>
+                                    ))}
+                                </select>
+                            </Field>
                         </div>
                     </div>
 

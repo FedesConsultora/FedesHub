@@ -41,10 +41,41 @@ export const updateLead = async (req, res) => {
     }
 };
 
+export const deleteLead = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await leadSvc.svcDeleteLead(req.params.id, userId);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const listTrash = async (req, res) => {
+    try {
+        const data = await leadSvc.svcListTrash();
+        res.json(data);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const restoreLead = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await leadSvc.svcRestoreLead(req.params.id, userId);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const addNota = async (req, res) => {
     try {
         const userId = req.user.id;
-        const data = await leadSvc.svcAddNota(req.params.id, req.body.contenido, userId);
+        const { contenido } = req.body;
+        const files = req.files || []; // Viene de multer .any() o .array()
+        const data = await leadSvc.svcAddNota(req.params.id, contenido, userId, files);
         res.status(201).json(data);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -88,7 +119,17 @@ export const importLeads = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
         const userId = req.user.id;
-        const result = await svcImportLeads(req.file.buffer, userId);
+
+        let mapping = null;
+        if (req.body.mapping) {
+            try {
+                mapping = JSON.parse(req.body.mapping);
+            } catch (e) {
+                console.error("Error parsing import mapping:", e);
+            }
+        }
+
+        const result = await svcImportLeads(req.file.buffer, userId, mapping);
         res.json(result);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -99,6 +140,15 @@ export const getCatalogs = async (req, res) => {
     try {
         const catalogs = await leadSvc.svcGetCatalogs();
         res.json(catalogs);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const listOnboarding = async (req, res) => {
+    try {
+        const data = await leadSvc.svcListOnboarding(req.query);
+        res.json(data);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

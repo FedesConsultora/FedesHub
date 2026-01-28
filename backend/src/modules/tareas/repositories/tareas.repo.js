@@ -48,6 +48,7 @@ export const buildListSQL = (params = {}, currentUser) => {
     etiqueta_id, impacto_id, urgencia_id, aprobacion_estado_id,
     // múltiples
     cliente_ids = [], estado_ids = [], etiqueta_ids = [],
+    feder_ids = [],
     // flags
     solo_mias, include_archivadas, include_finalizadas, is_favorita, is_seguidor,
     // fechas
@@ -191,6 +192,15 @@ export const buildListSQL = (params = {}, currentUser) => {
   if (colaborador_feder_id) {
     where.push(`EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:cf)`);
     repl.cf = colaborador_feder_id;
+  }
+
+  if (feder_ids?.length) {
+    const keys = feder_ids.map((_, i) => `fidb${i}`);
+    where.push(`(
+        EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id IN (${keys.map(k => ':' + k).join(',')}))
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id IN (${keys.map(k => ':' + k).join(',')}))
+    )`);
+    keys.forEach((k, i) => { repl[k] = feder_ids[i]; });
   }
 
   // Rangos de fechas

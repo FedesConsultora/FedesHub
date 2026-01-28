@@ -1,0 +1,528 @@
+@use '../../styles/variables' as v;
+
+.ComercialDashboards {
+    margin-bottom: 30px;
+
+    &.loading {
+        padding: 40px;
+        text-align: center;
+        color: v.$fh-muted;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 20px;
+    }
+
+    padding: 16px 24px;
+    padding-bottom: 0;
+
+    .dash-header,
+    .dash-grid {
+        max-width: 1540px;
+        margin: 0 auto;
+    }
+
+    .dash-header {
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+        .title {
+            h2 {
+                margin: 0;
+                font-size: 1.3rem;
+                font-weight: 850;
+                color: white;
+                letter-spacing: -0.5px;
+            }
+
+            p {
+                margin: 0;
+                color: v.$fh-muted;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+        }
+
+        .right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-eecc,
+        .btn-toggle-dash {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            @media (max-width: 600px) {
+                .txt {
+                    display: none;
+                }
+
+                padding: 10px;
+            }
+        }
+
+        .btn-eecc {
+            background: v.$fh-primary;
+            border-color: v.$fh-primary;
+            box-shadow: 0 4px 12px rgba(v.$fh-primary, 0.2);
+
+            &:hover {
+                filter: brightness(1.1);
+            }
+        }
+    }
+
+    .dash-empty-notice {
+        background: rgba(v.$fh-warning, 0.1);
+        border: 1px solid rgba(v.$fh-warning, 0.2);
+        color: v.$fh-warning;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-weight: 600;
+
+        svg {
+            font-size: 1.5rem;
+        }
+    }
+
+    .dash-grid {
+        display: grid;
+        grid-template-columns: 0.8fr 0.9fr 1.15fr 1.15fr;
+        gap: 12px;
+
+        @media (max-width: 1400px) {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 1200px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .dash-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 16px;
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+
+        header {
+            margin-bottom: 12px;
+
+            h3 {
+                margin: 0;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: v.$fh-muted;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                svg {
+                    color: v.$fh-primary;
+                }
+            }
+        }
+    }
+
+    // 1. Pipeline List
+    .pipeline-list {
+        .pipeline-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .pipeline-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: rgba(255, 255, 255, 0.02);
+                padding: 8px 12px;
+                border-radius: 10px;
+                font-size: 0.8rem;
+                border: 1px solid rgba(255, 255, 255, 0.03);
+
+                .status-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                }
+
+                .name {
+                    flex: 1;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-weight: 600;
+                }
+
+                .val {
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    font-weight: 800;
+                    font-size: 0.75rem;
+                }
+            }
+        }
+    }
+
+    // 2. Gauge V2
+    .gauge-v2 {
+        .gauge-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gauge-meter {
+            position: relative;
+            width: 220px; // Increased for better visibility
+            margin: 0 auto 15px;
+
+            svg {
+                width: 100%;
+                height: auto;
+
+                path {
+                    fill: none;
+                    stroke-width: 8;
+                    stroke-linecap: round;
+
+                    &.meter-bg {
+                        stroke: rgba(255, 255, 255, 0.05);
+                    }
+
+                    &.meter-fill {
+                        stroke: v.$fh-primary;
+                        transition: stroke-dashoffset 1s ease-out;
+                    }
+                }
+            }
+
+            .gauge-val {
+                position: absolute;
+                bottom: 15px; // Move number further up into the arc
+                left: 0;
+                right: 0;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+
+                .percent {
+                    font-size: 2rem; // Much bigger for the 220px container
+                    font-weight: 900;
+                    color: white;
+                    line-height: 1.1;
+                    letter-spacing: -1px;
+                }
+
+                .lbl {
+                    font-size: 0.75rem;
+                    color: v.$fh-muted;
+                    font-weight: 700;
+                    margin-top: 2px;
+                }
+            }
+        }
+
+        .gauge-footer {
+            width: 100%;
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+            label {
+                display: block;
+                font-size: 0.7rem;
+                color: v.$fh-muted;
+                margin-bottom: 2px;
+            }
+
+            strong {
+                font-size: 1.1rem;
+                color: v.$fh-primary;
+            }
+        }
+    }
+
+    // 3. Monthly Bars
+    .monthly-bars {
+        .bars-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .bar-row {
+                .bar-meta {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.75rem;
+                    margin-bottom: 6px;
+
+                    label {
+                        color: v.$fh-muted;
+                        font-weight: 800;
+                        flex: 1;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        margin-right: 8px;
+                    }
+
+                    span {
+                        color: rgba(255, 255, 255, 0.9);
+                        font-weight: 700;
+                        font-family: monospace;
+                        font-size: 0.7rem;
+                    }
+                }
+
+                .bar-progress {
+                    height: 8px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 4px;
+                    overflow: hidden;
+
+                    .fill {
+                        height: 100%;
+                        background: #ffab00;
+                        border-radius: 4px;
+                        transition: width 0.6s ease;
+                    }
+                }
+            }
+        }
+    }
+
+    .historical-sales {
+        grid-column: 1 / -1;
+        margin-top: 24px;
+
+        .history-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 140px;
+            padding: 20px 40px 10px;
+            gap: 20px;
+
+            .chart-col {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+
+                .bar-container {
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.03);
+                    border-radius: 6px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
+                    position: relative;
+                    overflow: visible;
+
+                    .bar-val {
+                        position: absolute;
+                        top: -20px;
+                        width: 100%;
+                        text-align: center;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: var(--fh-text-sec);
+                    }
+
+                    .bar-fill {
+                        width: 100%;
+                        background: linear-gradient(to top, #ffab00, #ffc400);
+                        border-top-left-radius: 6px;
+                        border-top-right-radius: 6px;
+                        transition: height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                        min-height: 2px;
+                    }
+                }
+
+                .bar-label {
+                    font-size: 0.75rem;
+                    color: var(--fh-text-sec);
+                    font-weight: 600;
+                    text-transform: capitalize;
+                }
+            }
+        }
+    }
+
+    // 4. Q Summary
+    .q-summary {
+        .summary-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+
+            .summary-item {
+                .label-row {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+
+                    label {
+                        color: v.$fh-muted;
+                    }
+
+                    span {
+                        color: white;
+                    }
+                }
+
+                .bar-bg {
+                    height: 12px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 6px;
+                    overflow: hidden;
+
+                    .bar-fill {
+                        height: 100%;
+                        border-radius: 6px;
+                        transition: width 1s ease-out;
+
+                        &.pac {
+                            background: #60a5fa;
+                        }
+
+                        &.bon {
+                            background: #f87171;
+                        }
+
+                        &.net {
+                            background: #4ade80;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Facturación Q (Redesigned)
+    .facturacion-q {
+        .summary-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-top: 10px;
+
+            .main-stat {
+                label {
+                    display: block;
+                    font-size: 0.7rem;
+                    color: v.$fh-muted;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .value-row {
+                    display: flex;
+                    flex-wrap: wrap; // Added to handle long numbers better
+                    align-items: baseline;
+                    gap: 6px;
+                    margin-bottom: 8px;
+
+                    .actual {
+                        font-size: 1.3rem;
+                        font-weight: 900;
+                        color: v.$fh-success;
+                    }
+
+                    .separator {
+                        color: rgba(255, 255, 255, 0.2);
+                        font-size: 1.0rem;
+                    }
+
+                    .total {
+                        font-size: 0.9rem;
+                        color: rgba(255, 255, 255, 0.4);
+                        font-weight: 700;
+                    }
+                }
+
+                .progress-bar-minimal {
+                    height: 6px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 10px;
+                    overflow: hidden;
+
+                    .fill {
+                        height: 100%;
+                        background: v.$fh-success;
+                        border-radius: 10px;
+                        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+                }
+            }
+
+            .footer-stats {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding-top: 16px;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+                .stat-sm {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+
+                    label {
+                        font-size: 0.6rem;
+                        color: v.$fh-muted;
+                        text-transform: uppercase;
+                    }
+
+                    strong {
+                        font-size: 0.9rem;
+                        color: rgba(255, 255, 255, 0.8);
+
+                        &.bon-val {
+                            color: v.$fh-danger;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

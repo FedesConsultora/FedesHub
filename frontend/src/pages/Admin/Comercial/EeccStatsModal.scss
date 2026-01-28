@@ -1,0 +1,261 @@
+@use '../../../styles/variables' as v;
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.EeccStatsModal {
+    .modal-content-card {
+        width: 95%;
+        max-width: 900px;
+        background: #161d26;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        animation: modalAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                background: rgba(v.$fh-primary, 0.1);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: v.$fh-primary;
+                font-size: 1.4rem;
+            }
+
+            h2 {
+                margin: 0;
+                font-size: 1.25rem;
+                font-weight: 800;
+                color: white;
+            }
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: v.$fh-muted;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+
+            &:hover {
+                background: rgba(248, 113, 113, 0.1);
+                color: #f87171;
+            }
+        }
+    }
+
+    .modal-scroll-body {
+        padding: 24px;
+        overflow-y: auto;
+    }
+
+    .eecc-analytics {
+        padding: 10px 0;
+    }
+
+    .chart-container {
+        display: flex;
+        gap: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 40px;
+        position: relative;
+    }
+
+    .chart-y-axis {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: v.$fh-muted;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding-bottom: 40px;
+    }
+
+    .stacked-bars {
+        flex: 1;
+        height: 350px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        gap: 20px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 10px;
+
+        .q-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            max-width: 80px;
+
+            .bar-area {
+                flex: 1;
+                width: 100%;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+            }
+
+            .bar-stack {
+                width: 100%;
+                height: 100%; // Critical: allows percentage-based children to have height
+                display: flex;
+                flex-direction: column-reverse;
+                justify-content: flex-start;
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 8px 8px 0 0;
+                overflow: hidden;
+                z-index: 1;
+
+                .segment {
+                    width: 100%;
+                    transition: all 0.3s;
+                    cursor: pointer;
+
+                    &.net {
+                        background: #4ade80; // Green for Result
+                    }
+
+                    &.bon {
+                        background: #f87171; // Red for BON
+                    }
+
+                    &:hover {
+                        filter: brightness(1.2);
+                        transform: scaleX(1.1);
+                    }
+                }
+            }
+
+            .objective-dot {
+                position: absolute;
+                left: 50%;
+                transform: translate(-50%, 50%);
+                width: 12px;
+                height: 12px;
+                background: white;
+                border: 3px solid v.$fh-primary;
+                border-radius: 50%;
+                z-index: 10;
+                box-shadow: 0 0 10px rgba(v.$fh-primary, 0.5);
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    left: -50px;
+                    right: -50px;
+                    top: 50%;
+                    height: 1px;
+                    background: rgba(v.$fh-primary, 0.2);
+                    z-index: -1;
+                    pointer-events: none;
+                }
+            }
+
+            .q-label {
+                margin-top: 20px;
+                font-weight: 800;
+                color: v.$fh-muted;
+                font-size: 0.9rem;
+            }
+        }
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        margin-top: 40px;
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: v.$fh-muted;
+
+            .box {
+                width: 16px;
+                height: 16px;
+                border-radius: 4px;
+
+                &.net {
+                    background: #4ade80;
+                }
+
+                &.bon {
+                    background: #f87171;
+                }
+            }
+
+            .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: white;
+                border: 3px solid v.$fh-primary;
+            }
+        }
+    }
+
+    .loading-state {
+        padding: 80px;
+        text-align: center;
+        color: v.$fh-muted;
+        font-size: 1.1rem;
+    }
+}
