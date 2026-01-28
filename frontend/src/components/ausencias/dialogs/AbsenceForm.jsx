@@ -9,10 +9,10 @@ const two = n => String(n).padStart(2, '0')
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}` }
 const WORKDAY_HOURS = Number(import.meta.env.VITE_WORKDAY_HOURS || 8)
 
-export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipos = [], saldos = [], canApprove = false, editingItem = null }) {
+export default function AbsenceForm({ onCancel, onCreated, initDate = null, initHasta = null, tipos = [], saldos = [], canApprove = false, editingItem = null }) {
   const [tipoId, setTipoId] = useState(editingItem?.tipo_id || '')
   const [desde, setDesde] = useState(editingItem?.fecha_desde || initDate || today())
-  const [hasta, setHasta] = useState(editingItem?.fecha_hasta || initDate || today())
+  const [hasta, setHasta] = useState(editingItem?.fecha_hasta || initHasta || initDate || today())
   const [medio, setMedio] = useState(editingItem?.es_medio_dia || false)
   const [mitad, setMitad] = useState(editingItem?.mitad_dia_id || 1)
   const [horas, setHoras] = useState(editingItem?.duracion_horas || '')
@@ -64,9 +64,17 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, tipo
     if (!tipo) return 0
     if (unidad === 'hora') return horas ? Number(horas) : calculatedHoras
     if (medio) return 0.5
-    const d1 = new Date(desde + 'T00:00:00'), d2 = new Date(hasta + 'T00:00:00')
-    const days = Math.floor((d2 - d1) / 86400000) + 1
-    return isNaN(days) ? 0 : days
+
+    // Contar días hábiles (excluir fines de semana)
+    let count = 0
+    let cur = new Date(desde + 'T00:00:00')
+    const last = new Date(hasta + 'T00:00:00')
+    while (cur <= last) {
+      const wd = cur.getDay()
+      if (wd !== 0 && wd !== 6) count++
+      cur.setDate(cur.getDate() + 1)
+    }
+    return count
   }
   function estimateHours() {
     if (unidad !== 'hora') return 0

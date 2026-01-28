@@ -163,7 +163,14 @@ export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
       SELECT feder_id, tipo_id,
         SUM(CASE
           WHEN u2.codigo = 'dia' THEN
-            CASE WHEN a.es_medio_dia THEN 0.5 ELSE (a.fecha_hasta - a.fecha_desde + 1) END
+            CASE 
+              WHEN a.es_medio_dia THEN 0.5 
+              ELSE (
+                SELECT count(*) 
+                FROM generate_series(a.fecha_desde::date, a.fecha_hasta::date, '1 day'::interval) d 
+                WHERE extract(dow from d) NOT IN (0, 6)
+              )
+            END
           ELSE
             COALESCE(a.duracion_horas, 0)
         END) AS planificado

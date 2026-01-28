@@ -164,7 +164,7 @@ export default function AusenciasBoard() {
   )
 
   // ---- abrir formularios con el Provider
-  const openNewAbs = (dateStr = null) => {
+  const openNewAbs = (dateStr = null, initHasta = null) => {
     modal.open({
       title: 'Nueva ausencia',
       width: 720,
@@ -177,12 +177,17 @@ export default function AusenciasBoard() {
             setTimeout(() => openDay(row.fecha_desde), 100)
           }}
           initDate={dateStr}
+          initHasta={initHasta}
           tipos={board.saldos.tipos}
           saldos={board.saldos.saldos}
           canApprove={canApprove}
         />
       )
     })
+  }
+
+  const openRangeAbs = (start, end) => {
+    openNewAbs(start, end)
   }
 
   const openEditAbs = (item) => {
@@ -353,6 +358,7 @@ export default function AusenciasBoard() {
             setMonthIdx={board.setMonthIdx}
             byDate={filteredByDate}
             onDayClick={openDay}
+            onRangeSelect={openRangeAbs}
           />
         ) : (
           <MonthCalendar
@@ -360,6 +366,7 @@ export default function AusenciasBoard() {
             month={monthIdx}
             rows={filteredRows}
             onDayClick={openDay}
+            onRangeSelect={openRangeAbs}
             onPrev={() => {
               if (monthIdx === 0) { setYear(y => y - 1); setMonthIdx(11); }
               else { setMonthIdx(m => m - 1); }

@@ -1,11 +1,13 @@
-// src/components/ausencias/MonthCalendar.jsx
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import './MonthCalendar.scss'
 
 const two = n => String(n).padStart(2, '0')
 
-export default function MonthCalendar({ year, month, rows = [], onDayClick, onPrev, onNext }) {
+export default function MonthCalendar({ year, month, rows = [], onDayClick, onPrev, onNext, onRangeSelect }) {
+  const [dragStart, setDragStart] = useState(null)
+  const [dragEnd, setDragEnd] = useState(null)
+
   const first = new Date(year, month, 1)
   const startWeekDay = (first.getDay() + 6) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -34,8 +36,43 @@ export default function MonthCalendar({ year, month, rows = [], onDayClick, onPr
   const label = ((str) => str.charAt(0).toUpperCase() + str.slice(1))(new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }))
   const today = new Date(); const todayStr = `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`
 
+  const isSelected = (dateStr) => {
+    if (!dragStart || !dragEnd) return false
+    const d = new Date(dateStr + 'T00:00:00')
+    const s = new Date(dragStart + 'T00:00:00')
+    const e = new Date(dragEnd + 'T00:00:00')
+    const min = s < e ? s : e
+    const max = s < e ? e : s
+    return d >= min && d <= max
+  }
+
+  const handleMouseDown = (dateStr) => {
+    setDragStart(dateStr)
+    setDragEnd(dateStr)
+  }
+
+  const handleMouseEnter = (dateStr) => {
+    if (dragStart) setDragEnd(dateStr)
+  }
+
+  const handleMouseUp = () => {
+    if (dragStart && dragEnd) {
+      if (dragStart === dragEnd) {
+        onDayClick?.(dragStart)
+      } else {
+        const s = new Date(dragStart + 'T00:00:00')
+        const e = new Date(dragEnd + 'T00:00:00')
+        const minDate = s < e ? dragStart : dragEnd
+        const maxDate = s < e ? dragEnd : dragStart
+        onRangeSelect?.(minDate, maxDate)
+      }
+    }
+    setDragStart(null)
+    setDragEnd(null)
+  }
+
   return (
-    <div className="aus-month-container">
+    <div className="aus-month-container" onMouseLeave={() => { setDragStart(null); setDragEnd(null) }}>
       <button className="nav-btn prev" onClick={onPrev} title="Mes anterior"><FaChevronLeft /></button>
 
       <div className="aus-month-view">
@@ -53,11 +90,15 @@ export default function MonthCalendar({ year, month, rows = [], onDayClick, onPr
             const wd = new Date(year, month, d).getDay()
             const weekend = (wd === 0 || wd === 6)
             const isToday = (dateStr === todayStr)
+            const selected = isSelected(dateStr)
+
             return (
               <button
-                className={`day ${items.length ? 'busy' : ''} ${pendientes.length ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''}`}
+                className={`day ${items.length ? 'busy' : ''} ${pendientes.length ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''}`}
                 key={idx}
-                onClick={() => onDayClick?.(dateStr)}
+                onMouseDown={() => handleMouseDown(dateStr)}
+                onMouseEnter={() => handleMouseEnter(dateStr)}
+                onMouseUp={handleMouseUp}
                 title={`${items.length || 0} ausencias`}
               >
                 <span className="num">{d}</span>

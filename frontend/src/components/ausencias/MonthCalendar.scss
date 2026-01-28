@@ -110,6 +110,13 @@
       border-color: rgba(251, 191, 36, 0.4);
     }
 
+    &.selected {
+      background: rgba($fh-accent, 0.2) !important;
+      border-color: rgba($fh-accent, 0.9) !important;
+      box-shadow: 0 0 10px rgba($fh-accent, 0.4);
+      z-index: 5;
+    }
+
     .num {
       font-size: 0.85rem;
       font-weight: 600;
