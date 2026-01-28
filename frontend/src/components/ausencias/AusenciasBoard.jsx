@@ -132,7 +132,7 @@ export default function AusenciasBoard() {
       const amt = normalizeAmount(row, WORKDAY_HOURS)
       const val = b.unidad_codigo === 'hora' ? amt.horas : amt.dias
       if (row.estado_codigo === 'aprobada') b.approved += val
-      else if (row.estado_codigo === 'pendiente' && row.fecha_desde >= today) b.planned += val
+      else if (row.estado_codigo === 'pendiente') b.planned += val
       map.set(row.tipo_id, b)
     }
     return Array.from(map.values())

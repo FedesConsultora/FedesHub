@@ -145,9 +145,10 @@ export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
   const sql = `
     SELECT
       t.id AS tipo_id, t.codigo AS tipo_codigo, t.nombre AS tipo_nombre, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo,
-      COALESCE(SUM(c.cantidad_total),0) AS asignado,
-      COALESCE(SUM(cc.consumido),0) AS consumido,
-      COALESCE(SUM(c.cantidad_total),0) - COALESCE(SUM(cc.consumido),0) AS disponible
+      COALESCE(SUM(c.cantidad_total), 0) AS asignado,
+      COALESCE(SUM(cc.consumido), 0) AS consumido,
+      COALESCE(p.planificado, 0) AS planificado,
+      COALESCE(SUM(c.cantidad_total), 0) - COALESCE(SUM(cc.consumido), 0) - COALESCE(p.planificado, 0) AS disponible
     FROM "AusenciaTipo" t
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     LEFT JOIN "AusenciaCuota" c
@@ -158,7 +159,22 @@ export const saldoPorTipo = async ({ feder_id, fecha = null }) => {
       FROM "AusenciaCuotaConsumo"
       GROUP BY cuota_id
     ) cc ON cc.cuota_id = c.id
-    GROUP BY t.id, t.codigo, t.nombre, t.icon, t.color, u.codigo
+    LEFT JOIN (
+      SELECT feder_id, tipo_id,
+        SUM(CASE
+          WHEN u2.codigo = 'dia' THEN
+            CASE WHEN a.es_medio_dia THEN 0.5 ELSE (a.fecha_hasta - a.fecha_desde + 1) END
+          ELSE
+            COALESCE(a.duracion_horas, 0)
+        END) AS planificado
+      FROM "Ausencia" a
+      JOIN "AusenciaTipo" t2 ON t2.id = a.tipo_id
+      JOIN "AusenciaUnidadTipo" u2 ON u2.id = t2.unidad_id
+      JOIN "AusenciaEstado" e ON e.id = a.estado_id
+      WHERE e.codigo = 'pendiente' AND a.feder_id = :feder_id
+      GROUP BY feder_id, tipo_id
+    ) p ON p.tipo_id = t.id
+    GROUP BY t.id, t.codigo, t.nombre, t.icon, t.color, u.codigo, p.planificado
     ORDER BY t.nombre ASC
   `;
   return sequelize.query(sql, { type: QueryTypes.SELECT, replacements: repl });
