@@ -6,6 +6,13 @@ import {
 } from 'react-icons/fi'
 import './LeadTimeline.scss'
 
+const linkify = (text = '') => {
+    if (!text) return ''
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const withBr = escaped.replace(/\n/g, '<br/>')
+    return withBr.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+}
+
 export default function LeadTimeline({ lead, onAddNota, showOnly = 'all' }) {
     const [nota, setNota] = useState('')
     const [submitting, setSubmitting] = useState(false)
@@ -131,7 +138,7 @@ export default function LeadTimeline({ lead, onAddNota, showOnly = 'all' }) {
                                             <span className="date">{format(new Date(ev.created_at), "d 'de' MMMM, HH:mm", { locale: es })}</span>
                                         </header>
                                         <div className="body">
-                                            <div className="nota-text">{ev.contenido}</div>
+                                            <div className="nota-text" dangerouslySetInnerHTML={{ __html: linkify(ev.contenido) }} />
                                             {ev.adjuntos?.length > 0 && (
                                                 <div className="nota-attachments">
                                                     {ev.adjuntos.map(adj => (

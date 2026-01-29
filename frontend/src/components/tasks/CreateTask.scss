@@ -44,6 +44,18 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   position: relative;
   box-sizing: border-box;
 
+  a,
+  .editor-link,
+  [data-lexical-link],
+  [class*="editor-link"] {
+    color: #3b82f6 !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    display: inline !important;
+    font-weight: inherit !important;
+  }
+
   @media (max-width: 600px) {
     width: calc(100% - 12px);
     max-height: 94vh;
