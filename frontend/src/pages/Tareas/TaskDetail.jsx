@@ -16,10 +16,10 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
-import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
+import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile, MdLink } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
 import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye } from "react-icons/fi";
-import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt } from 'react-icons/fa';
+import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt, FaFolder } from 'react-icons/fa';
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -85,6 +85,9 @@ const getFileType = (file) => {
   if (name.match(/\.(xls|xlsx)$/) || mime.includes('excel') || mime.includes('spreadsheet')) return 'excel';
   if (name.match(/\.(zip|rar|7z|tar|gz)$/) || mime.includes('zip') || mime.includes('compressed')) return 'zip';
   if (name.match(/\.(html|htm)$/) || mime === 'text/html') return 'html';
+
+  const url = (file.url || file.drive_url || '').toLowerCase();
+  if (url.includes('/drive/folders/') || mime?.includes('folder')) return 'folder';
 
   return 'other';
 };
@@ -543,6 +546,46 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }
 
+  // === Agregar link manualmente (especialmente para carpetas de Drive) ===
+  const handleAddLink = useCallback(async (esEmbebido = false) => {
+    const url = await modal.prompt({
+      title: 'Agregar link de Google Drive',
+      message: 'Pegá el link de la carpeta o archivo de Drive:',
+      placeholder: 'https://drive.google.com/...',
+      okText: 'Siguiente',
+      cancelText: 'Cancelar'
+    });
+
+    if (!url || !url.trim()) return;
+
+    const nombre = await modal.prompt({
+      title: 'Nombre del recurso',
+      message: 'Ingresá un nombre para identificar este link:',
+      placeholder: 'Ej: Carpeta de insumos',
+      okText: 'Agregar',
+      cancelText: 'Cancelar'
+    });
+
+    if (nombre === undefined) return;
+
+    const finalNombre = nombre?.trim() || 'Link de Drive';
+
+    try {
+      const isFolder = url.includes('/drive/folders/') || url.includes('drive.google.com/drive/u/');
+      await add({
+        nombre: finalNombre,
+        drive_url: url.trim(),
+        mime: isFolder ? 'application/vnd.google-apps.folder' : 'text/html',
+        es_embebido: esEmbebido
+      });
+      toast?.success('Link agregado');
+      setHistoryRefresh(prev => prev + 1);
+    } catch (err) {
+      console.error('Error adding link:', err);
+      toast?.error('No se pudo agregar el link');
+    }
+  }, [modal, add, toast]);
+
   if (isInitialLoading) {
     return (
       <div className="taskDetail">
@@ -603,6 +646,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       }
     }
   }
+
 
   // === cliente en línea (sin aprobación porque el backend no lo soporta) ===
   const handleClientChange = async (nextClienteId) => {
@@ -1089,6 +1133,18 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 }}
               />
               <p>Arrastra archivos o <label htmlFor="raw-content-input" className="file-select">selecciona</label></p>
+              <button
+                className="add-link-btn-inline"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddLink(false);
+                }}
+                title="Agregar link (Drive/Carpeta)"
+              >
+                <MdLink size={20} /> Agregar link
+              </button>
             </div>
 
             {/* Lista de archivos crudos */}
@@ -1101,13 +1157,15 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                       type === 'excel' ? FaFileExcel :
                         type === 'zip' ? FaFileArchive :
                           type === 'html' ? FaFileCode :
-                            type === 'video' ? FiEye : FaFileAlt;
+                            type === 'folder' ? FaFolder :
+                              type === 'video' ? FiEye : FaFileAlt;
 
                   const iconColor = type === 'pdf' ? '#ff3d00' :
                     type === 'word' ? '#2b579a' :
                       type === 'excel' ? '#217346' :
                         type === 'zip' ? '#fb8c00' :
-                          type === 'html' ? '#e44d26' : '#94a3b8';
+                          type === 'html' ? '#e44d26' :
+                            type === 'folder' ? '#FFD700' : '#94a3b8';
 
                   return (
                     <div key={file.id} className="raw-file-item">
@@ -1118,14 +1176,20 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                       <div className="file-actions">
                         <button
                           className="view-btn"
-                          onClick={() => setRawFullscreen({
-                            url: getFileUrl(file),
-                            name: file.nombre || 'Archivo',
-                            type: type,
-                            driveId: file.drive_file_id
-                          })}
+                          onClick={() => {
+                            if (type === 'folder') {
+                              window.open(getFileUrl(file), '_blank');
+                            } else {
+                              setRawFullscreen({
+                                url: getFileUrl(file),
+                                name: file.nombre || 'Archivo',
+                                type: type,
+                                driveId: file.drive_file_id
+                              });
+                            }
+                          }}
                         >
-                          Ver
+                          {type === 'folder' ? 'Abrir' : 'Ver'}
                         </button>
                         <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
                       </div>
@@ -1184,6 +1248,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             }}
             title="Contenido Listo"
             showAddButton={true}
+            onAddLink={() => handleAddLink(true)}
           />
 
           {/* Comments panel (kept mounted to persist draft) */}
@@ -1258,40 +1323,44 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       </div>
 
       {/* Modal de creación de subtarea */}
-      {createSubtaskParentId && (
-        <CreateTaskModal
-          modalTitle="Nueva Subtarea"
-          parentTaskId={Number(createSubtaskParentId)}
-          initialData={{
-            cliente_id: task?.cliente_id || task?.cliente?.id || null
-          }}
-          onClose={() => setCreateSubtaskParentId(null)}
-          onCreated={(newTask) => {
-            setCreateSubtaskParentId(null)
-            toast?.success('Subtarea creada')
-            // Recargar la tarea actual para actualizar la lista de subtareas
-            tareasApi.get(id).then(setTask)
-            onUpdated?.()
-          }}
-        />
-      )}
+      {
+        createSubtaskParentId && (
+          <CreateTaskModal
+            modalTitle="Nueva Subtarea"
+            parentTaskId={Number(createSubtaskParentId)}
+            initialData={{
+              cliente_id: task?.cliente_id || task?.cliente?.id || null
+            }}
+            onClose={() => setCreateSubtaskParentId(null)}
+            onCreated={(newTask) => {
+              setCreateSubtaskParentId(null)
+              toast?.success('Subtarea creada')
+              // Recargar la tarea actual para actualizar la lista de subtareas
+              tareasApi.get(id).then(setTask)
+              onUpdated?.()
+            }}
+          />
+        )
+      }
 
       {/* Modal de familia de tareas */}
-      {showFamilyModal && (
-        <TaskFamilyModal
-          taskId={Number(id)}
-          currentTask={task}
-          onClose={() => setShowFamilyModal(false)}
-          onNavigate={(newId) => {
-            setShowFamilyModal(false)
-            navigate(`/tareas/${newId}`)
-          }}
-          onNewSubtask={(parentId) => {
-            setShowFamilyModal(false)
-            setCreateSubtaskParentId(parentId || id)
-          }}
-        />
-      )}
+      {
+        showFamilyModal && (
+          <TaskFamilyModal
+            taskId={Number(id)}
+            currentTask={task}
+            onClose={() => setShowFamilyModal(false)}
+            onNavigate={(newId) => {
+              setShowFamilyModal(false)
+              navigate(`/tareas/${newId}`)
+            }}
+            onNewSubtask={(parentId) => {
+              setShowFamilyModal(false)
+              setCreateSubtaskParentId(parentId || id)
+            }}
+          />
+        )
+      }
 
     </div >
   )

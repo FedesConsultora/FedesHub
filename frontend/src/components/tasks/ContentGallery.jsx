@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { MdAdd, MdClose, MdPlayArrow } from 'react-icons/md';
-import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt } from 'react-icons/fa';
+import { MdAdd, MdClose, MdPlayArrow, MdLink } from 'react-icons/md';
+import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt, FaFolder } from 'react-icons/fa';
 import { useModal } from '../modal/ModalProvider';
 import { useUploadContext } from '../../context/UploadProvider';
 import ImageFullscreen from '../common/ImageFullscreen';
@@ -22,6 +22,9 @@ const getFileType = (file) => {
     if (name.match(/\.(xls|xlsx)$/) || mime.includes('excel') || mime.includes('spreadsheet')) return 'excel';
     if (name.match(/\.(zip|rar|7z|tar|gz)$/) || mime.includes('zip') || mime.includes('compressed')) return 'zip';
     if (name.match(/\.(html|htm)$/) || mime === 'text/html') return 'html';
+
+    const url = (file.url || file.drive_url || '').toLowerCase();
+    if (url.includes('/drive/folders/') || mime?.includes('folder')) return 'folder';
 
     return 'other';
 };
@@ -78,7 +81,8 @@ export default function ContentGallery({
     disabled = false,
     showAddButton = true,
     taskId = null, // Para filtrar uploads de esta tarea
-    esEmbebido = false // Para filtrar por tipo de galería
+    esEmbebido = false, // Para filtrar por tipo de galería
+    onAddLink = null // Callback para agregar links manualmente
 }) {
     const modal = useModal();
     const uploadContext = useUploadContext();
@@ -228,6 +232,16 @@ export default function ContentGallery({
         const imageId = isThumbnail ? `thumb-${file.id}` : `main-${file.id}`;
         const isLoading = loadingImages[imageId];
 
+        if (type === 'folder') {
+            return (
+                <div className={`file-icon-wrapper ${className} folder`} onClick={() => window.open(url, '_blank')}>
+                    <FaFolder size={isThumbnail ? 32 : 64} style={{ color: '#FFD700' }} />
+                    {!isThumbnail && <span className="file-name-label">{file.nombre}</span>}
+                    {isThumbnail && <span className="folder-indicator">📁</span>}
+                </div>
+            );
+        }
+
         if (type === 'video') {
             return (
                 <div className={`video-wrapper ${className}`} onClick={onClick}>
@@ -312,16 +326,28 @@ export default function ContentGallery({
             {/* Title */}
             <div className="gallery-header">
                 <h4>{title}</h4>
-                {showAddButton && !disabled && (
-                    <button
-                        className="add-btn"
-                        onClick={triggerFileInput}
-                        title="Agregar archivo"
-                        disabled={isUploading}
-                    >
-                        <MdAdd size={20} />
-                    </button>
-                )}
+                <div className="header-actions">
+                    {onAddLink && !disabled && (
+                        <button
+                            className="add-link-btn"
+                            onClick={onAddLink}
+                            title="Agregar link de Drive"
+                            disabled={isUploading}
+                        >
+                            <MdLink size={20} />
+                        </button>
+                    )}
+                    {showAddButton && !disabled && (
+                        <button
+                            className="add-btn"
+                            onClick={triggerFileInput}
+                            title="Agregar archivo"
+                            disabled={isUploading}
+                        >
+                            <MdAdd size={20} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Error message */}
@@ -423,11 +449,14 @@ export default function ContentGallery({
                                         type === 'word' ? '#2b579a' :
                                             type === 'excel' ? '#217346' :
                                                 type === 'zip' ? '#fb8c00' :
-                                                    type === 'html' ? '#e44d26' : '#94a3b8';
+                                                    type === 'html' ? '#e44d26' :
+                                                        type === 'folder' ? '#FFD700' : '#94a3b8';
+
+                                    const ThumbIcon = type === 'folder' ? FaFolder : Icon;
 
                                     return (
                                         <div className="file-thumb">
-                                            <Icon size={24} style={{ color: iconColor }} />
+                                            <ThumbIcon size={24} style={{ color: iconColor }} />
                                         </div>
                                     );
                                 })()}

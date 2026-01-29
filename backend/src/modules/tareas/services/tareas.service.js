@@ -677,6 +677,7 @@ const createTask = async (payload, currentFederId) => {
         tamano_bytes: a.tamano_bytes ?? null,
         drive_file_id: a.drive_file_id || null,
         drive_url: a.drive_url || null,
+        es_embebido: !!a.es_embebido,
         subido_por_feder_id: currentFederId
       }));
       await models.TareaAdjunto.bulkCreate(rows, { transaction: t });

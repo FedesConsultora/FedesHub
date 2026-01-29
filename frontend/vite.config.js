@@ -59,6 +59,7 @@ export default defineConfig(({ mode }) => {
         usePolling: true,
         interval: 150,
         awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 },
+        ignored: ['**/node_modules/**', '**/dist/**', '**/coverage/**', '**/backend/**']
       },
     },
 

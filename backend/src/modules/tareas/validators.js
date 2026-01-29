@@ -132,7 +132,8 @@ export const createTaskSchema = z.object({
     mime: z.string().max(120).nullish(),
     tamano_bytes: z.coerce.number().int().nonnegative().optional(),
     drive_file_id: z.string().max(255).nullish(),
-    drive_url: z.string().max(512).url().nullish()
+    drive_url: z.string().max(512).url().nullish(),
+    es_embebido: z.boolean().optional().default(false)
   })).optional().default([]),
   tc: tcCreateDataSchema.optional() // datos específicos para TC
 });
@@ -217,7 +218,8 @@ export const commentCreateSchema = z.object({
     mime: z.string().max(120).nullish(),
     tamano_bytes: z.coerce.number().int().nonnegative().optional(),
     drive_file_id: z.string().max(255).nullish(),
-    drive_url: z.string().max(512).url().nullish()
+    drive_url: z.string().max(512).url().nullish(),
+    es_embebido: z.boolean().optional().default(false)
   })).optional().default([]),
   reply_to_id: intId.nullish().optional()
 }).refine(obj => obj.contenido.trim().length > 0 || obj.adjuntos.length > 0, { message: 'Comentario vacío' })
@@ -228,7 +230,8 @@ export const adjuntoCreateSchema = z.object({
   mime: z.string().max(120).nullish(),
   tamano_bytes: z.coerce.number().int().nonnegative().optional(),
   drive_file_id: z.string().max(255).nullish(),
-  drive_url: z.string().max(512).url().nullish()
+  drive_url: z.string().max(512).url().nullish(),
+  es_embebido: z.boolean().optional().default(false)
 });
 
 export const relacionCreateSchema = z.object({ relacionada_id: intId, tipo_id: intId });

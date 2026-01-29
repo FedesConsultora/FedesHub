@@ -23,13 +23,14 @@ export function useTaskAttachments(taskId, onAfterChange = () => { }) {
 
     useEffect(() => { load(); }, [load]);
 
-    const add = useCallback(async ({ nombre, drive_url, mime = null, tamano_bytes = null }) => {
+    const add = useCallback(async ({ nombre, drive_url, mime = null, tamano_bytes = null, es_embebido = false }) => {
         if (!nombre?.trim() || !drive_url?.trim()) return;
         await tareasApi.postAdjunto(taskId, {
             nombre: nombre.trim(),
             drive_url: drive_url.trim(),
             mime,
-            tamano_bytes
+            tamano_bytes,
+            es_embebido
         });
         await load();
         await onAfterChange();

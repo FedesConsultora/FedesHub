@@ -207,31 +207,62 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        .add-btn {
-            background: $fh-accent;
-            border: none;
-            color: white;
-            width: 32px;
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
+        .header-actions {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            padding: 0;
-            position: relative;
-            right: 2rem;
-            bottom: 0.45rem;
+            gap: 8px;
+            margin-right: 3rem;
 
-            &:hover:not(:disabled) {
-                background: color.adjust($fh-accent, $lightness: 8%);
-                transform: scale(1.05);
+            button {
+                padding: 4px 6px !important;
+                font-size: 1.25rem;
+
+                svg {
+                    font-size: 1.25rem !important;
+                }
+
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+
+                &:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                }
+
+                &:active:not(:disabled) {
+                    transform: translateY(0);
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
             }
 
-            &:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
+            .add-link-btn {
+                background: rgba(255, 255, 255, 0.05);
+                color: rgba(255, 255, 255, 0.7);
+
+                &:hover:not(:disabled) {
+                    background: rgba($fh-accent, 0.15);
+                    color: $fh-accent;
+                    border-color: rgba($fh-accent, 0.3);
+                }
+            }
+
+            .add-btn {
+                background: $fh-accent;
+                color: white;
+                border: none;
+
+                &:hover:not(:disabled) {
+                    background: color.adjust($fh-accent, $lightness: 8%);
+                }
             }
         }
     }
@@ -326,13 +357,25 @@
             width: 100%;
             height: 100%;
             background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             padding: 2rem;
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
 
             &:hover {
                 background: rgba(255, 255, 255, 0.08);
+                transform: translateY(-4px);
+            }
+
+            &.folder {
+                background: rgba(255, 215, 0, 0.03);
+                border-color: rgba(255, 215, 0, 0.15);
+
+                &:hover {
+                    background: rgba(255, 215, 0, 0.06);
+                    border-color: rgba(255, 215, 0, 0.3);
+                }
             }
 
             .file-name-label {
@@ -469,6 +512,15 @@
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.05);
+        }
+
+        .folder-indicator {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+            pointer-events: none;
         }
 
         // More visible remove button
