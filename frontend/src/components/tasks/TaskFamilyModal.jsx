@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FiX, FiArrowUp, FiPlus, FiExternalLink } from 'react-icons/fi'
+import { FiX, FiPlus, FiChevronDown, FiChevronRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import useTaskFamily from '../../pages/Tareas/hooks/useTaskFamily'
 import GlobalLoader from '../loader/GlobalLoader'
@@ -19,27 +19,126 @@ const STATUS_COLORS = {
 }
 
 /**
- * Modal para navegar entre tareas de una familia (padre, hermanas, hijas)
- * Con vista estilo Kanban y drag & drop para reorganizar jerarquía
+ * Componente para cada tarjeta de tarea en el árbol
+ */
+const TaskKanbanCard = ({
+    task,
+    isCurrent = false,
+    onNavigate,
+    onNewSubtask,
+    onDragStart,
+    dragOverTaskId,
+    onDragOver,
+    onDragLeave,
+    onDrop
+}) => {
+    const dueTxt = task?.vencimiento
+        ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' }).format(new Date(task.vencimiento))
+        : '—'
+
+    const prio = getPriorityMeta(task?.prioridad_num || 0, task?.boost_manual || 0, task?.vencimiento)
+    const prioClass = prio.level >= 3 ? 'prio-crit' : prio.level === 2 ? 'prio-high' : prio.level === 1 ? 'prio-med' : 'prio-low'
+
+    const statusCode = task?.estado_codigo || 'pendiente'
+    const statusName = task?.estado_nombre || '—'
+    const statusColor = STATUS_COLORS[statusCode] || '#94a3b8'
+
+    const clienteNombre = task?.cliente_nombre || '—'
+    const responsables = task?.responsables || []
+
+    return (
+        <article
+            className={`fh-k-task compact ${prioClass} ${task?.vencida ? 'is-vencida' : ''} ${isCurrent ? 'is-current' : ''} ${dragOverTaskId === task.id ? 'drag-over' : ''}`}
+            draggable={!isCurrent}
+            onDragStart={(e) => !isCurrent && onDragStart(e, task)}
+            onDragOver={(e) => !isCurrent && onDragOver(e, task.id)}
+            onDragLeave={onDragLeave}
+            onDrop={(e) => !isCurrent && onDrop(e, task.id)}
+            onClick={() => !isCurrent && onNavigate(task.id)}
+        >
+            <div className="fh-k-row">
+                <div className="fh-k-client">{clienteNombre}</div>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <div className="fh-k-status-badge" style={{ color: statusColor, borderColor: statusColor + '30', backgroundColor: statusColor + '15' }}>
+                        {statusName}
+                    </div>
+                </div>
+            </div>
+            <div className="fh-k-title">{task?.titulo}</div>
+            <div className="fh-k-people">
+                <AvatarStack people={(responsables || []).map(r => r.feder || r)} titlePrefix="Resp: " />
+                <div className="fh-k-date">{dueTxt}</div>
+                {!task.isAncestor && (
+                    <button
+                        className="btn-create-subtask-icon active-plus"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onNewSubtask(task.id);
+                        }}
+                        title="Nueva subtarea"
+                    >
+                        <FiPlus />
+                    </button>
+                )}
+            </div>
+            {isCurrent && <div className="current-badge">Actual</div>}
+        </article>
+    )
+}
+
+/**
+ * Nodo recursivo del árbol
+ */
+const TreeNode = ({ node, currentTaskId, ...props }) => {
+    // Inicializar expandido si es ancestro o el actual por defecto
+    const [isExpanded, setIsExpanded] = useState(true);
+    const hasChildren = node.children && node.children.length > 0;
+
+    return (
+        <div className={`tree-node ${node.isCurrent ? 'is-active-branch' : ''}`}>
+            <div className="tree-node-content">
+                {hasChildren && (
+                    <button className="tree-toggle" onClick={() => setIsExpanded(!isExpanded)}>
+                        {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
+                    </button>
+                )}
+
+                <TaskKanbanCard
+                    task={node}
+                    isCurrent={Number(node.id) === Number(currentTaskId)}
+                    {...props}
+                />
+            </div>
+
+            {hasChildren && isExpanded && (
+                <div className="tree-children">
+                    {node.children.map(child => (
+                        <TreeNode key={child.id} node={child} currentTaskId={currentTaskId} {...props} />
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
+/**
+ * Modal principal de Jerarquía
  */
 export default function TaskFamilyModal({ taskId, onClose, onNavigate, onNewSubtask, currentTask }) {
     const navigate = useNavigate()
     const toast = useToast()
-    const { parentTask, siblings, children, loading, error, reload } = useTaskFamily(taskId)
+    const { levels: roots, loading, error, reload } = useTaskFamily(taskId)
     const [draggedTask, setDraggedTask] = useState(null)
-    const [dragOverZone, setDragOverZone] = useState(null)
+    const [dragOverTaskId, setDragOverTaskId] = useState(null)
 
-    // Scroll lock
     useEffect(() => {
         document.body.style.overflow = 'hidden'
-        return () => { document.body.style.overflow = '' }
-    }, [])
-
-    // Escape to close
-    useEffect(() => {
         const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
         window.addEventListener('keydown', onKey)
-        return () => window.removeEventListener('keydown', onKey)
+        return () => {
+            document.body.style.overflow = ''
+            window.removeEventListener('keydown', onKey)
+        }
     }, [onClose])
 
     const handleNavigate = (id) => {
@@ -51,327 +150,74 @@ export default function TaskFamilyModal({ taskId, onClose, onNavigate, onNewSubt
         }
     }
 
-
-    const handleDragStart = (e, task, zone) => {
-        setDraggedTask({ ...task, fromZone: zone })
+    const handleDragStart = (e, task) => {
+        setDraggedTask(task)
         e.dataTransfer.effectAllowed = 'move'
         e.dataTransfer.setData('text/plain', task.id.toString())
-
-        // Visual feedback for ghost image
-        const target = e.currentTarget
-        target.style.opacity = '0.5'
-        setTimeout(() => { target.style.opacity = '1' }, 0)
+        e.currentTarget.style.opacity = '0.5'
+        setTimeout(() => { if (e.currentTarget) e.currentTarget.style.opacity = '1' }, 0)
     }
 
-    const handleDragOver = (e, zone) => {
+    const handleDragOver = (e, targetTaskId) => {
         e.preventDefault()
-        e.dataTransfer.dropEffect = 'move'
-        setDragOverZone(zone)
+        if (draggedTask && draggedTask.id !== targetTaskId) {
+            setDragOverTaskId(targetTaskId)
+        }
     }
 
-    const handleDragLeave = () => {
-        setDragOverZone(null)
-    }
-
-    const handleDrop = async (e, targetZone) => {
+    const handleDrop = async (e, targetParentId) => {
         e.preventDefault()
-        setDragOverZone(null)
-
-        if (!draggedTask) {
-            setDraggedTask(null)
-            return
-        }
-
-        // Si se suelta en la misma zona, no hacemos nada
-        if (draggedTask.fromZone === targetZone) {
-            setDraggedTask(null)
-            return
-        }
+        setDragOverTaskId(null)
+        if (!draggedTask || draggedTask.id === targetParentId) return
 
         try {
-            let newParentId = undefined
-
-            // Lógica de jerarquía:
-            if (targetZone === 'parent') {
-                // Subir nivel: El padre del padre actual se convierte en el nuevo padre
-                newParentId = parentTask?.tarea_padre_id || null
-            } else if (targetZone === 'siblings') {
-                // Nivel Actual: El padre de la tarea actual se convierte en el nuevo padre
-                newParentId = currentTask?.tarea_padre_id || null
-            } else if (targetZone === 'children') {
-                // Bajar nivel: La tarea actual se convierte en el nuevo padre
-                newParentId = taskId
-            }
-
-            if (newParentId !== undefined) {
-                // Actualizar la tarea
-                await tareasApi.update(draggedTask.id, { tarea_padre_id: newParentId })
-                toast?.success('Jerarquía actualizada')
-                reload()
-            }
+            await tareasApi.update(draggedTask.id, { tarea_padre_id: targetParentId })
+            toast?.success('Jerarquía actualizada')
+            reload()
         } catch (e) {
             toast?.error(e?.message || 'No se pudo actualizar la jerarquía')
         } finally {
             setDraggedTask(null)
-            setDragOverZone(null)
         }
     }
 
-    const handleOverlayClick = (e) => {
-        if (e.target.classList.contains('taskFamilyModalWrap') || e.target.classList.contains('familyCardScroll')) {
-            onClose?.()
-        }
-    }
-
-    const TaskKanbanCard = ({ task, zone, isCurrent = false }) => {
-        const dueTxt = task?.vencimiento
-            ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' })
-                .format(new Date(task.vencimiento))
-            : '—'
-
-        const prio = getPriorityMeta(
-            task?.prioridad_num || task?.prioridad || 0,
-            task?.boost_manual || 0,
-            task?.vencimiento
-        )
-        const prioClass = prio.level >= 3 ? 'prio-crit' : prio.level === 2 ? 'prio-high' : prio.level === 1 ? 'prio-med' : 'prio-low'
-
-        const boltIcon = prio.isBoosted && (
-            <div className="fh-k-prio-bolt" title="Prioridad manual activada">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffeb3b" style={{ filter: 'drop-shadow(0 0 4px rgba(255,235,59,0.8))' }}>
-                    <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
-                </svg>
-            </div>
-        )
-
-        const statusCode = task?.estado?.codigo || task?.estado_codigo || 'pendiente'
-        const statusName = task?.estado?.nombre || task?.estado_nombre || '—'
-        const statusColor = STATUS_COLORS[statusCode] || '#94a3b8'
-
-        const clienteNombre = task?.cliente?.nombre || task?.cliente_nombre || '—'
-        const responsables = task?.Responsables || task?.responsables || []
-        const colaboradores = task?.Colaboradores || task?.colaboradores || []
-
-        return (
-            <article
-                className={`fh-k-task ${prioClass} ${task?.vencida ? 'is-vencida' : ''} ${isCurrent ? 'is-current' : ''}`}
-                draggable={!isCurrent}
-                onDragStart={(e) => !isCurrent && handleDragStart(e, task, zone)}
-                onClick={() => !isCurrent && handleNavigate(task.id)}
-                role="button"
-                tabIndex={0}
-            >
-                <div className="fh-k-row">
-                    <div className="fh-k-client" title={clienteNombre}>
-                        {clienteNombre}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div
-                            className="fh-k-status-badge"
-                            style={{
-                                fontSize: '0.65rem',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                backgroundColor: `${statusColor}15`,
-                                color: statusColor,
-                                border: `1px solid ${statusColor}30`,
-                                fontWeight: '800',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.3px',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            {statusName}
-                        </div>
-                        {task?.vencida && (
-                            <div
-                                className="fh-k-status-badge"
-                                style={{
-                                    fontSize: '0.65rem',
-                                    padding: '1px 5px',
-                                    borderRadius: '4px',
-                                    backgroundColor: `#9F1B1B15`,
-                                    color: '#9F1B1B',
-                                    border: `1px solid #9F1B1B30`,
-                                    fontWeight: '800',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.3px',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Vencida
-                            </div>
-                        )}
-                        <div className="fh-k-date" title="Vencimiento">{dueTxt}</div>
-                        {boltIcon}
-                    </div>
-                </div>
-
-                <div className="fh-k-title" title={task?.titulo}>{task?.titulo}</div>
-
-                <div className="fh-k-people">
-                    <div className="fh-k-role">
-                        <span className="fh-k-roleLabel">Resp.</span>
-                        <AvatarStack
-                            people={responsables}
-                            titlePrefix="Responsable: "
-                        />
-                    </div>
-                    <div className="fh-k-role">
-                        <span className="fh-k-roleLabel">Colab.</span>
-                        <AvatarStack
-                            people={colaboradores}
-                            titlePrefix="Colaborador: "
-                        />
-                    </div>
-                </div>
-
-                {isCurrent && (
-                    <div className="current-badge">Tarea actual</div>
-                )}
-            </article>
-        )
-    }
-
-    const modalContent = (
-        <div className="taskFamilyModalWrap" role="dialog" aria-modal="true" onClick={handleOverlayClick}>
+    return createPortal(
+        <div className="taskFamilyModalWrap" onClick={onClose}>
             <div className="familyCard" onClick={(e) => e.stopPropagation()}>
                 <header className="familyHeader">
                     <div className="brand">
-                        <div className="logo">Familia de Tareas</div>
-                        <div className="subtitle">Arrastrá las tarjetas para reorganizar la jerarquía</div>
+                        <div className="logo">Jerarquía de Tareas</div>
+                        <div className="subtitle">Visualizando el árbol completo de relaciones</div>
                     </div>
-                    <button type="button" className="close" onClick={onClose} aria-label="Cerrar">
-                        <FiX />
-                    </button>
+                    <button className="close" onClick={onClose} aria-label="Cerrar"><FiX /></button>
                 </header>
 
-                <div className="familyBody">
-                    {loading && (
-                        <div style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <GlobalLoader isLoading={true} size={80} />
-                        </div>
-                    )}
-
-                    {error && (
+                <div className="familyBody tree-mode">
+                    {loading ? (
+                        <div className="loader-center"><GlobalLoader isLoading={true} size={80} /></div>
+                    ) : error ? (
                         <div className="error-message">{error}</div>
-                    )}
-
-                    {!loading && !error && (
-                        <div className="hierarchy-container">
-
-                            {/* NIVEL 1: SUPERIOR / PADRE */}
-                            <div
-                                className={`hierarchy-level level-parent ${dragOverZone === 'parent' ? 'drag-over' : ''}`}
-                                onDragOver={(e) => handleDragOver(e, 'parent')}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, 'parent')}
-                            >
-                                <div className="level-header">
-                                    <div className="level-info">
-                                        <span className="level-badge">Nivel 1</span>
-                                        <h3>Superior</h3>
-                                        <button
-                                            className="btn-create-subtask"
-                                            onClick={() => onNewSubtask(parentTask?.tarea_padre_id || null)}
-                                            title="Nueva tarea en este nivel"
-                                        >
-                                            <FiPlus /> Nueva Subtarea
-                                        </button>
-                                    </div>
-                                    <FiArrowUp className="level-icon" />
-                                </div>
-                                <div className="level-content">
-                                    {parentTask ? (
-                                        <div className="tasks-grid single-col">
-                                            <TaskKanbanCard task={parentTask} zone="parent" />
-                                        </div>
-                                    ) : (
-                                        <div className="empty-level">Esta tarea no tiene padre</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="hierarchy-connector">
-                                <div className="line"></div>
-                                <FiArrowUp className="arrow" />
-                            </div>
-
-                            {/* NIVEL 2: ACTUAL / HERMANAS */}
-                            <div
-                                className={`hierarchy-level level-current ${dragOverZone === 'siblings' ? 'drag-over' : ''}`}
-                                onDragOver={(e) => handleDragOver(e, 'siblings')}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, 'siblings')}
-                            >
-                                <div className="level-header">
-                                    <div className="level-info">
-                                        <span className="level-badge active">Nivel 2</span>
-                                        <h3>Nivel Actual / Hermanas</h3>
-                                        <button
-                                            className="btn-create-subtask"
-                                            onClick={() => onNewSubtask(currentTask?.tarea_padre_id || null)}
-                                            title="Nueva tarea en este nivel"
-                                        >
-                                            <FiPlus /> Nueva Subtarea
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="level-content">
-                                    <div className="tasks-grid">
-                                        <TaskKanbanCard task={currentTask} zone="siblings" isCurrent={true} />
-                                        {siblings.filter(s => s.id !== taskId).map(s => (
-                                            <TaskKanbanCard key={s.id} task={s} zone="siblings" />
-                                        ))}
-                                    </div>
-                                    {siblings.length === 0 && <div className="empty-level">Sin otras tareas en este nivel</div>}
-                                </div>
-                            </div>
-
-                            <div className="hierarchy-connector">
-                                <div className="line"></div>
-                                <FiArrowUp className="arrow" />
-                            </div>
-
-                            {/* NIVEL 3: HIJAS / SUBTAREAS */}
-                            <div
-                                className={`hierarchy-level level-children ${dragOverZone === 'children' ? 'drag-over' : ''}`}
-                                onDragOver={(e) => handleDragOver(e, 'children')}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, 'children')}
-                            >
-                                <div className="level-header">
-                                    <div className="level-info">
-                                        <span className="level-badge">Nivel 3</span>
-                                        <h3>Subtareas</h3>
-                                        <button
-                                            className="btn-create-subtask"
-                                            onClick={() => onNewSubtask(taskId)}
-                                            title="Nueva tarea en este nivel"
-                                        >
-                                            <FiPlus /> Nueva Subtarea
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="level-content">
-                                    {children.length > 0 ? (
-                                        <div className="tasks-grid">
-                                            {children.map(c => (
-                                                <TaskKanbanCard key={c.id} task={c} zone="children" />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="empty-level">No hay subtareas aún</div>
-                                    )}
-                                </div>
-                            </div>
-
+                    ) : (
+                        <div className="tree-container">
+                            {roots.map(root => (
+                                <TreeNode
+                                    key={root.id}
+                                    node={root}
+                                    currentTaskId={taskId}
+                                    onNavigate={handleNavigate}
+                                    onNewSubtask={onNewSubtask}
+                                    onDragStart={handleDragStart}
+                                    dragOverTaskId={dragOverTaskId}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={() => setDragOverTaskId(null)}
+                                    onDrop={handleDrop}
+                                />
+                            ))}
                         </div>
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
-
-    return createPortal(modalContent, document.body)
 }

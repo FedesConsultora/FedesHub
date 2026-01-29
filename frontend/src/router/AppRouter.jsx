@@ -85,6 +85,10 @@ export default function AppRouter() {
             element={<RequirePerm modulo="tareas" accion="read"><TasksPage /></RequirePerm>}
           />
           <Route
+            path="tareas/:id"
+            element={<RequirePerm modulo="tareas" accion="read"><TasksPage /></RequirePerm>}
+          />
+          <Route
             path="asistencia"
             element={<RequirePerm modulo="asistencia" accion="read"><AsistenciaPage /></RequirePerm>}
           />

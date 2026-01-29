@@ -110,282 +110,247 @@
     }
 }
 
-.hierarchy-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    max-width: 900px;
-    margin: 0 auto;
+/* ===== Body Layout Tree Mode ===== */
+.familyBody.tree-mode {
+    padding: 30px 20px;
+    flex: 1;
+    overflow: auto;
+    background: radial-gradient(circle at top center, rgba(255, 255, 255, 0.02) 0%, transparent 80%);
+
+    .tree-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        min-width: fit-content;
+        padding-bottom: 60px;
+    }
 }
 
-/* ===== Hierarchy Levels ===== */
-.hierarchy-level {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    padding: 24px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ===== Tree Node ===== */
+.tree-node {
+    display: flex;
+    flex-direction: column;
     position: relative;
+    padding-left: 32px; // Horizontal spacing for branches
 
-    &.drag-over {
-        border-color: $fh-primary !important;
-        background: rgba($fh-primary, 0.08) !important;
-        transform: scale(1.01);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    // Vertical line connecting siblings
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.15);
     }
 
-    &.level-current {
-        background: rgba(255, 255, 255, 0.035);
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        z-index: 2;
+    // Stop vertical line at the last node's middle
+    &:last-child::before {
+        height: 28px;
     }
 
-    .level-header {
+    // Root node doesn't need a vertical line on top
+    &:first-child:not(:last-child)::before {
+        top: 28px;
+    }
+}
+
+// Level 1 roots: Remove leading lines
+.tree-container>.tree-node {
+    padding-left: 0;
+
+    &::before {
+        display: none;
+    }
+
+    &>.tree-node-content::before {
+        display: none;
+    }
+}
+
+.tree-node-content {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    padding: 10px 0 10px 36px; // Reserved space for the toggle/connect area
+    z-index: 10;
+
+    // Horizontal branch line
+    &::before {
+        content: '';
+        position: absolute;
+        left: -32px;
+        top: 28px;
+        width: 36px; // Connects to the card
+        height: 1px;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .tree-toggle {
+        position: absolute;
+        left: 0;
+        top: 16px;
+        background: #1a1f26;
+        border: 1px solid rgba($fh-primary, 0.5);
+        color: $fh-primary;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        z-index: 2;
 
-        .level-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        svg {
+            font-size: 16px;
+            stroke-width: 3;
         }
 
-        .level-badge {
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 4px 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.4);
+        &:hover {
+            background: $fh-primary;
+            color: #fff;
+            transform: scale(1.1);
+        }
+    }
 
-            &.active {
-                background: rgba($fh-primary, 0.15);
-                color: $fh-primary;
+
+
+    /* ===== Compact Kanban Card for Tree ===== */
+    .fh-k-task {
+        width: 280px;
+        flex-shrink: 0;
+        background: #1c222d;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 12px 14px;
+        transition: all 0.2s;
+        position: relative;
+        cursor: grab;
+
+        &:hover {
+            transform: scale(1.05);
+            transition: ease-in-out 0.2s;
+
+            .btn-create-subtask-icon.active-plus {
+                opacity: 1;
+                transform: scale(1.1);
             }
         }
 
-        h3 {
-            font-size: 16px;
+        &.drag-over {
+            border-color: $fh-primary;
+            background: rgba($fh-primary, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba($fh-primary, 0.4);
+        }
+
+        .fh-k-row {
+            margin-bottom: 4px;
+
+            .fh-k-client {
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                font-weight: 800;
+                color: rgba(255, 255, 255, 0.5);
+            }
+
+            .fh-k-status-badge {
+                font-size: 9px;
+                padding: 1px 6px;
+                font-weight: 700;
+            }
+        }
+
+        .fh-k-title {
+            font-size: 14px;
             font-weight: 700;
             color: #fff;
-            margin: 0;
-            opacity: 0.9;
+            margin-bottom: 10px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .level-icon {
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 20px;
+        .fh-k-people {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-    }
 
-    .level-content {
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        .fh-k-date {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-create-subtask-icon.active-plus {
+
+            padding: 3px !important;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.8;
+
+
+            svg {
+                font-size: 16px;
+                stroke-width: 3px !important;
+                color: #fff;
+            }
+
+            &:hover {
+                transform: scale(1.1);
+            }
+        }
+
+        .current-badge {
+            position: absolute;
+            top: -10px;
+            right: 12px;
+            background: $fh-primary;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba($fh-primary, 0.3);
+        }
+
+        &.is-current {
+            border: 2px solid $fh-primary;
+            background: rgba($fh-primary, 0.05);
+            cursor: default;
+
+            &:hover {
+                transform: none;
+            }
+        }
     }
 }
 
-/* ===== Connectors ===== */
-.hierarchy-connector {
-    height: 60px;
-    width: 2px;
+.tree-children {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-
-    .line {
-        height: 100%;
-        width: 1px;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-    }
-
-    .arrow {
-        position: absolute;
-        color: rgba(255, 255, 255, 0.15);
-        background: #0f131a;
-        padding: 4px;
-        font-size: 24px;
-    }
 }
 
-/* ===== Tasks Grid internal to level ===== */
-.tasks-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-    width: 100%;
-
-    &.single-col {
-        display: flex;
-        justify-content: center;
-
-        .fh-k-task {
-            max-width: 400px;
-        }
-    }
-}
-
-/* ===== Empty States ===== */
-.empty-level {
-    text-align: center;
+.error-message {
+    color: #f44336;
     padding: 20px;
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 14px;
-    border: 1px dashed rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    text-align: center;
 }
 
-/* ===== Kanban Task Cards (Synced with kanban.scss) ===== */
-.fh-k-task {
-    background: rgba(36, 34, 34, 0.467);
-    border: 1px solid rgba(255, 255, 255, .06);
-    border-radius: 12px;
-    padding: 12px 12px 10px;
-    cursor: grab;
-    transition: transform .06s ease, box-shadow .12s ease, border-color .12s ease;
-    position: relative;
-    touch-action: none;
-    width: 100%;
-    box-sizing: border-box;
-
-    &:active {
-        cursor: grabbing;
-    }
-
-    &:hover {
-        border-color: rgba(255, 255, 255, .12);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        transform: translateY(-2px);
-    }
-
-    &.is-current {
-        border-color: $fh-primary;
-        box-shadow: 0 0 0 2px rgba($fh-primary, 0.2);
-        cursor: default;
-        background: rgba($fh-primary, 0.03);
-
-        &:hover {
-            transform: none;
-        }
-    }
-
-    &.prio-crit {
-        border-left: 8px solid #9c27b0;
-        box-shadow: 0 0 10px rgba(156, 39, 176, 0.25);
-        background: rgba(156, 39, 176, 0.04);
-    }
-
-    &.prio-high {
-        border-left: 8px solid #f44336;
-    }
-
-    &.prio-med {
-        border-left: 8px solid #fb8c00;
-    }
-
-    &.prio-low {
-        border-left: 8px solid #4caf50;
-    }
-
-    &.is-vencida {
-        background: rgba(159, 27, 27, 0.15) !important;
-        border-color: rgba(159, 27, 27, 0.3);
-    }
-
-    .fh-k-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.4);
-    }
-
-    .fh-k-title {
-        color: #fff;
-        font-weight: 700;
-        font-size: 14px;
-        margin-bottom: 12px;
-    }
-
-    .fh-k-people {
-        display: flex;
-        gap: 16px;
-    }
-
-    .fh-k-role {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.3);
-    }
-
-    .current-badge {
-        position: absolute;
-        bottom: 10px;
-        right: 12px;
-        background: $fh-primary;
-        color: white;
-        font-size: 9px;
-        font-weight: 800;
-        text-transform: uppercase;
-        padding: 2px 8px;
-        border-radius: 4px;
-    }
-}
-
-/* ===== Animations ===== */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes popDown {
-    from {
-        transform: scale(0.95) translateY(-10px);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-    }
-}
-
-/* ===== Create Button ===== */
-.btn-create-subtask {
-    background: transparent;
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
+.loader-center {
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-    opacity: 0.7;
-
-    &:hover {
-        opacity: 1;
-        background: rgba(255, 255, 255, 0.05);
-    }
+    justify-content: center;
+    min-height: 400px;
 }

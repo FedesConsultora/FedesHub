@@ -1,6 +1,5 @@
-// /frontend/src/pages/tareas/TasksPage.jsx
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { federsApi } from "../../api/feders";
 import useTasksBoard from "../../hooks/useTasksBoard";
 import { tareasApi } from "../../api/tareas";
@@ -24,10 +23,20 @@ import "./TasksPage.scss";
 
 
 export default function TasksPage() {
+  const { id: routeId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState(() => localStorage.getItem('tasks_view') || "kanban");
   const [showCreate, setShowCreate] = useState(false);
   const [openTaskId, setOpenTaskId] = useState(null);
+
+  // Sincronizar openTaskId con el id de la ruta
+  useEffect(() => {
+    if (routeId) {
+      setOpenTaskId(Number(routeId));
+    } else {
+      setOpenTaskId(null);
+    }
+  }, [routeId]);
   const [initialData, setInitialData] = useState({});
   const [rankedFeders, setRankedFeders] = useState([]);
 
@@ -447,11 +456,20 @@ export default function TasksPage() {
       )}
 
       {openTaskId && (
-        <ModalPanel open={!!openTaskId} onClose={() => setOpenTaskId(null)}>
+        <ModalPanel
+          open={!!openTaskId}
+          onClose={() => {
+            setOpenTaskId(null);
+            navigate('/tareas');
+          }}
+        >
           <TaskDetail
             taskId={openTaskId}
             onUpdated={refetch}
-            onClose={() => setOpenTaskId(null)}
+            onClose={() => {
+              setOpenTaskId(null);
+              navigate('/tareas');
+            }}
           />
         </ModalPanel>
       )}

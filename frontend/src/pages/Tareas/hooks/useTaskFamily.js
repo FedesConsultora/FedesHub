@@ -8,9 +8,7 @@ import { parseApiError } from '../../../api/client'
  * @returns {object} - { parentTask, siblings, children, loading, error, reload }
  */
 export default function useTaskFamily(taskId) {
-    const [parentTask, setParentTask] = useState(null)
-    const [siblings, setSiblings] = useState([])
-    const [children, setChildren] = useState([])
+    const [levels, setLevels] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
@@ -21,27 +19,48 @@ export default function useTaskFamily(taskId) {
         setError(null)
 
         try {
-            // Obtener la tarea actual para saber si tiene padre
-            const currentTask = await tareasApi.get(taskId)
+            const allTasks = await tareasApi.getFamily(taskId)
 
-            // Si tiene padre, cargar el padre y los hermanos
-            if (currentTask.tarea_padre_id) {
-                const [parent, siblingsData] = await Promise.all([
-                    tareasApi.get(currentTask.tarea_padre_id),
-                    tareasApi.listChildren(currentTask.tarea_padre_id)
-                ])
+            // 1. Mapear todas las tareas por ID para acceso rápido
+            const taskMap = {}
+            allTasks.forEach(t => {
+                taskMap[t.id] = { ...t, children: [] }
+            })
 
-                setParentTask(parent)
-                // Filtrar para no incluir la tarea actual en los hermanos
-                setSiblings((siblingsData.rows || []).filter(t => t.id !== taskId))
-            } else {
-                setParentTask(null)
-                setSiblings([])
+            // 2. Construir la estructura de árbol y encontrar raíces
+            const roots = []
+            allTasks.forEach(t => {
+                const node = taskMap[t.id]
+                if (t.tarea_padre_id && taskMap[t.tarea_padre_id]) {
+                    taskMap[t.tarea_padre_id].children.push(node)
+                } else {
+                    roots.push(node)
+                }
+            })
+
+            // 3. Etiquetar nodos (isCurrent, isAncestor, isDescendant)
+            const markNodes = (nodes, currentFound = false, path = []) => {
+                let foundInBranch = false;
+                nodes.forEach(node => {
+                    node.isCurrent = Number(node.id) === Number(taskId)
+                    node.isAncestor = false
+                    node.isDescendant = currentFound
+
+                    if (node.isCurrent) {
+                        foundInBranch = true
+                        path.forEach(ancestor => { ancestor.isAncestor = true })
+                    }
+
+                    if (node.children.length > 0) {
+                        const childFound = markNodes(node.children, currentFound || node.isCurrent, [...path, node])
+                        if (childFound) foundInBranch = true
+                    }
+                })
+                return foundInBranch
             }
 
-            // Cargar las subtareas (hijos)
-            const childrenData = await tareasApi.listChildren(taskId)
-            setChildren(childrenData.rows || [])
+            markNodes(roots)
+            setLevels(roots)
 
         } catch (e) {
             setError(parseApiError(e)?.message || 'No se pudo cargar la información de la familia')
@@ -55,9 +74,7 @@ export default function useTaskFamily(taskId) {
     }, [taskId, load])
 
     return {
-        parentTask,
-        siblings,
-        children,
+        levels,
         loading,
         error,
         reload: load

@@ -35,6 +35,7 @@ export const tareasApi = {
     return api.get(base, { params: serializedParams }).then(r => ({ total: r.data.total ?? r.data.length ?? 0, rows: r.data.rows ?? r.data }));
   },
   get: (id) => api.get(`${base}/${id}`).then(r => r.data),
+  getFamily: (id) => api.get(`${base}/${id}/family`).then(r => r.data),
   create: (body) => api.post(base, body).then(r => r.data),
   update: (id, body) => {
     // Limpiar keys con valor undefined para evitar validaciones incorrectas en el backend

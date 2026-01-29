@@ -888,7 +888,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                   <FiGitBranch /> Tarea Padre:
                 </div>
                 <div className="banner-link" onClick={() => navigate(`/tareas/${task.tarea_padre_id}`)}>
-                  {task.tareaPadre?.titulo || `Tarea #${task.tarea_padre_id}`}
+                  {task.tarea_padre_titulo || `Tarea #${task.tarea_padre_id}`}
                 </div>
               </div>
             )}
