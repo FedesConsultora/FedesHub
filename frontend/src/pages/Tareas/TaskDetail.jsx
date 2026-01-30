@@ -754,18 +754,14 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           {/* Meta info - ahora puede hacer wrap */}
           <div className="meta">
             <span className="inlineDue">
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '2px' }}>
-                  {task?.tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
-                </span>
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                  onChange={handleDueChange}
-                  disabled={(!isResponsible && !isDirectivo) || !!task?.datos_tc?.inamovible}
-                  inamovible={!!task?.datos_tc?.inamovible}
-                />
-              </div>
+              <InlineDue
+                value={toInputDate(vencimientoISO)}
+                onChange={handleDueChange}
+                disabled={(!isResponsible && !isDirectivo) || !!task?.datos_tc?.inamovible}
+                inamovible={!!task?.datos_tc?.inamovible}
+              />
             </span>
+
             <TaskStatusCard
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
@@ -780,6 +776,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               isCollaborator={isCollaborator}
               isNivelB={isDirectivo}
             />
+
             <span className="inlineClient">
 
               <InlineClient
@@ -858,7 +855,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
         </div>
 
 
-      </div>
+      </div >
 
       <div className="grid">
         {/* LEFT */}
@@ -1484,10 +1481,7 @@ function InlineClient({ valueId = null, valueName = '', valueColor = null, optio
         onClick={handleClick}
         title={disabled ? 'Solo el responsable puede cambiar' : 'Cambiar cliente'}
         style={{
-          backgroundColor: valueColor || '#3B82F6',
-          color: '#ffffff',
-          border: `2px solid ${valueColor || '#3B82F6'}`,
-          fontWeight: '500'
+          backgroundColor: valueColor || '#3B82F6'
         }}
       >
         {valueName || 'Sin cliente'}
