@@ -181,6 +181,7 @@ export default function AusenciasBoard() {
           tipos={board.saldos.tipos}
           saldos={board.saldos.saldos}
           canApprove={canApprove}
+          holidays={board.holidays}
         />
       )
     })
@@ -196,16 +197,16 @@ export default function AusenciasBoard() {
       width: 720,
       render: (close) => (
         <AbsenceForm
+          editingItem={item}
           onCancel={() => close(false)}
           onCreated={(row) => {
-            onRowChanged(row)
+            setLocalRows(ls => ls.map(r => r.id === row.id ? { ...row } : r))
             close(true)
-            setTimeout(() => openDay(row.fecha_desde), 100)
           }}
-          editingItem={item}
           tipos={board.saldos.tipos}
           saldos={board.saldos.saldos}
           canApprove={canApprove}
+          holidays={board.holidays}
         />
       )
     })
@@ -358,6 +359,7 @@ export default function AusenciasBoard() {
             monthIdx={board.monthIdx}
             setMonthIdx={board.setMonthIdx}
             byDate={filteredByDate}
+            holidays={board.holidays}
             onDayClick={openDay}
             onRangeSelect={openRangeAbs}
           />
@@ -366,6 +368,7 @@ export default function AusenciasBoard() {
             year={year}
             month={monthIdx}
             rows={filteredRows}
+            holidays={board.holidays}
             onDayClick={openDay}
             onRangeSelect={openRangeAbs}
             onPrev={() => {

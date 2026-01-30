@@ -106,6 +106,16 @@
       box-shadow: 0 0 0 2px rgba($fh-accent, .55) inset;
     }
 
+    &.is-holiday {
+      background: rgba(3, 200, 255, 0.199);
+      border-right: 2px solid rgba(38, 248, 255, 0.875);
+
+      .num {
+
+        font-weight: 800;
+      }
+    }
+
     &.has-pending {
       border-color: rgba(251, 191, 36, 0.4);
     }

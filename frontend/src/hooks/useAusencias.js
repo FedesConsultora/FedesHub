@@ -1,6 +1,7 @@
 // src/hooks/useAusencias.js
 import { useEffect, useMemo, useState } from 'react'
 import { ausenciasApi } from '../api/ausencias'
+import { feriadosApi } from '../api/feriados'
 import usePermission from './usePermissions'
 
 // Utilidad
@@ -85,9 +86,20 @@ export function useAusenciasBoard(yearStr) {
   const today = new Date()
   const year = Number(yearStr)
   const [monthIdx, setMonthIdx] = useState(clamp(today.getFullYear() === year ? today.getMonth() : 0, 0, 11))
+  const [holidays, setHolidays] = useState(new Map())
 
   const saldos = useSaldos(yearStr)
   const aus = useAusenciasYear(yearStr)
+
+  useEffect(() => {
+    feriadosApi.list(year)
+      .then(list => {
+        const m = new Map()
+        list.forEach(h => m.set(h.fecha, h.nombre))
+        setHolidays(m)
+      })
+      .catch(e => console.error('[useAusenciasBoard] Error loading holidays:', e))
+  }, [year])
 
   // mapa por día → array de ausencias aprobadas
   const byDate = useMemo(() => {
@@ -108,5 +120,5 @@ export function useAusenciasBoard(yearStr) {
     return map
   }, [aus.rows])
 
-  return { monthIdx, setMonthIdx, saldos, aus, byDate, canApprove, canAssign }
+  return { monthIdx, setMonthIdx, saldos, aus, byDate, holidays, canApprove, canAssign }
 }

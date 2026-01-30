@@ -3,7 +3,7 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import './YearCalendar.scss'
 const two = n => String(n).padStart(2, '0')
 
-export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, onDayClick, onRangeSelect }) {
+export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, holidays = new Map(), onDayClick, onRangeSelect }) {
   const scrollRef = useRef(null)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
@@ -46,6 +46,7 @@ export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, onDa
             active={m === monthIdx}
             setActive={() => setMonthIdx(m)}
             byDate={byDate}
+            holidays={holidays}
             onDayClick={onDayClick}
             dragStart={dragStart}
             dragEnd={dragEnd}
@@ -60,7 +61,7 @@ export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, onDa
   )
 }
 
-function Month({ year, month, active, setActive, byDate, dragStart, dragEnd, setDragStart, setDragEnd }) {
+function Month({ year, month, active, setActive, byDate, holidays, dragStart, dragEnd, setDragStart, setDragEnd }) {
   const label = ((str) => str.charAt(0).toUpperCase() + str.slice(1))(new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }))
   const first = new Date(year, month, 1)
   const startWeekDay = (first.getDay() + 6) % 7
@@ -99,17 +100,20 @@ function Month({ year, month, active, setActive, byDate, dragStart, dragEnd, set
           const weekend = (wd === 0 || wd === 6)
           const isToday = (dateStr === t)
           const selected = isSelected(dateStr)
+          const holidayName = holidays.get(dateStr)
+          const isNonWorking = weekend || !!holidayName
+          const showIndicators = hits.length > 0 && !isNonWorking
 
           return (
             <button
               key={idx}
-              className={`day ${hits.length ? 'busy' : ''} ${statusCls} ${hasPending ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''}`}
-              title={hits.map(h => `${h.tipo_nombre} (${h.estado_codigo})`).join('\n')}
+              className={`day ${showIndicators ? 'busy' : ''} ${showIndicators ? statusCls : ''} ${showIndicators && hasPending ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
+              title={(holidayName ? `Feriado: ${holidayName}\n` : '') + hits.map(h => `${h.tipo_nombre} (${h.estado_codigo})`).join('\n')}
               onMouseDown={() => { setDragStart(dateStr); setDragEnd(dateStr) }}
               onMouseEnter={() => { if (dragStart) setDragEnd(dateStr) }}
             >
               <span className="num">{d}</span>
-              {!!hits.length && <span className="dots">{hits.length}</span>}
+              {showIndicators && <span className="dots">{hits.length}</span>}
             </button>
           )
         })}

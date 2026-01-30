@@ -193,6 +193,17 @@
       font-weight: 800;
       color: v.$fh-accent;
     }
+
+    &.is-holiday {
+      background: rgba(3, 200, 255, 0.199);
+      border-bottom: 2px solid rgba(38, 248, 255, 0.875);
+
+      &:hover {
+        background: rgba(0, 255, 247, 0.523);
+
+      }
+
+    }
   }
 }
 

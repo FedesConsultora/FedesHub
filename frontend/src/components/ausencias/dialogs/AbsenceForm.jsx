@@ -1,6 +1,7 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { FiTag, FiCalendar, FiClock, FiMessageCircle, FiCheckCircle, FiHash, FiPaperclip, FiX } from 'react-icons/fi'
 import { ausenciasApi } from '../../../api/ausencias'
+import { feriadosApi } from '../../../api/feriados'
 import { useAuth } from '../../../context/AuthContext'
 import PremiumSelect from '../../ui/PremiumSelect'
 import './Dialog.scss'
@@ -9,7 +10,7 @@ const two = n => String(n).padStart(2, '0')
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}` }
 const WORKDAY_HOURS = Number(import.meta.env.VITE_WORKDAY_HOURS || 8)
 
-export default function AbsenceForm({ onCancel, onCreated, initDate = null, initHasta = null, tipos = [], saldos = [], canApprove = false, editingItem = null }) {
+export default function AbsenceForm({ onCancel, onCreated, initDate = null, initHasta = null, tipos = [], saldos = [], canApprove = false, editingItem = null, holidays: initialHolidays = null }) {
   const [tipoId, setTipoId] = useState(editingItem?.tipo_id || '')
   const [desde, setDesde] = useState(editingItem?.fecha_desde || initDate || today())
   const [hasta, setHasta] = useState(editingItem?.fecha_hasta || initHasta || initDate || today())
@@ -21,6 +22,7 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, init
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
+  const [holidays, setHolidays] = useState(new Set())
   const { roles, user } = useAuth()
   const isRRHH = roles.includes('RRHH')
   const isEditingSelf = !editingItem || String(editingItem.user_id) === String(user?.id)
@@ -39,6 +41,31 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, init
   useEffect(() => {
     setApproveNow(canFinalApprove && editingItem?.estado_codigo !== 'aprobada')
   }, [canFinalApprove, editingItem])
+
+  // Cargar feriados para los años involucrados
+  useEffect(() => {
+    // Si ya recibimos feriados por prop y solo es un año, podemos usarlos
+    if (initialHolidays && initialHolidays.size > 0) {
+      // initialHolidays es un Map (fecha -> nombre)
+      const names = Array.from(initialHolidays.keys())
+      setHolidays(new Set(names))
+      return
+    }
+
+    const y1 = new Date(desde + 'T00:00:00').getFullYear()
+    const y2 = new Date(hasta + 'T00:00:00').getFullYear()
+    if (isNaN(y1) || isNaN(y2)) return
+
+    const years = [y1]
+    if (y2 !== y1) years.push(y2)
+
+    Promise.all(years.map(y => feriadosApi.list(y)))
+      .then(results => {
+        const allHolidays = results.flat().map(h => h.fecha)
+        setHolidays(new Set(allHolidays))
+      })
+      .catch(e => console.error('[AbsenceForm] Error loading holidays:', e))
+  }, [desde, hasta, initialHolidays])
 
   // Auto-calcular horas si cambian los tiempos
   useMemo(() => {
@@ -65,13 +92,17 @@ export default function AbsenceForm({ onCancel, onCreated, initDate = null, init
     if (unidad === 'hora') return horas ? Number(horas) : calculatedHoras
     if (medio) return 0.5
 
-    // Contar días hábiles (excluir fines de semana)
+    // Contar días hábiles (excluir fines de semana y feriados)
     let count = 0
     let cur = new Date(desde + 'T00:00:00')
     const last = new Date(hasta + 'T00:00:00')
     while (cur <= last) {
-      const wd = cur.getDay()
-      if (wd !== 0 && wd !== 6) count++
+      const wd = cur.getDay() // 0=Sunday, 6=Saturday
+      const dateStr = `${cur.getFullYear()}-${two(cur.getMonth() + 1)}-${two(cur.getDate())}`
+      const isWeekend = wd === 0 || wd === 6
+      const isHoliday = holidays.has(dateStr)
+
+      if (!isWeekend && !isHoliday) count++
       cur.setDate(cur.getDate() + 1)
     }
     return count

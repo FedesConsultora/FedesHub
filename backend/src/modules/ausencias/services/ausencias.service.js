@@ -9,14 +9,40 @@ import {
 import { initModels } from '../../../models/registry.js';
 import { sequelize } from '../../../core/db.js';
 import { QueryTypes } from 'sequelize';
+import { feriadosService } from '../../../lib/feriados.service.js';
 
 const WORKDAY_HOURS = Number(process.env.WORKDAY_HOURS ?? 8);
 
-const parseDaysInclusive = (d1, d2) => {
-  const a = new Date(`${d1}T00:00:00Z`);
-  const b = new Date(`${d2}T00:00:00Z`);
-  const ms = b.getTime() - a.getTime();
-  return Math.floor(ms / 86400000) + 1; // inclusive
+const parseDaysInclusive = async (d1, d2) => {
+  const start = new Date(`${d1}T00:00:00Z`);
+  const end = new Date(`${d2}T00:00:00Z`);
+
+  // Obtener feriados para los años involucrados
+  const years = new Set([start.getUTCFullYear(), end.getUTCFullYear()]);
+  const holidays = new Set();
+  for (const year of years) {
+    try {
+      const yearlyHolidays = await feriadosService.getFeriados(year);
+      yearlyHolidays.forEach(h => holidays.add(h.fecha));
+    } catch (e) {
+      // console.error(`[AusenciasService] Error fetching holidays for ${year}:`, e);
+    }
+  }
+
+  let count = 0;
+  let cur = new Date(start);
+  while (cur <= end) {
+    const dayOfWeek = cur.getUTCDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0=Sunday, 6=Saturday
+    const dateStr = cur.toISOString().split('T')[0];
+    const isHoliday = holidays.has(dateStr);
+
+    if (!isWeekend && !isHoliday) {
+      count++;
+    }
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return count;
 };
 
 export const catUnidades = () => listUnidades();
@@ -121,7 +147,7 @@ const buildPayloadSolicitud = async ({ feder_id, tipo_id, tipo_codigo, fecha_des
   if (u?.codigo === 'hora') {
     if (!duracion_horas && !es_medio_dia) {
       // Si no pasan horas, calculamos (días * WORKDAY_HOURS).
-      const days = parseDaysInclusive(fecha_desde, fecha_hasta);
+      const days = await parseDaysInclusive(fecha_desde, fecha_hasta);
       payload.duracion_horas = days * WORKDAY_HOURS;
     } else if (duracion_horas) {
       payload.duracion_horas = Number(duracion_horas);
@@ -167,7 +193,7 @@ export const ausApprove = async (id, user_id) => {
   // Calcular requerido
   let requerido = 0;
   if (row.unidad_codigo === 'dia') {
-    const days = parseDaysInclusive(row.fecha_desde, row.fecha_hasta);
+    const days = await parseDaysInclusive(row.fecha_desde, row.fecha_hasta);
     requerido = row.es_medio_dia ? 0.5 : days;
   } else { // 'hora'
     requerido = Number(row.duracion_horas ?? 0);

@@ -4,7 +4,7 @@ import './MonthCalendar.scss'
 
 const two = n => String(n).padStart(2, '0')
 
-export default function MonthCalendar({ year, month, rows = [], onDayClick, onPrev, onNext, onRangeSelect }) {
+export default function MonthCalendar({ year, month, rows = [], holidays = new Map(), onDayClick, onPrev, onNext, onRangeSelect }) {
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
 
@@ -91,29 +91,36 @@ export default function MonthCalendar({ year, month, rows = [], onDayClick, onPr
             const weekend = (wd === 0 || wd === 6)
             const isToday = (dateStr === todayStr)
             const selected = isSelected(dateStr)
+            const holidayName = holidays.get(dateStr)
+            const isNonWorking = weekend || !!holidayName
+            const showDetails = items.length > 0 && !isNonWorking
 
             return (
               <button
-                className={`day ${items.length ? 'busy' : ''} ${pendientes.length ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''}`}
+                className={`day ${showDetails ? 'busy' : ''} ${showDetails && pendientes.length ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
                 key={idx}
                 onMouseDown={() => handleMouseDown(dateStr)}
                 onMouseEnter={() => handleMouseEnter(dateStr)}
                 onMouseUp={handleMouseUp}
-                title={`${items.length || 0} ausencias`}
+                title={(holidayName ? `Feriado: ${holidayName}\n` : '') + `${items.length || 0} ausencias`}
               >
                 <span className="num">{d}</span>
-                <div className="tags">
-                  {!!aprobadas.length && <span className="tag ok">{aprobadas.length}</span>}
-                  {!!pendientes.length && <span className="tag warn">{pendientes.length}</span>}
-                  {!!denegadas.length && <span className="tag err">{denegadas.length}</span>}
-                  {!!canceladas.length && <span className="tag cancel">{canceladas.length}</span>}
-                </div>
-                {items.slice(0, 3).map((r, i) => (
-                  <div key={i} className={`chip ${r.estado_codigo}`}>
-                    {r.tipo_nombre}
-                  </div>
-                ))}
-                {items.length > 3 && <div className="more">+{items.length - 3} más…</div>}
+                {showDetails && (
+                  <>
+                    <div className="tags">
+                      {!!aprobadas.length && <span className="tag ok">{aprobadas.length}</span>}
+                      {!!pendientes.length && <span className="tag warn">{pendientes.length}</span>}
+                      {!!denegadas.length && <span className="tag err">{denegadas.length}</span>}
+                      {!!canceladas.length && <span className="tag cancel">{canceladas.length}</span>}
+                    </div>
+                    {items.slice(0, 3).map((r, i) => (
+                      <div key={i} className={`chip ${r.estado_codigo}`}>
+                        {r.tipo_nombre}
+                      </div>
+                    ))}
+                    {items.length > 3 && <div className="more">+{items.length - 3} más…</div>}
+                  </>
+                )}
               </button>
             )
           })}
