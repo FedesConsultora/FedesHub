@@ -24,6 +24,7 @@ import "./TasksPage.scss";
 
 export default function TasksPage() {
   const { id: routeId } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState(() => localStorage.getItem('tasks_view') || "kanban");
   const [showCreate, setShowCreate] = useState(false);
@@ -381,6 +382,30 @@ export default function TasksPage() {
                 {trashCount > 0 && <span className="tab-badge" style={{ marginLeft: '6px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', padding: '1px 5px', borderRadius: '10px' }}>{trashCount}</span>}
               </button>
             )}
+            <button
+              type="button"
+              className="one-pager-btn"
+              onClick={() => navigate('/tareas/one-pager')}
+              title="Ver One Pager"
+              style={{
+                marginLeft: '8px',
+                background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              <i className="fi fi-rr-document-signed" style={{ marginRight: '6px' }}></i>
+              One Pager
+            </button>
           </div>
 
           <button

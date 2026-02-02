@@ -12,6 +12,8 @@ const compactParams = (obj = {}) =>
 export const tareasApi = {
   // Catálogo para columnas/combos
   catalog: () => api.get(`${base}/catalog`).then(r => r.data),
+  getOnePager: (cliente_id, params = {}) => api.get(`${base}/one-pager/${cliente_id}`, { params }).then(r => r.data),
+  getOnePagerSummary: () => api.get(`${base}/one-pager/summary`).then(r => r.data),
 
   compose: (id = null) => api.get(`${base}/compose`, { params: id ? { id } : undefined }).then(r => r.data),
 

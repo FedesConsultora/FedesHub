@@ -17,7 +17,8 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl, getUrgentTasksCtrl, getTaskFamily
+  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl, getUrgentTasksCtrl, getTaskFamily,
+  getOnePager, getOnePagerSummary
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -108,7 +109,8 @@ router.get('/:id/recordatorios', requireAuth, requirePermission('tareas', 'read'
 router.post('/:id/recordatorios', requireAuth, requirePermission('tareas', 'read'), postRecordatorio);
 router.delete('/:id/recordatorios/:remId', requireAuth, requirePermission('tareas', 'read'), deleteRecordatorio);
 
-// Drive Image Proxy (for displaying private Drive images)
-router.get('/drive/image/:fileId', requireAuth, getDriveImage);
+// One Pager View
+router.get('/one-pager/summary', requireAuth, requirePermission('tareas', 'read'), getOnePagerSummary);
+router.get('/one-pager/:cliente_id', requireAuth, requirePermission('tareas', 'read'), getOnePager);
 
 export default router;

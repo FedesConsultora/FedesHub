@@ -264,8 +264,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
 
   const reload = useCallback(async () => {
+    const fetchId = id || taskId;
+    if (!fetchId) return;
+
     const [t, cat] = await Promise.all([
-      tareasApi.get(taskId).then(taskData => {
+      tareasApi.get(fetchId).then(taskData => {
         if (taskData.estado_nombre === 'Revisión') taskData.estado_nombre = 'En Revisión';
         if (taskData.estado?.nombre === 'Revisión') taskData.estado.nombre = 'En Revisión';
         return taskData;
@@ -288,9 +291,22 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     setCatalog(cat || {})
     setForm({ titulo: t?.titulo || '', descripcion: t?.descripcion || '' })
     document.title = `${t?.titulo || 'Tarea'}`
-  }, [id])
+  }, [id, taskId])
 
-  useEffect(() => { (async () => { await reload() })() }, [reload])
+  useEffect(() => { reload() }, [reload])
+
+  // Escuchar actualizaciones globales (Sincronización)
+  useEffect(() => {
+    const handleGlobalUpdate = (e) => {
+      const currentId = id || taskId;
+      if (e.detail?.taskId == currentId) {
+        console.log('[TaskDetail] Global update detected, reloading...');
+        reload();
+      }
+    };
+    window.addEventListener('task-updated', handleGlobalUpdate);
+    return () => window.removeEventListener('task-updated', handleGlobalUpdate);
+  }, [id, taskId, reload]);
 
 
   const dirty = useMemo(() => {

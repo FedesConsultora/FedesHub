@@ -23,7 +23,7 @@ import {
   svcGetCompose, svcSetResponsableLeader,
   svcGetDashboardMetrics, svcGetUrgentTasks,
   svcGetHistorial, svcSetBoostManual, svcToggleComentarioReaccion,
-  svcGetTaskFamily
+  svcGetTaskFamily, svcGetOnePager, svcGetOnePagerSummary
 } from '../services/tareas.service.js';
 
 import { saveUploadedFiles, getFolderLink } from '../../../infra/storage/index.js';
@@ -781,6 +781,32 @@ export const getDriveImage = async (req, res, next) => {
     if (e.code === 404 || e.message?.includes('not found') || e.message?.includes('File not found')) {
       return res.status(404).json({ error: 'File not found' });
     }
+    next(e);
+  }
+};
+
+// ---- One Pager View ----
+export const getOnePager = async (req, res, next) => {
+  try {
+    const { cliente_id } = req.params;
+    const { tipo = 'ALL' } = req.query;
+
+    if (!cliente_id) {
+      return res.status(400).json({ error: 'cliente_id is required' });
+    }
+
+    const data = await svcGetOnePager(Number(cliente_id), tipo);
+    res.json(data);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const getOnePagerSummary = async (req, res, next) => {
+  try {
+    const data = await svcGetOnePagerSummary(req.user);
+    res.json(data);
+  } catch (e) {
     next(e);
   }
 };

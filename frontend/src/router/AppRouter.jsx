@@ -42,7 +42,7 @@ import NotifListPage from '../pages/Notificaciones/NotifListPage.jsx'
 
 import ChatPage from '../pages/Chat/ChatPage.jsx'   // NUEVO
 import PerfilPage from '../pages/Perfil/PerfilPage.jsx'
-
+import OnePagerPage from '../pages/Tareas/OnePager/OnePagerPage.jsx'
 
 export default function AppRouter() {
   return (
@@ -87,6 +87,10 @@ export default function AppRouter() {
           <Route
             path="tareas/:id"
             element={<RequirePerm modulo="tareas" accion="read"><TasksPage /></RequirePerm>}
+          />
+          <Route
+            path="tareas/one-pager"
+            element={<RequirePerm modulo="tareas" accion="read"><OnePagerPage /></RequirePerm>}
           />
           <Route
             path="asistencia"

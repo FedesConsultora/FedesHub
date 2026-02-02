@@ -787,23 +787,23 @@ const createTask = async (payload, currentFederId) => {
 
 const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
   return sequelize.transaction(async (t) => {
+    // 1) Obtener estado actual (antes del cambio) para comparar y registrar historial
     const cur = await models.Tarea.findByPk(id, {
       include: [{ model: models.TareaTC, as: 'datosTC' }],
       transaction: t
     });
     if (!cur) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
 
-    // REGLA DE NEGOCIO: inamovible
+    // REGLA DE NEGOCIO: inamovible (bloqueo de vencimiento)
     if (cur.datosTC?.inamovible && payload.vencimiento !== undefined) {
-      // Si la tarea es inamovible, comparamos fechas (solo el día)
       const oldD = cur.vencimiento ? new Date(cur.vencimiento).toISOString().split('T')[0] : null;
       const newD = payload.vencimiento ? new Date(payload.vencimiento).toISOString().split('T')[0] : null;
-
       if (oldD !== newD) {
         throw Object.assign(new Error('Esta tarea es inamovible y no permite cambiar su fecha de publicación.'), { status: 400 });
       }
     }
 
+    // Validaciones de existencia de relaciones
     if (payload.cliente_id) await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
     if (payload.lead_id) await ensureExists(models.ComercialLead, payload.lead_id, 'Lead no encontrado');
     if (payload.hito_id) await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
@@ -812,169 +812,174 @@ const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
       await validateHierarchy(id, payload.tarea_padre_id);
     }
 
-    // recalcular prioridad si cambian ponderacion/impacto/urgencia/cliente
+    // Recalcular prioridad si cambian factores clave
     let prioridad_num = cur.prioridad_num;
     let cliente_ponderacion = cur.cliente_ponderacion;
-    let impacto_id = payload.impacto_id ?? cur.impacto_id;
-    let urgencia_id = payload.urgencia_id ?? cur.urgencia_id;
-
     if (payload.cliente_id || payload.impacto_id || payload.urgencia_id) {
       cliente_ponderacion = await getClientePonderacion(payload.cliente_id ?? cur.cliente_id);
-      const pts = await getPuntos(impacto_id, urgencia_id);
+      const pts = await getPuntos(payload.impacto_id ?? cur.impacto_id, payload.urgencia_id ?? cur.urgencia_id);
       prioridad_num = calcPrioridad(cliente_ponderacion, pts.impacto, pts.urgencia);
     }
 
-    // DETECTAR Y REGISTRAR CAMBIOS EN HISTORIAL
-    const cambios = [];
-
-    // Separar tc para que no se pase al update de Tarea base
+    // 2) Clasificar campos por tabla y detectar cambios para el historial
+    const fieldsTarea = {};
+    const fieldsTC = {};
+    const cambiosHistorial = [];
     const { tc, ...basePayload } = payload;
 
-    // Deadline (vencimiento)
-    if (basePayload.vencimiento !== undefined && basePayload.vencimiento !== cur.vencimiento) {
-      const { formatearFecha } = await import('../helpers/historial.helper.js');
-      cambios.push({
-        tipo_cambio: TIPO_CAMBIO.DEADLINE,
-        accion: ACCION.UPDATED,
-        valor_anterior: cur.vencimiento,
-        valor_nuevo: basePayload.vencimiento,
-        campo: 'vencimiento',
-        descripcion: `Cambió el vencimiento de ${formatearFecha(cur.vencimiento)} a ${formatearFecha(basePayload.vencimiento)}`
-      });
+    // Campos de Tarea (Nucleo)
+    const mappingTarea = [
+      'cliente_id', 'lead_id', 'hito_id', 'tarea_padre_id', 'titulo', 'descripcion',
+      'estado_id', 'requiere_aprobacion', 'impacto_id', 'urgencia_id',
+      'fecha_inicio', 'vencimiento', 'progreso_pct', 'is_archivada'
+    ];
+
+    for (const field of mappingTarea) {
+      if (basePayload[field] !== undefined) {
+        let oldVal = cur[field];
+        let newVal = basePayload[field];
+
+        // Normalización para comparación
+        if (oldVal instanceof Date) oldVal = oldVal.toISOString();
+        if (newVal instanceof Date) newVal = newVal.toISOString();
+
+        if (String(oldVal) !== String(newVal)) {
+          fieldsTarea[field] = basePayload[field];
+
+          // Mapeo robusto de field -> TIPO_CAMBIO
+          const lookupKey = field.replace('_id', '').toUpperCase();
+          const tipo = TIPO_CAMBIO[lookupKey] || TIPO_CAMBIO[field.toUpperCase()] || 'tarea_detalle';
+
+          cambiosHistorial.push({
+            tipo_cambio: tipo,
+            accion: ACCION.UPDATED,
+            campo: field,
+            valor_anterior: cur[field],
+            valor_nuevo: basePayload[field],
+            descripcion: `Actualizó ${field.replace(/_/g, ' ')}`
+          });
+        }
+      }
     }
 
-    // Cliente
-    if (basePayload.cliente_id !== undefined && basePayload.cliente_id !== cur.cliente_id) {
-      const clienteAnterior = await models.Cliente.findByPk(cur.cliente_id, { attributes: ['nombre'], transaction: t });
-      const clienteNuevo = await models.Cliente.findByPk(basePayload.cliente_id, { attributes: ['nombre'], transaction: t });
-      cambios.push({
-        tipo_cambio: TIPO_CAMBIO.CLIENTE,
-        accion: ACCION.UPDATED,
-        valor_anterior: { id: cur.cliente_id, nombre: clienteAnterior?.nombre },
-        valor_nuevo: { id: basePayload.cliente_id, nombre: clienteNuevo?.nombre },
-        campo: 'cliente_id',
-        descripcion: `Cambió el cliente de "${clienteAnterior?.nombre}" a "${clienteNuevo?.nombre}"`
-      });
+    // Agregar campos calculados si hubo cambios
+    if (prioridad_num !== cur.prioridad_num) fieldsTarea.prioridad_num = prioridad_num;
+    if (cliente_ponderacion !== cur.cliente_ponderacion) fieldsTarea.cliente_ponderacion = cliente_ponderacion;
+
+    // Manejar casos especiales de estado (clausura)
+    if (fieldsTarea.estado_id) {
+      const { codigo } = await models.TareaEstado.findByPk(fieldsTarea.estado_id, { attributes: ['codigo'], transaction: t });
+      if (codigo === 'finalizada') {
+        fieldsTarea.finalizada_at = new Date();
+        fieldsTarea.progreso_pct = 100;
+      } else {
+        fieldsTarea.finalizada_at = null;
+      }
     }
 
-    // Actualizar tarea base
-    await models.Tarea.update({ ...basePayload, prioridad_num, cliente_ponderacion }, { where: { id }, transaction: t });
-
-    // Actualizar datos de TC
+    // Campos de TareaTC (Extensión)
     if (tc) {
-      console.log('[updateTask] Actualizando TC con:', JSON.stringify(tc));
-      const { red_social_ids, formato_ids, ...tcFields } = tc;
+      const tcMapping = ['objetivo_negocio_id', 'objetivo_marketing_id', 'estado_publicacion_id', 'inamovible'];
+      const curTC = cur.datosTC || {};
 
-      const tcData = await models.TareaTC.findByPk(id, { transaction: t }) ||
-        await models.TareaTC.create({ tarea_id: id }, { transaction: t });
+      for (const field of tcMapping) {
+        if (tc[field] !== undefined) {
+          if (String(tc[field]) !== String(curTC[field])) {
 
-      // REGLA DE NEGOCIO: inamovible (bloquear desactivación)
-      if (tcData.inamovible && tc.inamovible === false) {
-        throw Object.assign(new Error('No podés desmarcar una tarea como inamovible una vez establecida.'), { status: 400 });
-      }
-
-      // REGLA DE NEGOCIO: solo directivos o responsable pueden marcarlo
-      if (tc.inamovible === true && !tcData.inamovible) {
-        const isNivelB = currentUser?.roles?.includes('NivelA') || currentUser?.roles?.includes('NivelB');
-        const isResponsible = await models.TareaResponsable.findOne({ where: { tarea_id: id, feder_id: feder_id }, transaction: t });
-        if (!isNivelB && !isResponsible) {
-          throw Object.assign(new Error('Solo los directivos o el responsable de la tarea pueden marcarla como inamovible.'), { status: 403 });
-        }
-      }
-
-      // Historial de cambios en campos de TareaTC
-      for (const key of Object.keys(tcFields)) {
-        const newVal = tcFields[key];
-        const oldVal = tcData[key];
-
-        // Comparación flexible (ignora tipos string vs number, maneja nulls)
-        if (newVal !== undefined && newVal != oldVal) {
-          let desc = `Actualizó ${key.replace(/_/g, ' ')}`;
-
-          if (key === 'estado_publicacion_id') {
-            const st = await models.TCEstadoPublicacion.findByPk(newVal, { transaction: t });
-            desc = `Cambió el estado de publicación a "${st?.nombre || 'Pendiente'}"`;
-          } else if (key === 'objetivo_negocio_id') {
-            if (newVal == null) {
-              desc = 'Quitó el objetivo de negocio';
-            } else {
-              const obj = await models.TCObjetivoNegocio.findByPk(newVal, { transaction: t });
-              desc = `Cambió el objetivo de negocio a "${obj?.nombre || 'Nuevo objetivo'}"`;
+            // REGLA DE NEGOCIO: inamovible
+            if (field === 'inamovible') {
+              if (curTC.inamovible && tc.inamovible === false) {
+                throw Object.assign(new Error('No podés desmarcar una tarea como inamovible una vez establecida.'), { status: 400 });
+              }
+              if (tc.inamovible === true) {
+                const isNivelB = currentUser?.roles?.includes('NivelA') || currentUser?.roles?.includes('NivelB');
+                const isResponsible = await models.TareaResponsable.findOne({ where: { tarea_id: id, feder_id: feder_id }, transaction: t });
+                if (!isNivelB && !isResponsible) {
+                  throw Object.assign(new Error('Solo los directivos o el responsable de la tarea pueden marcarla como inamovible.'), { status: 403 });
+                }
+              }
             }
-          } else if (key === 'objetivo_marketing_id') {
-            if (newVal == null) {
-              desc = 'Quitó el objetivo de marketing';
-            } else {
-              const obj = await models.TCObjetivoMarketing.findByPk(newVal, { transaction: t });
-              desc = `Cambió el objetivo de marketing a "${obj?.nombre || 'Nuevo objetivo'}"`;
-            }
-          } else if (key === 'inamovible') {
-            desc = newVal ? 'Marcó la publicación como inamovible (🔒)' : 'Quitó restricción de inamovible';
+
+            fieldsTC[field] = tc[field];
+
+            cambiosHistorial.push({
+              tipo_cambio: TIPO_CAMBIO.TC_DETALLE,
+              accion: ACCION.UPDATED,
+              campo: field,
+              valor_anterior: curTC[field],
+              valor_nuevo: tc[field],
+              descripcion: `Actualizó campo TC: ${field.replace(/_/g, ' ')}`
+            });
           }
-
-          cambios.push({
-            tipo_cambio: TIPO_CAMBIO.TC_DETALLE,
-            accion: ACCION.UPDATED,
-            campo: key,
-            valor_anterior: oldVal,
-            valor_nuevo: newVal,
-            descripcion: desc
-          });
-        }
-      }
-
-      if (Object.keys(tcFields).length > 0) {
-        await tcData.update(tcFields, { transaction: t });
-      }
-
-      // Pivotes - Solo si se pasaron explícitamente y son diferentes
-      if (red_social_ids !== undefined) {
-        const current = await models.TareaTCRedSocial.findAll({ where: { tarea_id: id }, transaction: t });
-        const curIds = current.map(c => Number(c.red_social_id)).sort();
-        const newIds = red_social_ids ? red_social_ids.map(id => Number(id)).sort() : [];
-
-        if (JSON.stringify(curIds) !== JSON.stringify(newIds)) {
-          console.log('[updateTask] Recreando Redes:', newIds);
-          await models.TareaTCRedSocial.destroy({ where: { tarea_id: id }, transaction: t });
-          if (newIds.length) {
-            await models.TareaTCRedSocial.bulkCreate(newIds.map(rsid => ({ tarea_id: id, red_social_id: rsid })), { transaction: t });
-          }
-          cambios.push({
-            tipo_cambio: TIPO_CAMBIO.TC_REDES,
-            accion: ACCION.UPDATED,
-            valor_nuevo: newIds,
-            descripcion: 'Actualizó las redes sociales de la publicación'
-          });
-        }
-      }
-      if (formato_ids !== undefined) {
-        const current = await models.TareaTCFormato.findAll({ where: { tarea_id: id }, transaction: t });
-        const curIds = current.map(c => Number(c.formato_id)).sort();
-        const newIds = formato_ids ? formato_ids.map(id => Number(id)).sort() : [];
-
-        if (JSON.stringify(curIds) !== JSON.stringify(newIds)) {
-          console.log('[updateTask] Recreando Formatos:', newIds);
-          await models.TareaTCFormato.destroy({ where: { tarea_id: id }, transaction: t });
-          if (newIds.length) {
-            await models.TareaTCFormato.bulkCreate(newIds.map(fid => ({ tarea_id: id, formato_id: fid })), { transaction: t });
-          }
-          cambios.push({
-            tipo_cambio: TIPO_CAMBIO.TC_FORMATOS,
-            accion: ACCION.UPDATED,
-            valor_nuevo: newIds,
-            descripcion: 'Actualizó los formatos de la publicación'
-          });
         }
       }
     }
 
-    // REGISTRAR TODOS LOS CAMBIOS
-    if (feder_id && cambios.length > 0) {
-      for (const cambio of cambios) {
+    // 3) Ejecutar Raw SQL UPDATES
+
+    // UPDATE Tarea
+    if (Object.keys(fieldsTarea).length > 0) {
+      const setClause = Object.keys(fieldsTarea).map(k => `"${k}" = :${k}`).join(', ');
+      await sequelize.query(`
+        UPDATE "Tarea" 
+        SET ${setClause}, "updated_at" = NOW()
+        WHERE "id" = :id
+      `, {
+        replacements: { ...fieldsTarea, id },
+        type: QueryTypes.UPDATE,
+        transaction: t
+      });
+    }
+
+    // UPDATE TareaTC
+    if (Object.keys(fieldsTC).length > 0 || tc) {
+      // Asegurar que exista la fila en TareaTC
+      const tcExists = !!cur.datosTC;
+      if (!tcExists) {
+        await sequelize.query(`INSERT INTO "TareaTC" ("tarea_id", "created_at", "updated_at") VALUES (:id, NOW(), NOW())`,
+          { replacements: { id }, type: QueryTypes.INSERT, transaction: t });
+      }
+
+      if (Object.keys(fieldsTC).length > 0) {
+        const setClauseTC = Object.keys(fieldsTC).map(k => `"${k}" = :${k}`).join(', ');
+        await sequelize.query(`
+          UPDATE "TareaTC" 
+          SET ${setClauseTC}, "updated_at" = NOW()
+          WHERE "tarea_id" = :id
+        `, {
+          replacements: { ...fieldsTC, id },
+          type: QueryTypes.UPDATE,
+          transaction: t
+        });
+      }
+    }
+
+    // 4) Manejar Pivotes (Redes y Formatos)
+    if (tc?.red_social_ids !== undefined) {
+      await sequelize.query(`DELETE FROM "TareaTCRedSocial" WHERE "tarea_id" = :id`, { replacements: { id }, transaction: t });
+      if (tc.red_social_ids?.length) {
+        const values = tc.red_social_ids.map(rsid => `(${id}, ${rsid})`).join(',');
+        await sequelize.query(`INSERT INTO "TareaTCRedSocial" ("tarea_id", "red_social_id") VALUES ${values}`, { transaction: t });
+      }
+      cambiosHistorial.push({ tipo_cambio: TIPO_CAMBIO.TC_REDES, accion: ACCION.UPDATED, descripcion: 'Actualizó redes sociales' });
+    }
+
+    if (tc?.formato_ids !== undefined) {
+      await sequelize.query(`DELETE FROM "TareaTCFormato" WHERE "tarea_id" = :id`, { replacements: { id }, transaction: t });
+      if (tc.formato_ids?.length) {
+        const values = tc.formato_ids.map(fid => `(${id}, ${fid})`).join(',');
+        await sequelize.query(`INSERT INTO "TareaTCFormato" ("tarea_id", "formato_id") VALUES ${values}`, { transaction: t });
+      }
+      cambiosHistorial.push({ tipo_cambio: TIPO_CAMBIO.TC_FORMATOS, accion: ACCION.UPDATED, descripcion: 'Actualizó formatos' });
+    }
+
+    // 5) Persistir Historial
+    if (feder_id && cambiosHistorial.length > 0) {
+      for (const ch of cambiosHistorial) {
         await registrarCambio({
           tarea_id: id,
           feder_id,
-          ...cambio,
+          ...ch,
           transaction: t
         });
       }
@@ -1667,37 +1672,41 @@ export const svcCreateTask = async (body, user) => {
 };
 export const svcUpdateTask = async (id, body, user) => {
   const feder_id = user?.feder_id;
+  const roles = user?.roles || [];
+  const isDirectivo = roles.includes('NivelA') || roles.includes('NivelB');
 
-  // DEBUG: Loguear qué se está recibiendo
-  console.log('[svcUpdateTask] id:', id);
-  console.log('[svcUpdateTask] body keys:', Object.keys(body));
-  console.log('[svcUpdateTask] body:', JSON.stringify(body));
-  console.log('[svcUpdateTask] feder_id:', feder_id);
+  // Si no es directivo, verificar si es participante o creador
+  if (!isDirectivo) {
+    const tarea = await models.Tarea.findByPk(id, { attributes: ['creado_por_feder_id'] });
+    if (!tarea) throw Object.assign(new Error('Tarea no encontrada'), { status: 404 });
 
-  // Si se intenta cambiar el vencimiento, validar permisos
-  // Solo validar si 'vencimiento' está explícitamente presente en el body
-  const hasVencimiento = Object.prototype.hasOwnProperty.call(body, 'vencimiento');
-  console.log('[svcUpdateTask] hasVencimiento:', hasVencimiento);
+    const isCreator = Number(tarea.creado_por_feder_id) === Number(feder_id);
+    const [isResp, isColab] = await Promise.all([
+      models.TareaResponsable.findOne({ where: { tarea_id: id, feder_id } }),
+      models.TareaColaborador.findOne({ where: { tarea_id: id, feder_id } })
+    ]);
 
-  if (hasVencimiento && body.vencimiento !== undefined) {
-    console.log('[svcUpdateTask] Validando permisos de vencimiento...');
-    // Verificar si es responsable de la tarea
-    const isResponsable = await models.TareaResponsable.findOne({
-      where: { tarea_id: id, feder_id }
-    });
-
-    // Solo responsables pueden cambiar el deadline
-    if (!isResponsable) {
-      console.log('[svcUpdateTask] RECHAZADO: No es responsable');
-      throw Object.assign(
-        new Error('Solo los responsables de la tarea pueden modificar la fecha de vencimiento'),
-        { status: 403 }
-      );
+    if (!isCreator && !isResp && !isColab) {
+      throw Object.assign(new Error('No tenés permisos para editar esta tarea.'), { status: 403 });
     }
-    console.log('[svcUpdateTask] OK: Es responsable');
+
+    // REGLA: Solo directivos pueden Aprobar o Cancelar
+    if (body.estado_id !== undefined) {
+      const targetState = await models.TareaEstado.findByPk(body.estado_id);
+      if (targetState && (targetState.codigo === 'aprobada' || targetState.codigo === 'cancelada')) {
+        throw Object.assign(new Error(`Solo los directivos pueden marcar una tarea como ${targetState.nombre}.`), { status: 403 });
+      }
+    }
+
+    // REGLA: Solo Responsables/Creadores pueden cambiar Vencimiento
+    const hasVencimiento = Object.prototype.hasOwnProperty.call(body, 'vencimiento');
+    if (hasVencimiento && body.vencimiento !== undefined) {
+      if (!isResp && !isCreator) {
+        throw Object.assign(new Error('Solo los responsables de la tarea pueden modificar la fecha de vencimiento.'), { status: 403 });
+      }
+    }
   }
 
-  console.log('[svcUpdateTask] Procediendo con updateTask...');
   return updateTask(id, body, feder_id, user);
 };
 
@@ -2102,3 +2111,100 @@ export const svcToggleComentarioReaccion = (comentario_id, user_id, body) => {
   const { emoji, on = true } = body || {};
   return toggleComentarioReaccion(comentario_id, user_id, emoji, on);
 };
+
+// ---------- One Pager View (Phase 0 & 1) ----------
+const getOnePager = async (cliente_id, tipo = 'ALL') => {
+  const repl = { cliente_id };
+  let typeFilter = '';
+
+  if (tipo !== 'ALL') {
+    typeFilter = ' AND t.tipo = :tipo';
+    repl.tipo = tipo;
+  } else {
+    // Si es ALL, traemos IT y TC
+    typeFilter = " AND t.tipo IN ('IT', 'TC')";
+  }
+
+  const sql = `
+    SELECT 
+      t.id, 
+      t.titulo, 
+      t.descripcion,
+      t.vencimiento, 
+      t.tipo, 
+      t.cliente_id,
+      t.estado_id,
+      t.progreso_pct,
+      te.nombre AS estado_nombre,
+      te.codigo AS estado_codigo,
+      ttc.estado_publicacion_id,
+      ttc.objetivo_marketing_id,
+      ttc.objetivo_negocio_id,
+      ttc.inamovible,
+      tep.nombre AS estado_publicacion_nombre,
+      tom.nombre AS objetivo_marketing_nombre,
+      ton.nombre AS objetivo_negocio_nombre,
+      -- IDs de participantes para permisos
+      t.creado_por_feder_id AS creador_id,
+      (SELECT json_agg(feder_id) FROM "TareaResponsable" WHERE tarea_id = t.id) as responsable_ids,
+      (SELECT json_agg(feder_id) FROM "TareaColaborador" WHERE tarea_id = t.id) as colaborador_ids,
+      -- Agregación de Redes Sociales
+      COALESCE((
+        SELECT json_agg(json_build_object('id', rs.id, 'nombre', rs.nombre))
+        FROM "TareaTCRedSocial" trs
+        JOIN "TCRedSocial" rs ON rs.id = trs.red_social_id
+        WHERE trs.tarea_id = t.id
+      ), '[]'::json) AS redes_sociales,
+      -- Agregación de Formatos
+      COALESCE((
+        SELECT json_agg(json_build_object('id', f.id, 'nombre', f.nombre))
+        FROM "TareaTCFormato" ttf
+        JOIN "TCFormato" f ON f.id = ttf.formato_id
+        WHERE ttf.tarea_id = t.id
+      ), '[]'::json) AS formatos
+    FROM "Tarea" t
+    LEFT JOIN "TareaTC" ttc ON ttc.tarea_id = t.id
+    LEFT JOIN "TareaEstado" te ON te.id = t.estado_id
+    LEFT JOIN "TCEstadoPublicacion" tep ON tep.id = ttc.estado_publicacion_id
+    LEFT JOIN "TCObjetivoMarketing" tom ON tom.id = ttc.objetivo_marketing_id
+    LEFT JOIN "TCObjetivoNegocio" ton ON ton.id = ttc.objetivo_negocio_id
+    WHERE t.cliente_id = :cliente_id
+      AND t.deleted_at IS NULL
+      ${typeFilter}
+    ORDER BY t.vencimiento ASC NULLS LAST;
+  `;
+
+  return sequelize.query(sql, {
+    replacements: repl,
+    type: QueryTypes.SELECT
+  });
+};
+
+const getOnePagerSummary = async (user) => {
+  // Solo mostramos clientes a los que el usuario tiene acceso (basado en celula o admin)
+  // Reutilizamos la lógica de scoping si existiera, pero aquí haremos un count simple agrupado por cliente.
+  const sql = `
+    SELECT 
+      c.id, 
+      c.nombre,
+      (
+        SELECT COUNT(*) 
+        FROM "Tarea" t 
+        JOIN "TareaEstado" te ON te.id = t.estado_id
+        WHERE t.cliente_id = c.id 
+          AND t.deleted_at IS NULL 
+          AND t.tipo IN ('IT', 'TC')
+          AND te.codigo NOT IN ('finalizada', 'cancelada')
+      ) as pending_count
+    FROM "Cliente" c
+    ORDER BY c.nombre ASC;
+  `;
+
+  return sequelize.query(sql, {
+    type: QueryTypes.SELECT
+  });
+};
+
+export const svcGetOnePagerSummary = (user) => getOnePagerSummary(user);
+
+export const svcGetOnePager = (cliente_id, tipo) => getOnePager(cliente_id, tipo);
