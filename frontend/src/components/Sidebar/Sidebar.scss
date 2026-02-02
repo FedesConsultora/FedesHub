@@ -77,13 +77,14 @@
   position: relative;
   width: 44px;
   height: 44px;
-  margin: 12px auto 4px;
+  margin: 12px 0 4px;
   background: rgba(77, 208, 225, 0.1);
   border: 1px solid rgba(77, 208, 225, 0.3);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
-
+  padding: 0;
+  margin-left: 12px;
   &:hover {
     background: rgba(77, 208, 225, 0.2);
     border-color: $fh-accent;
