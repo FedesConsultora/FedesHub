@@ -22,7 +22,8 @@ import {
   svcSetFavorito, svcSetSeguidor, svcSetEstado, svcSetAprobacion, svcMoveKanban,
   svcGetCompose, svcSetResponsableLeader,
   svcGetDashboardMetrics, svcGetUrgentTasks,
-  svcGetHistorial, svcSetBoostManual, svcToggleComentarioReaccion
+  svcGetHistorial, svcSetBoostManual, svcToggleComentarioReaccion,
+  svcGetTaskFamily
 } from '../services/tareas.service.js';
 
 import { saveUploadedFiles, getFolderLink } from '../../../infra/storage/index.js';
@@ -194,6 +195,13 @@ export const getTarea = async (req, res, next) => {
   try {
     const { id } = taskIdParamSchema.parse(req.params);
     res.json(await svcGetTask(id, req.user));
+  } catch (e) { next(e); }
+};
+
+export const getTaskFamily = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json(await svcGetTaskFamily(id, req.user));
   } catch (e) { next(e); }
 };
 

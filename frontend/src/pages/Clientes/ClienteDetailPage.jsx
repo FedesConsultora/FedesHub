@@ -16,6 +16,13 @@ import ClienteStatusCard from '../../components/clients/ClienteStatusCard'
 import AttendanceBadge from '../../components/common/AttendanceBadge'
 import './clienteDetail.scss'
 
+const linkify = (text = '') => {
+    if (!text) return ''
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const withBr = escaped.replace(/\n/g, '<br/>')
+    return withBr.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+}
+
 import { useLoading } from '../../context/LoadingContext'
 
 export default function ClienteDetailPage() {
@@ -281,7 +288,7 @@ export default function ClienteDetailPage() {
                                 {editing ? (
                                     <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ejemplo@correo.com" />
                                 ) : (
-                                    <p>{cliente.email || <span className="empty">Sin correo</span>}</p>
+                                    <p>{cliente.email ? <a href={`mailto:${cliente.email}`}>{cliente.email}</a> : <span className="empty">Sin correo</span>}</p>
                                 )}
                             </div>
                             <div className="contactField">
@@ -289,7 +296,7 @@ export default function ClienteDetailPage() {
                                 {editing ? (
                                     <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} placeholder="+54..." />
                                 ) : (
-                                    <p>{cliente.telefono || <span className="empty">Sin teléfono</span>}</p>
+                                    <p>{cliente.telefono ? <a href={`tel:${cliente.telefono}`}>{cliente.telefono}</a> : <span className="empty">Sin teléfono</span>}</p>
                                 )}
                             </div>
                             <div className="contactField full">
@@ -320,7 +327,7 @@ export default function ClienteDetailPage() {
                                     placeholder="Escribe detalles relevantes sobre el cliente..."
                                 />
                             ) : (
-                                <p className="descText">{cliente.descripcion || <span className="empty">No hay descripción disponible.</span>}</p>
+                                <p className="descText" dangerouslySetInnerHTML={{ __html: linkify(cliente.descripcion) || '<span class="empty">No hay descripción disponible.</span>' }} />
                             )}
                         </div>
                     </section>

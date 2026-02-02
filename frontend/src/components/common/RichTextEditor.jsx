@@ -99,17 +99,13 @@ const getEditorConfig = () => ({
         LinkNode,
         AutoLinkNode,
         FileNode,
-        ExtendedTextNode,
-        {
-            replace: TextNode,
-            with: (node) => new ExtendedTextNode(node.__text),
-            withKlass: ExtendedTextNode,
-        },
     ],
     onError(error) {
         console.error('Lexical Error:', error);
     },
 });
+
+console.log('[RichTextEditor] Config loaded with nodes:', [ParagraphNode, HeadingNode, ListNode, ListItemNode, QuoteNode, LinkNode, AutoLinkNode, FileNode]);
 
 // Plugin para inicializar el contenido HTML
 function InitialValuePlugin({ initialValue }) {
@@ -143,11 +139,28 @@ function InitialValuePlugin({ initialValue }) {
 
         hasInitialized.current = true;
 
+        let processedValue = initialValue || '';
+        // Si no tiene <a> tags pero parece tener URLs, intentamos linkificar antes de parsear
+        const hasLinks = processedValue.includes('<a');
+        const hasUrlSchema = processedValue.includes('http');
+        const hasWww = processedValue.includes('www.');
+
+        if (!hasLinks && (hasUrlSchema || hasWww || processedValue.includes('.'))) {
+            const pattern = /((https?:\/\/[^\s<>"']+)|(www\.[^\s<>"']+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,6}[^\s<>"']*))/g;
+            processedValue = processedValue.replace(pattern, (match) => {
+                if (match === '...' || match.length < 4) return match;
+                const url = (match.startsWith('http') || match.startsWith('www.'))
+                    ? (match.startsWith('www.') ? `https://${match}` : match)
+                    : `https://${match}`;
+                return `<a href="${url}" target="_blank" rel="noreferrer">${match}</a>`;
+            });
+        }
+
         editor.update(() => {
             try {
                 const root = $getRoot();
                 const parser = new DOMParser();
-                const dom = parser.parseFromString(initialValue, 'text/html');
+                const dom = parser.parseFromString(processedValue, 'text/html');
                 const nodes = $generateNodesFromDOM(editor, dom);
 
                 if (nodes.length > 0) {
@@ -237,6 +250,40 @@ function OnBlurPlugin({ onBlur }) {
 }
 
 
+// Plugin para hacer los links clickeables (Lexical por defecto los bloquea en editable)
+function ClickableLinkPlugin() {
+    const [editor] = useLexicalComposerContext();
+    useEffect(() => {
+        const onClick = (event) => {
+            const target = event.target;
+            const anchor = target instanceof HTMLAnchorElement ? target : target.closest('a');
+
+            if (anchor) {
+                const href = anchor.getAttribute('href') || anchor.href;
+                if (!href || href.startsWith('javascript:') || event.metaKey || event.ctrlKey) {
+                    return;
+                }
+
+                window.open(href, '_blank', 'noopener,noreferrer');
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+
+        return editor.registerRootListener((rootElement, prevRootElement) => {
+            if (prevRootElement) {
+                prevRootElement.removeEventListener('click', onClick);
+            }
+            if (rootElement) {
+                rootElement.addEventListener('click', onClick, true); // Use capture to intercept Lexical's own handlers
+            }
+        });
+    }, [editor]);
+
+    return null;
+}
+
+
 export default function RichTextEditor({
     value = '',
     onChange,
@@ -244,14 +291,18 @@ export default function RichTextEditor({
     taskId,
     placeholder = 'Escribe aquí...',
     maxLength = 600,
-    minHeight = '190px'
+    minHeight = '190px',
+    readOnly = false
 }) {
     // Generate a stable key based on taskId - only remount when taskId changes
     const mountIdRef = useRef(Date.now());
     const editorKey = `editor-${taskId || 'new'}-${mountIdRef.current}`;
 
     // Memoize config to avoid unnecessary recreation
-    const editorConfig = useMemo(() => getEditorConfig(), []);
+    const editorConfig = useMemo(() => ({
+        ...getEditorConfig(),
+        editable: !readOnly
+    }), [readOnly]);
 
     return (
         <div
@@ -259,8 +310,8 @@ export default function RichTextEditor({
             style={{ minHeight }}
         >
             <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-                <div className="editor-container">
-                    <ToolbarPlugin />
+                <div className={`editor-container ${readOnly ? 'read-only' : ''}`}>
+                    {!readOnly && <ToolbarPlugin />}
                     <div className="editor-inner">
                         <RichTextPlugin
                             contentEditable={
@@ -282,6 +333,7 @@ export default function RichTextEditor({
                         <AutoLinkPlugin />
                         <CharacterLimitPlugin maxLength={maxLength} />
                         <OnChangeHTMLPlugin onChange={onChange} />
+                        <ClickableLinkPlugin />
                         {onBlur && <OnBlurPlugin onBlur={onBlur} />}
                         {taskId && <FilePlugin taskId={taskId} />}
                     </div>

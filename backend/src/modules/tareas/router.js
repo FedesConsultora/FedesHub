@@ -17,7 +17,7 @@ import {
   postRelacion, deleteRelacionCtrl,
   postFavorito, postSeguidor,
   getCompose, postAdjuntoUpload, postResponsableLeader,
-  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl, getUrgentTasksCtrl
+  getHistorial, patchBoostManual, getDriveImage, getDashboardMetricsCtrl, getUrgentTasksCtrl, getTaskFamily
 } from './controllers/tareas.controller.js';
 
 const router = Router();
@@ -39,6 +39,7 @@ router.patch('/:id/restore', requireAuth, patchRestore);
 // Listado y CRUD
 router.get('/', requireAuth, requirePermission('tareas', 'read'), listTareas);
 router.get('/:id', requireAuth, requirePermission('tareas', 'read'), getTarea);
+router.get('/:id/family', requireAuth, requirePermission('tareas', 'read'), getTaskFamily);
 router.post('/', requireAuth, requirePermission('tareas', 'create'), postTarea);
 router.patch('/:id', requireAuth, requirePermission('tareas', 'update'), patchTarea);
 router.patch('/:id/archive', requireAuth, requirePermission('tareas', 'delete'), archiveTarea);

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { MdAdd, MdClose, MdPlayArrow } from 'react-icons/md';
+import { MdAdd, MdClose, MdPlayArrow, MdLink } from 'react-icons/md';
+import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt, FaFolder } from 'react-icons/fa';
 import { useModal } from '../modal/ModalProvider';
 import { useUploadContext } from '../../context/UploadProvider';
 import ImageFullscreen from '../common/ImageFullscreen';
@@ -8,17 +9,27 @@ import './ContentGallery.scss';
 // Límite de archivo (50GB - los archivos se suben a Google Drive)
 const MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024;
 
-// Helper para detectar si es video
-const isVideo = (file) => {
-    if (!file) return false;
-    const mime = file.mime || file.mimeType || '';
+// Helper para detectar el tipo de archivo
+const getFileType = (file) => {
+    if (!file) return 'other';
+    const mime = (file.mime || file.mimeType || '').toLowerCase();
     const name = (file.nombre || file.name || '').toLowerCase();
-    return mime.startsWith('video/') ||
-        name.endsWith('.mp4') ||
-        name.endsWith('.webm') ||
-        name.endsWith('.mov') ||
-        name.endsWith('.avi');
+
+    if (mime.startsWith('image/')) return 'image';
+    if (mime.startsWith('video/') || name.match(/\.(mp4|webm|mov|avi)$/)) return 'video';
+    if (mime === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+    if (name.match(/\.(doc|docx)$/) || mime.includes('word')) return 'word';
+    if (name.match(/\.(xls|xlsx)$/) || mime.includes('excel') || mime.includes('spreadsheet')) return 'excel';
+    if (name.match(/\.(zip|rar|7z|tar|gz)$/) || mime.includes('zip') || mime.includes('compressed')) return 'zip';
+    if (name.match(/\.(html|htm)$/) || mime === 'text/html') return 'html';
+
+    const url = (file.url || file.drive_url || '').toLowerCase();
+    if (url.includes('/drive/folders/') || mime?.includes('folder')) return 'folder';
+
+    return 'other';
 };
+
+const isVideo = (file) => getFileType(file) === 'video';
 
 // Helper para convertir URLs de Drive a proxy URL
 const getProxyUrl = (file, thumbnail = false) => {
@@ -66,11 +77,12 @@ export default function ContentGallery({
     onUpload,
     onRemove,
     title = 'Galería',
-    accept = 'image/*,video/*',
+    accept = '*/*',
     disabled = false,
     showAddButton = true,
     taskId = null, // Para filtrar uploads de esta tarea
-    esEmbebido = false // Para filtrar por tipo de galería
+    esEmbebido = false, // Para filtrar por tipo de galería
+    onAddLink = null // Callback para agregar links manualmente
 }) {
     const modal = useModal();
     const uploadContext = useUploadContext();
@@ -213,14 +225,24 @@ export default function ContentGallery({
         });
     };
 
-    // Render media (image or video) with loading state
+    // Render media (image, video or file icon) with loading state
     const renderMedia = (file, className, onClick, isThumbnail = false) => {
         const url = getProxyUrl(file, isThumbnail);
-        const isVideoFile = isVideo(file);
+        const type = getFileType(file);
         const imageId = isThumbnail ? `thumb-${file.id}` : `main-${file.id}`;
         const isLoading = loadingImages[imageId];
 
-        if (isVideoFile) {
+        if (type === 'folder') {
+            return (
+                <div className={`file-icon-wrapper ${className} folder`} onClick={() => window.open(url, '_blank')}>
+                    <FaFolder size={isThumbnail ? 32 : 64} style={{ color: '#FFD700' }} />
+                    {!isThumbnail && <span className="file-name-label">{file.nombre}</span>}
+                    {isThumbnail && <span className="folder-indicator">📁</span>}
+                </div>
+            );
+        }
+
+        if (type === 'video') {
             return (
                 <div className={`video-wrapper ${className}`} onClick={onClick}>
                     <video
@@ -238,18 +260,40 @@ export default function ContentGallery({
             );
         }
 
+        if (type === 'image') {
+            return (
+                <div className={`image-wrapper ${isLoading ? 'loading' : ''}`}>
+                    {isLoading && <div className="image-loader"><div className="spinner-small"></div></div>}
+                    <img
+                        src={url}
+                        alt={file.nombre || 'Media'}
+                        className={className}
+                        onClick={onClick}
+                        loading={isThumbnail ? "lazy" : "eager"}
+                        onLoad={() => handleImageLoad(imageId)}
+                        onError={() => handleImageLoad(imageId)}
+                    />
+                </div>
+            );
+        }
+
+        // Iconos para otros tipos de archivos
+        const Icon = type === 'pdf' ? FaFilePdf :
+            type === 'word' ? FaFileWord :
+                type === 'excel' ? FaFileExcel :
+                    type === 'zip' ? FaFileArchive :
+                        type === 'html' ? FaFileCode : FaFileAlt;
+
+        const iconColor = type === 'pdf' ? '#ff3d00' :
+            type === 'word' ? '#2b579a' :
+                type === 'excel' ? '#217346' :
+                    type === 'zip' ? '#fb8c00' :
+                        type === 'html' ? '#e44d26' : '#94a3b8';
+
         return (
-            <div className={`image-wrapper ${isLoading ? 'loading' : ''}`}>
-                {isLoading && <div className="image-loader"><div className="spinner-small"></div></div>}
-                <img
-                    src={url}
-                    alt={file.nombre || 'Media'}
-                    className={className}
-                    onClick={onClick}
-                    loading={isThumbnail ? "lazy" : "eager"}
-                    onLoad={() => handleImageLoad(imageId)}
-                    onError={() => handleImageLoad(imageId)}
-                />
+            <div className={`file-icon-wrapper ${className} ${type}`} onClick={onClick}>
+                <Icon size={isThumbnail ? 32 : 64} style={{ color: iconColor }} />
+                {!isThumbnail && <span className="file-name-label">{file.nombre}</span>}
             </div>
         );
     };
@@ -282,16 +326,28 @@ export default function ContentGallery({
             {/* Title */}
             <div className="gallery-header">
                 <h4>{title}</h4>
-                {showAddButton && !disabled && (
-                    <button
-                        className="add-btn"
-                        onClick={triggerFileInput}
-                        title="Agregar archivo"
-                        disabled={isUploading}
-                    >
-                        <MdAdd size={20} />
-                    </button>
-                )}
+                <div className="header-actions">
+                    {onAddLink && !disabled && (
+                        <button
+                            className="add-link-btn"
+                            onClick={onAddLink}
+                            title="Agregar link de Drive"
+                            disabled={isUploading}
+                        >
+                            <MdLink size={20} />
+                        </button>
+                    )}
+                    {showAddButton && !disabled && (
+                        <button
+                            className="add-btn"
+                            onClick={triggerFileInput}
+                            title="Agregar archivo"
+                            disabled={isUploading}
+                        >
+                            <MdAdd size={20} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Error message */}
@@ -332,13 +388,13 @@ export default function ContentGallery({
                                     </div>
                                 </div>
                             ))}
-                            <p className="hint">Los videos pueden tardar varios minutos</p>
+                            <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                         </div>
                     ) : (
                         <>
                             <div className="spinner"></div>
                             <p>Subiendo archivo...</p>
-                            <p className="hint">Los videos pueden tardar varios minutos</p>
+                            <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                         </>
                     )}
                 </div>
@@ -370,14 +426,40 @@ export default function ContentGallery({
                                 className={`thumbnail ${mainImage?.id === image.id ? 'selected' : ''}`}
                                 onClick={() => handleThumbnailClick(image)}
                             >
-                                {isVideo(image) ? (
-                                    <div className="video-thumb">
-                                        <video src={getProxyUrl(image, true)} muted preload="metadata" />
-                                        <MdPlayArrow className="play-icon" size={24} />
-                                    </div>
-                                ) : (
-                                    <img src={getProxyUrl(image, true)} alt={image.nombre || 'Thumbnail'} loading="lazy" />
-                                )}
+                                {(() => {
+                                    const type = getFileType(image);
+                                    if (type === 'video') {
+                                        return (
+                                            <div className="video-thumb">
+                                                <video src={getProxyUrl(image, true)} muted preload="metadata" />
+                                                <MdPlayArrow className="play-icon" size={24} />
+                                            </div>
+                                        );
+                                    }
+                                    if (type === 'image') {
+                                        return <img src={getProxyUrl(image, true)} alt={image.nombre || 'Thumbnail'} loading="lazy" />;
+                                    }
+                                    const Icon = type === 'pdf' ? FaFilePdf :
+                                        type === 'word' ? FaFileWord :
+                                            type === 'excel' ? FaFileExcel :
+                                                type === 'zip' ? FaFileArchive :
+                                                    type === 'html' ? FaFileCode : FaFileAlt;
+
+                                    const iconColor = type === 'pdf' ? '#ff3d00' :
+                                        type === 'word' ? '#2b579a' :
+                                            type === 'excel' ? '#217346' :
+                                                type === 'zip' ? '#fb8c00' :
+                                                    type === 'html' ? '#e44d26' :
+                                                        type === 'folder' ? '#FFD700' : '#94a3b8';
+
+                                    const ThumbIcon = type === 'folder' ? FaFolder : Icon;
+
+                                    return (
+                                        <div className="file-thumb">
+                                            <ThumbIcon size={24} style={{ color: iconColor }} />
+                                        </div>
+                                    );
+                                })()}
                                 {!disabled && (
                                     <button
                                         className="remove-btn"
@@ -399,7 +481,7 @@ export default function ContentGallery({
                     className="single-remove-btn"
                     onClick={(e) => handleRemove(e, images[0])}
                 >
-                    <MdClose size={16} /> Eliminar {isVideo(images[0]) ? 'video' : 'imagen'}
+                    <MdClose size={16} /> Eliminar archivo
                 </button>
             )}
 
@@ -408,7 +490,8 @@ export default function ContentGallery({
                 <ImageFullscreen
                     src={getProxyUrl(fullscreenImage)}
                     alt={fullscreenImage.nombre || 'Media'}
-                    isVideo={isVideo(fullscreenImage)}
+                    type={getFileType(fullscreenImage)}
+                    driveId={fullscreenImage.drive_file_id}
                     onClose={() => setFullscreenImage(null)}
                 />
             )}

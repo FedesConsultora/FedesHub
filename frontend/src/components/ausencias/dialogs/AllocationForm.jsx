@@ -2,9 +2,11 @@ import { useEffect, useState, useMemo } from 'react'
 import { FiTag, FiCalendar, FiMessageCircle, FiHash, FiPaperclip, FiX, FiCheckCircle } from 'react-icons/fi'
 import { ausenciasApi } from '../../../api/ausencias'
 import PremiumSelect from '../../ui/PremiumSelect'
+import { useToast } from '../../toast/ToastProvider'
 import './Dialog.scss'
 
 export default function AllocationForm({ onCancel, onDone, initDate = null, tipos: initialTipos = [] }) {
+  const toast = useToast()
   const [tipos, setTipos] = useState(initialTipos)
   const [tipoId, setTipoId] = useState('')
   const [cantidad, setCantidad] = useState('')
@@ -43,6 +45,7 @@ export default function AllocationForm({ onCancel, onDone, initDate = null, tipo
         body.archivo_url = url
       }
       await ausenciasApi.asignacion.create(body)
+      toast.success('Solicitud de asignación enviada correctamente')
       window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'ausencia_asignacion' } }))
       onDone?.()
     } catch (e) {

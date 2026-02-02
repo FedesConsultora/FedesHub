@@ -11,12 +11,15 @@ import TaskChecklist from '../../components/tasks/TaskChecklist.jsx'
 import RichTextEditor from '../../components/common/RichTextEditor.jsx'
 import { useModal } from '../../components/modal/ModalProvider.jsx'
 import SubtasksPanel from '../../components/tasks/SubtasksPanel.jsx'
+import TaskFamilyModal from '../../components/tasks/TaskFamilyModal.jsx'
+import CreateTaskModal from '../../components/tasks/CreateTaskModal.jsx'
 import ParticipantsEditor from '../../components/tasks/ParticipantsEditor.jsx'
 import useContentEditable from '../../hooks/useContentEditable'
 import { useToast } from '../../components/toast/ToastProvider.jsx'
-import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile } from 'react-icons/md'
+import { MdKeyboardArrowDown, MdAddComment, MdAdd, MdAttachFile, MdLink } from 'react-icons/md'
 import { FaRegSave, FaStar, FaTrash } from "react-icons/fa";
-import { FiLock, FiCheckCircle, FiClock, FiArrowLeft } from "react-icons/fi";
+import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye } from "react-icons/fi";
+import { FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileCode, FaFileAlt, FaFolder } from 'react-icons/fa';
 import TaskHistory from '../../components/tasks/TaskHistory.jsx'
 import PriorityBoostCheckbox from '../../components/tasks/PriorityBoostCheckbox.jsx'
 import TitleTooltip from '../../components/tasks/TitleTooltip.jsx'
@@ -69,6 +72,26 @@ const getFileUrl = (file) => {
   return file.url || file.drive_url || null
 }
 
+// Helper para detectar el tipo de archivo
+const getFileType = (file) => {
+  if (!file) return 'other';
+  const mime = (file.mime || file.mimeType || '').toLowerCase();
+  const name = (file.nombre || file.name || file.originalname || '').toLowerCase();
+
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/') || name.match(/\.(mp4|webm|mov|avi)$/)) return 'video';
+  if (mime === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+  if (name.match(/\.(doc|docx)$/) || mime.includes('word')) return 'word';
+  if (name.match(/\.(xls|xlsx)$/) || mime.includes('excel') || mime.includes('spreadsheet')) return 'excel';
+  if (name.match(/\.(zip|rar|7z|tar|gz)$/) || mime.includes('zip') || mime.includes('compressed')) return 'zip';
+  if (name.match(/\.(html|htm)$/) || mime === 'text/html') return 'html';
+
+  const url = (file.url || file.drive_url || '').toLowerCase();
+  if (url.includes('/drive/folders/') || mime?.includes('folder')) return 'folder';
+
+  return 'other';
+};
+
 // Límite de tamaño de archivo (50GB - se suben a Google Drive)
 const MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024
 
@@ -103,8 +126,12 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     responsables: [],
     colaboradores: []
   });
-  const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+  const [showCommentsPopup, setShowCommentsPopup] = useState(false)
+  const [showFamilyModal, setShowFamilyModal] = useState(false)
+  const [createSubtaskParentId, setCreateSubtaskParentId] = useState(null)
+  const [showFamilyDropdown, setShowFamilyDropdown] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const familyDropdownRef = useRef(null)
 
   const [isResponsible, setIsResponsible] = useState(false)
   const [isCollaborator, setIsCollaborator] = useState(false)
@@ -441,6 +468,17 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }, [dirty, form.descripcion, task, taskId, flushDescriptionOnBlur])
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (familyDropdownRef.current && !familyDropdownRef.current.contains(e.target)) {
+        setShowFamilyDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const handleBack = async () => {
     if (dirty) {
       const ok = await modal.confirm({
@@ -508,6 +546,46 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     }
   }
 
+  // === Agregar link manualmente (especialmente para carpetas de Drive) ===
+  const handleAddLink = useCallback(async (esEmbebido = false) => {
+    const url = await modal.prompt({
+      title: 'Agregar link de Google Drive',
+      message: 'Pegá el link de la carpeta o archivo de Drive:',
+      placeholder: 'https://drive.google.com/...',
+      okText: 'Siguiente',
+      cancelText: 'Cancelar'
+    });
+
+    if (!url || !url.trim()) return;
+
+    const nombre = await modal.prompt({
+      title: 'Nombre del recurso',
+      message: 'Ingresá un nombre para identificar este link:',
+      placeholder: 'Ej: Carpeta de insumos',
+      okText: 'Agregar',
+      cancelText: 'Cancelar'
+    });
+
+    if (nombre === undefined) return;
+
+    const finalNombre = nombre?.trim() || 'Link de Drive';
+
+    try {
+      const isFolder = url.includes('/drive/folders/') || url.includes('drive.google.com/drive/u/');
+      await add({
+        nombre: finalNombre,
+        drive_url: url.trim(),
+        mime: isFolder ? 'application/vnd.google-apps.folder' : 'text/html',
+        es_embebido: esEmbebido
+      });
+      toast?.success('Link agregado');
+      setHistoryRefresh(prev => prev + 1);
+    } catch (err) {
+      console.error('Error adding link:', err);
+      toast?.error('No se pudo agregar el link');
+    }
+  }, [modal, add, toast]);
+
   if (isInitialLoading) {
     return (
       <div className="taskDetail">
@@ -568,6 +646,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
       }
     }
   }
+
 
   // === cliente en línea (sin aprobación porque el backend no lo soporta) ===
   const handleClientChange = async (nextClienteId) => {
@@ -675,18 +754,14 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           {/* Meta info - ahora puede hacer wrap */}
           <div className="meta">
             <span className="inlineDue">
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '2px' }}>
-                  {task?.tipo === 'TC' ? 'Fecha de Publicación' : 'Deadline'}
-                </span>
-                <InlineDue
-                  value={toInputDate(vencimientoISO)}
-                  onChange={handleDueChange}
-                  disabled={(!isResponsible && !isDirectivo) || !!task?.datos_tc?.inamovible}
-                  inamovible={!!task?.datos_tc?.inamovible}
-                />
-              </div>
+              <InlineDue
+                value={toInputDate(vencimientoISO)}
+                onChange={handleDueChange}
+                disabled={(!isResponsible && !isDirectivo) || !!task?.datos_tc?.inamovible}
+                inamovible={!!task?.datos_tc?.inamovible}
+              />
             </span>
+
             <TaskStatusCard
               estadoCodigo={estadoCodigo}
               progresoPct={progreso}
@@ -701,6 +776,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               isCollaborator={isCollaborator}
               isNivelB={isDirectivo}
             />
+
             <span className="inlineClient">
 
               <InlineClient
@@ -741,11 +817,45 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
+            {/* Botón de familia de tareas con dropdown */}
+            <div className="family-dropdown-wrapper" ref={familyDropdownRef} style={{ position: 'relative' }}>
+              <button
+                className="familyBtn"
+                onClick={() => setShowFamilyDropdown(!showFamilyDropdown)}
+                title="Opciones de familia"
+              >
+                <FiGitBranch />
+              </button>
+
+              {showFamilyDropdown && (
+                <div className="family-dropdown">
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setCreateSubtaskParentId(id)
+                      setShowFamilyDropdown(false)
+                    }}
+                  >
+                    <FiPlus /> Crear Subtarea
+                  </button>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowFamilyModal(true)
+                      setShowFamilyDropdown(false)
+                    }}
+                  >
+                    <FiEye /> Ver Familia
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
 
 
-      </div>
+      </div >
 
       <div className="grid">
         {/* LEFT */}
@@ -753,10 +863,32 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
           <div className="card" style={{ minHeight: '300px' }}>
             <div className="cardHeader">
               <div className="desc">
-                <p>Descripción</p>
-                {/* <button className={`fh-chip ${tab==='childs'?'primary':''}`} onClick={()=>setTab('childs')}>Tareas hijas</button> */}
+                <button
+                  className={`fh-chip ${tab === 'desc' ? 'primary' : ''}`}
+                  onClick={() => setTab('desc')}
+                >
+                  Descripción
+                </button>
+                <button
+                  className={`fh-chip ${tab === 'childs' ? 'primary' : ''}`}
+                  onClick={() => setTab('childs')}
+                >
+                  Subtareas
+                </button>
               </div>
             </div>
+
+            {/* Mostrar tarea padre si existe */}
+            {task?.tarea_padre_id && (
+              <div className="parent-task-banner">
+                <div className="banner-label">
+                  <FiGitBranch /> Tarea Padre:
+                </div>
+                <div className="banner-link" onClick={() => navigate(`/tareas/${task.tarea_padre_id}`)}>
+                  {task.tarea_padre_titulo || `Tarea #${task.tarea_padre_id}`}
+                </div>
+              </div>
+            )}
 
             {estadoCodigo === 'cancelada' && task?.cancelacion_motivo && (
               <div className="cancelReasonBanner">
@@ -782,6 +914,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 parentId={Number(id)}
                 defaultClienteId={task?.cliente_id || task?.cliente?.id || null}
                 catalog={catalog}
+                onNewSubtask={() => setCreateSubtaskParentId(id)}
+                onNavigate={(subId) => navigate(`/tareas/${subId}`)}
               />
             )}
           </div>
@@ -918,13 +1052,13 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                         </div>
                       </div>
                     ))}
-                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                   </div>
                 ) : (
                   <>
                     <div className="spinner"></div>
                     <p>Subiendo archivo...</p>
-                    <p className="hint">Los videos pueden tardar varios minutos</p>
+                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
                   </>
                 )}
               </div>
@@ -996,27 +1130,63 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
                 }}
               />
               <p>Arrastra archivos o <label htmlFor="raw-content-input" className="file-select">selecciona</label></p>
+              <button
+                className="add-link-btn-inline"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddLink(false);
+                }}
+                title="Agregar link (Drive/Carpeta)"
+              >
+                <MdLink size={20} /> Agregar link
+              </button>
             </div>
 
             {/* Lista de archivos crudos */}
             {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
               <div className="raw-files-list">
                 {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
-                  const isVideoFile = file.mime?.startsWith('video/') ||
-                    file.nombre?.toLowerCase().match(/\.(mp4|webm|mov|avi)$/);
+                  const type = getFileType(file);
+                  const Icon = type === 'pdf' ? FaFilePdf :
+                    type === 'word' ? FaFileWord :
+                      type === 'excel' ? FaFileExcel :
+                        type === 'zip' ? FaFileArchive :
+                          type === 'html' ? FaFileCode :
+                            type === 'folder' ? FaFolder :
+                              type === 'video' ? FiEye : FaFileAlt;
+
+                  const iconColor = type === 'pdf' ? '#ff3d00' :
+                    type === 'word' ? '#2b579a' :
+                      type === 'excel' ? '#217346' :
+                        type === 'zip' ? '#fb8c00' :
+                          type === 'html' ? '#e44d26' :
+                            type === 'folder' ? '#FFD700' : '#94a3b8';
+
                   return (
                     <div key={file.id} className="raw-file-item">
-                      <span className="file-name">{file.nombre || 'Archivo'}</span>
+                      <div className="file-info-icon">
+                        <Icon style={{ color: iconColor }} />
+                        <span className="file-name">{file.nombre || 'Archivo'}</span>
+                      </div>
                       <div className="file-actions">
                         <button
                           className="view-btn"
-                          onClick={() => setRawFullscreen({
-                            url: getFileUrl(file),
-                            name: file.nombre || 'Archivo',
-                            isVideo: !!isVideoFile
-                          })}
+                          onClick={() => {
+                            if (type === 'folder') {
+                              window.open(getFileUrl(file), '_blank');
+                            } else {
+                              setRawFullscreen({
+                                url: getFileUrl(file),
+                                name: file.nombre || 'Archivo',
+                                type: type,
+                                driveId: file.drive_file_id
+                              });
+                            }
+                          }}
                         >
-                          Ver
+                          {type === 'folder' ? 'Abrir' : 'Ver'}
                         </button>
                         <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
                       </div>
@@ -1032,7 +1202,8 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             <ImageFullscreen
               src={rawFullscreen.url}
               alt={rawFullscreen.name}
-              isVideo={rawFullscreen.isVideo}
+              type={rawFullscreen.type}
+              driveId={rawFullscreen.driveId}
               onClose={() => setRawFullscreen(null)}
             />
           )}
@@ -1074,6 +1245,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
             }}
             title="Contenido Listo"
             showAddButton={true}
+            onAddLink={() => handleAddLink(true)}
           />
 
           {/* Comments panel (kept mounted to persist draft) */}
@@ -1147,6 +1319,45 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
       </div>
 
+      {/* Modal de creación de subtarea */}
+      {
+        createSubtaskParentId && (
+          <CreateTaskModal
+            modalTitle="Nueva Subtarea"
+            parentTaskId={Number(createSubtaskParentId)}
+            initialData={{
+              cliente_id: task?.cliente_id || task?.cliente?.id || null
+            }}
+            onClose={() => setCreateSubtaskParentId(null)}
+            onCreated={(newTask) => {
+              setCreateSubtaskParentId(null)
+              toast?.success('Subtarea creada')
+              // Recargar la tarea actual para actualizar la lista de subtareas
+              tareasApi.get(id).then(setTask)
+              onUpdated?.()
+            }}
+          />
+        )
+      }
+
+      {/* Modal de familia de tareas */}
+      {
+        showFamilyModal && (
+          <TaskFamilyModal
+            taskId={Number(id)}
+            currentTask={task}
+            onClose={() => setShowFamilyModal(false)}
+            onNavigate={(newId) => {
+              setShowFamilyModal(false)
+              navigate(`/tareas/${newId}`)
+            }}
+            onNewSubtask={(parentId) => {
+              setShowFamilyModal(false)
+              setCreateSubtaskParentId(parentId || id)
+            }}
+          />
+        )
+      }
 
     </div >
   )
@@ -1270,10 +1481,7 @@ function InlineClient({ valueId = null, valueName = '', valueColor = null, optio
         onClick={handleClick}
         title={disabled ? 'Solo el responsable puede cambiar' : 'Cambiar cliente'}
         style={{
-          backgroundColor: valueColor || '#3B82F6',
-          color: '#ffffff',
-          border: `2px solid ${valueColor || '#3B82F6'}`,
-          fontWeight: '500'
+          backgroundColor: valueColor || '#3B82F6'
         }}
       >
         {valueName || 'Sin cliente'}

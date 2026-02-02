@@ -21,6 +21,22 @@
             border-color: $fh-primary;
             box-shadow: 0 0 0 1px $fh-primary;
         }
+
+        &.read-only {
+            background: transparent;
+            border-color: transparent;
+            padding: 0;
+
+            &:focus-within {
+                border-color: transparent;
+                box-shadow: none;
+            }
+
+            .editor-input {
+                padding: 0;
+                min-height: auto;
+            }
+        }
     }
 
     .toolbar {
@@ -287,14 +303,18 @@
         color: #FF6B6B;
     }
 
-    .editor-link {
-        color: $fh-primary;
-        text-decoration: underline;
-        cursor: pointer;
-        transition: color 0.15s ease;
+    .editor-link,
+    a,
+    [data-lexical-link] {
+        color: #3b82f6 !important;
+        text-decoration: underline !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        transition: all 0.15s ease;
 
         &:hover {
-            color: color.adjust($fh-primary, $lightness: 15%);
+            filter: brightness(1.1);
+            text-decoration: none !important;
         }
     }
 

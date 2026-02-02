@@ -43,6 +43,52 @@ pre {
 a {
   color: inherit;
   text-decoration: none;
+
+  // External links should be blue and underlined by default
+  &[href^="http"],
+  &[href^="mailto:"],
+  &[href^="tel:"],
+  &.link-blue {
+    color: #3b82f6 !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+
+    &:hover {
+      filter: brightness(1.2);
+    }
+  }
+}
+
+// External/System links styling
+a.link-blue,
+a[href^="http"],
+a[href^="mailto:"],
+a[href^="tel:"],
+.editor-link,
+.bubble a,
+.nota-text a,
+.descText a,
+.msgBody a,
+.comment-text a,
+.replyPreview a,
+.replyExcerpt a,
+.timeline-items a,
+.txt a,
+.richTextEditor a,
+.editor-input a,
+.taskModalWrap a,
+.tcCard a,
+[class*="editor-link"],
+[data-lexical-link] {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+
+  &:hover {
+    filter: brightness(1.2);
+    text-decoration: none !important;
+  }
 }
 
 button {

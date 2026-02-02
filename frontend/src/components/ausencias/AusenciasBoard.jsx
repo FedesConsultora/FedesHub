@@ -132,7 +132,7 @@ export default function AusenciasBoard() {
       const amt = normalizeAmount(row, WORKDAY_HOURS)
       const val = b.unidad_codigo === 'hora' ? amt.horas : amt.dias
       if (row.estado_codigo === 'aprobada') b.approved += val
-      else if (row.estado_codigo === 'pendiente' && row.fecha_desde >= today) b.planned += val
+      else if (row.estado_codigo === 'pendiente') b.planned += val
       map.set(row.tipo_id, b)
     }
     return Array.from(map.values())
@@ -164,7 +164,7 @@ export default function AusenciasBoard() {
   )
 
   // ---- abrir formularios con el Provider
-  const openNewAbs = (dateStr = null) => {
+  const openNewAbs = (dateStr = null, initHasta = null) => {
     modal.open({
       title: 'Nueva ausencia',
       width: 720,
@@ -177,12 +177,18 @@ export default function AusenciasBoard() {
             setTimeout(() => openDay(row.fecha_desde), 100)
           }}
           initDate={dateStr}
+          initHasta={initHasta}
           tipos={board.saldos.tipos}
           saldos={board.saldos.saldos}
           canApprove={canApprove}
+          holidays={board.holidays}
         />
       )
     })
+  }
+
+  const openRangeAbs = (start, end) => {
+    openNewAbs(start, end)
   }
 
   const openEditAbs = (item) => {
@@ -191,22 +197,23 @@ export default function AusenciasBoard() {
       width: 720,
       render: (close) => (
         <AbsenceForm
+          editingItem={item}
           onCancel={() => close(false)}
           onCreated={(row) => {
-            onRowChanged(row)
+            setLocalRows(ls => ls.map(r => r.id === row.id ? { ...row } : r))
             close(true)
-            setTimeout(() => openDay(row.fecha_desde), 100)
           }}
-          editingItem={item}
           tipos={board.saldos.tipos}
           saldos={board.saldos.saldos}
           canApprove={canApprove}
+          holidays={board.holidays}
         />
       )
     })
   }
 
-  const openNewAlloc = (initDate = null) => {
+  const openNewAlloc = (d = null) => {
+    const initDate = (d && typeof d === 'string') ? d : null;
     modal.open({
       title: 'Nueva asignación (solicitud)',
       width: 720,
@@ -352,14 +359,18 @@ export default function AusenciasBoard() {
             monthIdx={board.monthIdx}
             setMonthIdx={board.setMonthIdx}
             byDate={filteredByDate}
+            holidays={board.holidays}
             onDayClick={openDay}
+            onRangeSelect={openRangeAbs}
           />
         ) : (
           <MonthCalendar
             year={year}
             month={monthIdx}
             rows={filteredRows}
+            holidays={board.holidays}
             onDayClick={openDay}
+            onRangeSelect={openRangeAbs}
             onPrev={() => {
               if (monthIdx === 0) { setYear(y => y - 1); setMonthIdx(11); }
               else { setMonthIdx(m => m - 1); }

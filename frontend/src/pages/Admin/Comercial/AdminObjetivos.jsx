@@ -87,8 +87,8 @@ export default function AdminObjetivos() {
             await comercialApi.upsertObjetivoMes({
                 eecc_id: selectedEecc,
                 mes_calendario: mes,
-                qty_onb_mercado: parseInt(onb),
-                qty_plan_prom: parseInt(plan)
+                qty_onb_mercado: parseInt(onb) || 0,
+                qty_plan_prom: parseInt(plan) || 0
             })
             toast.success(`Objetivo Mensual (${mes}) guardado`)
             loadObjetivos(selectedEecc)

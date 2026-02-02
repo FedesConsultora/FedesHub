@@ -29,6 +29,29 @@ const ensureExists = async (model, id, msg = 'No encontrado') => {
   return row;
 };
 
+const validateHierarchy = async (id, newParentId) => {
+  if (!newParentId) return;
+  if (id && Number(id) === Number(newParentId)) {
+    throw Object.assign(new Error('Una tarea no puede ser su propio padre.'), { status: 400 });
+  }
+
+  // Verificar loops: el nuevo padre no puede ser un descendiente de la tarea actual
+  // O más simplemente: si seguimos los padres del nuevo padre, no deberíamos encontrar la tarea actual.
+  let currentParentId = newParentId;
+  const visited = new Set();
+
+  while (currentParentId) {
+    if (id && Number(currentParentId) === Number(id)) {
+      throw Object.assign(new Error('Se ha detectado una dependencia circular en la jerarquía.'), { status: 400 });
+    }
+    if (visited.has(currentParentId)) break; // Seguridad
+    visited.add(currentParentId);
+
+    const p = await models.Tarea.findByPk(currentParentId, { attributes: ['tarea_padre_id'] });
+    currentParentId = p?.tarea_padre_id;
+  }
+};
+
 const getPuntos = async (impacto_id, urgencia_id) => {
   const [imp, urg] = await Promise.all([
     impacto_id ? models.ImpactoTipo.findByPk(impacto_id, { attributes: ['puntos'] }) : null,
@@ -375,6 +398,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
       c.id AS cliente_id, c.nombre AS cliente_nombre, c.color AS cliente_color,
       lead.id AS lead_id, lead.empresa AS lead_empresa, lead.nombre AS lead_nombre,
       h.id AS hito_id, h.nombre AS hito_nombre,
+      tp.titulo AS tarea_padre_titulo,
 
       -- Datos específicos de TC (si existen)
       (SELECT json_build_object(
@@ -525,6 +549,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
     LEFT JOIN "Cliente" c ON c.id = t.cliente_id
     LEFT JOIN "ComercialLead" lead ON lead.id = t.lead_id
     LEFT JOIN "ClienteHito" h ON h.id = t.hito_id
+    LEFT JOIN "Tarea" tp ON tp.id = t.tarea_padre_id
     LEFT JOIN "TareaKanbanPos" tkp ON tkp.tarea_id = t.id AND tkp.user_id = :uid
     WHERE t.id = :id AND t.deleted_at IS NULL
     LIMIT 1
@@ -538,6 +563,75 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
   });
 
   return rows[0] || null;
+};
+
+/* Hierarchical Clan Data */
+export const svcGetTaskFamily = async (id, currentUser) => {
+  // 1. Encontrar el root absoluto (hacia arriba)
+  const rootSql = `
+    WITH RECURSIVE ancestors AS (
+      SELECT id, tarea_padre_id FROM "Tarea" WHERE id = :id
+      UNION ALL
+      SELECT t.id, t.tarea_padre_id FROM "Tarea" t JOIN ancestors a ON t.id = a.tarea_padre_id
+    )
+    SELECT id FROM ancestors WHERE tarea_padre_id IS NULL AND id IS NOT NULL LIMIT 1;
+  `;
+  const rootResult = await sequelize.query(rootSql, {
+    replacements: { id: Number(id) },
+    type: QueryTypes.SELECT
+  });
+  const absoluteRootId = rootResult[0]?.id || id;
+
+  // 2. Traer todo el árbol desde ese root (hacia abajo)
+  const treeSql = `
+    WITH RECURSIVE family_tree AS (
+      SELECT 
+        t.*,
+        te.codigo AS estado_codigo, te.nombre AS estado_nombre,
+        it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
+        c.nombre AS cliente_nombre, c.color AS cliente_color,
+        0 AS depth
+      FROM "Tarea" t
+      JOIN "TareaEstado" te ON te.id = t.estado_id
+      LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
+      LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
+      LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+      WHERE t.id = :absoluteRootId AND t.deleted_at IS NULL
+      
+      UNION ALL
+      
+      SELECT 
+        t.*,
+        te.codigo AS estado_codigo, te.nombre AS estado_nombre,
+        it.puntos AS impacto_puntos, ut.puntos AS urgencia_puntos,
+        c.nombre AS cliente_nombre, c.color AS cliente_color,
+        ft.depth + 1
+      FROM "Tarea" t
+      JOIN family_tree ft ON t.tarea_padre_id = ft.id
+      JOIN "TareaEstado" te ON te.id = t.estado_id
+      LEFT JOIN "ImpactoTipo" it ON it.id = t.impacto_id
+      LEFT JOIN "UrgenciaTipo" ut ON ut.id = t.urgencia_id
+      LEFT JOIN "Cliente" c ON c.id = t.cliente_id
+      WHERE t.deleted_at IS NULL
+    )
+    SELECT 
+      ft.*,
+      COALESCE((SELECT json_agg(json_build_object(
+        'feder_id', tr.feder_id, 
+        'feder', json_build_object('id', f.id, 'nombre', f.nombre, 'apellido', f.apellido, 'avatar_url', f.avatar_url)
+      )) FROM "TareaResponsable" tr JOIN "Feder" f ON f.id = tr.feder_id WHERE tr.tarea_id = ft.id), '[]'::json) AS responsables,
+      COALESCE((SELECT json_agg(json_build_object(
+        'feder_id', tc.feder_id, 
+        'feder', json_build_object('id', f.id, 'nombre', f.nombre, 'apellido', f.apellido, 'avatar_url', f.avatar_url)
+      )) FROM "TareaColaborador" tc JOIN "Feder" f ON f.id = tc.feder_id WHERE tc.tarea_id = ft.id), '[]'::json) AS colaboradores
+    FROM family_tree ft
+    ORDER BY ft.depth, ft.id;
+  `;
+
+  return sequelize.query(treeSql, {
+    replacements: { absoluteRootId: Number(absoluteRootId) },
+    type: QueryTypes.SELECT
+  });
 };
 
 
@@ -569,7 +663,10 @@ const createTask = async (payload, currentFederId) => {
     if (cliente_id) await ensureExists(models.Cliente, cliente_id, 'Cliente no encontrado');
     if (lead_id) await ensureExists(models.ComercialLead, lead_id, 'Lead no encontrado');
     if (hito_id) await ensureExists(models.ClienteHito, hito_id, 'Hito no encontrado');
-    if (tarea_padre_id) await ensureExists(models.Tarea, tarea_padre_id, 'Tarea padre no encontrada');
+    if (tarea_padre_id) {
+      await ensureExists(models.Tarea, tarea_padre_id, 'Tarea padre no encontrada');
+      await validateHierarchy(null, tarea_padre_id);
+    }
 
     const [puntos, ponderacion] = await Promise.all([
       getPuntos(impacto_id, urgencia_id),
@@ -677,6 +774,7 @@ const createTask = async (payload, currentFederId) => {
         tamano_bytes: a.tamano_bytes ?? null,
         drive_file_id: a.drive_file_id || null,
         drive_url: a.drive_url || null,
+        es_embebido: !!a.es_embebido,
         subido_por_feder_id: currentFederId
       }));
       await models.TareaAdjunto.bulkCreate(rows, { transaction: t });
@@ -709,7 +807,10 @@ const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
     if (payload.cliente_id) await ensureExists(models.Cliente, payload.cliente_id, 'Cliente no encontrado');
     if (payload.lead_id) await ensureExists(models.ComercialLead, payload.lead_id, 'Lead no encontrado');
     if (payload.hito_id) await ensureExists(models.ClienteHito, payload.hito_id, 'Hito no encontrado');
-    if (payload.tarea_padre_id) await ensureExists(models.Tarea, payload.tarea_padre_id, 'Tarea padre no encontrada');
+    if (payload.tarea_padre_id) {
+      await ensureExists(models.Tarea, payload.tarea_padre_id, 'Tarea padre no encontrada');
+      await validateHierarchy(id, payload.tarea_padre_id);
+    }
 
     // recalcular prioridad si cambian ponderacion/impacto/urgencia/cliente
     let prioridad_num = cur.prioridad_num;

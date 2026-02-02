@@ -76,7 +76,7 @@ $text: $fh-text;
 .fh-chip {
   padding: .42rem .65rem;
   border: 1px solid $border-strong;
-  border-radius: 999px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, .04);
 }
 
@@ -128,14 +128,15 @@ $text: $fh-text;
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding: 10px 20px;
+    overflow: visible !important;
 
     .back-to-list-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: $fh-muted;
-      height: 36px;
+      height: 38px;
       padding: 0 16px;
-      border-radius: 999px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -169,8 +170,7 @@ $text: $fh-text;
     max-width: 100%;
     min-height: 60px;
     box-sizing: border-box;
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: visible; // Avoid clipping dropdowns or causing scrollbars
 
     .titleSection {
       flex: 1 1 auto; // Crece para llenar espacio disponible
@@ -221,6 +221,7 @@ $text: $fh-text;
       align-items: center;
       gap: 0.75rem;
       flex-wrap: nowrap; // NO wrap en desktop
+      overflow: visible;
 
       >* {
         flex-shrink: 0;
@@ -303,6 +304,8 @@ $text: $fh-text;
     display: flex;
     align-items: center;
     gap: 8px;
+
+    ;
 
     .btnGroup {
       display: flex;
@@ -478,7 +481,7 @@ $text: $fh-text;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -505,6 +508,102 @@ $text: $fh-text;
           margin-top: 0.75rem;
           color: white;
           font-size: 0.85rem;
+
+          &.hint {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+          }
+        }
+
+        // Estilos para la lista de progreso de subida (Raw Content)
+        .upload-progress-list {
+          width: 85%;
+          max-width: 450px;
+        }
+
+        .upload-progress-item {
+          margin-bottom: 12px;
+
+          .upload-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 16px; // Espacio solicitado
+
+            .file-name {
+              color: white;
+              font-size: 0.85rem;
+              font-weight: 500;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 65%;
+            }
+
+            .progress-text {
+              color: $fh-accent;
+              font-size: 0.8rem;
+              font-weight: 600;
+            }
+          }
+
+          .progress-bar-container {
+            position: relative;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+            overflow: visible;
+
+            .progress-bar {
+              height: 100%;
+              background: linear-gradient(90deg, $fh-accent, color.adjust($fh-accent, $lightness: 15%));
+              border-radius: 3px;
+              transition: width 0.3s ease;
+
+              &.processing {
+                background: linear-gradient(90deg, #ff9800, #ffc107);
+                animation: processingPulse 1s ease-in-out infinite;
+              }
+            }
+
+            @keyframes processingPulse {
+
+              0%,
+              100% {
+                opacity: 1;
+              }
+
+              50% {
+                opacity: 0.6;
+              }
+            }
+
+            .cancel-btn {
+              position: absolute;
+              right: -30px;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              background: rgba(255, 77, 79, 0.9);
+              border: none;
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              opacity: 0;
+              transition: opacity 0.2s ease;
+            }
+
+            &:hover .cancel-btn {
+              opacity: 1;
+            }
+          }
         }
       }
 
@@ -596,6 +695,34 @@ $text: $fh-text;
         }
       }
 
+      .add-link-btn-inline {
+        margin-top: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+
+        border-radius: 6px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+
+        &:hover {
+          background: rgba($fh-accent, 0.1);
+          color: $fh-accent;
+          border-color: rgba($fh-accent, 0.3);
+        }
+
+        svg {
+          font-size: 1.1rem;
+
+        }
+      }
+
       .raw-files-list {
         margin-top: 0.75rem;
         display: flex;
@@ -611,14 +738,25 @@ $text: $fh-text;
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 8px;
 
-          .file-name {
-            font-size: 0.875rem;
-            color: rgba(255, 255, 255, 0.8);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+          .file-info-icon {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             flex: 1;
-            margin-right: 0.75rem;
+            min-width: 0;
+
+            svg {
+              font-size: 1.15rem;
+              flex-shrink: 0;
+            }
+
+            .file-name {
+              font-size: 0.875rem;
+              color: rgba(255, 255, 255, 0.8);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
           }
 
           .file-actions {
@@ -674,13 +812,14 @@ $text: $fh-text;
 
       .action-icon {
         width: 36px;
-        height: 36px;
-        padding: 6px;
+        height: 34px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 8px;
         cursor: pointer;
         color: #A086FF;
         transition: all 0.2s ease;
+        margin-top: .3rem;
+        padding: 4px 4px 2px 4px !important;
 
         &:hover {
           background: rgba(255, 255, 255, 0.2);
@@ -1139,11 +1278,12 @@ $text: $fh-text;
   .meta {
 
     display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap; // Allow wrap by default or handle in MQ
+    align-items: center;
     justify-content: flex-start;
     margin-right: .5rem;
+    overflow: visible;
 
 
     .inlineDue,
@@ -1156,17 +1296,20 @@ $text: $fh-text;
 
     .dueChip,
     .clientChip {
-      padding: .24rem .55rem;
-      border-radius: 999px;
+      padding: 8px 16px;
+      min-height: 38px;
+      border-radius: 24px;
       background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, 0.08); // Added border for consistency
       color: $text;
       cursor: pointer;
-      font-weight: 700;
-      transition: background .18s ease, border-color .18s ease, filter .18s ease;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all .2s ease;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
 
       &:hover {
         background: rgba(255, 255, 255, .07);
@@ -1281,7 +1424,7 @@ $text: $fh-text;
     }
   }
 
-  /* Placeholder para contentEditable */
+  // Placeholder para contentEditable
   .editable[contenteditable="true"] {
     &:empty::before {
       content: attr(data-placeholder);
@@ -1483,7 +1626,8 @@ $text: $fh-text;
       display: flex;
       gap: 10px;
       align-items: center;
-      flex-shrink: 0; // Ensure buttons never shrink or move out
+      flex-shrink: 0;
+      flex-direction: row-reverse; // Ensure buttons never shrink or move out
 
       .cancel-btn-text {
         background: transparent;
@@ -1607,5 +1751,144 @@ $text: $fh-text;
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Family Button ===== */
+.familyBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  svg {
+    font-size: 1rem;
+  }
+}
+
+/* ===== Family Dropdown ===== */
+.family-dropdown-wrapper {
+  position: relative;
+  z-index: 1000; // Increased to ensure it's above other elements
+}
+
+.family-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 200px;
+  background: #1a222d;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 6px;
+  z-index: 999999; // Absolute maximum to stay above everything
+  animation: popDown 0.18s ease-out;
+  overflow: hidden; // Clip the hover states to the rounded corners
+  user-select: none;
+
+  .dropdown-item {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    text-align: left;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    svg {
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+
+    &:hover svg {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Parent Task Banner ===== */
+.parent-task-banner {
+  background: rgba($fh-primary, 0.08);
+  border: 1px solid rgba($fh-primary, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 0 12px 12px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-out;
+
+  .banner-label {
+    color: $fh-primary;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+
+    svg {
+      font-size: 1rem;
+    }
+  }
+
+  .banner-link {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: white;
+      text-decoration: underline;
+    }
   }
 }

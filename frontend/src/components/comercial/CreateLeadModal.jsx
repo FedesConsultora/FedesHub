@@ -27,7 +27,7 @@ export default function CreateLeadModal({ onClose, onCreated }) {
             federsApi.list({ is_activo: true })
         ]).then(([catRes, fedRes]) => {
             const filteredFeders = (fedRes.rows || []).filter(f =>
-                f.roles?.includes('NivelB') || f.roles?.includes('Comercial')
+                f.roles?.includes('NivelA') || f.roles?.includes('NivelB') || f.roles?.includes('Comercial')
             )
             setCatalog({ ...catRes.data, feders: filteredFeders })
         })
@@ -35,13 +35,23 @@ export default function CreateLeadModal({ onClose, onCreated }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!form.empresa || !form.nombre || !form.responsable_feder_id) return
+        if (!form.empresa || !form.nombre || !form.responsable_feder_id) {
+            return toast.warn('Faltan campos obligatorios (Empresa, Nombre y Responsable)')
+        }
         setSaving(true)
+        const pendingStatus = catalog.statuses.find(s => s.codigo === 'pendiente')
+        const contactEtapa = catalog.etapas.find(et => et.codigo === 'contacto')
+
+        if (!pendingStatus || !contactEtapa) {
+            setSaving(false)
+            return toast.error('Error de configuración: Faltan estados o etapas base en la base de datos.')
+        }
+
         try {
             await comercialApi.createLead({
                 ...form,
-                status_id: catalog.statuses.find(s => s.codigo === 'pendiente')?.id,
-                etapa_id: catalog.etapas.find(et => et.codigo === 'contacto')?.id
+                status_id: pendingStatus.id,
+                etapa_id: contactEtapa.id
             })
             toast.success('Lead creado correctamente')
             onCreated()
@@ -128,7 +138,7 @@ export default function CreateLeadModal({ onClose, onCreated }) {
                         </div>
                     </div>
 
-                    <div className="field full no-ico">
+                    <div className="select-wrapper mt16">
                         <PremiumSelect
                             label="Fuente"
                             icon={FiTag}
@@ -139,7 +149,7 @@ export default function CreateLeadModal({ onClose, onCreated }) {
                         />
                     </div>
 
-                    <div className="field full no-ico">
+                    <div className="select-wrapper mt16">
                         <PremiumSelect
                             label="Responsable"
                             icon={FiUsers}

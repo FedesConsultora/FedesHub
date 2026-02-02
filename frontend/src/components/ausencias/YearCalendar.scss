@@ -142,6 +142,13 @@
       background: transparent;
     }
 
+    &.selected {
+      background: rgba(v.$fh-accent, 0.2) !important;
+      border-color: rgba(v.$fh-accent, 0.9) !important;
+      box-shadow: 0 0 10px rgba(v.$fh-accent, 0.4);
+      z-index: 5;
+    }
+
     .dots {
       position: absolute;
       bottom: 2px;
@@ -185,6 +192,17 @@
       border-color: v.$fh-accent;
       font-weight: 800;
       color: v.$fh-accent;
+    }
+
+    &.is-holiday {
+      background: rgba(3, 200, 255, 0.199);
+      border-bottom: 2px solid rgba(38, 248, 255, 0.875);
+
+      &:hover {
+        background: rgba(0, 255, 247, 0.523);
+
+      }
+
     }
   }
 }

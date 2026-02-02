@@ -96,13 +96,13 @@ export default function LeadDetailPage() {
 
                         <div className="details-list">
                             <div className="item">
-                                <FiMail /><p>{lead.email || 'N/A'}</p>
+                                <FiMail /><p>{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : 'N/A'}</p>
                             </div>
                             <div className="item">
-                                <FiPhone /><p>{lead.telefono || 'N/A'}</p>
+                                <FiPhone /><p>{lead.telefono ? <a href={`tel:${lead.telefono}`}>{lead.telefono}</a> : 'N/A'}</p>
                             </div>
                             <div className="item">
-                                <FiGlobe /><p>{lead.sitio_web || 'N/A'}</p>
+                                <FiGlobe /><p>{lead.sitio_web ? <a href={lead.sitio_web.startsWith('http') ? lead.sitio_web : `https://${lead.sitio_web}`} target="_blank" rel="noreferrer">{lead.sitio_web}</a> : 'N/A'}</p>
                             </div>
                             <div className="item">
                                 <FiMapPin /><p>{lead.ubicacion || 'N/A'}</p>

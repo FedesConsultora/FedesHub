@@ -1,3 +1,9 @@
+@use "sass:color";
+@use '../../styles/variables' as *;
+$surface-2: rgba(18, 22, 30, .82);
+$border: rgba(255, 255, 255, .08);
+$muted: $fh-muted;
+
 .image-fullscreen-overlay {
     position: fixed;
     top: 0;
@@ -7,9 +13,8 @@
     background: rgba(0, 0, 0, 0.95);
     z-index: 9999;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    flex-direction: column; // Layout vertical
+    padding: 0; // Padding se quita para que el header llegue a los bordes
     animation: fadeIn 0.2s ease;
 
     @keyframes fadeIn {
@@ -22,81 +27,166 @@
         }
     }
 
-    // Action buttons container
-    .action-buttons {
-        position: absolute;
-        top: 1.5rem;
-        right: 1.5rem;
+    // New Header Bar (Google Drive style)
+    .fullscreen-header {
+        width: 100%;
+        height: 64px;
         display: flex;
-        gap: 0.75rem;
-        z-index: 10;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        z-index: 100;
+        flex-shrink: 0;
 
-        .action-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            cursor: pointer;
+        .file-info {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            position: relative;
+            gap: 1rem;
+            min-width: 0;
 
-            &:hover {
-                background: rgba(255, 255, 255, 0.2);
-                transform: scale(1.05);
+            .file-name {
+                color: white;
+                font-size: 1rem;
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
+        }
 
-            &:active {
-                transform: scale(0.95);
-            }
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
 
-            &.close {
-                background: rgba(255, 77, 79, 0.3);
+            .action-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                color: white;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                position: relative;
 
                 &:hover {
-                    background: rgba(255, 77, 79, 0.5);
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: scale(1.05);
                 }
-            }
 
-            .tooltip {
-                position: absolute;
-                bottom: -30px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #22c55e;
-                color: white;
-                padding: 4px 10px;
-                border-radius: 4px;
-                font-size: 12px;
-                white-space: nowrap;
-                animation: fadeIn 0.2s ease;
+                &.close {
+                    background: rgba(255, 77, 79, 0.3);
+
+                    &:hover {
+                        background: rgba(255, 77, 79, 0.5);
+                    }
+                }
+
+                .tooltip {
+                    position: absolute;
+                    bottom: -32px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #22c55e;
+                    color: white;
+                    padding: 4px 10px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                }
             }
         }
     }
 
     .media-container {
-        max-width: 95vw;
-        max-height: 95vh;
+        flex: 1; // Toma todo el espacio restante
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 1.5rem;
+        overflow: hidden;
 
         img,
-        video {
+        video,
+        .preview-iframe {
             max-width: 100%;
-            max-height: 90vh;
+            max-height: 98vh;
             object-fit: contain;
-            border-radius: 8px;
+            border-radius: 4px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             animation: scaleIn 0.25s ease;
         }
 
+        .preview-iframe {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border: none;
+        }
+
+        &.type-pdf,
+        &.type-html {
+            width: 96vw;
+            height: 96vh;
+        }
+
         video {
             background: #000;
+        }
+
+        .no-preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            text-align: center;
+            background: rgba($surface-2, 0.5);
+            padding: 3rem;
+            border-radius: 16px;
+            border: 1px solid $border;
+            backdrop-filter: blur(10px);
+            animation: scaleIn 0.25s ease;
+
+            h3 {
+                margin: 0;
+                color: white;
+                font-size: 1.25rem;
+            }
+
+            p {
+                margin: 0;
+                color: $muted;
+                font-size: 0.95rem;
+            }
+
+            .download-btn {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                background: $fh-accent;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: color.adjust($fh-accent, $lightness: 8%);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba($fh-accent, 0.3);
+                }
+            }
         }
 
         @keyframes scaleIn {
