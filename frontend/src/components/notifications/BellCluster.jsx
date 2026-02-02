@@ -91,18 +91,9 @@ export default function BellCluster({ onAnyOpen }) {
     return () => document.removeEventListener('click', onDoc)
   }, [])
 
-  useEffect(() => {
-    const onInvalidate = () => {
-      qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
-      qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
-    }
-    window.addEventListener('fh:push', onInvalidate)
-    window.addEventListener('fh:notif:changed', onInvalidate)
-    return () => {
-      window.removeEventListener('fh:push', onInvalidate)
-      window.removeEventListener('fh:notif:changed', onInvalidate)
-    }
-  }, [qc])
+  // La invalidación de queries de notificaciones ahora se maneja centralizadamente en RealtimeProvider.jsx
+  // para evitar múltiples refetch simultáneos.
+
 
   // Reconciliación del conteo de chat:
   // Si el backend dice que hay 1 y nosotros acabamos de limpiar uno (suppressed), prefiero confiar en el local 0.

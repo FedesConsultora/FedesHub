@@ -94,7 +94,6 @@ export default function UnreadDmBubbles({ limit = 1 }) {
     // Usamos todos los posibles canal_id (de DMs) que conozcamos
     const allDmIds = new Set([...dmByCanal.keys(), ...Array.from(derivedUnread.keys())])
 
-    console.log('[Sidebar] allDmIds:', Array.from(allDmIds), 'unreadByCanal:', unreadByCanal)
 
     allDmIds.forEach(cid => {
       const cidNum = Number(cid)

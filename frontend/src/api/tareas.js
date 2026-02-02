@@ -99,7 +99,7 @@ export const tareasApi = {
     }
     return api.post(`${base}/${id}/adjuntos/upload`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 120000 // 2 minutes for uploading files to Google Drive
+      timeout: 0 // Sin timeout para permitir archivos grandes
     }).then(r => r.data);
   },
   listChildren: (parentId, params = {}) =>

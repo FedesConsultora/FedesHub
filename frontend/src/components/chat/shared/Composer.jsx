@@ -114,11 +114,11 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
 
     try {
       if (files.length) {
-        // Validación de tamaño (ej: 100MB total)
-        const MAX_SIZE = 100 * 1024 * 1024
+        // Validación de tamaño (Límite: 50GB)
+        const MAX_SIZE = 50 * 1024 * 1024 * 1024
         const totalSize = files.reduce((acc, f) => acc + f.size, 0)
         if (totalSize > MAX_SIZE) {
-          toast?.error('El tamaño total de los archivos supera los 100MB')
+          toast?.error(`El tamaño total de los archivos supera el límite de 50GB`)
           return
         }
 

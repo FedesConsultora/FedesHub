@@ -15,10 +15,10 @@ export const uploadSingle = mem.single('file');
 
 export function multerErrorHandler(err, _req, res, next) {
   if (err instanceof multer.MulterError) {
-    const sizeMB = MAX_FILE_SIZE / 1024 / 1024 / 1024;
+    const sizeGB = MAX_FILE_SIZE / 1024 / 1024 / 1024;
     const map = {
-      LIMIT_FILE_SIZE: `Archivo demasiado grande. Máximo permitido: ${sizeMB}GB`,
-      LIMIT_FILE_COUNT: `Demasiados archivos. Máximo permitido: ${MAX_FILES}`,
+      LIMIT_FILE_SIZE: `Archivo demasiado grande. El máximo permitido es de ${sizeGB}GB.`,
+      LIMIT_FILE_COUNT: `Demasiados archivos. El máximo permitido son ${MAX_FILES} archivos.`,
       LIMIT_UNEXPECTED_FILE: 'Campo de archivo inesperado'
     };
     return res.status(413).json({ error: map[err.code] || err.message });
