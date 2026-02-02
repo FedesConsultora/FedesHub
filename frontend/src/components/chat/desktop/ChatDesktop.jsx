@@ -8,7 +8,7 @@ import Composer from '../shared/Composer'
 import Tabs from '../shared/Tabs'
 import ChannelCreateModal from './ChannelCreateModal'
 import ChannelHeader from './ChannelHeader'
-import { useMessages, useDmCandidates, useChatRealtime, useChannelMembers, useChannelPins } from '../../../hooks/useChat'
+import { useMessages, useDmCandidates, useChannelMembers, useChannelPins } from '../../../hooks/useChat'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import { chatApi } from '../../../api/chat'
 import { ChatActionCtx } from '../shared/context'
@@ -79,7 +79,6 @@ export default function ChatDesktop({ channels = [], currentId = null, onOpen })
   }, [dmQ.data])
 
   const msgs = useMessages(cid, { limit: 50 })
-  useChatRealtime()
   const { data: membersFull = [] } = useChannelMembers(cid)
 
   // Sync view tab with selected channel type

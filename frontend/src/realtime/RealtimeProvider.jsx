@@ -452,119 +452,98 @@ export default function RealtimeProvider({ children }) {
 
     const dKey = buildDedupKey(anyData)
     const isRich = !!data.fcm_title
+    const isDuplicate = checkSeenOnce(dKey)
 
-    // Si ya lo vimos y NO es una actualización rica, ignoramos.
-    // Si es rica (FCM), permitimos que pase para "mejorar" el banner de SSE aunque el ID sea el mismo.
-    if (checkSeenOnce(dKey) && !isRich) return
+    // Si es un duplicado y NO es una notificación rica (FCM), ignoramos por completo
+    if (isDuplicate && !isRich) return
 
-    if (type !== 'ping') console.log('[Realtime] incoming:', type, data)
+    if (type !== 'ping') console.log('[Realtime] incoming:', type, 'isDuplicate:', isDuplicate, data)
 
-    // Invalidaciones de Query
-    if (type.startsWith('chat.')) {
-      const cid = data?.canal_id ? Number(data.canal_id) : null
-      if (/chat\.message\.(created|edited|deleted|pin)/.test(type) && cid) {
-        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
-        qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
+    // 1. ACTUALIZACIONES DE ESTADO Y CACHÉ (Solo una vez por ID de mensaje)
+    if (!isDuplicate) {
+      // Invalidaciones de Query
+      if (type.startsWith('chat.')) {
+        const cid = data?.canal_id ? Number(data.canal_id) : null
+        if (/chat\.message\.(created|edited|deleted|pin)/.test(type) && cid) {
+          qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+          qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
+        }
+        if (/chat\.channel\./.test(type) && cid) {
+          qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+          qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
+        }
       }
-      if (/chat\.channel\./.test(type) && cid) {
-        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
-        qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
+
+      if (type === 'chat.channel.read') {
+        const cid = Number(data?.canal_id || 0)
+        if (cid && Number(data?.user_id || 0) === myId) {
+          setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+          setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+          flushChatNotifsForCanal(cid).catch(() => { })
+        }
       }
+
+      const looksLikeChat = type === 'chat.message.created' || (type === 'chat_mensaje' && !!data?.chat_canal_id)
+      if (looksLikeChat) {
+        const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
+        const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
+
+        // Si el mensaje es propio (desde cualquier sesión), limpiar estado y salir
+        if (aid === myId && cid) {
+          setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+          setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+          qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+          window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
+          setSuppressedCanals(prev => { if (prev.has(cid)) return prev; const next = new Set(prev); next.add(cid); return next })
+          return
+        }
+
+        if (cid && myId && (aid || !isLikelySelfEcho(cid))) {
+          if (currentCanalRef.current !== cid) {
+            const nId = Number(data?.notificacion_id || 0)
+            if (nId) rememberNotifForCanal(cid, nId)
+
+            const mentions = extractMentionsFromPayload(data)
+            setUnreadByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
+            if (mentions.has(myId)) setMentionByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
+
+            setSuppressedCanals(prev => { if (!prev.has(cid)) return prev; const next = new Set(prev); next.delete(cid); return next })
+          }
+        }
+      }
+
+      qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+      qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     }
 
-    if (type === 'chat.channel.read') {
-      const cid = Number(data?.canal_id || 0)
-      if (cid && Number(data?.user_id || 0) === myId) {
-        setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-        setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-        flushChatNotifsForCanal(cid).catch(() => { })
-      }
-    }
-
+    // 2. NOTIFICACIONES (BANNERS)
+    // Esto sí puede ejecutarse dos veces si el segundo es "isRich" (FCM), para hacer el upgrade del banner.
     const looksLikeChat = type === 'chat.message.created' || (type === 'chat_mensaje' && !!data?.chat_canal_id)
     if (looksLikeChat) {
       const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
       const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
 
-      // Si el mensaje es propio (desde cualquier sesión), limpiar estado y salir
-      if (aid === myId && cid) {
-        if (DEBUG) console.log('[Realtime] Self-message detected, clearing local unread for canal:', cid)
-        // Limpiar unread local
-        setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-        setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-        // Refrescar canales para que el derivedUnread también se actualice
-        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
-        // Disparar evento de limpieza para suprimir temporalmente en UnreadDmBubbles
-        window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
-        // Matar localmente también por si acaso
-        setSuppressedCanals(prev => {
-          if (prev.has(cid)) return prev
-          const next = new Set(prev); next.add(cid); return next
-        })
-        return
-      }
-
-      if (!cid || !myId) return
-      if (!aid && isLikelySelfEcho(cid)) return
-
-      console.log(`[Realtime] Processing layout update for cid:${cid}, currentCanal:${currentCanalRef.current}`)
-      if (currentCanalRef.current !== cid) {
-        const nId = Number(data?.notificacion_id || 0)
-        if (nId) rememberNotifForCanal(cid, nId)
-        // El audio ahora se gestiona dentro de showNotification.
-
-        // Lógica de banner SSE vs FCM rica
-        const isRich = !!data.fcm_title
+      if (aid !== myId && cid && currentCanalRef.current !== cid) {
         const bKey = `banner:${cid}`
-
         if (isRich) {
-          console.log('[🔔 NOTIF] ✨ Firebase LLEGÓ (FCM). Lanzo banner rico Lv2.')
-          // Si Firebase llegó antes que el timer de SSE, cancelamos el SSE para que solo salga el rico.
           if (pendingBannersRef.current.has(bKey)) {
-            console.log('[🔔 NOTIF] 🎯 FCM ganó la carrera. Cancelando timer SSE.')
             clearTimeout(pendingBannersRef.current.get(bKey))
             pendingBannersRef.current.delete(bKey)
           }
           showNotification(data, 2)
         } else {
-          // SSE espera un mínimo (400ms) para ver si Firebase llega instantáneo y evitar dobles banners.
-          // Si no llega, lanza el Lv1 para asegurar el sonido.
-          console.log('[🔔 NOTIF] ⏱ SSE detectado, esperando 400ms por Firebase antes de Lv1...')
           if (pendingBannersRef.current.has(bKey)) clearTimeout(pendingBannersRef.current.get(bKey))
-
           const timer = setTimeout(() => {
-            console.log('[🔔 NOTIF] ⌛ Wait finish. Launching Lv1 Banner (Fallback).')
             showNotification(data, 1)
             pendingBannersRef.current.delete(bKey)
-          }, 400)
+          }, 450)
           pendingBannersRef.current.set(bKey, timer)
         }
-
-        const mentions = extractMentionsFromPayload(data)
-        setUnreadByCanal(prev => {
-          const next = { ...prev, [cid]: (prev[cid] || 0) + 1 }
-          console.log('[Realtime] Updated unreadByCanal:', next)
-          return next
-        })
-        if (mentions.has(myId)) setMentionByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
-
-        // Si estaba suprimido (ej: porque lo acabamos de leer), lo liberamos porque llegó algo nuevo
-        setSuppressedCanals(prev => {
-          if (!prev.has(cid)) return prev
-          const next = new Set(prev)
-          next.delete(cid)
-          return next
-        })
       }
     }
 
-    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
-    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
-
-    // Handler para notificaciones de TAREAS (Solo si no es chat para evitar dobles)
     const looksLikeTarea = /tarea/.test(type) || !!data?.tarea_id
     if (looksLikeTarea && !looksLikeChat) {
-      if (DEBUG) console.log('[Realtime] Processing task update:', data)
       showNotification({
         ...data,
         author_name: data.author_name || data.titulo || 'FedesHub',
@@ -594,11 +573,25 @@ export default function RealtimeProvider({ children }) {
     const onChatSent = (ev) => { if (ev.detail?.canal_id) markSelfSend(ev.detail.canal_id) }
     window.addEventListener('fh:push', handler)
     window.addEventListener('fh:chat:sent', onChatSent)
+
+    // 📡 Listener para mensajes del Service Worker (FCM en primer plano)
+    const onSwMessage = (e) => {
+      if (e.data && e.data.type === 'fh:push') {
+        onIncoming(e.data.data || {})
+      }
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', onSwMessage)
+    }
+
     return () => {
       window.removeEventListener('fh:push', handler)
       window.removeEventListener('fh:chat:sent', onChatSent)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', onSwMessage)
+      }
     }
-  }, [user?.id])
+  }, [user?.id])  // Removido onIncoming de dependencias - la función tiene acceso al closure
 
   useEffect(() => {
     if (booted && user) {
@@ -631,18 +624,14 @@ export default function RealtimeProvider({ children }) {
       if (msg.type === 'ping') {
         bc.postMessage({ type: 'pong', tabId, isMaster: isMasterTabRef.current })
       } else if (msg.type === 'claim_master') {
-        // Alguien reclama el trono. Si su tabId es menor (orden alfabético), cedemos.
-        // Si no, lo ignoramos o reclamamos de vuelta si somos master.
         if (msg.tabId < tabId) {
           isMasterTabRef.current = false
           setIsMasterTab(false)
           console.log(`[🔊 AUDIO] Pestaña (${tabId}) cedió el trono a (${msg.tabId})`)
         } else if (isMasterTabRef.current) {
-          // Si somos master y el que reclama tiene ID mayor, reafirmamos mandato
           bc.postMessage({ type: 'claim_master', tabId })
         }
       } else if (msg.type === 'pong' && msg.isMaster) {
-        // Hay otro master. Si su ID es menor, nosotros no somos master.
         if (msg.tabId < tabId) {
           isMasterTabRef.current = false
           setIsMasterTab(false)
@@ -650,13 +639,10 @@ export default function RealtimeProvider({ children }) {
       }
     }
 
-    // Anunciar presencia
     bc.postMessage({ type: 'ping', tabId })
 
-    // Si no hay respuesta clara en 500ms, declararse master
     const masterTimer = setTimeout(() => {
       if (!isMasterTabRef.current) {
-        // Solo reclamamos si no hemos detectado un master con ID menor
         claimMaster()
       }
     }, 600)
@@ -665,7 +651,7 @@ export default function RealtimeProvider({ children }) {
       clearTimeout(masterTimer)
       bc.close()
     }
-  }, [user, booted])
+  }, [user, booted, tabId])
 
   // ---- AudioContext Keep-Alive
   useEffect(() => {
