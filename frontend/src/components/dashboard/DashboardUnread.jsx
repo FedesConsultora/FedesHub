@@ -21,28 +21,45 @@ export default function DashboardUnread({ notifications, onOpenTask, onRefresh }
         const { notificacion } = n;
         if (!notificacion) return;
 
-        try {
-            // 1. Marcar como leído en DB
-            await notifApi.read(n.id, true);
-
-            // 2. Acciones específicas por tipo
-            if (notificacion.chat_canal_id) {
-                // Es un chat: limpiar badges globales y navegar
-                clearUnreadFor(notificacion.chat_canal_id);
-                navigate(`/chat/c/${notificacion.chat_canal_id}`);
-            } else if (notificacion.tarea_id) {
-                // Es una tarea: abrir el modal en el dashboard
-                onOpenTask(notificacion.tarea_id);
-            } else if (notificacion.link_url) {
-                // Link genérico
-                navigate(notificacion.link_url);
-            }
-
-            // 3. Informar al dashboard para que refresque su lista
-            onRefresh?.();
-        } catch (e) {
-            console.error("Error al procesar notificación:", e);
+        // 1. Marcar como leído en DB (Independiente de la navegación para ser robustos)
+        // Usamos notificacion.id (el ID real de la notificación) en lugar de n.id (el ID del destino)
+        // porque el backend setRead espera el notificacion_id.
+        const notifId = notificacion.id || n.notificacion_id;
+        if (notifId) {
+            notifApi.read(notifId, true).catch(err => {
+                console.error("Error marking notification as read:", err);
+            });
         }
+
+        // 2. Navegar inmediatamente
+        const canalId = notificacion.chat_canal_id || notificacion.chatCanal?.id || notificacion.canal_id;
+
+        if (canalId) {
+            // Es un chat: limpiar badges globales y navegar
+            clearUnreadFor(canalId);
+            navigate(`/chat/c/${canalId}`);
+        } else if (notificacion.tarea_id) {
+            // Es una tarea: abrir el modal en el dashboard
+            let commentId = null;
+            if (notificacion.tipo?.codigo === 'tarea_comentario') {
+                // Tentar extraer el ID del comentario si viene en data_json
+                try {
+                    const data = typeof notificacion.data_json === 'string'
+                        ? JSON.parse(notificacion.data_json)
+                        : notificacion.data_json;
+                    commentId = data?.comentario_id || data?.comment_id;
+                } catch (e) {
+                    console.warn("No se pudo parsear metadata para comentario", e);
+                }
+            }
+            onOpenTask(notificacion.tarea_id, commentId);
+        } else if (notificacion.link_url) {
+            // Link genérico
+            navigate(notificacion.link_url);
+        }
+
+        // 3. Informar al dashboard para que refresque su lista
+        onRefresh?.();
     };
 
     return (

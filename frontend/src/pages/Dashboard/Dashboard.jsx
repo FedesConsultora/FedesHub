@@ -22,6 +22,7 @@ export default function Dashboard() {
   const { clearAllChatUnreads } = useRealtime() || {}
   const [showCreate, setShowCreate] = useState(false)
   const [openTaskId, setOpenTaskId] = useState(null)
+  const [openCommentId, setOpenCommentId] = useState(null)
   const [metrics, setMetrics] = useState(null)
   const [periodo, setPeriodo] = useState('semana')
   const [urgentTasks, setUrgentTasks] = useState([])
@@ -98,6 +99,11 @@ export default function Dashboard() {
     setCollapsedBlocks(prev =>
       prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
     )
+  }
+
+  const handleOpenTask = (id, commentId = null) => {
+    setOpenTaskId(id)
+    setOpenCommentId(commentId)
   }
 
   const moveBlock = (id, direction, col) => {
@@ -205,14 +211,14 @@ export default function Dashboard() {
       case 'urgent':
         return (
           <DashboardBlock key={id} {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
-            <UrgentTasks tasks={urgentTasks} onOpenTask={setOpenTaskId} />
+            <UrgentTasks tasks={urgentTasks} onOpenTask={(tid) => handleOpenTask(tid)} />
           </DashboardBlock>
         )
       case 'revision':
         if (!metrics?.is_directivo) return null
         return (
           <DashboardBlock key={id} {...blockProps} title="📋 Tareas en revisión" count={revisionTasks.length}>
-            <RevisionTasks tasks={revisionTasks} onOpenTask={setOpenTaskId} />
+            <RevisionTasks tasks={revisionTasks} onOpenTask={(tid) => handleOpenTask(tid)} />
           </DashboardBlock>
         )
       case 'unread':
@@ -235,7 +241,7 @@ export default function Dashboard() {
               )
             }
           >
-            <DashboardUnread notifications={unreadNotifs} onOpenTask={setOpenTaskId} onRefresh={() => fetchData()} />
+            <DashboardUnread notifications={unreadNotifs} onOpenTask={handleOpenTask} onRefresh={() => fetchData()} />
           </DashboardBlock>
         )
       default:
@@ -294,11 +300,12 @@ export default function Dashboard() {
 
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={() => fetchData()} />}
       {openTaskId && (
-        <ModalPanel open={!!openTaskId} onClose={() => setOpenTaskId(null)}>
+        <ModalPanel open={!!openTaskId} onClose={() => { setOpenTaskId(null); setOpenCommentId(null); }}>
           <TaskDetail
             taskId={openTaskId}
+            initialCommentId={openCommentId}
             onUpdated={() => fetchData()}
-            onClose={() => setOpenTaskId(null)}
+            onClose={() => { setOpenTaskId(null); setOpenCommentId(null); }}
           />
         </ModalPanel>
       )}
