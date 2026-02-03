@@ -3,17 +3,19 @@ import './metrics.scss'
 import MetricCard from './MetricCard'
 
 export default function MetricsGrid({ data }) {
-  const metrics = data ?? { tareas_hoy: 0, tareas_periodo: 0, tareas_prioritarias: 0, notif_unread: 0, tareas_en_revision: 0, periodo: 'semana' }
+  const metrics = data ?? {
+    tareas_pendientes: 0,
+    tareas_en_curso: 0,
+    tareas_en_revision: 0,
+    tareas_aprobadas_semana: 0
+  }
 
   const items = [
-    { k: 'tareas_prioritarias', label: 'Urgentes / Prioritarias', value: metrics.tareas_prioritarias || 0 },
-    { k: 'tareas_periodo', label: `Pendientes (${metrics.periodo === 'mes' ? 'del mes' : 'esta semana'})`, value: metrics.tareas_periodo || 0 },
-    { k: 'notif_unread', label: 'Mensajes sin leer', value: metrics.notif_unread || 0 },
+    { k: 'tareas_pendientes', label: 'Pendientes', value: metrics.tareas_pendientes || 0 },
+    { k: 'tareas_en_curso', label: 'En Curso', value: metrics.tareas_en_curso || 0 },
+    { k: 'tareas_en_revision', label: 'En Revisión', value: metrics.tareas_en_revision || 0 },
+    { k: 'tareas_aprobadas_semana', label: 'Aprobadas esta semana', value: metrics.tareas_aprobadas_semana || 0 },
   ]
-
-  if (metrics.is_directivo) {
-    items.unshift({ k: 'tareas_en_revision', label: 'En revisión (Global)', value: metrics.tareas_en_revision || 0 });
-  }
 
   return (
     <section className="card mt16">

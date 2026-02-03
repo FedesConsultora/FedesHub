@@ -1940,8 +1940,6 @@ const getDashboardMetrics = async (user, query = {}) => {
 
   const roles = user?.roles || [];
   const isDirectivo = roles.includes('NivelA') || roles.includes('NivelB');
-  const periodo = query.periodo === 'mes' ? 'mes' : 'semana';
-  const interval = periodo === 'mes' ? '30 days' : '7 days';
 
   const replacements = {
     fid: feder_id,
@@ -1949,71 +1947,57 @@ const getDashboardMetrics = async (user, query = {}) => {
     today: new Date().toISOString().split('T')[0]
   };
 
-  // 1. Tareas de hoy (scoping ampliado)
-  const sqlHoy = `
-    SELECT COUNT(*)::int as count 
-    FROM "Tarea" t
-    WHERE t.is_archivada = false 
-      AND t.deleted_at IS NULL
-      AND (
-        t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
-        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
-      )
-      AND (
-        t.vencimiento = :today 
-        OR (t.fecha_inicio <= :today AND t.vencimiento >= :today)
-      )
+  const scopingSQL = isDirectivo ? '' : `
+    AND (
+      t.creado_por_feder_id = :fid
+      OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+      OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+      OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
+    )
   `;
 
-  // 2. Pendientes en el período (scoping ampliado + filtro por estado + vencimiento)
-  const sqlPeriodo = `
+  // 1. Pendientes (estado: pendiente)
+  const sqlPendientes = `
     SELECT COUNT(*)::int as count 
     FROM "Tarea" t
     JOIN "TareaEstado" te ON te.id = t.estado_id
-    WHERE t.is_archivada = false 
-      AND t.deleted_at IS NULL
-      AND (
-        t.creado_por_feder_id = :fid
-        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
-        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
-        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
-      )
-      AND te.codigo NOT IN ('aprobada', 'cancelada')
-      AND t.vencimiento <= :today::date + INTERVAL '${interval}'
-      AND t.vencimiento >= :today::date
+    WHERE t.is_archivada = false AND t.deleted_at IS NULL
+      AND te.codigo = 'pendiente'
+      ${scopingSQL}
   `;
 
-  // 3. Tareas Prioritarias (Lógica de fallback: si no hay Crítica/Alta, cuenta Media, etc.)
-  const sqlPrioritarias = `
-    WITH counts AS (
-      SELECT 
-        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) >= 300 THEN 1 END) as critical_high,
-        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) BETWEEN 100 AND 299 THEN 1 END) as medium,
-        COUNT(CASE WHEN (t.prioridad_num + t.boost_manual) < 100 THEN 1 END) as low
-      FROM "Tarea" t
-      JOIN "TareaEstado" te ON te.id = t.estado_id
-      WHERE t.is_archivada = false 
-        AND t.deleted_at IS NULL
-        AND te.codigo NOT IN ('aprobada', 'cancelada')
-        AND (
-          t.creado_por_feder_id = :fid
-          OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
-          OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
-          OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
-        )
-    )
-    SELECT 
-      CASE 
-        WHEN critical_high > 0 THEN critical_high 
-        WHEN medium > 0 THEN medium 
-        ELSE low 
-      END as count
-    FROM counts
+  // 2. En Curso (estado: en_curso)
+  const sqlEnCurso = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false AND t.deleted_at IS NULL
+      AND te.codigo = 'en_curso'
+      ${scopingSQL}
   `;
 
-  // 4. Notificaciones no leídas
+  // 3. En Revisión (estado: revision)
+  const sqlRevision = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false AND t.deleted_at IS NULL
+      AND te.codigo = 'revision'
+      ${scopingSQL}
+  `;
+
+  // 4. Aprobadas esta semana (estado: aprobada, últimos 7 días)
+  const sqlAprobadasSemana = `
+    SELECT COUNT(*)::int as count 
+    FROM "Tarea" t
+    JOIN "TareaEstado" te ON te.id = t.estado_id
+    WHERE t.is_archivada = false AND t.deleted_at IS NULL
+      AND te.codigo = 'aprobada'
+      AND t.updated_at >= NOW() - INTERVAL '7 days'
+      ${scopingSQL}
+  `;
+
+  // 5. Notificaciones no leídas
   const sqlNotif = `
     SELECT COUNT(*)::int as count 
     FROM "NotificacionDestino"
@@ -2021,22 +2005,12 @@ const getDashboardMetrics = async (user, query = {}) => {
   `;
 
   const queries = {
-    hoy: sequelize.query(sqlHoy, { type: QueryTypes.SELECT, replacements }),
-    periodo: sequelize.query(sqlPeriodo, { type: QueryTypes.SELECT, replacements }),
-    prioritarias: sequelize.query(sqlPrioritarias, { type: QueryTypes.SELECT, replacements }),
+    pendientes: sequelize.query(sqlPendientes, { type: QueryTypes.SELECT, replacements }),
+    en_curso: sequelize.query(sqlEnCurso, { type: QueryTypes.SELECT, replacements }),
+    revision: sequelize.query(sqlRevision, { type: QueryTypes.SELECT, replacements }),
+    aprobadas_semana: sequelize.query(sqlAprobadasSemana, { type: QueryTypes.SELECT, replacements }),
     notif: sequelize.query(sqlNotif, { type: QueryTypes.SELECT, replacements })
   };
-
-  // 5. Solo si es Directivo: Tareas en Revisión (Global)
-  if (isDirectivo) {
-    const sqlRevision = `
-      SELECT COUNT(*)::int as count 
-      FROM "Tarea" t
-      JOIN "TareaEstado" te ON te.id = t.estado_id
-      WHERE t.is_archivada = false AND t.deleted_at IS NULL AND te.codigo = 'revision'
-    `;
-    queries.revision = sequelize.query(sqlRevision, { type: QueryTypes.SELECT });
-  }
 
   const results = await Promise.all(Object.values(queries));
   const keys = Object.keys(queries);
@@ -2044,14 +2018,13 @@ const getDashboardMetrics = async (user, query = {}) => {
   keys.forEach((k, i) => { data[k] = results[i][0]?.count || 0; });
 
   return {
-    tareas_hoy: data.hoy,
-    tareas_periodo: data.periodo,
-    tareas_prioritarias: data.prioritarias,
+    tareas_pendientes: data.pendientes,
+    tareas_en_curso: data.en_curso,
+    tareas_en_revision: data.revision,
+    tareas_aprobadas_semana: data.aprobadas_semana,
     notif_unread: data.notif,
-    tareas_en_revision: data.revision || 0,
     is_directivo: isDirectivo,
-    user_nombre: user.nombre || user.email.split('@')[0],
-    periodo
+    user_nombre: user.nombre || user.email.split('@')[0]
   };
 };
 
@@ -2182,8 +2155,23 @@ const getOnePager = async (cliente_id, tipo = 'ALL') => {
 };
 
 const getOnePagerSummary = async (user) => {
-  // Solo mostramos clientes a los que el usuario tiene acceso (basado en celula o admin)
-  // Reutilizamos la lógica de scoping si existiera, pero aquí haremos un count simple agrupado por cliente.
+  const { roles, feder_id } = await getUserContext(user);
+  const isDirectivo = isNivelA(roles) || isNivelB(roles);
+  const fid = feder_id || -1;
+  const uid = user?.id || -1;
+
+  let scopingFilter = '';
+  if (!isDirectivo) {
+    scopingFilter = `
+      AND (
+        t.creado_por_feder_id = :fid
+        OR EXISTS (SELECT 1 FROM "TareaResponsable" xr WHERE xr.tarea_id=t.id AND xr.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaColaborador" xc WHERE xc.tarea_id=t.id AND xc.feder_id=:fid)
+        OR EXISTS (SELECT 1 FROM "TareaSeguidor" xs WHERE xs.tarea_id=t.id AND xs.user_id=:uid)
+      )
+    `;
+  }
+
   const sql = `
     SELECT 
       c.id, 
@@ -2195,13 +2183,39 @@ const getOnePagerSummary = async (user) => {
         WHERE t.cliente_id = c.id 
           AND t.deleted_at IS NULL 
           AND t.tipo IN ('IT', 'TC')
-          AND te.codigo NOT IN ('finalizada', 'cancelada')
-      ) as pending_count
+          AND te.codigo NOT IN ('aprobada', 'finalizada', 'cancelada')
+          ${scopingFilter}
+      ) as pending_count,
+      ${isDirectivo ? `
+      (
+        SELECT jsonb_object_agg(estado_nombre, cnt)
+        FROM (
+          SELECT te.nombre as estado_nombre, COUNT(*) as cnt
+          FROM "Tarea" t
+          JOIN "TareaEstado" te ON te.id = t.estado_id
+          WHERE t.cliente_id = c.id
+            AND t.deleted_at IS NULL
+            AND t.tipo IN ('IT', 'TC')
+            AND te.codigo NOT IN ('aprobada', 'finalizada', 'cancelada')
+          GROUP BY te.nombre
+        ) s
+      ) as status_counts
+      ` : 'NULL as status_counts'}
     FROM "Cliente" c
+    WHERE EXISTS (
+        SELECT 1 FROM "Tarea" t 
+        JOIN "TareaEstado" te ON te.id = t.estado_id
+        WHERE t.cliente_id = c.id 
+          AND t.deleted_at IS NULL 
+          AND t.tipo IN ('IT', 'TC')
+          AND te.codigo NOT IN ('aprobada', 'finalizada', 'cancelada')
+          ${scopingFilter}
+    )
     ORDER BY c.nombre ASC;
   `;
 
   return sequelize.query(sql, {
+    replacements: { fid, uid },
     type: QueryTypes.SELECT
   });
 };

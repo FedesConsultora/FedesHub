@@ -171,29 +171,10 @@ export default function OnePagerPage() {
                     onUpdate={handleUpdateRow}
                 />
             ) : (
-                <div className="summary-dashboard anim-fade-in">
-                    <div className="summary-grid">
-                        {summaryData.map(c => (
-                            <div
-                                key={c.id}
-                                className="summary-card"
-                                onClick={() => setSelectedClientId(c.id)}
-                            >
-                                <div className="card-content">
-                                    <div className="client-name">{c.nombre}</div>
-                                    <div className="task-count">
-                                        <span className={`count ${c.pending_count > 0 ? 'has-tasks' : ''}`}>
-                                            {c.pending_count}
-                                        </span>
-                                        <span className="label">tareas pendientes</span>
-                                    </div>
-                                </div>
-                                <div className="card-footer">
-                                    <span>Ver One Pager</span>
-                                    <i className="fi fi-rr-arrow-right"></i>
-                                </div>
-                            </div>
-                        ))}
+                <div className="no-client-selected anim-fade-in">
+                    <div className="empty-state">
+                        <i className="fi fi-rr-search"></i>
+                        <p>Seleccioná un cliente para ver su One Pager</p>
                     </div>
                 </div>
             )}
