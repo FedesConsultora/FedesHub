@@ -530,6 +530,11 @@
       transition: all 0.2s ease;
       display: block;
       overflow-y: hidden;
+      color: #1e293b !important; // Texto oscuro para fondo claro
+
+      &::placeholder {
+        color: #94a3b8 !important;
+      }
 
       &:focus {
         outline: none;
@@ -711,4 +716,21 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes commentHighlight {
+  0% {
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: scale(1.02);
+  }
+
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+.item.highlight {
+  animation: commentHighlight 2s ease-out forwards;
+  border-radius: 12px;
 }

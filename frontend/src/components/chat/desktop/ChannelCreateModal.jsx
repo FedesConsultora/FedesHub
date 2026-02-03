@@ -4,6 +4,7 @@ import { FiHash, FiTag, FiImage, FiLock, FiX, FiSearch } from 'react-icons/fi'
 import { chatApi } from '../../../api/chat'
 import { useDmCandidates } from '../../../hooks/useChat'
 import { displayName } from '../../../utils/people'
+import { useToast } from '../../../components/toast/ToastProvider'
 import SelectedMembersTable from './SelectedMembersTable'
 import './ChannelCreateModal.scss'
 
@@ -18,6 +19,7 @@ export default function ChannelCreateModal({
   initialNombre = '',
   preselectUserIds = []
 }) {
+  const toast = useToast()
   // ----- estado básico
   const [tipo, setTipo] = useState(initialTipo) // 'canal' | 'grupo'
   const [nombre, setNombre] = useState(initialNombre || '')
@@ -156,15 +158,17 @@ export default function ChannelCreateModal({
       if (roleOps.length) await Promise.allSettled(roleOps)
 
       if (imgFile && chatApi?.channels?.uploadAvatar) {
-        try { await chatApi.channels.uploadAvatar(c.id, imgFile) } catch {}
+        try { await chatApi.channels.uploadAvatar(c.id, imgFile) } catch { }
       }
 
-      try { window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'chat.channel.updated', canal: c } })) } catch {}
+      try { window.dispatchEvent(new CustomEvent('fh:push', { detail: { type: 'chat.channel.updated', canal: c } })) } catch { }
 
+      toast.success(tipo === 'grupo' ? 'Grupo creado' : 'Canal creado')
       onCreated?.(c)
       onClose?.()
-    } catch (e) {
-      console.error('create channel', e)
+    } catch (err) {
+      console.error('create channel', err)
+      toast.error(err.fh?.message || (tipo === 'grupo' ? 'Error al crear grupo' : 'Error al crear canal'))
     } finally { setLoading(false) }
   }
 
@@ -173,7 +177,7 @@ export default function ChannelCreateModal({
   const modal = (
     <div className="ccModalWrap" role="dialog" aria-modal="true" aria-label="Crear canal o grupo">
       <div className="ccBackdrop" onClick={onClose} />
-      <form className="ccCard" onSubmit={onSubmit} aria-labelledby="cc_title" onClick={(e)=>e.stopPropagation()}>
+      <form className="ccCard" onSubmit={onSubmit} aria-labelledby="cc_title" onClick={(e) => e.stopPropagation()}>
         <header className="ccHeader">
           <div className="brand">
             <div id="cc_title" className="logo">{tipo === 'grupo' ? 'Nuevo grupo' : 'Nuevo canal'}</div>
@@ -192,7 +196,7 @@ export default function ChannelCreateModal({
           <label className="lbl" htmlFor="cc_name">Nombre <span className="req">*</span></label>
           <div className="field">
             <FiHash className="ico" aria-hidden />
-            <input id="cc_name" name="nombre" type="text" placeholder="#general / Equipo de soporte" value={nombre} onChange={(e)=>setNombre(e.target.value)} required />
+            <input id="cc_name" name="nombre" type="text" placeholder="#general / Equipo de soporte" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
           </div>
 
           {tipo === 'canal' && (
@@ -200,7 +204,7 @@ export default function ChannelCreateModal({
               <label className="lbl" htmlFor="cc_slug">Slug (opcional)</label>
               <div className="field">
                 <FiTag className="ico" aria-hidden />
-                <input id="cc_slug" name="slug" type="text" placeholder="general / soporte / anuncios" value={slug} onChange={(e)=>setSlug(e.target.value)} />
+                <input id="cc_slug" name="slug" type="text" placeholder="general / soporte / anuncios" value={slug} onChange={(e) => setSlug(e.target.value)} />
               </div>
             </>
           )}
@@ -208,24 +212,24 @@ export default function ChannelCreateModal({
           <label className="lbl" htmlFor="cc_topic">Tema</label>
           <div className="field">
             <FiTag className="ico" aria-hidden />
-            <input id="cc_topic" name="topic" type="text" placeholder="Descripción breve…" value={topic} onChange={(e)=>setTopic(e.target.value)} />
+            <input id="cc_topic" name="topic" type="text" placeholder="Descripción breve…" value={topic} onChange={(e) => setTopic(e.target.value)} />
           </div>
 
           <label className="lbl" htmlFor="cc_avatar">Imagen de perfil</label>
           <div className="field filefield">
             {imgPreview ? <img src={imgPreview} alt="preview" className="avatarPreview" /> : <FiImage className="ico" aria-hidden />}
-            <input id="cc_avatar" name="avatar" type="file" accept="image/*" onChange={(e)=>setImgFile(e.target.files?.[0] || null)} />
+            <input id="cc_avatar" name="avatar" type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0] || null)} />
           </div>
 
           <div className="grid2">
             <div className="field checkbox">
               <FiLock className="ico" aria-hidden />
-              <input id="cc_mods" name="only_mods_can_post" type="checkbox" checked={onlyMods} onChange={(e)=>setOnlyMods(e.target.checked)} />
+              <input id="cc_mods" name="only_mods_can_post" type="checkbox" checked={onlyMods} onChange={(e) => setOnlyMods(e.target.checked)} />
               <label htmlFor="cc_mods">Sólo moderadores pueden postear</label>
             </div>
             <div className="field checkbox">
               <FiLock className="ico" aria-hidden />
-              <input id="cc_priv" name="is_privado" type="checkbox" checked={privado} onChange={(e)=>setPrivado(e.target.checked)} />
+              <input id="cc_priv" name="is_privado" type="checkbox" checked={privado} onChange={(e) => setPrivado(e.target.checked)} />
               <label htmlFor="cc_priv">{tipo === 'grupo' ? 'Grupo privado' : 'Canal privado'}</label>
             </div>
           </div>
@@ -242,7 +246,7 @@ export default function ChannelCreateModal({
             <div className="leftPane">
               <div className="field">
                 <FiSearch className="ico" aria-hidden />
-                <input type="search" name="search_members" placeholder="Buscar por nombre o email…" value={q} onChange={(e)=>setQ(e.target.value)} autoComplete="off" />
+                <input type="search" name="search_members" placeholder="Buscar por nombre o email…" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
               </div>
 
               <div className="list" role="listbox" aria-label="Candidatos">
@@ -258,7 +262,7 @@ export default function ChannelCreateModal({
                         {u.email && <span className="sub">{u.email}</span>}
                       </span>
                       <span className="presenceDot" data-status={u.presence_status || 'offline'} />
-                      <input id={id} type="checkbox" className="checkSel" checked={checked} onChange={()=>toggleSel(u.user_id)} />
+                      <input id={id} type="checkbox" className="checkSel" checked={checked} onChange={() => toggleSel(u.user_id)} />
                     </label>
                   )
                 })}

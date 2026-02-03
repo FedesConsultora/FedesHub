@@ -240,13 +240,28 @@ export async function createOrUpdateCanal(payload, user, t) {
     await canal.update(base, { transaction: t });
 
     // si en un update me pasan invited_user_ids, agrego los nuevos (y los registro)
-    for (const uid of (payload.invited_user_ids || [])) {
-      const [mm, wasCreated] = await m.ChatCanalMiembro.findOrCreate({
-        where: { canal_id: canal.id, user_id: uid },
-        defaults: { rol_id: await idByCodigo(m.ChatRolTipo, 'member', t), is_mute: false, notif_level: 'all', joined_at: new Date() },
+    if (payload.invited_user_ids?.length) {
+      const rolMember = await idByCodigo(m.ChatRolTipo, 'member', t);
+      const existing = await m.ChatCanalMiembro.findAll({
+        where: { canal_id: canal.id, user_id: { [Op.in]: payload.invited_user_ids } },
+        attributes: ['user_id'],
         transaction: t
       });
-      if (wasCreated) addedUserIds.push(uid);
+      const exists = new Set(existing.map(r => r.user_id));
+      const toAdd = payload.invited_user_ids.filter(uid => !exists.has(uid));
+
+      if (toAdd.length) {
+        const ds = toAdd.map(uid => ({
+          canal_id: canal.id,
+          user_id: uid,
+          rol_id: rolMember,
+          is_mute: false,
+          notif_level: 'all',
+          joined_at: new Date()
+        }));
+        await m.ChatCanalMiembro.bulkCreate(ds, { transaction: t });
+        addedUserIds.push(...toAdd);
+      }
     }
 
   } else {
@@ -275,20 +290,28 @@ export async function createOrUpdateCanal(payload, user, t) {
     const rolOwner = await idByCodigo(m.ChatRolTipo, 'owner', t);
     const rolMember = await idByCodigo(m.ChatRolTipo, 'member', t);
 
+    // yo como owner
     await m.ChatCanalMiembro.findOrCreate({
       where: { canal_id: canal.id, user_id: user.id },
       defaults: { rol_id: rolOwner, is_mute: false, notif_level: 'all', joined_at: new Date() },
       transaction: t
     });
 
-    for (const uid of (payload.invited_user_ids || [])) {
-      if (uid === user.id) continue;
-      const [mm, wasCreated] = await m.ChatCanalMiembro.findOrCreate({
-        where: { canal_id: canal.id, user_id: uid },
-        defaults: { rol_id: rolMember, is_mute: false, notif_level: 'all', joined_at: new Date() },
-        transaction: t
-      });
-      if (wasCreated) addedUserIds.push(uid);
+    // el resto como members
+    const others = (payload.invited_user_ids || []).filter(uid => uid !== user.id);
+    if (others.length) {
+      const ds = others.map(uid => ({
+        canal_id: canal.id,
+        user_id: uid,
+        rol_id: rolMember,
+        is_mute: false,
+        notif_level: 'all',
+        joined_at: new Date()
+      }));
+      // Usamos ignoreDuplicates por si acaso (aunque en CREATE es raro que ya existan, 
+      // pero si es una reutilización de DM que falló parcialmente podría pasar)
+      await m.ChatCanalMiembro.bulkCreate(ds, { transaction: t, ignoreDuplicates: true });
+      addedUserIds.push(...others);
     }
   }
 

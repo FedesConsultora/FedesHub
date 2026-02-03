@@ -109,6 +109,8 @@ export default function TasksPage() {
     orden_by: "prioridad",
   });
 
+  const [initialCommentId, setInitialCommentId] = useState(null);
+
   // URL -> filtros (solo al montar)
   useEffect(() => {
     const patch = {};
@@ -138,6 +140,10 @@ export default function TasksPage() {
         patch[k] =
           k === "solo_mias" || k === "include_archivadas" || k === "include_finalizadas" ? v === "true" : v;
     });
+
+    const commentId = searchParams.get("c") || searchParams.get("commentId");
+    if (commentId) setInitialCommentId(commentId);
+
     if (Object.keys(patch).length) setFilters((f) => ({ ...f, ...patch }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -153,6 +159,8 @@ export default function TasksPage() {
         // Limpiar el param 'open' de la URL para evitar que se reabra al volver
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("open");
+        newParams.delete("c");
+        newParams.delete("commentId");
         setSearchParams(newParams, { replace: true });
       }
     }
@@ -485,14 +493,17 @@ export default function TasksPage() {
           open={!!openTaskId}
           onClose={() => {
             setOpenTaskId(null);
+            setInitialCommentId(null);
             navigate('/tareas');
           }}
         >
           <TaskDetail
             taskId={openTaskId}
+            initialCommentId={initialCommentId}
             onUpdated={refetch}
             onClose={() => {
               setOpenTaskId(null);
+              setInitialCommentId(null);
               navigate('/tareas');
             }}
           />

@@ -207,7 +207,11 @@ function TableRow({ r, onChanged }) {
   }
 
   return (
-    <tr className={`row ${r.read_at ? 'read' : ''}`}>
+    <tr
+      className={`row ${r.read_at ? 'read' : ''} ${n.link_url ? 'clickable' : ''}`}
+      onClick={n.link_url ? handleOpen : undefined}
+      style={n.link_url ? { cursor: 'pointer' } : {}}
+    >
       <td className="colMain">
         <div className="ttl">{title}</div>
         {n.mensaje && <div className="msg">{n.mensaje}</div>}

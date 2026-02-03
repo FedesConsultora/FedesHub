@@ -575,7 +575,7 @@ export const postComentario = async (req, res, next) => {
         // --- 2) Datos de la tarea y link
         const tarea = await models.Tarea.findByPk(id, { attributes: ['id', 'titulo'] });
         const baseUrl = buildBaseUrl(req);
-        const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${id}#c${cm.id}` : undefined;
+        const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${id}&c=${cm.id}` : undefined;
 
         req.log?.info('tareas.postComentario:notif:payload', {
           tipo_codigo: 'tarea_comentario',

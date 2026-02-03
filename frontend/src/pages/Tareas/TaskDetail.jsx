@@ -105,7 +105,7 @@ const formatFileSize = (bytes) => {
 
 import { useLoading } from '../../context/LoadingContext.jsx'
 
-export default function TaskDetail({ taskId, onUpdated, onClose }) {
+export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentId = null }) {
   const { id: urlId } = useParams()
   const navigate = useNavigate()
   const modal = useModal()
@@ -125,7 +125,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
     responsables: [],
     colaboradores: []
   });
-  const [showCommentsPopup, setShowCommentsPopup] = useState(false)
+  const [showCommentsPopup, setShowCommentsPopup] = useState(!!initialCommentId)
   const [showFamilyModal, setShowFamilyModal] = useState(false)
   const [createSubtaskParentId, setCreateSubtaskParentId] = useState(null)
   const [showFamilyDropdown, setShowFamilyDropdown] = useState(false);
@@ -1254,7 +1254,11 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               pointerEvents: showCommentsPopup ? 'all' : 'none'
             }}
           >
-            <TaskComments taskId={Number(taskId)} catalog={catalog} />
+            <TaskComments
+              taskId={Number(taskId)}
+              catalog={catalog}
+              initialCommentId={initialCommentId}
+            />
           </div>
         </div>
 

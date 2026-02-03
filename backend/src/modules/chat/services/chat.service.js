@@ -29,6 +29,7 @@ import {
 } from '../realtime/publisher.js';
 
 import { sequelize } from '../../../core/db.js';
+import { logger } from '../../../core/logger.js';
 const mReg = await initModels();
 
 // -------- Catálogos
@@ -40,17 +41,20 @@ export const svcListDmCandidates = (user) => listDmCandidates(user.id);
 export const svcListCanales = (q, user) => listCanales(q, user);
 
 export const svcUpsertCanal = async (payload, user) => {
+  const start = Date.now();
   const t = await sequelize.transaction();
   let out;
   try {
     out = await createOrUpdateCanal(payload, user, t);
     await t.commit();
   } catch (e) { await t.rollback(); throw e; }
+  const afterDb = Date.now();
 
   const row = out.canal;
 
   // 🔊 realtime (siempre)
   try { await publishChannelUpdated(row); } catch (err) { console.error('sse channel updated', err); }
+  const afterSse = Date.now();
 
   // 🔔 notificar SOLO si:
   //  - fue creado OR
@@ -76,6 +80,17 @@ export const svcUpsertCanal = async (payload, user) => {
       }
     }
   } catch (e) { console.error('notif upsert canal', e); }
+  const end = Date.now();
+
+  logger.info({
+    msg: 'svcUpsertCanal timing',
+    total_ms: end - start,
+    db_ms: afterDb - start,
+    sse_ms: afterSse - afterDb,
+    notif_ms: end - afterSse,
+    canal_id: row.id,
+    added_members: out.addedUserIds?.length || 0
+  });
 
   return row;
 };
@@ -556,6 +571,7 @@ async function _notifyNewMessage(canal_id, msg, user) {
       titulo: `Mención${canalNice}`,
       mensaje: bodyText,
       chat_canal_id: canal_id,
+      link_url: `/chat/c/${canal_id}`,
       data: { mensaje_id: msg.id },
       destinos: destinosMention
     }, user);
@@ -568,6 +584,7 @@ async function _notifyNewMessage(canal_id, msg, user) {
       titulo: `Nuevo mensaje${canalNice}`,
       mensaje: bodyText,
       chat_canal_id: canal_id,
+      link_url: `/chat/c/${canal_id}`,
       data: { mensaje_id: msg.id },
       destinos: restantes
     }, user);

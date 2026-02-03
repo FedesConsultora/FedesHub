@@ -33,7 +33,7 @@ const groupByDay = (arr = []) => {
 // helper: normaliza a number o null
 const toNum = v => (v === null || v === undefined || v === '' ? null : Number(v))
 
-export default function TaskComments({ taskId, catalog }) {
+export default function TaskComments({ taskId, catalog, initialCommentId = null }) {
   const { comentarios, loading, add, toggleReaction } = useTaskComments(taskId, catalog)
   const [replyTo, setReplyTo] = useState(null)
   const composerRef = useRef(null)
@@ -155,11 +155,22 @@ export default function TaskComments({ taskId, catalog }) {
   const { statuses } = useAttendanceStatus(commentFederIds)
   console.log('[TaskComments] statuses:', statuses)
 
-  // autoscroll al final
+  // autoscroll al final (o al comentario inicial)
   useEffect(() => {
-    if (!listRef.current) return
+    if (!listRef.current || loading) return
+
+    if (initialCommentId) {
+      const el = listRef.current.querySelector(`#comment-${initialCommentId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('highlight')
+        setTimeout(() => el.classList.remove('highlight'), 3000)
+        return
+      }
+    }
+
     listRef.current.scrollTop = listRef.current.scrollHeight
-  }, [sorted.length])
+  }, [sorted.length, initialCommentId, loading])
 
   const handleSend = async ({ contenido, adjuntos, menciones, files }) => {
     await add({ contenido, adjuntos, menciones, files, reply_to_id: replyTo?.id || null })
@@ -225,7 +236,11 @@ export default function TaskComments({ taskId, catalog }) {
               const isMine = (typeof c.is_mine === 'boolean') ? c.is_mine : fallbackIsMine
 
               return (
-                <div className={`item ${isMine ? 'mine' : ''}`} key={c.id}>
+                <div
+                  className={`item ${isMine ? 'mine' : ''}`}
+                  key={c.id}
+                  id={`comment-${c.id}`}
+                >
                   <div className="avatarWrapper">
                     <Avatar className="ph-avatar" name={author} src={c.autor_avatar_url} size={30} />
                     <AttendanceBadge {...getStatus(statuses, cFederId)} size={12} />

@@ -30,10 +30,10 @@ export const listCanalesQuery = z.object({
 export const upsertCanalSchema = z.object({
   id: z.number().int().optional(),
   tipo_codigo: z.enum(['dm', 'grupo', 'canal', 'cliente']),
-  nombre: z.string().max(120).optional(),
-  slug: z.string().max(120).optional(),
-  topic: z.string().max(240).optional(),
-  descripcion: z.string().optional(),
+  nombre: z.string().max(120).optional().nullable(),
+  slug: z.string().max(120).optional().nullable(),
+  topic: z.string().max(240).optional().nullable(),
+  descripcion: z.string().optional().nullable(),
   is_privado: z.boolean().optional(),
   only_mods_can_post: z.boolean().optional(),
   slowmode_seconds: z.number().int().min(0).max(86400).optional(),
@@ -48,9 +48,9 @@ export const upsertCanalSchema = z.object({
 export const updateCanalSettingsSchema = z.object({
   only_mods_can_post: z.boolean().optional(),
   slowmode_seconds: z.number().int().min(0).max(86400).optional(),
-  topic: z.string().max(240).optional(),
+  topic: z.string().max(240).optional().nullable(),
   is_privado: z.boolean().optional(),
-  imagen_url: z.string().min(1).optional()
+  imagen_url: z.string().min(1).optional().nullable()
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para actualizar' });
 
 export const memberUpsertSchema = z.object({
