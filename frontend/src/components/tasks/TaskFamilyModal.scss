@@ -68,22 +68,22 @@
     }
 
     .close {
-        background: rgba(255, 255, 255, 0.05);
         border: none;
         color: rgba(255, 255, 255, 0.6);
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
+        background-color: transparent !important;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s;
 
+        svg {
+            font-size: 1.2rem;
+        }
+
         &:hover {
-            background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            transform: rotate(90deg);
+
         }
     }
 }
