@@ -54,8 +54,17 @@ export default function DashboardUnread({ notifications, onOpenTask, onRefresh }
             }
             onOpenTask(notificacion.tarea_id, commentId);
         } else if (notificacion.link_url) {
-            // Link genérico
-            navigate(notificacion.link_url);
+            // Link genérico - Convertir a relativo si es del mismo origen para SPA
+            let url = notificacion.link_url;
+            try {
+                if (url.startsWith('http')) {
+                    const parsed = new URL(url);
+                    if (parsed.origin === window.location.origin) {
+                        url = parsed.pathname + parsed.search + parsed.hash;
+                    }
+                }
+            } catch (e) { }
+            navigate(url);
         }
 
         // 3. Informar al dashboard para que refresque su lista

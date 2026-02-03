@@ -316,12 +316,24 @@ function NotifItem({ row, closeAll }) {
       }
     }
 
-    // Detectar link de tarea: /tareas/123 o similar
-    const tareaMatch = url.match(/\/tareas\/(\d+)/)
+    // Si es una URL absoluta del mismo origen, convertir a relativa para SPA
+    try {
+      if (url.startsWith('http')) {
+        const parsed = new URL(url);
+        if (parsed.origin === window.location.origin) {
+          url = parsed.pathname + parsed.search + parsed.hash;
+        }
+      }
+    } catch (err) { console.warn('URL invalida en notif:', url) }
+
+    // Detectar link de tarea: /tareas/123 o /tareas?open=123 o /tareas?open=123&c=456
+    const tareaMatch = url.match(/\/tareas\/(\d+)/) || url.match(/\/tareas\?open=(\d+)/)
     if (tareaMatch) {
       const tareaId = tareaMatch[1]
-      // Navegar a /tareas con query param para abrir el modal
-      navigate(`/tareas?open=${tareaId}`)
+      // Intentar preservar el ID del comentario si existe
+      const commentMatch = url.match(/[?&](c|commentId)=(\d+)/)
+      const commentParam = commentMatch ? `&c=${commentMatch[2]}` : ''
+      navigate(`/tareas?open=${tareaId}${commentParam}`)
       return
     }
 
