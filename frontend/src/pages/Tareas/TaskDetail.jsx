@@ -863,7 +863,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
                   const nonCanceled = task.children.filter(c => (c.estado_codigo || c.estado?.codigo) !== 'cancelada');
                   const approved = task.children.filter(c => (c.estado_codigo || c.estado?.codigo) === 'aprobada');
                   const text = `${approved.length}/${nonCanceled.length}`;
-                  const tip = `${approved.length} subtareas aprobadas de ${nonCanceled.length} totales`;
+
+                  const sApp = approved.length === 1 ? 'subtarea aprobada' : 'subtareas aprobadas';
+                  const sTot = nonCanceled.length === 1 ? 'total' : 'totales';
+                  const tip = `${approved.length} ${sApp} de ${nonCanceled.length} ${sTot}`;
 
                   return nonCanceled.length > 0 && (
                     <span

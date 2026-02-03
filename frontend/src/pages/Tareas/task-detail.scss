@@ -1032,15 +1032,24 @@ $text: $fh-text;
       margin-left: auto; // Solo si no hay tarea padre, esto asegura que quede a la derecha
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 0px;
+      isolation: isolate;
+      position: relative;
+      z-index: 100;
 
       .subtasks-progress {
+        position: relative;
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
         font-size: 0.78rem;
         font-weight: 500;
         color: $fh-muted;
         cursor: help;
-        padding: 0 4px;
+        padding: 4px 8px 6px 8px;
+
         transition: color 0.2s ease;
+        pointer-events: auto;
 
         &:hover {
           color: white;
