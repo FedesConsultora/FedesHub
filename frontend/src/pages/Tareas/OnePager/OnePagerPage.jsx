@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { tareasApi } from '../../../api/tareas';
 import OnePagerTable from './OnePagerTable';
 import ModalPanel from '../components/ModalPanel';
@@ -6,10 +7,12 @@ import TaskDetail from '../TaskDetail';
 import TaskHistory from '../../../components/tasks/TaskHistory';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { IoChevronDownOutline } from "react-icons/io5";
+import { FiArrowLeft } from 'react-icons/fi';
 
 import './OnePager.scss';
 
 export default function OnePagerPage() {
+    const navigate = useNavigate();
     const toast = useToast();
     const [clients, setClients] = useState([]);
     const [selectedClientId, setSelectedClientId] = useState('');
@@ -111,6 +114,9 @@ export default function OnePagerPage() {
         <div className="OnePagerPage">
             <header className="toolbar">
                 <div className="left">
+                    <button className="back-btn" onClick={() => navigate('/tareas')} title="Volver a Tareas">
+                        <FiArrowLeft />
+                    </button>
                     <h1>One Pager</h1>
                 </div>
 
