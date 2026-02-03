@@ -983,7 +983,7 @@ $text: $fh-text;
 
   .cardHeader {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 8px;
@@ -1756,11 +1756,9 @@ $text: $fh-text;
 
 /* ===== Family Button ===== */
 .familyBtn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 6px;
-  border-radius: 8px;
+  color: #A086FF;
+  background-color: transparent !important;
+  border: none !important;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1769,11 +1767,13 @@ $text: $fh-text;
 
   &:hover {
     color: white;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   svg {
-    font-size: 1rem;
+    font-size: 1.1rem;
+
   }
 }
 
@@ -1785,7 +1785,7 @@ $text: $fh-text;
 
 .family-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   right: 0;
   margin-top: 8px;
   min-width: 200px;

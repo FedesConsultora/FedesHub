@@ -119,7 +119,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
   const [catalog, setCatalog] = useState(null)
 
   const isInitialLoading = !task || !catalog;
-  const [tab, setTab] = useState('desc')
   const [form, setForm] = useState({ titulo: '', descripcion: '' })
   const [saving, setSaving] = useState(false)
   const [peopleForm, setPeopleForm] = useState({
@@ -833,39 +832,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
 
             {hitoNombre && <span><b>Hito</b> {hitoNombre}</span>}
 
-            {/* Botón de familia de tareas con dropdown */}
-            <div className="family-dropdown-wrapper" ref={familyDropdownRef} style={{ position: 'relative' }}>
-              <button
-                className="familyBtn"
-                onClick={() => setShowFamilyDropdown(!showFamilyDropdown)}
-                title="Opciones de familia"
-              >
-                <FiGitBranch />
-              </button>
 
-              {showFamilyDropdown && (
-                <div className="family-dropdown">
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setCreateSubtaskParentId(id)
-                      setShowFamilyDropdown(false)
-                    }}
-                  >
-                    <FiPlus /> Crear Subtarea
-                  </button>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setShowFamilyModal(true)
-                      setShowFamilyDropdown(false)
-                    }}
-                  >
-                    <FiEye /> Ver Familia
-                  </button>
-                </div>
-              )}
-            </div>
 
           </div>
         </div>
@@ -878,19 +845,40 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
         <div className="left">
           <div className="card" style={{ minHeight: '300px' }}>
             <div className="cardHeader">
-              <div className="desc">
+              <h3 style={{ fontSize: '1rem', color: '#fff', margin: 0 }}>Descripción</h3>
+
+              {/* Botón de familia de tareas con dropdown - Movido desde el header */}
+              <div className="family-dropdown-wrapper" ref={familyDropdownRef}>
                 <button
-                  className={`fh-chip ${tab === 'desc' ? 'primary' : ''}`}
-                  onClick={() => setTab('desc')}
+                  className="familyBtn"
+                  onClick={() => setShowFamilyDropdown(!showFamilyDropdown)}
+                  title="Opciones de familia"
                 >
-                  Descripción
+                  <FiGitBranch />
                 </button>
-                <button
-                  className={`fh-chip ${tab === 'childs' ? 'primary' : ''}`}
-                  onClick={() => setTab('childs')}
-                >
-                  Subtareas
-                </button>
+
+                {showFamilyDropdown && (
+                  <div className="family-dropdown">
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setCreateSubtaskParentId(id)
+                        setShowFamilyDropdown(false)
+                      }}
+                    >
+                      <FiPlus /> Crear Subtarea
+                    </button>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setShowFamilyModal(true)
+                        setShowFamilyDropdown(false)
+                      }}
+                    >
+                      <FiEye /> Ver Familia
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -913,27 +901,17 @@ export default function TaskDetail({ taskId, onUpdated, onClose }) {
               </div>
             )}
 
-            {tab === 'desc' ? (
-              // Descripción con editor de texto enriquecido
-              <RichTextEditor
-                value={form.descripcion}
-                onChange={(content) => setForm(f => ({ ...f, descripcion: content }))}
-                onBlur={flushDescriptionOnBlur}
-                taskId={Number(id)}
-                placeholder="Escribí la descripción…"
-                ErrorBoundary={LexicalErrorBoundary}
-                maxLength={3600}
-                minHeight="190px"
-              />
-            ) : (
-              <SubtasksPanel
-                parentId={Number(id)}
-                defaultClienteId={task?.cliente_id || task?.cliente?.id || null}
-                catalog={catalog}
-                onNewSubtask={() => setCreateSubtaskParentId(id)}
-                onNavigate={(subId) => navigate(`/tareas/${subId}`)}
-              />
-            )}
+            {/* Descripción con editor de texto enriquecido */}
+            <RichTextEditor
+              value={form.descripcion}
+              onChange={(content) => setForm(f => ({ ...f, descripcion: content }))}
+              onBlur={flushDescriptionOnBlur}
+              taskId={Number(id)}
+              placeholder="Escribí la descripción…"
+              ErrorBoundary={LexicalErrorBoundary}
+              maxLength={3600}
+              minHeight="190px"
+            />
           </div>
 
           {/* Metadata de TC (si aplica) */}
