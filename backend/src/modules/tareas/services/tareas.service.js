@@ -526,6 +526,7 @@ export const getTaskById = async (id, currentUser, transaction = null) => {
                 json_build_object(
                   'id', c.id,
                   'titulo', c.titulo,
+                  'estado_codigo', te2.codigo,
                   'estado_nombre', te2.nombre,
                   'cliente_nombre', cl.nombre
                 )

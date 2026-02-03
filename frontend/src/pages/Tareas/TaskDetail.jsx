@@ -847,8 +847,34 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
             <div className="cardHeader">
               <h3 style={{ fontSize: '1rem', color: '#fff', margin: 0 }}>Descripción</h3>
 
+              {/* Mostrar tarea padre si existe */}
+              {task?.tarea_padre_id && (
+                <div className="parent-task-banner" onClick={() => navigate(`/tareas/${task.tarea_padre_id}`)} title="Ir a tarea padre">
+                  <FiGitBranch />
+                  <span className="banner-link">
+                    Tarea Padre: {task.tarea_padre_titulo || `#${task.tarea_padre_id}`}
+                  </span>
+                </div>
+              )}
+
               {/* Botón de familia de tareas con dropdown - Movido desde el header */}
               <div className="family-dropdown-wrapper" ref={familyDropdownRef}>
+                {task?.children?.length > 0 && (() => {
+                  const nonCanceled = task.children.filter(c => (c.estado_codigo || c.estado?.codigo) !== 'cancelada');
+                  const approved = task.children.filter(c => (c.estado_codigo || c.estado?.codigo) === 'aprobada');
+                  const text = `${approved.length}/${nonCanceled.length}`;
+                  const tip = `${approved.length} subtareas aprobadas de ${nonCanceled.length} totales`;
+
+                  return nonCanceled.length > 0 && (
+                    <span
+                      className="subtasks-progress"
+                      title={tip}
+                      aria-label={tip}
+                    >
+                      {text}
+                    </span>
+                  );
+                })()}
                 <button
                   className="familyBtn"
                   onClick={() => setShowFamilyDropdown(!showFamilyDropdown)}
@@ -882,17 +908,6 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
               </div>
             </div>
 
-            {/* Mostrar tarea padre si existe */}
-            {task?.tarea_padre_id && (
-              <div className="parent-task-banner">
-                <div className="banner-label">
-                  <FiGitBranch /> Tarea Padre:
-                </div>
-                <div className="banner-link" onClick={() => navigate(`/tareas/${task.tarea_padre_id}`)}>
-                  {task.tarea_padre_titulo || `Tarea #${task.tarea_padre_id}`}
-                </div>
-              </div>
-            )}
 
             {estadoCodigo === 'cancelada' && task?.cancelacion_motivo && (
               <div className="cancelReasonBanner">
