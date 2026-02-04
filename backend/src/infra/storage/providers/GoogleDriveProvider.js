@@ -45,7 +45,7 @@ export class GoogleDriveProvider {
         const { data } = await this.drive.files.get({
           fileId: this.opts.baseFolderId,
           fields: 'id,name,mimeType,driveId,parents',
-          supportsAllDrives: true,
+          ...supportsAllDrives,
         });
         if (data.mimeType !== 'application/vnd.google-apps.folder') {
           return { ok: false, error: 'DRIVE_BASE_FOLDER_ID no es una carpeta' };
@@ -204,6 +204,12 @@ export class GoogleDriveProvider {
       includeItemsFromAllDrives: true,
     });
 
+    // 🧹 Cleanup temp file if it was from disk
+    if (path) {
+      const fs = await import('node:fs/promises');
+      await fs.unlink(path).catch(() => { });
+    }
+
     return {
       provider: 'drive',
       drive_file_id: id,
@@ -233,14 +239,14 @@ export class GoogleDriveProvider {
       const meta = await this.drive.files.get({
         fileId,
         fields: 'id, name, mimeType, size',
-        supportsAllDrives: true,
+        ...supportsAllDrives,
       });
 
       // Get file content as stream
       const response = await this.drive.files.get({
         fileId,
         alt: 'media',
-        supportsAllDrives: true,
+        ...supportsAllDrives,
       }, { responseType: 'stream' });
 
       return {

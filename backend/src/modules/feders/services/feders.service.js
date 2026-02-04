@@ -112,9 +112,16 @@ export const svcUploadAvatar = async (federId, file) => {
     }
   }
 
-  // 4) Asegurar directorio y guardar buffer de Multer
+  // 4) Asegurar directorio y guardar archivo
   await fs.mkdir(publicDir, { recursive: true })
-  await fs.writeFile(fullPath, file.buffer)
+  if (file.buffer) {
+    await fs.writeFile(fullPath, file.buffer)
+  } else if (file.path) {
+    await fs.copyFile(file.path, fullPath)
+    await fs.unlink(file.path).catch(() => { }) // Cleanup temp
+  } else {
+    throw new Error('Archivo inválido: no hay buffer ni path')
+  }
 
   // 5) Actualizar DB con la ruta relativa pública
   const avatarUrl = `/avatars/${filename}`

@@ -26,6 +26,7 @@ services:
       - fedes-net
     volumes:
       - ./backend/public/avatars:/usr/src/app/public/avatars
+      - ./backend/uploads:/usr/src/app/uploads
 
   frontend:
     build: ./frontend

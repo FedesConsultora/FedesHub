@@ -113,4 +113,7 @@ router.delete('/:id/recordatorios/:remId', requireAuth, requirePermission('tarea
 router.get('/one-pager/summary', requireAuth, requirePermission('tareas', 'read'), getOnePagerSummary);
 router.get('/one-pager/:cliente_id', requireAuth, requirePermission('tareas', 'read'), getOnePager);
 
+// Proxy para imágenes de Google Drive
+router.get('/drive/image/:fileId', requireAuth, getDriveImage);
+
 export default router;

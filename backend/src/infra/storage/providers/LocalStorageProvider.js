@@ -18,8 +18,12 @@ export class LocalStorageProvider {
       const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeOrig}`
       const dest = path.join(dir, name)
 
-      // soporta memoryStorage; si usas diskStorage reemplazá por fs.copyFileSync
-      fs.writeFileSync(dest, f.buffer)
+      if (f.buffer) {
+        fs.writeFileSync(dest, f.buffer)
+      } else if (f.path) {
+        fs.copyFileSync(f.path, dest)
+        fs.unlinkSync(f.path) // Cleanup temp
+      }
 
       // relpath POSIX
       const relpath = [...parts.map(String), name].join('/')

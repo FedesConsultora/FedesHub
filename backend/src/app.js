@@ -29,15 +29,8 @@ app.use(cors({
   exposedHeaders: ['X-Request-Id']
 }));
 
-// estáticos
-const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads')
-app.use('/uploads', express.static(uploadsDir, {
-  maxAge: '365d',
-  immutable: true
-}))
-
-// También servimos la carpeta public (donde están los avatars)
-app.use(express.static(path.resolve('public')))
+// 🔎 nuestro logger por request (correlación + tiempos + body sanitizado)
+app.use(requestLogger);
 
 // seguridad básica - relajamos políticas para permitir servir imágenes/archivos correctamente
 app.use(helmet({
@@ -51,13 +44,20 @@ app.use(helmet({
   },
 }));
 
+// estáticos
+const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads')
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '365d',
+  immutable: true
+}))
+
+// También servimos la carpeta public (donde están los avatars)
+app.use(express.static(path.resolve('public')))
+
 // body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
 app.use(express.json({ limit: '50gb' }));
 app.use(express.urlencoded({ extended: true, limit: '50gb' }));
 app.use(cookieParser());
-
-// 🔎 nuestro logger por request (correlación + tiempos + body sanitizado)
-app.use(requestLogger);
 
 // healthcheck simple (fuera de /api)
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'fedeshub-backend' }));

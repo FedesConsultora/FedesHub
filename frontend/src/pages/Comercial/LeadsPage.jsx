@@ -14,7 +14,7 @@ import LeadsFilters from '../../components/comercial/LeadsFilters'
 import ImportLeadsModal from './ImportLeadsModal'
 import FederBubblesFilter from '../../components/common/FederBubblesFilter'
 import ModalPanel from '../Tareas/components/ModalPanel.jsx'
-import { FiSearch, FiFilter, FiUser, FiBriefcase, FiList, FiGrid, FiTrash2, FiPlus, FiChevronDown, FiDownload } from 'react-icons/fi'
+import { FiSearch, FiFilter, FiUser, FiBriefcase, FiList, FiGrid, FiTrash2, FiPlus, FiChevronDown, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import GlobalLoader from '../../components/loader/GlobalLoader'
 import './LeadsPage.scss'
 
