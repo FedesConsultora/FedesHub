@@ -25,12 +25,13 @@ const allowedOrigins = ORIGINS.length ? ORIGINS : ['http://localhost:3000', 'htt
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requests sin origen (como apps móviles o curl si no se requiere CORS)
-    // O verificar contra la lista permitida
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Permitir si no hay origen (peticiones del mismo servidor o herramientas de test)
+    // o si el origen está en nuestra lista blanca.
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
     } else {
-      callback(new Error('CORS: Origen no permitido'));
+      console.warn(`CORS bloqueado para el origen: ${origin}`);
+      callback(null, false); // No tirar error, solo denegar CORS
     }
   },
   credentials: true,
