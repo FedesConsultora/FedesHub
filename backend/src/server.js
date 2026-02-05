@@ -27,13 +27,26 @@ const PORT = process.env.PORT || 3000;
       }
     }
 
-    startRevocationCleanupJob();
-    startAutoCloseAttendanceJob();
-    startOnboardingJob();
-    startRecordatoriosJob();
-    app.listen(PORT, () => logger.info(`API on http://localhost:${PORT}`));
+    // Start background jobs safely
+    const runJob = (name, fn) => {
+      try {
+        fn();
+        logger.info(`Job started: ${name}`);
+      } catch (err) {
+        logger.error({ err }, `Failed to start job: ${name}`);
+      }
+    };
+
+    runJob('RevocationCleanup', startRevocationCleanupJob);
+    runJob('AutoCloseAttendance', startAutoCloseAttendanceJob);
+    runJob('Onboarding', startOnboardingJob);
+    runJob('Recordatorios', startRecordatoriosJob);
+
+    app.listen(PORT, '0.0.0.0', () => {
+      logger.info({ port: PORT, host: '0.0.0.0' }, 'SERVER STARTED SUCCESSFULY');
+    });
   } catch (err) {
-    logger.error({ err }, 'Startup failed');
+    logger.error({ err }, 'FATAL STARTUP ERROR');
     process.exit(1);
   }
 })();
