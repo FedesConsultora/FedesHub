@@ -1956,6 +1956,11 @@ const getDashboardMetrics = async (user, query = {}) => {
     )
   `;
 
+  const tipo = query.tipo && query.tipo !== 'TODAS' ? query.tipo : null;
+  if (tipo) replacements.tipo = tipo;
+
+  const tipoSQL = tipo ? 'AND t.tipo = :tipo' : '';
+
   // 1. Pendientes (estado: pendiente)
   const sqlPendientes = `
     SELECT COUNT(*)::int as count 
@@ -1963,6 +1968,7 @@ const getDashboardMetrics = async (user, query = {}) => {
     JOIN "TareaEstado" te ON te.id = t.estado_id
     WHERE t.is_archivada = false AND t.deleted_at IS NULL
       AND te.codigo = 'pendiente'
+      ${tipoSQL}
       ${scopingSQL}
   `;
 
@@ -1973,6 +1979,7 @@ const getDashboardMetrics = async (user, query = {}) => {
     JOIN "TareaEstado" te ON te.id = t.estado_id
     WHERE t.is_archivada = false AND t.deleted_at IS NULL
       AND te.codigo = 'en_curso'
+      ${tipoSQL}
       ${scopingSQL}
   `;
 
@@ -1983,6 +1990,7 @@ const getDashboardMetrics = async (user, query = {}) => {
     JOIN "TareaEstado" te ON te.id = t.estado_id
     WHERE t.is_archivada = false AND t.deleted_at IS NULL
       AND te.codigo = 'revision'
+      ${tipoSQL}
       ${scopingSQL}
   `;
 
@@ -1994,6 +2002,7 @@ const getDashboardMetrics = async (user, query = {}) => {
     WHERE t.is_archivada = false AND t.deleted_at IS NULL
       AND te.codigo = 'aprobada'
       AND t.updated_at >= NOW() - INTERVAL '7 days'
+      ${tipoSQL}
       ${scopingSQL}
   `;
 

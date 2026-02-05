@@ -49,7 +49,8 @@
     gap: 16px;
     flex-shrink: 0;
 
-    .periodToggle {
+    .periodToggle,
+    .miniTabs {
       display: flex;
       background: rgba(255, 255, 255, 0.05);
       padding: 4px;
@@ -72,6 +73,23 @@
           color: #0f1720;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
+
+        &:hover:not(.active) {
+          background: rgba(255, 255, 255, 0.05);
+          color: $fh-text;
+        }
+      }
+    }
+
+    .miniTabs {
+      padding: 2px;
+      border-radius: 10px;
+      gap: 2px;
+
+      button {
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        border-radius: 7px;
       }
     }
 

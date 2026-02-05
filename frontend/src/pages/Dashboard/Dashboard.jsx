@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [openCommentId, setOpenCommentId] = useState(null)
   const [metrics, setMetrics] = useState(null)
   const [periodo, setPeriodo] = useState('semana')
+  const [tipoTarea, setTipoTarea] = useState('TODAS')
   const [urgentTasks, setUrgentTasks] = useState([])
   const [revisionTasks, setRevisionTasks] = useState([])
   const [unreadNotifs, setUnreadNotifs] = useState([])
@@ -54,11 +55,11 @@ export default function Dashboard() {
     localStorage.setItem('fh:dashboard:collapsed', JSON.stringify(collapsedBlocks))
   }, [collapsedBlocks])
 
-  const fetchData = async (p = periodo) => {
+  const fetchData = async (p = periodo, t = tipoTarea) => {
     setLoading(true)
     try {
       const [m, u, n] = await Promise.all([
-        tareasApi.getMetrics({ periodo: p }),
+        tareasApi.getMetrics({ periodo: p, tipo: t }),
         tareasApi.getUrgent(),
         notifApi.inbox({ only_unread: true, limit: 10 })
       ])
@@ -92,7 +93,12 @@ export default function Dashboard() {
 
   const handlePeriodChange = (newP) => {
     setPeriodo(newP)
-    fetchData(newP)
+    fetchData(newP, tipoTarea)
+  }
+
+  const handleTipoChange = (newT) => {
+    setTipoTarea(newT)
+    fetchData(periodo, newT)
   }
 
   const toggleCollapse = (id) => {
@@ -204,7 +210,19 @@ export default function Dashboard() {
     switch (id) {
       case 'metrics':
         return (
-          <DashboardBlock key={id} {...blockProps} title="Resumen">
+          <DashboardBlock
+            key={id}
+            {...blockProps}
+            title="Resumen"
+            headerActions={
+              <div className="miniTabs">
+                <button className={tipoTarea === 'TODAS' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TODAS') }}>Todas</button>
+                <button className={tipoTarea === 'COM' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('COM') }}>Comercial</button>
+                <button className={tipoTarea === 'TC' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TC') }}>TC</button>
+                <button className={tipoTarea === 'IT' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('IT') }}>IT</button>
+              </div>
+            }
+          >
             <MetricsGrid data={metrics} />
           </DashboardBlock>
         )
