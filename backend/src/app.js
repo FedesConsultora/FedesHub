@@ -15,11 +15,23 @@ const app = express();
 // si estamos detrás de proxy/ingress con TLS
 app.set('trust proxy', 1);
 
-// CORS con credenciales (cookies) para el frontend
+// --- ESTÁTICOS (Al principio para evitar interferencias) ---
+const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads')
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '365d',
+  immutable: true
+}))
+
+// Servir avatars explícitamente y luego el resto de public
+app.use('/avatars', express.static(path.resolve('public/avatars'), { maxAge: '7d' }))
+app.use(express.static(path.resolve('public')))
+
+// Proxy CORS con credenciales (cookies) para el frontend
 const ORIGINS = (process.env.WEB_ORIGIN || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+// ... resto del archivo
 
 const allowedOrigins = ORIGINS.length ? ORIGINS : ['http://localhost:3000', 'http://localhost:5173'];
 
@@ -55,15 +67,7 @@ app.use(helmet({
   },
 }));
 
-// estáticos
-const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads')
-app.use('/uploads', express.static(uploadsDir, {
-  maxAge: '365d',
-  immutable: true
-}))
-
-// También servimos la carpeta public (donde están los avatars)
-app.use(express.static(path.resolve('public')))
+// body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
 
 // body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
 app.use(express.json({ limit: '50gb' }));
