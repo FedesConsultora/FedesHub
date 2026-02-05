@@ -233,7 +233,7 @@ export class GoogleDriveProvider {
   }
 
   // Get file stream for proxy serving
-  async getFileStream(fileId) {
+  async get) {
     try {
       // Get file metadata first
       const meta = await this.drive.files.get({
