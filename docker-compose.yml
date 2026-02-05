@@ -4,21 +4,8 @@ services:
     container_name: fedes-hub_db
     restart: always
     env_file: .env
-    # El comando habilita SSL pero permite conexiones sin SSL por defecto.
-    # Las rutas deben coincidir con los volúmenes montados abajo.
-    command:
-      - "postgres"
-      - "-c"
-      - "ssl=on"
-      - "-c"
-      - "ssl_cert_file=/etc/postgresql/ssl/fullchain.pem"
-      - "-c"
-      - "ssl_key_file=/etc/postgresql/ssl/privkey.pem"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Montaje de certificados desde la carpeta de proxy para producción
-      # Si falla localmente porque no existe la ruta, comentar estas líneas
-      - /srv/proxy/certs/live/hub.fedes.ai:/etc/postgresql/ssl:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME" ]
       interval: 5s
@@ -40,8 +27,6 @@ services:
     volumes:
       - ./backend/public/avatars:/usr/src/app/public/avatars
       - ./backend/uploads:/usr/src/app/uploads
-      # Montaje del CA para que el backend pueda validar la conexión SSL
-      - /srv/proxy/certs/live/hub.fedes.ai/chain.pem:/etc/ssl/certs/db-ca.pem:ro
 
   frontend:
     build: ./frontend
