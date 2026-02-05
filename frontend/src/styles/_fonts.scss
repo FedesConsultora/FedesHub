@@ -11,10 +11,10 @@
   }
 }
 
-/* Ajustá los nombres de archivos si tus .woff2 difieren */
-@include font('Fedes Sans', 'FedesSans-Regular', 400);
-@include font('Fedes Sans', 'FedesSans-Medium', 500);
-@include font('Fedes Sans', 'FedesSans-Bold', 700);
+/* Usando Forma DJR Banner como fuente de marca Fedes Sans */
+@include font('Fedes Sans', 'DJR_Banner_Web/FormaDJRBanner-Regular-Testing', 400);
+@include font('Fedes Sans', 'DJR_Banner_Web/FormaDJRBanner-Medium-Testing', 500);
+@include font('Fedes Sans', 'DJR_Banner_Web/FormaDJRBanner-Bold-Testing', 700);
 
 @include font('Fedes Mono', 'FedesMono-Regular', 400);
 
