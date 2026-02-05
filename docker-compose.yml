@@ -34,6 +34,9 @@ services:
     restart: always
     networks:
       - fedes-net
+    volumes:
+      - ./backend/public/avatars:/usr/share/nginx/html/avatars:ro
+      - ./backend/uploads:/usr/share/nginx/html/uploads:ro
 
 volumes:
   postgres_data:
