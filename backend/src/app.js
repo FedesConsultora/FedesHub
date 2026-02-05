@@ -4,9 +4,9 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 
 import apiRoutes from './router.js';
-
 import { requestLogger } from './infra/http/requestLogger.js';
 import { errorHandler } from './infra/http/errorHandler.js';
 
@@ -15,35 +15,36 @@ const app = express();
 // si estamos detrás de proxy/ingress con TLS
 app.set('trust proxy', 1);
 
-// --- ESTÁTICOS (Al principio para evitar interferencias) ---
-const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads')
-app.use('/uploads', express.static(uploadsDir, {
-  maxAge: '365d',
-  immutable: true
-}))
+// --- 1. ARCHIVOS ESTÁTICOS (Prioridad máxima para evitar 502) ---
+const uploadsDir = path.resolve(process.env.STORAGE_BASE_DIR || 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    console.log(`[INIT] Creating uploads directory: ${uploadsDir}`);
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (err) {
+  console.error(`[CRITICAL] Failed to ensure uploads directory: ${err.message}`);
+}
 
-// Servir avatars explícitamente y luego el resto de public
-app.use('/avatars', express.static(path.resolve('public/avatars'), { maxAge: '7d' }))
-app.use(express.static(path.resolve('public')))
+app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
+app.use('/avatars', express.static(path.resolve('public/avatars'), { maxAge: '7d' }));
+app.use(express.static(path.resolve('public')));
 
-// Proxy CORS con credenciales (cookies) para el frontend
+// --- 2. CONFIGURACIÓN DE ORIGENS ---
 const ORIGINS = (process.env.WEB_ORIGIN || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
-// ... resto del archivo
 
-const allowedOrigins = ORIGINS.length ? ORIGINS : ['http://localhost:3000', 'http://localhost:5173'];
+const allowedOrigins = ORIGINS.length ? ORIGINS : ['http://localhost:3000', 'http://localhost:5173', 'https://hub.fedes.ai'];
 
+// --- 3. MIDDLEWARES GLOBALES ---
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir si no hay origen (peticiones del mismo servidor o herramientas de test)
-    // o si el origen está en nuestra lista blanca.
     if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
     } else {
-      console.warn(`CORS bloqueado para el origen: ${origin}`);
-      callback(null, false); // No tirar error, solo denegar CORS
+      callback(null, false);
     }
   },
   credentials: true,
@@ -52,38 +53,25 @@ app.use(cors({
   exposedHeaders: ['X-Request-Id']
 }));
 
-// 🔎 nuestro logger por request (correlación + tiempos + body sanitizado)
 app.use(requestLogger);
 
-// seguridad básica - relajamos políticas para permitir servir imágenes/archivos correctamente
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: {
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "blob:", "https:", "http:"],
-      "media-src": ["'self'", "data:", "blob:", "https:", "http:"],
-    },
-  },
+  contentSecurityPolicy: false, // Desactivamos CSP temporalmente para asegurar carga de recursos
 }));
 
-// body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
-
-// body parsers - límites muy altos para videos de producción (suben a Drive, no al server)
 app.use(express.json({ limit: '50gb' }));
 app.use(express.urlencoded({ extended: true, limit: '50gb' }));
 app.use(cookieParser());
 
-// healthcheck simple (fuera de /api)
+// --- 4. RUTAS ---
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'fedeshub-backend' }));
-
-// rutas de API
 app.use('/api', apiRoutes);
 
-// 404 explícito (deja rastro en requestLogger como RES 404)
+// 404 explícito
 app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 
-// 🎯 único manejador de errores (incluye Zod → 400, Sequelize, etc.)
+// 🎯 Manejador de errores
 app.use(errorHandler);
 
 export default app;
