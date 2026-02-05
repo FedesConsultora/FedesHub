@@ -14,8 +14,10 @@ const base = {
     ? {
       ssl: {
         require: true,
-        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false', // Por defecto true
-        ca: process.env.DB_SSL_CA_PATH ? fs.readFileSync(process.env.DB_SSL_CA_PATH, 'utf8') : undefined
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+        ca: (process.env.DB_SSL_CA_PATH && fs.existsSync(process.env.DB_SSL_CA_PATH))
+          ? fs.readFileSync(process.env.DB_SSL_CA_PATH, 'utf8')
+          : undefined
       }
     }
     : {}
