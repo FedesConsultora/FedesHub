@@ -18,6 +18,7 @@ import ReadReceiptBadge from './ReadReceiptBadge'
 import Avatar from '../../Avatar.jsx'
 import { ChatActionCtx } from '../shared/context'
 import { fullName, displayName, pickAvatar } from '../../../utils/people'
+import { escapeHtml, linkify } from '../../../utils/security'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
 import './Timeline.scss'
@@ -25,8 +26,6 @@ import './Timeline.scss'
 const fmtDay = (d) =>
   new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })
 const toNum = (v) => (v === null || v === undefined || v === '' ? null : Number(v))
-const escapeHtml = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-const linkify = (html = '') => html.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
 
 export default function Timeline({ rows = [], loading = false, canal_id = null, my_user_id = null, members = [], canPin = true, canReply = true }) {
 

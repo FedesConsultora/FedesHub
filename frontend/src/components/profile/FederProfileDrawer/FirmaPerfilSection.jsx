@@ -5,6 +5,8 @@ import { useToast } from '../../toast/ToastProvider.jsx'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
 import './FirmaPerfilSection.scss'
 
+import { escapeHtml } from '../../../utils/security'
+
 const norm = (s = '') => s.replace(/\s+/g, ' ').trim()
 const initialsFromFull = (full = '') => {
   const p = norm(full).split(' ').filter(Boolean)
@@ -15,8 +17,9 @@ const initialsFromFull = (full = '') => {
 
 /** SVG cursiva: por defecto blanca en fondo oscuro (preview app) */
 function svgCursiva(fullName, { color = '#ffffff', bg = '#0b0f15', skew = -6 } = {}) {
+  const escapedName = escapeHtml(fullName)
   return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 260" role="img" aria-label="Firma ${fullName}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 260" role="img" aria-label="Firma ${escapedName}">
   ${bg ? `<rect x="0" y="0" width="860" height="260" rx="18" fill="${bg}"/>` : ''}
   <g transform="translate(40,160) skewX(${skew})">
     <text x="0" y="0"
@@ -24,7 +27,7 @@ function svgCursiva(fullName, { color = '#ffffff', bg = '#0b0f15', skew = -6 } =
       font-size="108" font-weight="700"
       fill="${color}" stroke="${color}" stroke-opacity="0.18" stroke-width="1"
       style="paint-order: stroke fill; letter-spacing:.5px;">
-      ${fullName}
+      ${escapedName}
     </text>
   </g>
 </svg>`.trim()
@@ -32,13 +35,14 @@ function svgCursiva(fullName, { color = '#ffffff', bg = '#0b0f15', skew = -6 } =
 
 /** SVG iniciales: por defecto blanco en fondo oscuro (preview app) */
 function svgIniciales(initials, { color = '#ffffff', bg = '#0b0f15' } = {}) {
+  const escapedInitials = escapeHtml(initials)
   return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-label="Iniciales ${initials}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-label="Iniciales ${escapedInitials}">
   ${bg ? `<rect x="0" y="0" width="640" height="220" rx="16" fill="${bg}"/>` : ''}
   <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
         font-family="ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Inter"
         font-size="120" font-weight="900" fill="${color}">
-    ${initials}
+    ${escapedInitials}
   </text>
 </svg>`.trim()
 }

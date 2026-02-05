@@ -26,7 +26,7 @@ export function errorHandler(err, req, res, _next) {
     status,
     error: err?.message,
     name: err?.name,
-    stack: process.env.LOG_STACK === '1' ? err?.stack : undefined,
+    stack: process.env.LOG_STACK === '1' ? err?.stack : undefined, // Solo exponer stack en desarrollo
     zod: isZodError(err) ? payload.validation : undefined,
     sequelize: isSequelize(err) ? { parent: err?.parent?.code, fields: err?.fields } : undefined,
   };

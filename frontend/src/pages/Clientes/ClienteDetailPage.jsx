@@ -13,15 +13,11 @@ import { getContrastColor, getCleanInitials } from '../../utils/ui'
 import { resolveMediaUrl } from '../../utils/media'
 import Avatar from '../../components/Avatar'
 import ClienteStatusCard from '../../components/clients/ClienteStatusCard'
+import { escapeHtml, linkify } from '../../utils/security'
 import AttendanceBadge from '../../components/common/AttendanceBadge'
 import './clienteDetail.scss'
 
-const linkify = (text = '') => {
-    if (!text) return ''
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const withBr = escaped.replace(/\n/g, '<br/>')
-    return withBr.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
-}
+
 
 import { useLoading } from '../../context/LoadingContext'
 

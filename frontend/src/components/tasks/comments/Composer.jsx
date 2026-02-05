@@ -3,6 +3,7 @@ import { FaReply } from 'react-icons/fa'
 import MentionTextArea from './MentionTextArea.jsx'
 import FilesPicker from '../../common/FilesPicker'
 import { IoMdSend } from "react-icons/io";
+import { escapeHtml } from '../../../utils/security'
 
 
 const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCancelReply, onSend }, ref) {
@@ -26,7 +27,6 @@ const Composer = forwardRef(function Composer({ canPost, feders, replyTo, onCanc
     }
   }), [])
 
-  const escapeHtml = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const replyHtml = useMemo(() => {
     if (!replyTo) return null
     let html = escapeHtml((replyTo.contenido || '').replace(/\s+/g, ' '))

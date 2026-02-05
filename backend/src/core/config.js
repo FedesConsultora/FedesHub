@@ -1,5 +1,6 @@
 // backend/src/core/config.js
 import 'dotenv/config';
+import fs from 'fs';
 
 const base = {
   username: process.env.DB_USER,
@@ -10,7 +11,13 @@ const base = {
   dialect: 'postgres',
   logging: false,
   dialectOptions: process.env.DB_SSL === 'true'
-    ? { ssl: { require: true, rejectUnauthorized: false } }
+    ? {
+      ssl: {
+        require: true,
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false', // Por defecto true
+        ca: process.env.DB_SSL_CA_PATH ? fs.readFileSync(process.env.DB_SSL_CA_PATH, 'utf8') : undefined
+      }
+    }
     : {}
 };
 

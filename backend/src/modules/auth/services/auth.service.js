@@ -42,6 +42,23 @@ export const registerCorePermissions = async () => {
 };
 registerCorePermissions(); // Se ejecuta al cargar el servicio
 
+const validatePassword = (password) => {
+  if (!password || typeof password !== 'string') {
+    throw Object.assign(new Error('La contraseña es requerida'), { status: 400 });
+  }
+  if (password.length < 12) {
+    throw Object.assign(new Error('La contraseña debe tener al menos 12 caracteres'), { status: 400 });
+  }
+  // Al menos una mayúscula, una minúscula, un número y un carácter especial
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+  if (!regex.test(password)) {
+    throw Object.assign(
+      new Error('La contraseña debe incluir mayúsculas, minúsculas, números y caracteres especiales (@$!%*?&)'),
+      { status: 400 }
+    );
+  }
+};
+
 const emailDomain = (email) => String(email).split('@')[1]?.toLowerCase();
 
 export const ensureDomainAllowed = async (email) => {
@@ -133,6 +150,7 @@ export const createUserWithRoles = async ({ email, password, roles, is_activo })
   const existing = await getUserByEmail(email.toLowerCase());
   if (existing) throw Object.assign(new Error('El email ya existe'), { status: 400 });
 
+  validatePassword(password);
   const password_hash = await hashPassword(password);
   const user = await createUser({ email: email.toLowerCase(), password_hash, email_dominio_id: domRow.id, is_activo: !!is_activo });
   await assignRoles(user.id, roles);
@@ -160,6 +178,7 @@ export const changePassword = async (userId, { old_password, new_password }) => 
   const ok = await verifyPassword(user.password_hash, old_password);
   if (!ok) throw Object.assign(new Error('Contraseña actual incorrecta'), { status: 400 });
 
+  validatePassword(new_password);
   const password_hash = await hashPassword(new_password);
   await setUserPassword(user.id, password_hash);
   return { ok: true };
@@ -314,6 +333,7 @@ async function _queueResetEmailNotification(user_id, link_url) {
 
 export const resetPasswordByToken = async ({ token, new_password }) => {
   const { user_id } = await usePasswordResetToken(token); // valida y consume
+  validatePassword(new_password);
   const password_hash = await hashPassword(new_password);
   await setUserPassword(user_id, password_hash);
   return { ok: true };

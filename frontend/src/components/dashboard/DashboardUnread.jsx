@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { notifApi } from '../../api/notificaciones';
 import { useRealtime } from '../../realtime/RealtimeProvider';
 import { FiMessageSquare } from 'react-icons/fi';
+import { linkify, escapeHtml } from '../../utils/security';
 import './tasks.scss';
 
 export default function DashboardUnread({ notifications, onOpenTask, onRefresh }) {
@@ -81,7 +82,7 @@ export default function DashboardUnread({ notifications, onOpenTask, onRefresh }
                 >
                     <div className="unreadInfo">
                         <span className="unreadTitle">{n.notificacion?.titulo}</span>
-                        <p className="unreadText" dangerouslySetInnerHTML={{ __html: n.notificacion?.mensaje }} />
+                        <p className="unreadText" dangerouslySetInnerHTML={{ __html: linkify(escapeHtml(n.notificacion?.mensaje)) }} />
                         <div className="unreadMeta">
                             <span className="unreadTime">{new Date(n.notificacion?.created_at).toLocaleString()}</span>
                         </div>

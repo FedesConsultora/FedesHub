@@ -4,14 +4,10 @@ import { es } from 'date-fns/locale'
 import {
     FiMessageSquare, FiActivity, FiPaperclip, FiX, FiPlus
 } from 'react-icons/fi'
+import { escapeHtml, linkify } from '../../utils/security'
 import './LeadTimeline.scss'
 
-const linkify = (text = '') => {
-    if (!text) return ''
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const withBr = escaped.replace(/\n/g, '<br/>')
-    return withBr.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
-}
+
 
 export default function LeadTimeline({ lead, onAddNota, showOnly = 'all' }) {
     const [nota, setNota] = useState('')

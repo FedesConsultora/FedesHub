@@ -21,8 +21,18 @@ const ORIGINS = (process.env.WEB_ORIGIN || '')
   .map(s => s.trim())
   .filter(Boolean);
 
+const allowedOrigins = ORIGINS.length ? ORIGINS : ['http://localhost:3000', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: ORIGINS.length ? ORIGINS : true,
+  origin: (origin, callback) => {
+    // Permitir requests sin origen (como apps móviles o curl si no se requiere CORS)
+    // O verificar contra la lista permitida
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS: Origen no permitido'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Request-Id'],

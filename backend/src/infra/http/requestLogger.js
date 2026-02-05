@@ -5,6 +5,22 @@ function rid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+const SENSITIVE_FIELDS = ['password', 'old_password', 'new_password', 'token', 'access_token', 'refresh_token'];
+
+function sanitizeBody(body) {
+  if (!body || typeof body !== 'object') return body;
+  const safe = Array.isArray(body) ? [...body] : { ...body };
+
+  for (const key in safe) {
+    if (SENSITIVE_FIELDS.includes(key.toLowerCase())) {
+      safe[key] = '[REDACTED]';
+    } else if (typeof safe[key] === 'object') {
+      safe[key] = sanitizeBody(safe[key]);
+    }
+  }
+  return safe;
+}
+
 export function requestLogger(req, res, next) {
   const start = process.hrtime.bigint();
   const requestId = req.get('x-request-id') || rid();
@@ -18,8 +34,8 @@ export function requestLogger(req, res, next) {
     ua: req.get('user-agent'),
     params: req.params,
     query: req.query,
-    // OJO: no logueo body binario, y corto a 1000 chars
-    body: req.is('multipart/*') ? '[multipart]' : req.body,
+    // OJO: no logueo body binario, y redacto campos sensibles
+    body: req.is('multipart/*') ? '[multipart]' : sanitizeBody(req.body),
     headers: { 'content-type': req.get('content-type'), 'content-length': req.get('content-length') }
   });
 

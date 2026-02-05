@@ -6,6 +6,7 @@ import { useTaskComments } from '../../../pages/Tareas/hooks/useTaskComments'
 import CommentItem from './CommentItem'
 import Composer from './Composer'
 import GlobalLoader from '../../loader/GlobalLoader.jsx'
+import { escapeHtml, linkify } from '../../../utils/security'
 import './comments.scss'
 
 // ---- Utils ----
@@ -71,8 +72,7 @@ export default function TaskComments({ taskId, catalog, initialCommentId = null 
     return toNum(me?.id ?? null)
   }, [meFederId, meUserId, feders])
 
-  const escapeHtml = (s = '') =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 
   // Render: se escribe @id pero se muestra @Nombre Apellido
   const renderContenido = (texto = '', menciones = []) => {
@@ -111,7 +111,7 @@ export default function TaskComments({ taskId, catalog, initialCommentId = null 
     html = html.replace(/@(\d+)\b/g, replaceIdWithName)
 
     // 3) linkify (después de menciones)
-    html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+    html = linkify(html)
 
     return { __html: html }
   }
@@ -131,7 +131,7 @@ export default function TaskComments({ taskId, catalog, initialCommentId = null 
       const full = `${f.nombre || ''} ${f.apellido || ''}`.trim()
       return `<span class="mentions">@${full}</span>`
     })
-    html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+    html = linkify(html)
     return { __html: html }
   }
 

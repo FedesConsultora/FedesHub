@@ -24,9 +24,27 @@ const storage = multer.diskStorage({
   }
 });
 
+const ALLOWED_MIMES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+  'application/pdf',
+  'video/mp4', 'video/quicktime', 'video/webm',
+  'audio/mpeg', 'audio/wav', 'audio/webm', 'audio/ogg',
+  'application/zip', 'application/x-zip-compressed',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',      // xlsx
+  'text/plain', 'text/csv'
+];
+
 const upload = multer({
   storage,
-  limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES }
+  limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIMES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}.`), false);
+    }
+  }
 });
 
 export const uploadFiles = upload.array('files', MAX_FILES);
