@@ -166,7 +166,7 @@ export const buildListSQL = (params = {}, currentUser) => {
 
   // Por defecto ocultar aprobadas/canceladas si no se pide incluirlas Y no hay filtro de estado explícito
   if (include_finalizadas !== true && !estado_id && (!estado_ids || !estado_ids.length)) {
-    where.push(`te.codigo NOT IN ('aprobada', 'cancelada')`);
+    where.push(`te.codigo NOT IN ('aprobada', 'cancelada', 'finalizada')`);
   }
 
   if (is_favorita === true) where.push(`EXISTS(SELECT 1 FROM "TareaFavorito" tf WHERE tf.tarea_id=t.id AND tf.user_id=:uid)`);

@@ -334,19 +334,100 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 1rem;
-  gap: 2rem;
+  gap: 1.5rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
 
   .TareasActiveChips {
     flex: 1;
+    min-width: 0;
     margin: 0;
     padding: 0;
+  }
+
+  .filter-actions-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; // Pole to pole
+    flex: 1; // Stretch to allow space-between
+    gap: 1.25rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 1080px) {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  .view-toggle-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    height: 44px;
+
+    .icon-view-btn {
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 36px;
+      height: 36px;
+
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+        transform: scale(1.1);
+      }
+
+      &.fav {
+        color: #FFD700;
+        opacity: 0.6;
+
+        &.active,
+        &:hover {
+          opacity: 1;
+          filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+        }
+      }
+
+      &.trash {
+
+        &.active,
+        &:hover {
+          color: #ff4d4f;
+          filter: drop-shadow(0 0 8px rgba(255, 77, 79, 0.3));
+        }
+      }
+
+      .notif-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 1px 4px;
+        border-radius: 10px;
+        min-width: 14px;
+        text-align: center;
+        border: 2px solid #0B0F15;
+      }
+    }
   }
 
   .FederBubblesFilter {
     margin-bottom: 0;
     width: auto;
     flex-shrink: 0;
-    margin-left: auto; // Always push to the right
   }
 }

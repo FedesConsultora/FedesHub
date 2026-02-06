@@ -37,16 +37,12 @@ export default function useTasksBoard(
 
       const now = new Date();
       const mappedRows = r.map(t => {
-        // La tarea es vencida si:
-        // 1. Tiene fecha de vencimiento
-        // 2. (No está finalizada Y el vencimiento ya pasó) O (Está finalizada pero el vencimiento fue ANTES de la finalización)
         const vDate = t.vencimiento ? new Date(t.vencimiento) : null;
         const fDate = t.finalizada_at ? new Date(t.finalizada_at) : null;
+        const isFinal = ['aprobada', 'cancelada', 'finalizada'].includes(t.estado_codigo);
 
-        const isVencida = vDate && (
-          (!fDate && vDate < now) ||
-          (fDate && vDate < fDate)
-        );
+        // La tarea es vencida si NO está finalizada y el vencimiento ya pasó
+        const isVencida = !isFinal && vDate && (vDate < now);
 
         return {
           ...t,

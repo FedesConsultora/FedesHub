@@ -17,6 +17,8 @@ import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
 import useAttendanceStatus from "../../hooks/useAttendanceStatus";
+import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye, FiTrash2, FiStar as FiStarIcon } from "react-icons/fi";
+import { FaStar, FaTrash } from "react-icons/fa";
 import './components/modal-panel.scss';
 
 import "./TasksPage.scss";
@@ -376,17 +378,6 @@ export default function TasksPage() {
             <button
               type="button"
               role="tab"
-              aria-selected={view === "starred"}
-              className={view === "starred" ? "active" : ""}
-              onClick={() => handleSetView("starred")}
-              title="Ver destacados"
-            >
-              <i className="fi fi-rr-star" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
-              <span>Destacadas</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
               aria-selected={view === "overdue"}
               className={view === "overdue" ? "active" : ""}
               onClick={() => handleSetView("overdue")}
@@ -399,20 +390,6 @@ export default function TasksPage() {
               <i className="fi fi-rr-clock-three" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
               <span>Vencidas</span>
             </button>
-            {isDirectivo && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={view === "trash"}
-                className={view === "trash" ? "active" : ""}
-                onClick={() => handleSetView("trash")}
-                title="Ver papelera"
-              >
-                <i className="fi fi-rr-trash" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
-                <span>Papelera</span>
-                {trashCount > 0 && <span className="tab-badge" style={{ marginLeft: '6px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', padding: '1px 5px', borderRadius: '10px' }}>{trashCount}</span>}
-              </button>
-            )}
             <button
               type="button"
               className="one-pager-btn"
@@ -454,11 +431,34 @@ export default function TasksPage() {
           catalog={catalog}
           onChange={setFilters}
         />
-        <FederBubblesFilter
-          feders={rankedFeders}
-          selectedIds={filters.feder_ids || []}
-          onChange={ids => setFilters({ ...filters, feder_ids: ids, solo_mias: ids.length === 0 })}
-        />
+
+        <div className="filter-actions-group">
+          <div className="view-toggle-icons">
+            <button
+              className={`icon-view-btn fav ${view === 'starred' ? 'active' : ''}`}
+              onClick={() => handleSetView(view === 'starred' ? 'list' : 'starred')}
+              title="Ver destacados"
+            >
+              <FaStar />
+            </button>
+            {isDirectivo && (
+              <button
+                className={`icon-view-btn trash ${view === 'trash' ? 'active' : ''}`}
+                onClick={() => handleSetView(view === 'trash' ? 'list' : 'trash')}
+                title="Ver papelera"
+              >
+                <FaTrash />
+                {trashCount > 0 && <span className="notif-dot">{trashCount}</span>}
+              </button>
+            )}
+          </div>
+
+          <FederBubblesFilter
+            feders={rankedFeders}
+            selectedIds={filters.feder_ids || []}
+            onChange={ids => setFilters({ ...filters, feder_ids: ids, solo_mias: ids.length === 0 })}
+          />
+        </div>
       </div>
 
       <section className="results" data-view={view}>

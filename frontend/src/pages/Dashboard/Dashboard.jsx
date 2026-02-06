@@ -78,15 +78,24 @@ export default function Dashboard() {
       ])
 
       setMetrics(m)
-      setUrgentTasks(u)
+      setUrgentTasks((u.rows || u).map(t => ({
+        ...t,
+        estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
+        vencimiento: t.vencimiento || t.due
+      })))
       setUnreadNotifs(n.rows || n)
-      // Filter out tasks that are exactly today if requested, but backend vencimiento_to is inclusive usually.
-      // We'll trust the API list for overdue (vencimiento_to: today).
-      // Actually strictly overdue means < today.
-      const strictlyOverdue = (o.rows || o).filter(task => {
-        if (!task.vencimiento) return false;
-        return task.vencimiento < today;
-      });
+
+      const strictlyOverdue = (o.rows || o)
+        .filter(task => {
+          if (!task.vencimiento) return false;
+          const isFinal = ['aprobada', 'cancelada', 'finalizada'].includes(task.estado_codigo);
+          return !isFinal && task.vencimiento < today;
+        })
+        .map(t => ({
+          ...t,
+          vencida: true,
+          estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre
+        }));
       setOverdueTasks(strictlyOverdue)
 
       if (m.is_directivo) {
