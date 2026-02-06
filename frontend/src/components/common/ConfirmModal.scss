@@ -20,8 +20,9 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 24px;
         width: 100%;
-        max-width: 400px;
-        overflow: hidden;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -157,6 +158,31 @@
                 &:hover {
                     box-shadow: 0 6px 15px rgba(v.$fh-primary, 0.4);
                 }
+            }
+        }
+
+        .fh-textarea {
+            width: 100%;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            resize: none;
+            transition: all 0.2s;
+
+            &:focus {
+                border-color: v.$fh-primary;
+                background: rgba(0, 0, 0, 0.3);
+                box-shadow: 0 0 0 4px rgba(v.$fh-primary, 0.1);
+            }
+
+            &::placeholder {
+                color: v.$fh-muted;
+                opacity: 0.5;
             }
         }
     }
