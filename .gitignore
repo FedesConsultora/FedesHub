@@ -33,3 +33,8 @@ backend/dist/
 
 # Docker data
 docker-data/
+
+# Security audit reports (NEVER commit these!)
+*Security_Audit*.md
+*security_audit*.md
+*_audit*.pdf

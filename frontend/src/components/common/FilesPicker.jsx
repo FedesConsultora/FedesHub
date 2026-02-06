@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { MdOutlineUploadFile } from "react-icons/md";
+import { MdOutlineUploadFile, MdPlayArrow } from "react-icons/md";
+import { getFileType, getFileIcon, formatFileSize } from '../tasks/comments/fileHelpers';
 
 import '../../pages/Tareas/task-detail.scss'
 
@@ -49,16 +50,76 @@ export default function FilesPicker({
       {!!files.length && (
         <div className="list">
           {files.map((f, i) => {
-            const isImg = f.type?.startsWith('image/')
-            const url = isImg && showPreviews ? URL.createObjectURL(f) : null
+            const type = getFileType(f)
+            const isImg = type === 'image'
+            const isVideo = type === 'video'
+            const url = (isImg || isVideo) && showPreviews ? URL.createObjectURL(f) : null
+            const { Icon, color } = getFileIcon(type)
+
             return (
               <div className="fileItem" key={`${f.name}-${i}`}>
                 <button className="rm" onClick={() => removeAt(i)} title="Quitar">✕</button>
-                {isImg && showPreviews
-                  ? <img src={url} alt="" style={{ height: 36, width: 36, objectFit: 'cover', borderRadius: 6, marginRight: 6 }} />
-                  : <span className="material-symbols-outlined" aria-hidden>description</span>}
+
+                {/* Image preview */}
+                {isImg && showPreviews && url ? (
+                  <img
+                    src={url}
+                    alt=""
+                    style={{
+                      height: 40,
+                      width: 40,
+                      objectFit: 'cover',
+                      borderRadius: 6,
+                      marginRight: 8
+                    }}
+                  />
+                ) : isVideo && showPreviews && url ? (
+                  /* Video preview with play icon */
+                  <div style={{
+                    position: 'relative',
+                    height: 40,
+                    width: 40,
+                    marginRight: 8,
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    background: '#0f172a'
+                  }}>
+                    <video
+                      src={url}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        opacity: 0.7
+                      }}
+                      muted
+                    />
+                    <MdPlayArrow
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color: 'white',
+                        fontSize: '1.5rem',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  /* File type icon */
+                  <Icon
+                    style={{
+                      fontSize: '1.5rem',
+                      color,
+                      marginRight: 8,
+                      flexShrink: 0
+                    }}
+                  />
+                )}
+
                 <span className="name">{f.name}</span>
-                <span className="muted">{niceSize(f.size)}</span>
+                <span className="muted">{formatFileSize(f.size)}</span>
               </div>
             )
           })}
@@ -70,7 +131,6 @@ export default function FilesPicker({
 
 const sizeOf = (arr = []) => arr.reduce((s, f) => s + (f.size || 0), 0)
 const bytesToMB = (n) => n / (1024 ** 2)
-const niceSize = (n = 0) => n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : n < 1024 ** 3 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${(n / 1024 ** 3).toFixed(1)} GB`
 const dedupe = (arr = []) => {
   const seen = new Set()
   return arr.filter(f => { const k = `${f.name}-${f.size}-${f.lastModified}`; if (seen.has(k)) return false; seen.add(k); return true })

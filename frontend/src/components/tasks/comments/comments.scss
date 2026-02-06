@@ -381,7 +381,7 @@
 
         .ico {
           font-size: 2.2rem;
-          color: #3b82f6;
+          // Color is now set inline via fileHelpers
           background: #eff6ff;
           padding: 14px;
           border-radius: 12px;
@@ -391,6 +391,12 @@
           align-items: center;
           justify-content: center;
           border: 1px solid #dbeafe;
+          transition: all 0.2s ease;
+
+          &:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
         }
 
         .name {
@@ -519,7 +525,7 @@
     .mentionInput {
       width: 100%;
       min-height: 48px;
-      max-height: 180px;
+      max-height: 180px; // Expandable up to 180px
       padding: 14px 18px;
       border-radius: 12px;
       border: 1px solid #e2e8f0;
@@ -529,8 +535,30 @@
       resize: none;
       transition: all 0.2s ease;
       display: block;
-      overflow-y: hidden;
+      overflow-y: auto; // Add scroll when content exceeds max-height
       color: #1e293b !important; // Texto oscuro para fondo claro
+      line-height: 1.5; // Better line height for readability
+
+      // Custom scrollbar for textarea
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+
+        &:hover {
+          background: #94a3b8;
+        }
+      }
 
       &::placeholder {
         color: #94a3b8 !important;

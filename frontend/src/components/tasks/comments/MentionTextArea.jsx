@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState, useEffect } from 'react'
 import Avatar from '../../Avatar.jsx'
 
 export default function MentionTextArea({
@@ -12,6 +12,19 @@ export default function MentionTextArea({
   const [sel, setSel] = useState(0)
   const inner = inputRef || useRef(null)
   const ref = inner     // alias para el código existente
+
+  // Auto-resize textarea based on content (up to max-height of 180px)
+  useEffect(() => {
+    const textarea = ref.current
+    if (!textarea) return
+
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto'
+
+    // Set height based on scrollHeight, but don't exceed max-height
+    const newHeight = Math.min(textarea.scrollHeight, 180)
+    textarea.style.height = `${newHeight}px`
+  }, [value, ref])
 
   const results = useMemo(() => {
     if (!feders || !Array.isArray(feders)) return []
@@ -112,6 +125,7 @@ export default function MentionTextArea({
         onKeyUp={onKeyUp}
         placeholder={placeholder}
         disabled={disabled}
+        style={{ overflow: 'hidden' }} // Hide scrollbar until max-height is reached
       />
       {open && !!results.length && (
         <div className={classNames.popover || ''}>
