@@ -340,91 +340,72 @@
     padding: 0;
     width: 100%;
     overflow: hidden;
+
+    // Table integration (TaskList)
+    .fh-table {
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+
+      thead {
+        background: rgba(255, 255, 255, 0.02);
+
+        th {
+          padding: 12px 16px;
+          color: $fh-muted;
+          font-weight: 800;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+      }
+
+      tbody {
+        tr {
+          background: transparent !important;
+          transition: all 0.2s ease;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.03) !important;
+          }
+
+          td {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+
+            &.col-title {
+              font-weight: 600;
+              color: white;
+            }
+          }
+        }
+      }
+
+      // Responsive table hiding for narrow columns
+      @at-root .dashSideCol & {
+
+        .hidden-mobile,
+        .col-assigned {
+          display: none !important;
+        }
+
+        .fh-table tbody tr td {
+          padding: 10px 12px;
+          font-size: 0.8rem;
+        }
+      }
+    }
   }
 
   &[draggable="true"]:active {
     opacity: 0.6;
     cursor: grabbing;
-  }
-
-  // Row styles for tasks
-  .urgentList,
-  .overdueList {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .urgentItem,
-  .overdueSectionItem {
-    padding: 16px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-      transform: translateX(4px);
-    }
-  }
-
-  // Meta row adjustments for narrow columns
-  .itemMain {
-    flex: 1;
-    min-width: 0;
-  }
-
-  // Overdue specific styles
-  .overdueList {
-    .overdueSectionItem {
-      border-left: 4px solid #ef4444;
-      background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, transparent 100%);
-
-      &:hover {
-        background: linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-      }
-
-      .overdueClock {
-        color: #ef4444;
-        font-size: 0.95rem;
-        animation: overduePulse 2s infinite;
-      }
-    }
-  }
-
-  // Fix for narrow blocks (right column)
-  @at-root .dashSideCol & {
-    .blockHeader {
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 16px;
-
-      .headerRight {
-        width: 100%;
-        justify-content: space-between;
-      }
-    }
-
-    .urgentItem,
-    .overdueSectionItem {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-
-      .itemSide {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-    }
   }
 }
 

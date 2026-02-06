@@ -4,9 +4,8 @@ import MetricsGrid from '../../components/dashboard/MetricsGrid'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import ModalPanel from '../Tareas/components/ModalPanel'
 import TaskDetail from '../Tareas/TaskDetail'
-import UrgentTasks from '../../components/dashboard/UrgentTasks'
 import RevisionTasks from '../../components/dashboard/RevisionTasks'
-import OverdueTasks from '../../components/dashboard/OverdueTasks'
+import TaskList from '../../components/tasks/TaskList'
 import DashboardUnread from '../../components/dashboard/DashboardUnread'
 import DashboardBlock from '../../components/dashboard/DashboardBlock'
 import { tareasApi } from '../../api/tareas'
@@ -249,13 +248,27 @@ export default function Dashboard() {
               </div>
             }
           >
-            <OverdueTasks tasks={overdueTasks} onOpenTask={(tid) => handleOpenTask(tid)} />
+            <TaskList
+              rows={overdueTasks}
+              onOpenTask={(tid) => handleOpenTask(tid)}
+              dense
+              maxRows={6}
+              showHeader={false}
+              columns={{ cliente: true, estado: true, vence: true, progreso: false, responsables: true }}
+            />
           </DashboardBlock>
         )
       case 'urgent':
         return (
           <DashboardBlock key={id} {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
-            <UrgentTasks tasks={urgentTasks} onOpenTask={(tid) => handleOpenTask(tid)} />
+            <TaskList
+              rows={urgentTasks}
+              onOpenTask={(tid) => handleOpenTask(tid)}
+              dense
+              maxRows={6}
+              showHeader={false}
+              columns={{ cliente: true, estado: true, vence: true, progreso: false, responsables: true }}
+            />
           </DashboardBlock>
         )
       case 'revision':
