@@ -4,8 +4,8 @@ import MetricsGrid from '../../components/dashboard/MetricsGrid'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import ModalPanel from '../Tareas/components/ModalPanel'
 import TaskDetail from '../Tareas/TaskDetail'
-import UrgentTasks from '../../components/dashboard/UrgentTasks'
 import RevisionTasks from '../../components/dashboard/RevisionTasks'
+import TaskList from '../../components/tasks/TaskList'
 import DashboardUnread from '../../components/dashboard/DashboardUnread'
 import DashboardBlock from '../../components/dashboard/DashboardBlock'
 import { tareasApi } from '../../api/tareas'
@@ -14,7 +14,7 @@ import { useRealtime } from '../../realtime/RealtimeProvider'
 import { FiTrash2 } from 'react-icons/fi'
 import './Dashboard.scss'
 
-const DEFAULT_LEFT_COL = ['metrics', 'urgent', 'revision']
+const DEFAULT_LEFT_COL = ['metrics', 'overdue', 'urgent', 'revision']
 const DEFAULT_RIGHT_COL = ['unread']
 
 export default function Dashboard() {
@@ -26,7 +26,9 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState(null)
   const [periodo, setPeriodo] = useState('semana')
   const [tipoTarea, setTipoTarea] = useState('TODAS')
+  const [tipoOverdue, setTipoOverdue] = useState('TODAS') // New filter for overdue
   const [urgentTasks, setUrgentTasks] = useState([])
+  const [overdueTasks, setOverdueTasks] = useState([]) // New state
   const [revisionTasks, setRevisionTasks] = useState([])
   const [unreadNotifs, setUnreadNotifs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,11 +37,15 @@ export default function Dashboard() {
   // Layout State (Multi-column)
   const [leftCol, setLeftCol] = useState(() => {
     const saved = localStorage.getItem('fh:dashboard:leftCol')
-    return saved ? JSON.parse(saved) : DEFAULT_LEFT_COL
+    const initial = saved ? JSON.parse(saved) : DEFAULT_LEFT_COL
+    // Ensure 'overdue' is included in saved state if it's missing (migration)
+    if (!initial.includes('overdue')) initial.splice(1, 0, 'overdue')
+    return initial
   })
   const [rightCol, setRightCol] = useState(() => {
     const saved = localStorage.getItem('fh:dashboard:rightCol')
-    return saved ? JSON.parse(saved) : DEFAULT_RIGHT_COL
+    const initial = saved ? JSON.parse(saved) : DEFAULT_RIGHT_COL
+    return initial
   })
   const [collapsedBlocks, setCollapsedBlocks] = useState(() => {
     const saved = localStorage.getItem('fh:dashboard:collapsed')
@@ -55,18 +61,42 @@ export default function Dashboard() {
     localStorage.setItem('fh:dashboard:collapsed', JSON.stringify(collapsedBlocks))
   }, [collapsedBlocks])
 
-  const fetchData = async (p = periodo, t = tipoTarea) => {
+  const fetchData = async (p = periodo, t = tipoTarea, to = tipoOverdue) => {
     setLoading(true)
     try {
-      const [m, u, n] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0]
+      const [m, u, n, o] = await Promise.all([
         tareasApi.getMetrics({ periodo: p, tipo: t }),
         tareasApi.getUrgent(),
-        notifApi.inbox({ only_unread: true, limit: 10 })
+        notifApi.inbox({ only_unread: true, limit: 10 }),
+        tareasApi.list({
+          vencimiento_to: today,
+          include_finalizadas: false,
+          tipo: to === 'TODAS' ? undefined : to,
+          limit: 10
+        })
       ])
 
       setMetrics(m)
-      setUrgentTasks(u)
+      setUrgentTasks((u.rows || u).map(t => ({
+        ...t,
+        estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
+        vencimiento: t.vencimiento || t.due
+      })))
       setUnreadNotifs(n.rows || n)
+
+      const strictlyOverdue = (o.rows || o)
+        .filter(task => {
+          if (!task.vencimiento) return false;
+          const isFinal = ['aprobada', 'cancelada', 'finalizada'].includes(task.estado_codigo);
+          return !isFinal && task.vencimiento < today;
+        })
+        .map(t => ({
+          ...t,
+          vencida: true,
+          estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre
+        }));
+      setOverdueTasks(strictlyOverdue)
 
       if (m.is_directivo) {
         const rev = await tareasApi.list({ estado_codigo: 'revision' })
@@ -93,12 +123,17 @@ export default function Dashboard() {
 
   const handlePeriodChange = (newP) => {
     setPeriodo(newP)
-    fetchData(newP, tipoTarea)
+    fetchData(newP, tipoTarea, tipoOverdue)
   }
 
   const handleTipoChange = (newT) => {
     setTipoTarea(newT)
-    fetchData(periodo, newT)
+    fetchData(periodo, newT, tipoOverdue)
+  }
+
+  const handleTipoOverdueChange = (newT) => {
+    setTipoOverdue(newT)
+    fetchData(periodo, tipoTarea, newT)
   }
 
   const toggleCollapse = (id) => {
@@ -112,21 +147,6 @@ export default function Dashboard() {
     setOpenCommentId(commentId)
   }
 
-  const moveBlock = (id, direction, col) => {
-    const isLeft = col === 'left'
-    const arr = isLeft ? [...leftCol] : [...rightCol]
-    const idx = arr.indexOf(id)
-    if (idx === -1) return
-
-    const newIdx = idx + direction
-    if (newIdx < 0 || newIdx >= arr.length) return
-
-    // Swap
-    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]]
-
-    if (isLeft) setLeftCol(arr)
-    else setRightCol(arr)
-  }
   const handleClearNotifs = async () => {
     try {
       await notifApi.clearAll(null, 'read')
@@ -192,8 +212,6 @@ export default function Dashboard() {
 
   const renderBlock = (id, col, index) => {
     const isCollapsed = collapsedBlocks.includes(id)
-    const canMoveUp = index > 0
-    const canMoveDown = index < (col === 'left' ? leftCol.length : rightCol.length) - 1
 
     const blockProps = {
       id,
@@ -202,9 +220,6 @@ export default function Dashboard() {
       onDragStart: (e) => handleDragStart(e, id, col),
       onDragOver: (e) => handleDragOver(e, col, index),
       onDrop: (e) => handleDrop(e, id, col, index),
-      onMove: (dir) => moveBlock(id, dir, col),
-      canMoveUp,
-      canMoveDown
     }
 
     switch (id) {
@@ -226,10 +241,43 @@ export default function Dashboard() {
             <MetricsGrid data={metrics} />
           </DashboardBlock>
         )
+      case 'overdue':
+        return (
+          <DashboardBlock
+            key={id}
+            {...blockProps}
+            title="⚠️ Tareas Vencidas"
+            count={overdueTasks.length}
+            headerActions={
+              <div className="miniTabs" >
+                <button className={tipoOverdue === 'TODAS' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('TODAS') }}>Todas</button>
+                <button className={tipoOverdue === 'COM' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('COM') }}>Comercial</button>
+                <button className={tipoOverdue === 'TC' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('TC') }}>TC</button>
+                <button className={tipoOverdue === 'IT' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('IT') }}>IT</button>
+              </div>
+            }
+          >
+            <TaskList
+              rows={overdueTasks}
+              onOpenTask={(tid) => handleOpenTask(tid)}
+              dense
+              maxRows={6}
+              showHeader={false}
+              columns={{ cliente: true, estado: true, vence: true, progreso: false, responsables: true }}
+            />
+          </DashboardBlock>
+        )
       case 'urgent':
         return (
           <DashboardBlock key={id} {...blockProps} title="🚀 Tareas más urgentes" count={urgentTasks.length}>
-            <UrgentTasks tasks={urgentTasks} onOpenTask={(tid) => handleOpenTask(tid)} />
+            <TaskList
+              rows={urgentTasks}
+              onOpenTask={(tid) => handleOpenTask(tid)}
+              dense
+              maxRows={6}
+              showHeader={false}
+              columns={{ cliente: true, estado: true, vence: true, progreso: false, responsables: true }}
+            />
           </DashboardBlock>
         )
       case 'revision':
@@ -249,10 +297,9 @@ export default function Dashboard() {
             headerActions={
               unreadNotifs.length > 0 && (
                 <button
-                  className="moveBtn clearNotifsBtn"
+                  className="clearNotifsBtn"
                   onClick={(e) => { e.stopPropagation(); handleClearNotifs(); }}
                   title="Marcar todos como leídos"
-                  style={{ color: '#ff5151' }}
                 >
                   <FiTrash2 />
                 </button>

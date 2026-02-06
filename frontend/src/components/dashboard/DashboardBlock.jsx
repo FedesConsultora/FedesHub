@@ -51,18 +51,8 @@ export default function DashboardBlock({
                     {count !== undefined && <span className="countBadge">{count}</span>}
                 </div>
                 <div className="headerRight">
-                    <div className="moveActions">
+                    <div className="headerActions">
                         {headerActions}
-                        {canMoveUp && (
-                            <button className="moveBtn" onClick={() => onMove(-1)} title="Mover arriba">
-                                <FiChevronUp />
-                            </button>
-                        )}
-                        {canMoveDown && (
-                            <button className="moveBtn" onClick={() => onMove(1)} title="Mover abajo">
-                                <FiChevronDown />
-                            </button>
-                        )}
                     </div>
                     <button
                         className="toggleBtn"

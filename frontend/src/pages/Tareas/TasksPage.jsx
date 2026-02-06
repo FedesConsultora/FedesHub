@@ -17,6 +17,8 @@ import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
 import useAttendanceStatus from "../../hooks/useAttendanceStatus";
+import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye, FiTrash2, FiStar as FiStarIcon } from "react-icons/fi";
+import { FaStar, FaTrash } from "react-icons/fa";
 import './components/modal-panel.scss';
 
 import "./TasksPage.scss";
@@ -230,7 +232,15 @@ export default function TasksPage() {
   }, [filters, setSearchParams]);
 
   // data
-  const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(filters);
+  const boardFilters = useMemo(() => {
+    if (view === "overdue") {
+      const today = new Date().toISOString().split('T')[0];
+      return { ...filters, vencimiento_to: today, include_finalizadas: false };
+    }
+    return filters;
+  }, [filters, view]);
+
+  const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(boardFilters);
 
   // Recolectar todos los feder_ids únicos de la vista actual para el estado de asistencia
   const allFederIds = useMemo(() => {
@@ -368,28 +378,18 @@ export default function TasksPage() {
             <button
               type="button"
               role="tab"
-              aria-selected={view === "starred"}
-              className={view === "starred" ? "active" : ""}
-              onClick={() => handleSetView("starred")}
-              title="Ver destacados"
+              aria-selected={view === "overdue"}
+              className={view === "overdue" ? "active" : ""}
+              onClick={() => handleSetView("overdue")}
+              title="Ver vencidas"
+              style={{
+                borderLeft: '1px solid rgba(239, 68, 68, 0.2)',
+                color: view === "overdue" ? 'white' : '#ef4444'
+              }}
             >
-              <i className="fi fi-rr-star" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
-              <span>Destacadas</span>
+              <i className="fi fi-rr-clock-three" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Vencidas</span>
             </button>
-            {isDirectivo && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={view === "trash"}
-                className={view === "trash" ? "active" : ""}
-                onClick={() => handleSetView("trash")}
-                title="Ver papelera"
-              >
-                <i className="fi fi-rr-trash" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
-                <span>Papelera</span>
-                {trashCount > 0 && <span className="tab-badge" style={{ marginLeft: '6px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', padding: '1px 5px', borderRadius: '10px' }}>{trashCount}</span>}
-              </button>
-            )}
             <button
               type="button"
               className="one-pager-btn"
@@ -431,11 +431,34 @@ export default function TasksPage() {
           catalog={catalog}
           onChange={setFilters}
         />
-        <FederBubblesFilter
-          feders={rankedFeders}
-          selectedIds={filters.feder_ids || []}
-          onChange={ids => setFilters({ ...filters, feder_ids: ids, solo_mias: ids.length === 0 })}
-        />
+
+        <div className="filter-actions-group">
+          <div className="view-toggle-icons">
+            <button
+              className={`icon-view-btn fav ${view === 'starred' ? 'active' : ''}`}
+              onClick={() => handleSetView(view === 'starred' ? 'list' : 'starred')}
+              title="Ver destacados"
+            >
+              <FaStar />
+            </button>
+            {isDirectivo && (
+              <button
+                className={`icon-view-btn trash ${view === 'trash' ? 'active' : ''}`}
+                onClick={() => handleSetView(view === 'trash' ? 'list' : 'trash')}
+                title="Ver papelera"
+              >
+                <FaTrash />
+                {trashCount > 0 && <span className="notif-dot">{trashCount}</span>}
+              </button>
+            )}
+          </div>
+
+          <FederBubblesFilter
+            feders={rankedFeders}
+            selectedIds={filters.feder_ids || []}
+            onChange={ids => setFilters({ ...filters, feder_ids: ids, solo_mias: ids.length === 0 })}
+          />
+        </div>
       </div>
 
       <section className="results" data-view={view}>
@@ -449,7 +472,7 @@ export default function TasksPage() {
             canDelete={isDirectivo}
             attendanceStatuses={attendanceStatuses}
           />
-        ) : view === "list" ? (
+        ) : view === "list" || view === "overdue" ? (
           <TaskList
             onOpenTask={setOpenTaskId}
             rows={tableRows}
