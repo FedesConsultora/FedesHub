@@ -15,9 +15,9 @@ const APPS = [
   { code: 'feders', name: 'Feders', to: '/feders' },
   { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
   { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
-  { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true },
+  { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true, directivosOnly: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
-  { code: 'chat', name: 'Chat', to: '/chat' },
+  { code: 'chat', name: 'Chat', to: '/chat', directivosOnly: true },
   { code: 'comercial', name: 'Comercial', to: '/comercial/leads', directivosOnly: true },
   { code: 'onboarding', name: 'Onboarding', to: '/onboarding', directivosOnly: true },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
@@ -32,8 +32,8 @@ export default function Sidebar() {
 
   const canApproveAus = hasPerm('ausencias', 'approve') && (roles.includes('RRHH') || roles.includes('NivelA'))
 
-  // Verificar si es directivo (NivelB o admin) o si tiene acceso comercial
-  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || roles?.includes('Directivo') || hasPerm('auth', 'assign') || hasPerm('comercial', 'read')
+  // Verificar si es directivo (NivelB o NivelA)
+  const isDirectivo = roles?.includes('NivelB') || roles?.includes('NivelA') || roles?.includes('Directivo')
 
   useEffect(() => {
     const handler = (ev) => setChatHasUnread(!!ev?.detail?.hasUnread)
@@ -68,11 +68,12 @@ export default function Sidebar() {
   }, [canApproveAus])
 
   // Filtrar apps según permisos
+  const isRRHH = roles?.includes('RRHH')
   const allowed = APPS.filter(a => {
-    // Si requiere directivos y no lo es, ocultar
-    if (a.directivosOnly && !isDirectivo) return false
-    // Si tiene permiso específico (Admin/Directivo puede ver todo)
-    if (a.need && !hasPerm(a.need.modulo, a.need.accion) && !isDirectivo) return false
+    // Si requiere directivos (o RRHH) y no lo es, ocultar
+    if (a.directivosOnly && !isDirectivo && !isRRHH) return false
+    // Si tiene permiso específico (Admin/Directivo/RRHH puede ver todo lo que tenga 'need')
+    if (a.need && !hasPerm(a.need.modulo, a.need.accion) && !isDirectivo && !isRRHH) return false
     return true
   })
 

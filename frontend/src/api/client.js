@@ -7,7 +7,7 @@ const DEBUG = false
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || '/api',
   withCredentials: true,
-  timeout: 26000
+  timeout: 36000
 })
 
 let CSRF = null
