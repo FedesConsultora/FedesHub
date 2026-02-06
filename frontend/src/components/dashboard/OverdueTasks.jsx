@@ -1,29 +1,31 @@
 import React from 'react';
-import { FiClock } from 'react-icons/fi';
 import './tasks.scss';
+import { FiClock } from 'react-icons/fi';
 
-export default function UrgentTasks({ tasks, onOpenTask }) {
+export default function OverdueTasks({ tasks, onOpenTask }) {
     if (!tasks?.length) return (
-        <div className="urgentTasksEmpty">
-            <p>No hay tareas urgentes pendientes. ¡Buen trabajo!</p>
+        <div className="urgentTasksEmpty overdueEmpty">
+            <p>No hay tareas vencidas. ¡Todo al día! ✨</p>
         </div>
     );
 
     return (
-        <div className="urgentList">
+        <div className="urgentList overdueList">
             {tasks.map(t => (
                 <div
                     key={t.id}
-                    className="urgentItem"
+                    className="urgentItem overdueSectionItem"
                     onClick={() => onOpenTask(t.id)}
                 >
                     <div className="itemMain">
-                        <span className="taskTitle">{t.titulo}</span>
+                        <div className="titleLine">
+                            <span className="taskTitle">{t.titulo}</span>
+                        </div>
                         <div className="itemMeta">
                             {t.cliente_nombre && (
                                 <span
                                     className="clientBadge"
-                                    style={{ backgroundColor: t.cliente_color || '#cbd5e1' }}
+                                    style={{ backgroundColor: t.cliente_color || '#ef4444' }}
                                 >
                                     {t.cliente_nombre}
                                 </span>
@@ -33,9 +35,9 @@ export default function UrgentTasks({ tasks, onOpenTask }) {
                     </div>
                     <div className="itemSide">
                         {t.vencimiento && (
-                            <div className="urgentVenc">
-                                <FiClock className="itemClock" />
-                                <span className="vencTag">
+                            <div className="overdueVenc">
+                                <FiClock className="overdueClock" />
+                                <span className="vencTag overdue">
                                     {new Date(t.vencimiento).toLocaleDateString()}
                                 </span>
                             </div>

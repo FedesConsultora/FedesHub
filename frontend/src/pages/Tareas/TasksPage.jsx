@@ -230,7 +230,15 @@ export default function TasksPage() {
   }, [filters, setSearchParams]);
 
   // data
-  const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(filters);
+  const boardFilters = useMemo(() => {
+    if (view === "overdue") {
+      const today = new Date().toISOString().split('T')[0];
+      return { ...filters, vencimiento_to: today, include_finalizadas: false };
+    }
+    return filters;
+  }, [filters, view]);
+
+  const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(boardFilters);
 
   // Recolectar todos los feder_ids únicos de la vista actual para el estado de asistencia
   const allFederIds = useMemo(() => {
@@ -376,6 +384,21 @@ export default function TasksPage() {
               <i className="fi fi-rr-star" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
               <span>Destacadas</span>
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "overdue"}
+              className={view === "overdue" ? "active" : ""}
+              onClick={() => handleSetView("overdue")}
+              title="Ver vencidas"
+              style={{
+                borderLeft: '1px solid rgba(239, 68, 68, 0.2)',
+                color: view === "overdue" ? 'white' : '#ef4444'
+              }}
+            >
+              <i className="fi fi-rr-clock-three" style={{ marginRight: '4px', verticalAlign: 'middle' }}></i>
+              <span>Vencidas</span>
+            </button>
             {isDirectivo && (
               <button
                 type="button"
@@ -449,7 +472,7 @@ export default function TasksPage() {
             canDelete={isDirectivo}
             attendanceStatuses={attendanceStatuses}
           />
-        ) : view === "list" ? (
+        ) : view === "list" || view === "overdue" ? (
           <TaskList
             onOpenTask={setOpenTaskId}
             rows={tableRows}
