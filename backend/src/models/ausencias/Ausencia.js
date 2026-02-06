@@ -15,6 +15,8 @@ export default (sequelize, DataTypes) => {
     comentario_admin: { type: DataTypes.TEXT },
     aprobado_por_user_id: { type: DataTypes.INTEGER },
     aprobado_at: { type: DataTypes.DATE },
+    denegado_por_user_id: { type: DataTypes.INTEGER },
+    denegado_at: { type: DataTypes.DATE },
     denegado_motivo: { type: DataTypes.TEXT },
     creado_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     actualizado_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
