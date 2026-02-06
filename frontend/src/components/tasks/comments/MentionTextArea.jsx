@@ -125,7 +125,6 @@ export default function MentionTextArea({
         onKeyUp={onKeyUp}
         placeholder={placeholder}
         disabled={disabled}
-        style={{ overflow: 'hidden' }} // Hide scrollbar until max-height is reached
       />
       {open && !!results.length && (
         <div className={classNames.popover || ''}>

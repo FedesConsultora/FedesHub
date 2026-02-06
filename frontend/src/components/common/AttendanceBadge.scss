@@ -1,8 +1,8 @@
 // Attendance badge - transparent background, icon only
 .attendance-badge {
     position: absolute;
-    bottom: -4px;
-    right: -4px;
+    bottom: 1px;
+    right: -2px;
     width: var(--badge-size, 14px);
     height: var(--badge-size, 14px);
     display: grid;

@@ -84,7 +84,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden !important; // Evita scroll lateral interno
-    padding: 10px 35px; // Padding lateral suficiente para los iconos (-34px)
+    padding: 10px 0; // Sin padding horizontal para comentarios más anchos
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -92,22 +92,12 @@
 
     .item {
       display: flex;
-      gap: 8px;
-      align-items: flex-end;
+      gap: 0; // Sin gap para que el bubble ocupe todo el ancho
       width: 100%;
       margin-bottom: 0.5rem;
 
       &.mine {
         flex-direction: row-reverse;
-      }
-
-      .avatarWrapper {
-        position: relative;
-        flex-shrink: 0;
-        margin-bottom: 4px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        border-radius: 50%;
-        margin-left: 0;
       }
     }
 
@@ -146,32 +136,51 @@
   }
 
   .bubble {
-    max-width: 85%; // Ajustado para el nuevo ancho
-    padding: 12px 14px;
+    max-width: 100%; // Ancho completo para comentarios más anchos
+    padding: 8px 12px 8px 12px; // Padding reducido para compactar
     border-radius: 18px 18px 18px 4px;
-    background: #ffffff;
-    border: 1px solid #edf2f7;
+    background: #e0f2fe; // Celeste claro para mejor contraste
+    border: 1px solid #bae6fd;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     position: relative;
     transition: all 0.2s ease;
-    margin-right: 5px; // Espacio mínimo, el padding de la lista hace el resto
+    margin-right: 0; // Sin margen para aprovechar todo el ancho
+    padding-left: 36px; // Espacio para el avatar en la esquina izquierda
+
+    // Avatar en la esquina inferior izquierda
+    .avatarWrapper {
+      position: absolute;
+      bottom: -10px; // Sobresale un poco más del bubble
+      left: -1px; // Sobresale un poco del bubble
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      border-radius: 50%;
+      z-index: 9999 !important; // Asegurar que el avatar esté por encima de otros elementos
+
+      // Posicionar el badge de conexión tocando el avatar
+      .attendanceBadge {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+      }
+    }
 
     .author-row {
       display: flex;
       gap: 10px;
       align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 2px; // Menos espacio entre metadata y texto
 
       .author-name {
         font-size: 0.85rem;
-        font-weight: 700;
+        font-weight: 400; // Más fino
         color: #334155;
       }
 
       .time-ago {
         font-size: 0.65rem;
         color: #94a3b8;
-        font-weight: 500;
+        font-weight: 400; // Más fino que antes (era 500)
       }
     }
 
@@ -214,6 +223,7 @@
       color: #1e293b;
       word-wrap: break-word;
       text-align: left !important; // Fuerza alineación a la izquierda
+      font-weight: 300; // Letra más fina
 
       .mentions {
         color: #3b82f6;
@@ -235,16 +245,24 @@
     }
 
     &.mine {
-      background: #3b82f6;
+      background: #3b82f6; // Azul más oscuro para mis mensajes
       border-color: #3b82f6;
       border-radius: 18px 18px 14px 18px;
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
       margin-right: 0;
-      margin-left: 5px; // Espacio mínimo, el padding de la lista hace el resto
+      margin-left: 0; // Sin margen para aprovechar todo el ancho
+      padding-left: 12px; // Padding normal a la izquierda
+      padding-right: 36px; // Espacio para el avatar en la esquina derecha
+
+      // Avatar en la esquina inferior derecha para mis mensajes
+      .avatarWrapper {
+        left: auto;
+        right: -2px; // Sobresale un poco del bubble
+      }
 
       .author-row {
-        flex-direction: row-reverse;
+        // Removido flex-direction: row-reverse para mantener orden: nombre -> tiempo
 
         .author-name {
           color: rgba(255, 255, 255, 0.95);
@@ -284,7 +302,7 @@
     .replyIco {
       position: absolute;
       top: 2px; // Alineado un poco más abajo del borde superior
-      right: -34px; // Separado del recuadro para no tocarlo
+      right: -28px; // Ajustado para ser visible con padding reducido
       left: auto;
       width: 26px;
       height: 26px;
@@ -318,7 +336,7 @@
 
     &.mine .replyIco {
       right: auto;
-      left: -34px; // Separado en mensajes propios
+      left: -28px; // Ajustado para ser visible con padding reducido
     }
 
     &:hover .replyIco {
@@ -346,9 +364,9 @@
 
         img,
         .video-thumb {
-          width: 220px;
+          width: 260px;
           max-width: 100%;
-          height: 140px;
+          height: 180px;
           object-fit: cover;
           border-radius: 6px;
           background: #f1f5f9;
@@ -401,7 +419,7 @@
 
         .name {
           font-size: 0.75rem;
-          font-weight: 700;
+          font-weight: 400; // Más fino
           max-width: 100%; // Asegura que el nombre no desborde
           overflow: hidden;
           text-overflow: ellipsis;
@@ -474,8 +492,8 @@
 
       .replyExcerpt {
         flex: 1;
-        font-size: 0.82rem;
-        line-height: 1.45;
+        font-size: 0.75rem; // Más pequeño para ahorrar espacio
+        line-height: 1.4;
         color: #64748b;
         white-space: normal;
         word-break: break-word;
@@ -489,7 +507,7 @@
 
         b {
           color: #1e293b;
-          font-weight: 700;
+          font-weight: 600; // Menos negrita
           display: block;
           margin-bottom: 2px;
         }
@@ -511,8 +529,9 @@
 
     .type {
       display: flex;
+      flex-direction: row;
       gap: 8px;
-      align-items: center;
+      align-items: flex-end; // Botón al lado del input
       width: 100%;
       position: relative;
     }
@@ -532,19 +551,20 @@
       background: #f8fafc;
       font-size: 0.95rem;
       font-family: inherit;
+      font-weight: 300; // Letra más fina
       resize: none;
       transition: all 0.2s ease;
       display: block;
-      overflow-y: auto; // Add scroll when content exceeds max-height
+      overflow-y: scroll; // Scrollbar siempre visible
       color: #1e293b !important; // Texto oscuro para fondo claro
       line-height: 1.5; // Better line height for readability
 
-      // Custom scrollbar for textarea
+      // Gmail-style scrollbar
       scrollbar-width: thin;
-      scrollbar-color: #cbd5e1 transparent;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 
       &::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
       }
 
       &::-webkit-scrollbar-track {
@@ -552,16 +572,20 @@
       }
 
       &::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
 
         &:hover {
-          background: #94a3b8;
+          background: rgba(0, 0, 0, 0.3);
+          background-clip: padding-box;
         }
       }
 
       &::placeholder {
         color: #94a3b8 !important;
+        font-size: 0.85rem; // Placeholder más chico
       }
 
       &:focus {
@@ -573,8 +597,8 @@
     }
 
     .send-btn {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       flex-shrink: 0;
       border-radius: 50px;
       background: #3b82f6;
@@ -598,7 +622,7 @@
       }
 
       svg {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
       }
     }
 
@@ -634,12 +658,13 @@
           img {
             margin-right: 0 !important;
             margin-bottom: 4px;
-            width: 40px !important;
-            height: 40px !important;
+            width: 60px !important;
+            height: 60px !important;
           }
 
           .name {
             font-size: 0.65rem;
+            font-weight: 300; // Más fino
             max-width: 60px;
           }
 
