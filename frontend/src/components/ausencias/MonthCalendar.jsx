@@ -8,12 +8,22 @@ export default function MonthCalendar({ year, month, rows = [], holidays = new M
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
 
-  const first = new Date(year, month, 1)
-  const startWeekDay = (first.getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const cells = []
-  for (let i = 0; i < startWeekDay; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  const cells = useMemo(() => {
+    const arr = []
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d)
+      const wd = (date.getDay() + 6) % 7 // 0=Mon, ..., 4=Fri, 5=Sat, 6=Sun
+      if (wd < 5) { // Solo laborables
+        if (arr.length === 0) {
+          // Rellenar con nulos hasta el primer día laborable de la semana si es el caso
+          for (let i = 0; i < wd; i++) arr.push(null)
+        }
+        arr.push(d)
+      }
+    }
+    return arr
+  }, [year, month])
 
   const map = useMemo(() => {
     const m = new Map()
@@ -23,10 +33,12 @@ export default function MonthCalendar({ year, month, rows = [], holidays = new M
       let d = new Date(Math.max(d1, new Date(year, month, 1)))
       const end = new Date(Math.min(d2, new Date(year, month + 1, 0)))
       while (d <= end) {
-        const k = `${year}-${two(month + 1)}-${two(d.getDate())}`
-        const arr = m.get(k) || []
-        arr.push(r)
-        m.set(k, arr)
+        if (d.getDay() !== 0 && d.getDay() !== 6) { // Solo Mon-Fri
+          const k = `${year}-${two(month + 1)}-${two(d.getDate())}`
+          const arr = m.get(k) || []
+          arr.push(r)
+          m.set(k, arr)
+        }
         d = new Date(d.getTime() + 86400000)
       }
     }
@@ -77,7 +89,7 @@ export default function MonthCalendar({ year, month, rows = [], holidays = new M
 
       <div className="aus-month-view">
         <div className="title">{label}</div>
-        <div className="dow">{['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => <span key={i}>{d}</span>)}</div>
+        <div className="dow">{['L', 'M', 'X', 'J', 'V'].map((d, i) => <span key={i}>{d}</span>)}</div>
         <div className="grid">
           {cells.map((d, idx) => {
             if (!d) return <div key={idx} className="day empty" />
@@ -87,17 +99,15 @@ export default function MonthCalendar({ year, month, rows = [], holidays = new M
             const pendientes = items.filter(i => i.estado_codigo === 'pendiente')
             const denegadas = items.filter(i => i.estado_codigo === 'denegada')
             const canceladas = items.filter(i => i.estado_codigo === 'cancelada')
-            const wd = new Date(year, month, d).getDay()
-            const weekend = (wd === 0 || wd === 6)
             const isToday = (dateStr === todayStr)
             const selected = isSelected(dateStr)
             const holidayName = holidays.get(dateStr)
-            const isNonWorking = weekend || !!holidayName
+            const isNonWorking = !!holidayName
             const showDetails = items.length > 0 && !isNonWorking
 
             return (
               <button
-                className={`day ${showDetails ? 'busy' : ''} ${showDetails && pendientes.length ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
+                className={`day ${showDetails ? 'busy' : ''} ${showDetails && pendientes.length ? 'has-pending' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
                 key={idx}
                 onMouseDown={() => handleMouseDown(dateStr)}
                 onMouseEnter={() => handleMouseEnter(dateStr)}

@@ -93,7 +93,7 @@
 
   .dow {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     margin-bottom: 8px;
     color: v.$fh-muted;
@@ -105,7 +105,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     width: 100%; // Asegura que use todo el ancho del card
   }
@@ -135,11 +135,6 @@
       background: transparent;
       border: none;
       cursor: default;
-    }
-
-    &.wknd {
-      opacity: .6;
-      background: transparent;
     }
 
     &.selected {

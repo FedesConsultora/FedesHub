@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useMemo } from 'react'
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import './YearCalendar.scss'
 const two = n => String(n).padStart(2, '0')
@@ -63,12 +63,21 @@ export default function YearCalendar({ year, monthIdx, setMonthIdx, byDate, holi
 
 function Month({ year, month, active, setActive, byDate, holidays, dragStart, dragEnd, setDragStart, setDragEnd }) {
   const label = ((str) => str.charAt(0).toUpperCase() + str.slice(1))(new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }))
-  const first = new Date(year, month, 1)
-  const startWeekDay = (first.getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const cells = []
-  for (let i = 0; i < startWeekDay; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  const cells = useMemo(() => {
+    const arr = []
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d)
+      const wd = (date.getDay() + 6) % 7 // 0=Mon, ..., 6=Sun
+      if (wd < 5) {
+        if (arr.length === 0) {
+          for (let i = 0; i < wd; i++) arr.push(null)
+        }
+        arr.push(d)
+      }
+    }
+    return arr
+  }, [year, month])
 
   const today = new Date(); const t = `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`
 
@@ -85,7 +94,7 @@ function Month({ year, month, active, setActive, byDate, holidays, dragStart, dr
   return (
     <div className={`aus-month ${active ? 'active' : ''}`} onMouseEnter={setActive}>
       <div className="hdr">{label}</div>
-      <div className="dow">{['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => <span key={i}>{d}</span>)}</div>
+      <div className="dow">{['L', 'M', 'X', 'J', 'V'].map((d, i) => <span key={i}>{d}</span>)}</div>
       <div className="grid">
         {cells.map((d, idx) => {
           if (!d) return <div key={idx} className="day empty" />
@@ -96,18 +105,16 @@ function Month({ year, month, active, setActive, byDate, holidays, dragStart, dr
           const hasCanceled = hits.some(h => h.estado_codigo === 'cancelada')
           const hasApproved = hits.some(h => h.estado_codigo === 'aprobada')
           const statusCls = hasPending ? 'st-pendiente' : hasDenied ? 'st-denegada' : hasCanceled ? 'st-cancelada' : (hasApproved ? 'st-aprobada' : '')
-          const wd = new Date(year, month, d).getDay()
-          const weekend = (wd === 0 || wd === 6)
           const isToday = (dateStr === t)
           const selected = isSelected(dateStr)
           const holidayName = holidays.get(dateStr)
-          const isNonWorking = weekend || !!holidayName
+          const isNonWorking = !!holidayName
           const showIndicators = hits.length > 0 && !isNonWorking
 
           return (
             <button
               key={idx}
-              className={`day ${showIndicators ? 'busy' : ''} ${showIndicators ? statusCls : ''} ${showIndicators && hasPending ? 'has-pending' : ''} ${weekend ? 'wknd' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
+              className={`day ${showIndicators ? 'busy' : ''} ${showIndicators ? statusCls : ''} ${showIndicators && hasPending ? 'has-pending' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${holidayName ? 'is-holiday' : ''}`}
               title={(holidayName ? `Feriado: ${holidayName}\n` : '') + hits.map(h => `${h.tipo_nombre} (${h.estado_codigo})`).join('\n')}
               onMouseDown={() => { setDragStart(dateStr); setDragEnd(dateStr) }}
               onMouseEnter={() => { if (dragStart) setDragEnd(dateStr) }}
