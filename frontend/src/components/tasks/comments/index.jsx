@@ -235,16 +235,19 @@ export default function TaskComments({ taskId, catalog, initialCommentId = null 
               // ROBUSTO: prioriza c.is_mine del backend
               const isMine = (typeof c.is_mine === 'boolean') ? c.is_mine : fallbackIsMine
 
+              const avatarNode = (
+                <div className="avatarWrapper">
+                  <Avatar className="ph-avatar" name={author} src={c.autor_avatar_url} size={20} />
+                  <AttendanceBadge {...getStatus(statuses, cFederId)} size={10} />
+                </div>
+              )
+
               return (
                 <div
                   className={`item ${isMine ? 'mine' : ''}`}
                   key={c.id}
                   id={`comment-${c.id}`}
                 >
-                  <div className="avatarWrapper">
-                    <Avatar className="ph-avatar" name={author} src={c.autor_avatar_url} size={30} />
-                    <AttendanceBadge {...getStatus(statuses, cFederId)} size={12} />
-                  </div>
                   <CommentItem
                     c={c}
                     author={author}
@@ -256,6 +259,7 @@ export default function TaskComments({ taskId, catalog, initialCommentId = null 
                     onToggleReaction={toggleReaction}
                     renderContenido={renderContenido}
                     renderReplyExcerpt={renderReplyExcerpt}
+                    avatarNode={avatarNode}
                   />
                 </div>
               )

@@ -6,20 +6,21 @@ import AttachList from './AttachList'
 import CommentReactionBar from './CommentReactionBar'
 
 export default function CommentItem({
-  c, author, feders, isMine, timeAgo, fmtDateTime, onReply, onToggleReaction, renderContenido, renderReplyExcerpt
+  c, author, feders, isMine, timeAgo, fmtDateTime, onReply, onToggleReaction, renderContenido, renderReplyExcerpt, avatarNode
 }) {
   // debug opcional
   // console.log({ isMine, serverFlag: c.is_mine, author, c })
 
   return (
     <div className={`bubble ${isMine ? 'mine' : ''}`}>
+      {avatarNode}
       <button className="replyIco" aria-label="Responder" title="Responder" onClick={onReply}>
         <FaReply aria-hidden="true" />
       </button>
 
       <div className="author-row">
-        <span className="time-ago">{timeAgo(c.created_at)}</span>
         <b className="author-name">{author}</b>
+        <span className="time-ago">{timeAgo(c.created_at)}</span>
       </div>
 
       {c.reply_to && (
