@@ -27,24 +27,24 @@ const _importanciaByCodigo = async (codigo, t) => {
 export const listCatalogos = async () => {
   const [tipos, canales, importancias, estadosEnvio, proveedores, buzones] = await Promise.all([
     m.NotificacionTipo.findAll({
-      attributes: ['id','codigo','nombre','buzon_id','canales_default_json'],
-      order: [['codigo','ASC']]
+      attributes: ['id', 'codigo', 'nombre', 'buzon_id', 'canales_default_json'],
+      order: [['codigo', 'ASC']]
     }),
-    m.CanalTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    m.ImportanciaTipo.findAll({ attributes: ['id','codigo','nombre','orden'], order: [['orden','ASC']] }),
-    m.EstadoEnvio.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    m.ProveedorTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] }),
-    m.BuzonTipo.findAll({ attributes: ['id','codigo','nombre'], order: [['id','ASC']] })
+    m.CanalTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    m.ImportanciaTipo.findAll({ attributes: ['id', 'codigo', 'nombre', 'orden'], order: [['orden', 'ASC']] }),
+    m.EstadoEnvio.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    m.ProveedorTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] }),
+    m.BuzonTipo.findAll({ attributes: ['id', 'codigo', 'nombre'], order: [['id', 'ASC']] })
   ]);
   return { tipos, canales, importancias, estadosEnvio, proveedores, buzones };
 };
 
 /* ========== Inbox / Ventanas ========== */
 function _buildInboxFilters(params, { buzon_id, user_id }) {
-  const only_unread       = !!params.only_unread;
-  const include_archived  = !!params.include_archived;
+  const only_unread = !!params.only_unread;
+  const include_archived = !!params.include_archived;
   const include_dismissed = !!params.include_dismissed;
-  const q                 = params.q?.trim();
+  const q = params.q?.trim();
 
   const whereNotif = {};
   if (buzon_id) whereNotif.buzon_id = buzon_id;
@@ -61,7 +61,7 @@ function _buildInboxFilters(params, { buzon_id, user_id }) {
 
   const whereQ = q ? {
     [Op.or]: [
-      { '$notificacion.titulo$':  { [Op.iLike]: `%${q}%` } },
+      { '$notificacion.titulo$': { [Op.iLike]: `%${q}%` } },
       { '$notificacion.mensaje$': { [Op.iLike]: `%${q}%` } }
     ]
   } : {};
@@ -70,7 +70,7 @@ function _buildInboxFilters(params, { buzon_id, user_id }) {
 }
 
 export const listInbox = async (params, user, t) => {
-  const limit  = Math.min(Number(params.limit ?? 25), 100);
+  const limit = Math.min(Number(params.limit ?? 25), 100);
   const offset = Math.max(Number(params.offset ?? 0), 0);
   const buzon_id = params.buzon ? await _buzonIdByCodigo(params.buzon, t) : null;
 
@@ -81,23 +81,25 @@ export const listInbox = async (params, user, t) => {
     params.sort === 'oldest'
       ? [[{ model: m.Notificacion, as: 'notificacion' }, 'created_at', 'ASC']]
       : params.sort === 'importance'
-      ? [
+        ? [
           [{ model: m.Notificacion, as: 'notificacion' }, { model: m.ImportanciaTipo, as: 'importancia' }, 'orden', 'ASC'],
           [{ model: m.Notificacion, as: 'notificacion' }, 'created_at', 'DESC']
         ]
-      : [[{ model: m.Notificacion, as: 'notificacion' }, 'created_at', 'DESC']];
+        : [[{ model: m.Notificacion, as: 'notificacion' }, 'created_at', 'DESC']];
 
   const includeNotif = {
     model: m.Notificacion, as: 'notificacion', required: true, where: whereNotif,
     include: [
-      { model: m.NotificacionTipo, as: 'tipo', attributes: ['id','codigo','nombre','buzon_id'] },
-      { model: m.ImportanciaTipo, as: 'importancia', attributes: ['id','codigo','nombre','orden'] },
-      { model: m.Tarea, as: 'tarea', attributes: ['id','titulo','cliente_id'],
-        include: [{ model: m.Cliente, as: 'cliente', attributes: ['id','nombre'] }]
+      { model: m.NotificacionTipo, as: 'tipo', attributes: ['id', 'codigo', 'nombre', 'buzon_id'] },
+      { model: m.ImportanciaTipo, as: 'importancia', attributes: ['id', 'codigo', 'nombre', 'orden'] },
+      {
+        model: m.Tarea, as: 'tarea', attributes: ['id', 'titulo', 'cliente_id'],
+        include: [{ model: m.Cliente, as: 'cliente', attributes: ['id', 'nombre'] }]
       },
-      { model: m.Evento, as: 'evento', attributes: ['id','titulo','starts_at','ends_at'] },
-      { model: m.ChatCanal, as: 'chatCanal', attributes: ['id','nombre','slug'],
-        include: [{ model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] }]
+      { model: m.Evento, as: 'evento', attributes: ['id', 'titulo', 'starts_at', 'ends_at'] },
+      {
+        model: m.ChatCanal, as: 'chatCanal', attributes: ['id', 'nombre', 'slug'],
+        include: [{ model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo', 'nombre'] }]
       }
     ]
   };
@@ -127,8 +129,8 @@ export const countByVentana = async (user_id, t) => {
 
   const baseUnreadVisible = {
     user_id,
-    read_at:      { [Op.is]: null },
-    archived_at:  { [Op.is]: null },
+    read_at: { [Op.is]: null },
+    archived_at: { [Op.is]: null },
     dismissed_at: { [Op.is]: null },
   };
 
@@ -151,16 +153,16 @@ export const countByVentana = async (user_id, t) => {
 
 export const listChatCanalesForUser = async (user_id) => {
   const rows = await m.ChatCanal.findAll({
-    attributes: ['id','nombre','slug','is_archivado','created_at'],
+    attributes: ['id', 'nombre', 'slug', 'is_archivado', 'created_at'],
     include: [
-      { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo','nombre'] },
+      { model: m.ChatCanalTipo, as: 'tipo', attributes: ['codigo', 'nombre'] },
       {
         model: m.Notificacion, as: 'notificaciones', required: false,
         where: { chat_canal_id: { [Op.ne]: null } },
         include: [{ model: m.NotificacionDestino, as: 'destinos', where: { user_id }, required: true }]
       }
     ],
-    order: [['updated_at','DESC']]
+    order: [['updated_at', 'DESC']]
   });
   return rows;
 };
@@ -170,10 +172,10 @@ export const getPreferences = async (user_id) => {
   const rows = await m.NotificacionPreferencia.findAll({
     where: { user_id },
     include: [
-      { model: m.NotificacionTipo, as: 'tipo', attributes: ['id','codigo','nombre'] },
-      { model: m.CanalTipo, as: 'canal', attributes: ['id','codigo','nombre'] }
+      { model: m.NotificacionTipo, as: 'tipo', attributes: ['id', 'codigo', 'nombre'] },
+      { model: m.CanalTipo, as: 'canal', attributes: ['id', 'codigo', 'nombre'] }
     ],
-    order: [['tipo_id','ASC'], ['canal_id','ASC']]
+    order: [['tipo_id', 'ASC'], ['canal_id', 'ASC']]
   });
   return rows;
 };
@@ -221,11 +223,16 @@ export const createNotificacion = async (payload, destinos, created_by_user_id, 
     buzon_id
   }, { transaction: t });
 
-  const ds = destinos.map(d => ({
-    notificacion_id: n.id,
-    user_id: d.user_id,
-    feder_id: d.feder_id ?? null
-  }));
+  const ds = destinos.map(d => {
+    if (typeof d === 'number' || typeof d === 'string') {
+      return { notificacion_id: n.id, user_id: +d, feder_id: null };
+    }
+    return {
+      notificacion_id: n.id,
+      user_id: d.user_id,
+      feder_id: d.feder_id ?? null
+    };
+  });
   await m.NotificacionDestino.bulkCreate(ds, { transaction: t, ignoreDuplicates: true });
 
   return n;
