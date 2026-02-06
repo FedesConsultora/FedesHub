@@ -124,6 +124,53 @@ export const renderEmail = async ({ tipo_id, idioma = 'es', payload = {}, link_u
       html = templates.evento_rsvp({ evento: payload?.evento, rsvp: payload?.rsvp, link: link_url });
       break;
 
+    /* Ausencias */
+    case 'ausencia_aprobada': {
+      subject = '✅ Solicitud de ausencia aprobada';
+
+      const approverFeder = payload?.aprobador_id
+        ? await m.Feder.findOne({ where: { user_id: payload.aprobador_id } })
+        : null;
+
+      html = templates.ausencia_aprobada({
+        ausencia: {
+          tipo_nombre: payload?.tipo_nombre,
+          fecha_desde: payload?.fecha_desde,
+          fecha_hasta: payload?.fecha_hasta,
+          unidad_codigo: payload?.unidad_codigo,
+          duracion_horas: payload?.duracion_horas,
+          es_medio_dia: payload?.es_medio_dia,
+          mitad_dia_id: payload?.mitad_dia_id
+        },
+        approver_nombre: approverFeder ? `${approverFeder.nombre} ${approverFeder.apellido}` : null,
+        link: link_url
+      });
+      break;
+    }
+    case 'ausencia_rechazada': {
+      subject = '❌ Solicitud de ausencia rechazada';
+
+      const rechazadorFeder = payload?.rechazador_id
+        ? await m.Feder.findOne({ where: { user_id: payload.rechazador_id } })
+        : null;
+
+      html = templates.ausencia_rechazada({
+        ausencia: {
+          tipo_nombre: payload?.tipo_nombre,
+          fecha_desde: payload?.fecha_desde,
+          fecha_hasta: payload?.fecha_hasta,
+          unidad_codigo: payload?.unidad_codigo,
+          duracion_horas: payload?.duracion_horas,
+          es_medio_dia: payload?.es_medio_dia,
+          mitad_dia_id: payload?.mitad_dia_id
+        },
+        rechazador_nombre: rechazadorFeder ? `${rechazadorFeder.nombre} ${rechazadorFeder.apellido}` : null,
+        motivo: payload?.motivo,
+        link: link_url
+      });
+      break;
+    }
+
     default:
       subject = subject || 'FedesHub';
       html = templates.confirmEmail({ name: payload?.name || 'Fede', link: link_url || '#' });
@@ -151,6 +198,9 @@ export const sendNotificationEmails = async (notificacion_id, t) => {
   const defaults = Array.isArray(notif.tipo?.canales_default_json) ? notif.tipo.canales_default_json : [];
   const emailDefaultOn = defaults.includes('email');
 
+  const baseUrlEnv = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+  const baseUrl = baseUrlEnv || 'http://localhost:3000';
+
   let sent = 0;
   for (const d of notif.destinos) {
     const pref = await m.NotificacionPreferencia.findOne({
@@ -162,14 +212,18 @@ export const sendNotificationEmails = async (notificacion_id, t) => {
     const to = d.user?.email;
     if (!to) continue;
 
-    const link_url = notif.link_url || '#';
+    let link_url = notif.link_url || '#';
+    if (link_url.startsWith('/')) {
+      link_url = `${baseUrl}${link_url}`;
+    }
+
+    const data = notif.data_json ? JSON.parse(notif.data_json) : {};
     const payload = {
-      // payload estándar que esperan los templates
-      tarea: notif.tarea ? { ...(notif.tarea.get?.() ?? notif.tarea) } : undefined,
-      evento: notif.evento ? { ...(notif.evento.get?.() ?? notif.evento) } : undefined,
-      canal: notif.chatCanal ? { ...(notif.chatCanal.get?.() ?? notif.chatCanal) } : undefined,
-      comentario: notif.data_json ? JSON.parse(notif.data_json)?.comentario : undefined,
-      rsvp: notif.data_json ? JSON.parse(notif.data_json)?.rsvp : undefined,
+      ...data,
+      // payload estándar que esperan los templates como fallback
+      tarea: notif.tarea ? { ...(notif.tarea.get?.() ?? notif.tarea) } : data.tarea,
+      evento: notif.evento ? { ...(notif.evento.get?.() ?? notif.evento) } : data.evento,
+      canal: notif.chatCanal ? { ...(notif.chatCanal.get?.() ?? notif.chatCanal) } : data.canal,
       link: link_url
     };
 
@@ -182,8 +236,6 @@ export const sendNotificationEmails = async (notificacion_id, t) => {
     }, t);
 
     // 2) Pixel de apertura
-    const baseUrlEnv = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
-    const baseUrl = baseUrlEnv || 'https://tu-app.com';
     const pixelUrl = `${baseUrl}/api/notificaciones/email/open/${envio.tracking_token}.gif`;
     const htmlWithPixel = `${html}<img src="${pixelUrl}" width="1" height="1" alt="" style="display:none" />`;
 

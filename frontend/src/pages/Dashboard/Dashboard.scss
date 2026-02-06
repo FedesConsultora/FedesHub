@@ -52,44 +52,37 @@
     .periodToggle,
     .miniTabs {
       display: flex;
+      align-items: center;
       background: rgba(255, 255, 255, 0.05);
-      padding: 4px;
+      padding: 3px;
       border-radius: 12px;
-      gap: 4px;
+      gap: 2px;
+      height: fit-content;
+      margin-left: 12px;
+      flex-shrink: 0;
 
       button {
-        padding: 6px 16px;
-        border-radius: 8px;
+        padding: 5px 12px;
+        border-radius: 9px;
         border: none;
         background: transparent;
-        font-weight: 850;
-        font-size: 0.85rem;
+        font-weight: 700;
+        font-size: 0.72rem;
         color: $fh-muted;
         cursor: pointer;
         transition: all 0.2s;
+        white-space: nowrap;
 
         &.active {
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.98);
           color: #0f1720;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         &:hover:not(.active) {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.08);
           color: $fh-text;
         }
-      }
-    }
-
-    .miniTabs {
-      padding: 2px;
-      border-radius: 10px;
-      gap: 2px;
-
-      button {
-        padding: 4px 12px;
-        font-size: 0.75rem;
-        border-radius: 7px;
       }
     }
 
@@ -112,6 +105,7 @@
     }
   }
 }
+
 
 .dashContentGrid {
   display: grid;

@@ -67,13 +67,7 @@ export default function AusenciasBoard() {
   const canAssign = can('ausencias', 'assign')
   const canManageRrhh = can('rrhh', 'manage') || can('ausencias', 'manage')
 
-  if (import.meta.env.DEV) {
-    console.log('--- AUSENCIAS PERMISSIONS DEBUG ---')
-    console.log('User Perms Array:', perms)
-    console.log('canManageRrhh:', canManageRrhh)
-    console.log('canApprove (ausencias.approve):', canApprove)
-    console.log('-----------------------------------')
-  }
+
   const canRequestAllocation = canCreate || canAssign
 
   const board = useAusenciasBoard(String(year))

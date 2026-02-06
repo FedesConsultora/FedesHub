@@ -17,6 +17,16 @@ export const getTipoBy = async ({ id, codigo }) => {
   return null;
 };
 
+export const isUserDirectivo = async (userId) => {
+  const rows = await sequelize.query(`
+    SELECT r.nombre
+    FROM "UserRol" ur
+    JOIN "Rol" r ON r.id = ur.rol_id
+    WHERE ur.user_id = :uid AND r.nombre IN ('NivelA', 'NivelB', 'Directivo')
+  `, { type: QueryTypes.SELECT, replacements: { uid: userId } });
+  return rows.length > 0;
+};
+
 export const isUserRRHH = async (userId) => {
   const rows = await sequelize.query(`
     SELECT r.nombre
@@ -25,6 +35,11 @@ export const isUserRRHH = async (userId) => {
     WHERE ur.user_id = :uid AND r.nombre = 'RRHH'
   `, { type: QueryTypes.SELECT, replacements: { uid: userId } });
   return rows.length > 0;
+};
+
+export const isUserFede = async (userId) => {
+  const user = await m.User.findByPk(userId);
+  return user?.email === 'fedechironi@fedesconsultora.com';
 };
 
 export const getEstadoByCodigo = (codigo) =>
@@ -199,13 +214,19 @@ export const listAusencias = async ({ feder_id, estado_codigo, desde, hasta, lim
   const sql = `
     SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
            f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url, f.user_id AS user_id,
-           u_user.email AS solicitante_email
+           u_user.email AS solicitante_email,
+           fa.nombre AS aprobador_nombre, fa.apellido AS aprobador_apellido,
+           fd.nombre AS rechazador_nombre, fd.apellido AS rechazador_apellido
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
     JOIN "Feder" f          ON f.id = a.feder_id
     JOIN "User" u_user      ON u_user.id = f.user_id
+    LEFT JOIN "User" ua      ON ua.id = a.aprobado_por_user_id
+    LEFT JOIN "Feder" fa     ON fa.user_id = ua.id
+    LEFT JOIN "User" ud      ON ud.id = a.denegado_por_user_id
+    LEFT JOIN "Feder" fd     ON fd.user_id = ud.id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY a.fecha_desde DESC, a.id DESC
     LIMIT :limit OFFSET :offset
@@ -217,13 +238,19 @@ export const getAusenciaById = async (id) => {
   const rows = await sequelize.query(`
     SELECT a.*, t.nombre AS tipo_nombre, t.codigo AS tipo_codigo, t.icon AS tipo_icon, t.color AS tipo_color, u.codigo AS unidad_codigo, e.codigo AS estado_codigo, 
            f.nombre AS solicitante_nombre, f.apellido AS solicitante_apellido, f.avatar_url AS solicitante_avatar_url, f.user_id AS user_id,
-           u_user.email AS solicitante_email
+           u_user.email AS solicitante_email,
+           fa.nombre AS aprobador_nombre, fa.apellido AS aprobador_apellido,
+           fd.nombre AS rechazador_nombre, fd.apellido AS rechazador_apellido
     FROM "Ausencia" a
     JOIN "AusenciaTipo" t ON t.id = a.tipo_id
     JOIN "AusenciaUnidadTipo" u ON u.id = t.unidad_id
     JOIN "AusenciaEstado" e ON e.id = a.estado_id
     JOIN "Feder" f          ON f.id = a.feder_id
     JOIN "User" u_user       ON u_user.id = f.user_id
+    LEFT JOIN "User" ua      ON ua.id = a.aprobado_por_user_id
+    LEFT JOIN "Feder" fa     ON fa.user_id = ua.id
+    LEFT JOIN "User" ud      ON ud.id = a.denegado_por_user_id
+    LEFT JOIN "Feder" fd     ON fd.user_id = ud.id
     WHERE a.id = :id
   `, { type: QueryTypes.SELECT, replacements: { id } });
   return rows[0] || null;
@@ -363,6 +390,8 @@ export const resetAusenciaRepo = async (id) => {
       estado_id: pend.id,
       aprobado_por_user_id: null,
       aprobado_at: null,
+      denegado_por_user_id: null,
+      denegado_at: null,
       denegado_motivo: null,
       comentario_admin: null
     }, { transaction: tx });

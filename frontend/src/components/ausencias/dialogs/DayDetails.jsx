@@ -3,6 +3,8 @@ import { FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiInfo, FiCalendar, FiClock, F
 import { useAuth } from '../../../context/AuthContext'
 import { ausenciasApi } from '../../../api/ausencias'
 import { useToast } from '../../toast/ToastProvider'
+import ConfirmModal from '../../common/ConfirmModal'
+import PromptModal from '../../common/PromptModal'
 import './Dialog.scss'
 
 const initials = (txt = '') => {
@@ -19,7 +21,9 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
   const { success, error: toastError } = useToast?.() || {}
   const { roles, user } = useAuth()
   const isRRHH = roles.includes('RRHH') || roles.includes('NivelA')
-  const [uploadingId, setUploadingId] = useState(null)
+  const [confirmData, setConfirmData] = useState(null)
+  const [promptData, setPromptData] = useState(null)
+  const [uploadingId, setUploadingId] = useState(null) // { title, message, onConfirm, type }
 
   const enhanced = useMemo(() => rows.map(r => {
     const f = federById?.[r.feder_id]
@@ -32,7 +36,8 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
 
   async function approve(id) {
     try {
-      const updated = await ausenciasApi.aus.approve(id)
+      await ausenciasApi.aus.approve(id)
+      const updated = await ausenciasApi.aus.detail(id)
       setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
       onUpdated?.(updated)
       success?.('La ausencia ha sido aprobada.')
@@ -42,26 +47,70 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
   }
 
   async function reject(id) {
-    try {
-      const updated = await ausenciasApi.aus.reject(id, { denegado_motivo: null })
-      setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
-      onUpdated?.(updated)
-      success?.('La ausencia ha sido rechazada.')
-    } catch (e) {
-      toastError?.(e.response?.data?.error || 'Error al rechazar.')
-    }
+    setPromptData({
+      title: '¿Rechazar solicitud?',
+      message: 'Por favor, indica el motivo del rechazo para informar al Feder.',
+      placeholder: 'Ej: Ya hay demasiadas personas ausentes ese día...',
+      confirmText: 'Rechazar Ausencia',
+      type: 'danger',
+      onConfirm: async (motivo) => {
+        try {
+          await ausenciasApi.aus.reject(id, { denegado_motivo: motivo })
+          const updated = await ausenciasApi.aus.detail(id)
+          setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+          onUpdated?.(updated)
+          success?.('La ausencia ha sido rechazada.')
+        } catch (e) {
+          toastError?.(e.response?.data?.error || 'Error al rechazar.')
+        } finally {
+          setPromptData(null)
+        }
+      }
+    })
   }
 
   async function cancel(id) {
-    if (!window.confirm('¿Quieres cancelar esta solicitud?')) return
-    try {
-      const updated = await ausenciasApi.aus.cancel(id)
-      setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
-      onUpdated?.(updated)
-      success?.('Solicitud cancelada con éxito.')
-    } catch (e) {
-      toastError?.(e.response?.data?.error || 'Error al cancelar.')
-    }
+    setConfirmData({
+      title: '¿Cancelar solicitud?',
+      message: '¿Estás seguro de que quieres cancelar esta solicitud de ausencia?',
+      confirmText: 'Sí, cancelar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await ausenciasApi.aus.cancel(id)
+          const updated = await ausenciasApi.aus.detail(id)
+          setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+          onUpdated?.(updated)
+          success?.('Solicitud cancelada con éxito.')
+        } catch (e) {
+          toastError?.(e.response?.data?.error || 'Error al cancelar.')
+        } finally {
+          setConfirmData(null)
+        }
+      }
+    })
+  }
+
+  async function revert(id) {
+    setConfirmData({
+      title: '¿Volver a pendiente?',
+      message: 'Se eliminarán los consumos y eventos generados. Esta acción permitirá volver a aprobar o rechazar la solicitud.',
+      confirmText: 'Confirmar',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          await ausenciasApi.aus.reset(id)
+          const updated = await ausenciasApi.aus.detail(id)
+          setRows(rs => rs.map(r => r.id === id ? { ...r, ...updated } : r))
+          onUpdated?.(updated)
+          success?.('La solicitud ha vuelto a estado pendiente.')
+        } catch (e) {
+          toastError?.(e.response?.data?.error || 'Error al revertir.')
+        } finally {
+          setConfirmData(null)
+        }
+      }
+    })
   }
 
   async function handleUploadAttachment(id) {
@@ -130,7 +179,7 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
                 {/* Acciones para pendientes */}
                 {item.estado_codigo === 'pendiente' && (
                   <div style={{ display: 'flex', gap: 8, paddingLeft: 54, marginTop: 4 }}>
-                    {canApprove && String(item.user_id) !== String(user?.id) ? (
+                    {canApprove && String(item.user_id) !== String(user?.id) && (roles.includes('RRHH') || roles.includes('NivelA') || roles.includes('NivelB') || roles.includes('Directivo')) ? (
                       <>
                         <button className="fh-btn primary sm" onClick={() => approve(item.id)}><FiCheck /> Aprobar</button>
                         <button className="fh-btn danger sm" onClick={() => reject(item.id)}><FiX /> Rechazar</button>
@@ -145,6 +194,34 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
                         )}
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* Información de procesamiento (solo RRHH/Directivos) */}
+                {(roles.includes('RRHH') || roles.includes('NivelA') || roles.includes('NivelB') || roles.includes('Directivo')) && (item.estado_codigo === 'aprobada' || item.estado_codigo === 'denegada') && (
+                  <div style={{ paddingLeft: 54, marginTop: 8, fontSize: '0.75rem', color: 'var(--fh-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      {item.estado_codigo === 'aprobada' && item.aprobador_nombre && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <FiCheck style={{ color: 'var(--fh-success)' }} />
+                          Aprobada por {item.aprobador_nombre} {item.aprobador_apellido} el {new Date(item.aprobado_at).toLocaleDateString()}
+                        </div>
+                      )}
+                      {item.estado_codigo === 'denegada' && item.rechazador_nombre && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <FiX style={{ color: 'var(--fh-danger)' }} />
+                          Rechazada por {item.rechazador_nombre} {item.rechazador_apellido} el {new Date(item.denegado_at).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      className="fh-btn ghost sm"
+                      style={{ fontSize: '0.65rem', padding: '2px 8px', borderColor: 'rgba(255,255,255,0.1)' }}
+                      onClick={() => revert(item.id)}
+                    >
+                      Volver a Pendiente
+                    </button>
                   </div>
                 )}
               </div>
@@ -240,6 +317,20 @@ export default function DayDetails({ date, items = [], canApprove = false, feder
           <FiPlus /> Solicitar Ausencia
         </button>
       </div>
+
+      {confirmData && (
+        <ConfirmModal
+          {...confirmData}
+          onClose={() => setConfirmData(null)}
+        />
+      )}
+
+      {promptData && (
+        <PromptModal
+          {...promptData}
+          onClose={() => setPromptData(null)}
+        />
+      )}
     </div>
   )
 }

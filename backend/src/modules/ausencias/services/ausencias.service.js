@@ -4,7 +4,7 @@ import {
   assignCuota, listCuotas, deleteCuota, saldoPorTipo,
   listAusencias, getAusenciaById, createAusencia, updateAusencia,
   aprobarAusenciaConConsumo, resetAusenciaRepo, getEstadoByCodigo, getFederByUser, ensureFeder,
-  isUserRRHH, getUserById
+  isUserRRHH, isUserDirectivo, isUserFede, getUserById
 } from '../repositories/ausencias.repo.js';
 import { initModels } from '../../../models/registry.js';
 import { sequelize } from '../../../core/db.js';
@@ -182,11 +182,22 @@ export const ausApprove = async (id, user_id) => {
     throw Object.assign(new Error('No puedes aprobar tu propia ausencia'), { status: 403 });
   }
 
-  const requesterIsRRHH = await isUserRRHH(row.user_id);
-  if (requesterIsRRHH) {
-    const approver = await getUserById(user_id);
-    if (approver?.email !== 'fedechironi@fedesconsultora.com') {
-      throw Object.assign(new Error('Las ausencias de RRHH sólo pueden ser aprobadas por Federico Chironi'), { status: 403 });
+  const requesterIsFede = await isUserFede(row.user_id);
+  const approverIsDirectivo = await isUserDirectivo(user_id);
+  const approverIsFede = await isUserFede(user_id);
+
+  if (requesterIsFede) {
+    // A Fede solo lo pueden aprobar otros Directivos
+    if (!approverIsDirectivo) {
+      throw Object.assign(new Error('Las ausencias de Federico Chironi sólo pueden ser aprobadas por otros Directivos'), { status: 403 });
+    }
+  } else {
+    const requesterIsRRHH = await isUserRRHH(row.user_id);
+    if (requesterIsRRHH) {
+      // Al resto de RRHH solo lo aprueba Fede
+      if (!approverIsFede) {
+        throw Object.assign(new Error('Las ausencias de RRHH sólo pueden ser aprobadas por Federico Chironi'), { status: 403 });
+      }
     }
   }
 
@@ -200,21 +211,98 @@ export const ausApprove = async (id, user_id) => {
     if (requerido <= 0) requerido = WORKDAY_HOURS; // fallback
   }
 
-  return aprobarAusenciaConConsumo({
+  const result = await aprobarAusenciaConConsumo({
     ausencia_id: id,
     aprobado_por_user_id: user_id,
     requerido,
     unidad_codigo: row.unidad_codigo
   });
+
+  // 🔔 Notificar
+  try {
+    const { svcCreate } = await import('../../notificaciones/services/notificaciones.service.js');
+    await svcCreate({
+      tipo_codigo: 'ausencia_aprobada',
+      destinos: [row.user_id],
+      data: {
+        ausencia_id: id,
+        aprobador_id: user_id,
+        fecha_desde: row.fecha_desde,
+        fecha_hasta: row.fecha_hasta,
+        tipo_nombre: row.tipo_nombre,
+        unidad_codigo: row.unidad_codigo,
+        duracion_horas: row.duracion_horas,
+        es_medio_dia: row.es_medio_dia,
+        mitad_dia_id: row.mitad_dia_id
+      },
+      link_url: `/ausencias?date=${row.fecha_desde}`
+    }, { id: user_id });
+  } catch (e) {
+    console.error('Error enviando notificación de ausencia aprobada:', e);
+  }
+
+  return result;
 };
 
-export const ausReject = async (id, { denegado_motivo, comentario_admin }) => {
+export const ausReject = async (id, { denegado_motivo, comentario_admin }, user_id) => {
   const row = await ausDetail(id);
   if (!row) throw Object.assign(new Error('Ausencia no encontrada'), { status: 404 });
+
+  // 🛡️ Reglas de Seguridad (mismas que aprobacion)
+  const requesterIsFede = await isUserFede(row.user_id);
+  const approverIsDirectivo = await isUserDirectivo(user_id);
+  const approverIsFede = await isUserFede(user_id);
+
+  if (requesterIsFede) {
+    if (!approverIsDirectivo) {
+      throw Object.assign(new Error('Las ausencias de Federico Chironi sólo pueden ser rechazadas por otros Directivos'), { status: 403 });
+    }
+  } else {
+    const requesterIsRRHH = await isUserRRHH(row.user_id);
+    if (requesterIsRRHH) {
+      if (!approverIsFede) {
+        throw Object.assign(new Error('Las ausencias de RRHH sólo pueden ser rechazadas por Federico Chironi'), { status: 403 });
+      }
+    }
+  }
+
   const pend = await getEstadoByCodigo('pendiente');
   if (row.estado_id !== pend.id) throw Object.assign(new Error('Sólo ausencias pendientes pueden rechazarse'), { status: 409 });
+
   const den = await getEstadoByCodigo('denegada');
-  return updateAusencia(id, { estado_id: den.id, denegado_motivo: denegado_motivo ?? null, comentario_admin: comentario_admin ?? null });
+  const result = await updateAusencia(id, {
+    estado_id: den.id,
+    denegado_motivo: denegado_motivo ?? null,
+    comentario_admin: comentario_admin ?? null,
+    denegado_por_user_id: user_id,
+    denegado_at: new Date()
+  });
+
+  // 🔔 Notificar
+  try {
+    const { svcCreate } = await import('../../notificaciones/services/notificaciones.service.js');
+    await svcCreate({
+      tipo_codigo: 'ausencia_rechazada',
+      destinos: [row.user_id],
+      data: {
+        ausencia_id: id,
+        rechazador_id: user_id,
+        fecha_desde: row.fecha_desde,
+        fecha_hasta: row.fecha_hasta,
+        tipo_nombre: row.tipo_nombre,
+        motivo: denegado_motivo,
+        unidad_codigo: row.unidad_codigo,
+        duracion_horas: row.duracion_horas,
+        es_medio_dia: row.es_medio_dia,
+        mitad_dia_id: row.mitad_dia_id
+      },
+      link_url: `/ausencias?date=${row.fecha_desde}`
+    }, { id: user_id });
+  } catch (e) {
+    console.error('Error enviando notificación de ausencia rechazada:', e);
+  }
+
+  return result;
 };
 
 export const ausCancel = async (id) => {

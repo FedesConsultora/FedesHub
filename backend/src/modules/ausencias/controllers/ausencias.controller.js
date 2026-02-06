@@ -75,7 +75,7 @@ export const approveAus = async (req, res, next) => {
   try { res.json(await ausApprove(Number(req.params.id), req.user.id)); } catch (e) { next(e); }
 };
 export const rejectAus = async (req, res, next) => {
-  try { res.json(await ausReject(Number(req.params.id), ausenciaRechazoSchema.parse(req.body))); } catch (e) { next(e); }
+  try { res.json(await ausReject(Number(req.params.id), ausenciaRechazoSchema.parse(req.body), req.user.id)); } catch (e) { next(e); }
 };
 export const cancelAus = async (req, res, next) => {
   try { res.json(await ausCancel(Number(req.params.id))); } catch (e) { next(e); }

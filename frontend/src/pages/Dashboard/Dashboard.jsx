@@ -215,7 +215,7 @@ export default function Dashboard() {
             {...blockProps}
             title="Resumen"
             headerActions={
-              <div className="miniTabs">
+              <div className="miniTabs" >
                 <button className={tipoTarea === 'TODAS' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TODAS') }}>Todas</button>
                 <button className={tipoTarea === 'COM' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('COM') }}>Comercial</button>
                 <button className={tipoTarea === 'TC' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TC') }}>TC</button>
@@ -291,10 +291,6 @@ export default function Dashboard() {
           <p>Este es el resumen de tu actividad para hoy.</p>
         </div>
         <div className="headerRight">
-          <div className="periodToggle">
-            <button className={periodo === 'semana' ? 'active' : ''} onClick={() => handlePeriodChange('semana')}>Semana</button>
-            <button className={periodo === 'mes' ? 'active' : ''} onClick={() => handlePeriodChange('mes')}>Mes</button>
-          </div>
           <button className="btnCreate" onClick={() => navigate('/tareas')}>Ver Tareas</button>
         </div>
       </div>
