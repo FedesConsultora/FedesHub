@@ -1,6 +1,7 @@
 services:
-  db:
+  fedeshub-db:
     image: postgres:16
+    container_name: fedeshub-db-dev
     environment:
       - POSTGRES_USER=${DB_USER:-fedeshub}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-fedeshub}
@@ -9,6 +10,13 @@ services:
       - "5432:5432"
     volumes:
       - postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${DB_USER:-fedeshub} -d $${DB_NAME:-fedeshub}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fedeshub-network
 
   backend:
     build:
@@ -25,8 +33,12 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
+      - DB_HOST=fedeshub-db
     depends_on:
-      - db
+      fedeshub-db:
+        condition: service_healthy
+    networks:
+      - fedeshub-network
 
   frontend:
     build:
@@ -44,6 +56,12 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
+    networks:
+      - fedeshub-network
+
+networks:
+  fedeshub-network:
+    driver: bridge
 
 volumes:
   postgres_dev:
