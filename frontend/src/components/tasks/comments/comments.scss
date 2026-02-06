@@ -14,8 +14,8 @@
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.05) !important;
   border-radius: 24px !important; // Redondeado en todos los bordes
   animation: commentSidebarEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  overflow: hidden !important;
-  overflow-x: hidden !important; // Fuerza eliminación de scroll lateral
+  overflow: hidden !important; // Evita scroll lateral en el panel
+  overflow-x: hidden !important;
   border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
   z-index: 1000;
   margin-top: 0 !important;
@@ -83,8 +83,8 @@
   .list {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden !important; // Evita scroll lateral interno
-    padding: 10px 0; // Sin padding horizontal para comentarios más anchos
+    overflow-x: hidden; // Evita scroll lateral interno
+    padding: 10px 14px; // Padding suficiente para que el avatar "sobresalga" internamente
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -95,6 +95,7 @@
       gap: 0; // Sin gap para que el bubble ocupe todo el ancho
       width: 100%;
       margin-bottom: 0.5rem;
+      overflow: visible;
 
       &.mine {
         flex-direction: row-reverse;
@@ -109,6 +110,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      text-transform: capitalize;
 
       span {
         position: relative;
@@ -116,9 +118,9 @@
         padding: 0 16px;
         z-index: 2;
         font-size: 0.7rem;
-        font-weight: 700;
+        font-weight: 400;
         color: #94a3b8;
-        text-transform: uppercase;
+
         letter-spacing: 0.08em;
       }
 
@@ -136,26 +138,28 @@
   }
 
   .bubble {
-    max-width: 100%; // Ancho completo para comentarios más anchos
-    padding: 8px 12px 8px 12px; // Padding reducido para compactar
-    border-radius: 18px 18px 18px 4px;
+    width: 100%; // Forzar ancho completo para ahorrar alto
+    padding: 8px 12px 8px 12px; // Padding muy ajustado. El 22px es para el avatar.
+    border-radius: 14px 14px 14px 4px;
     background: #e0f2fe; // Celeste claro para mejor contraste
     border: 1px solid #bae6fd;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     position: relative;
     transition: all 0.2s ease;
-    margin-right: 0; // Sin margen para aprovechar todo el ancho
-    padding-left: 36px; // Espacio para el avatar en la esquina izquierda
+    margin-right: 0;
+    margin-bottom: 6px;
+    overflow: visible;
+    z-index: 5;
 
     // Avatar en la esquina inferior izquierda
     .avatarWrapper {
       position: absolute;
-      bottom: -10px; // Sobresale un poco más del bubble
-      left: -1px; // Sobresale un poco del bubble
+      bottom: -10px;
+      left: -1px;
       flex-shrink: 0;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
       border-radius: 50%;
-      z-index: 9999 !important; // Asegurar que el avatar esté por encima de otros elementos
+      z-index: 9999 !important;
 
       // Posicionar el badge de conexión tocando el avatar
       .attendanceBadge {
@@ -167,9 +171,9 @@
 
     .author-row {
       display: flex;
-      gap: 10px;
+      gap: 6px; // Reducido para ahorrar espacio
       align-items: center;
-      margin-bottom: 2px; // Menos espacio entre metadata y texto
+      margin-bottom: 2px;
 
       .author-name {
         font-size: 0.85rem;
@@ -245,31 +249,33 @@
     }
 
     &.mine {
-      background: #3b82f6; // Azul más oscuro para mis mensajes
-      border-color: #3b82f6;
-      border-radius: 18px 18px 14px 18px;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      background: #a7e6f0ec;
+      border-color: #a7e6f0ec;
+      ;
+      border-radius: 14px 14px 4px 14px;
+      color: #232d33 !important;
+      box-shadow: 0 4px 12px #4DD0E100;
       margin-right: 0;
-      margin-left: 0; // Sin margen para aprovechar todo el ancho
-      padding-left: 12px; // Padding normal a la izquierda
-      padding-right: 36px; // Espacio para el avatar en la esquina derecha
+      margin-left: 0;
+      margin-bottom: 6px;
+      padding-left: 12px; // Mínimo padding a la izquierda
+      padding-right: 12px; // Espacio justo para el avatar a la derecha
 
       // Avatar en la esquina inferior derecha para mis mensajes
       .avatarWrapper {
         left: auto;
-        right: -2px; // Sobresale un poco del bubble
+        right: -8px; // Sobresale sutilmente del bubble
       }
 
       .author-row {
         // Removido flex-direction: row-reverse para mantener orden: nombre -> tiempo
 
         .author-name {
-          color: rgba(255, 255, 255, 0.95);
+          color: #334155;
         }
 
         .time-ago {
-          color: rgba(255, 255, 255, 0.7);
+          color: #334155ed;
         }
       }
 
@@ -285,7 +291,7 @@
       }
 
       .txt {
-        color: #ffffff;
+
 
         .mentions {
           background: rgba(255, 255, 255, 0.2);
@@ -301,8 +307,8 @@
 
     .replyIco {
       position: absolute;
-      top: 2px; // Alineado un poco más abajo del borde superior
-      right: -28px; // Ajustado para ser visible con padding reducido
+      top: -3px; // Alineado un poco más abajo del borde superior
+      right: -10px; // Ajustado para ser visible con padding reducido
       left: auto;
       width: 26px;
       height: 26px;
@@ -326,7 +332,7 @@
       }
 
       &:hover {
-        transform: scale(1.25); // Solo se agranda, sin cambio de color
+        transform: scale(1.15); // Reducido para evitar que se corte
         background: #ffffff; // Mantiene fondo
         color: #3b82f6 !important;
         border-color: #e2e8f0;
@@ -334,14 +340,9 @@
       }
     }
 
-    &.mine .replyIco {
-      right: auto;
-      left: -28px; // Ajustado para ser visible con padding reducido
-    }
 
-    &:hover .replyIco {
-      opacity: 1;
-    }
+
+
 
     /* ATTACHMENTS (IMÁGENES Y ARCHIVOS) */
     .attachList {
@@ -585,7 +586,8 @@
 
       &::placeholder {
         color: #94a3b8 !important;
-        font-size: 0.85rem; // Placeholder más chico
+        font-size: 0.8rem; // Placeholder más chico para evitar corte
+        line-height: 1.2;
       }
 
       &:focus {

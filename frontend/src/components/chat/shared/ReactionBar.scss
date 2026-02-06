@@ -2,15 +2,15 @@
 
 .reactBar {
   display: flex;
-  gap: 6px;
+  gap: 3px; // Reducido para menos espacio
   align-items: center;
-  margin-top: 4px;
+  margin-top: 1px; // Reducido bastante para compactar
   flex-wrap: wrap;
   width: 100%;
 
   .reacts {
     display: flex;
-    gap: 6px;
+    gap: 3px; // Reducido para menos espacio entre emojis
     flex-wrap: wrap;
 
     .chipWrap {
