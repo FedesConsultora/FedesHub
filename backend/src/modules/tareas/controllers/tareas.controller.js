@@ -1,5 +1,6 @@
 // backend/src/modules/tareas/controllers/tareas.controller.js
 import { initModels } from '../../../models/registry.js';
+import { publishMany, publishAll } from '../../realtime/bus.js';
 import {
   listTasksQuerySchema, taskIdParamSchema, createTaskSchema, updateTaskSchema,
   setEstadoSchema, setAprobacionSchema, moveKanbanSchema,
@@ -50,6 +51,36 @@ async function federIdsToDestinos(federIds = [], req) {
   return feders
     .map(f => ({ user_id: f.user_id, feder_id: f.id }))
     .filter(d => d.user_id && d.user_id !== req.user?.id);
+}
+
+/**
+ * Obtiene todos los user_ids interesados en una tarea:
+ * - Creador
+ * - Responsables
+ * - Colaboradores
+ * - Seguidores
+ */
+async function getTaskInvolvedUserIds(taskId) {
+  const tarea = await models.Tarea.findByPk(taskId, {
+    attributes: ['id'],
+    include: [
+      { model: models.Feder, as: 'creadoPor', attributes: ['user_id'] },
+      { model: models.Feder, as: 'Responsables', attributes: ['user_id'] },
+      { model: models.Feder, as: 'Colaboradores', attributes: ['user_id'] },
+      { model: models.TareaSeguidor, as: 'seguidores', attributes: ['user_id'] }
+    ]
+  });
+
+  if (!tarea) return [];
+
+  const userIds = new Set();
+
+  if (tarea.creadoPor?.user_id) userIds.add(Number(tarea.creadoPor.user_id));
+  (tarea.Responsables || []).forEach(f => f.user_id && userIds.add(Number(f.user_id)));
+  (tarea.Colaboradores || []).forEach(f => f.user_id && userIds.add(Number(f.user_id)));
+  (tarea.seguidores || []).forEach(s => s.user_id && userIds.add(Number(s.user_id)));
+
+  return Array.from(userIds);
 }
 
 
@@ -600,6 +631,27 @@ export const postComentario = async (req, res, next) => {
         req.log?.error('tareas.postComentario:notif:fail', { err: err?.message, stack: err?.stack });
       }
     })();
+
+    // ===== Real-time Sync (SSE) =====
+    (async () => {
+      try {
+        const userIds = await getTaskInvolvedUserIds(id);
+        console.log(`[Tareas:SSE] Notifying users for comment on task ${id}: [${userIds.join(', ')}]`);
+
+        // TEMPORAL DEBUG: Notify EVERYONE connected to be absolutely sure the frontend receives it
+        const broadCount = publishAll({
+          type: 'tarea.comentario.creado',
+          tarea_id: Number(id),
+          comentario_id: cm.id,
+          autor_id: req.user.id,
+          debug: 'broad'
+        });
+        console.log(`[Tareas:SSE] publishAll reached ${broadCount} connections.`);
+      } catch (err) {
+        console.error(`[Tareas:SSE] Error in postComentario SSE:`, err.message);
+        req.log?.error('tareas.postComentario:sse:err', { err: err?.message });
+      }
+    })();
   } catch (e) {
     req.log?.error('tareas.postComentario:err', { err: e?.message, stack: e?.stack });
     next(e);
@@ -611,7 +663,29 @@ export const postToggleReaccion = async (req, res, next) => {
     const { id, comentarioId } = req.params;
     const body = reactionToggleSchema.parse(req.body);
     await svcToggleComentarioReaccion(Number(comentarioId), req.user.id, body);
-    res.json(await svcListComentarios(Number(id), req.user));
+    const list = await svcListComentarios(Number(id), req.user);
+    res.json(list);
+
+    // ===== Real-time Sync (SSE) =====
+    (async () => {
+      try {
+        const userIds = await getTaskInvolvedUserIds(id);
+        console.log(`[Tareas:SSE] Notifying users for reaction on task ${id}: [${userIds.join(', ')}]`);
+
+        // TEMPORAL DEBUG: Notify EVERYONE
+        const broadCount = publishAll({
+          type: 'tarea.comentario.reaccion',
+          tarea_id: Number(id),
+          comentario_id: Number(comentarioId),
+          autor_id: req.user.id,
+          debug: 'broad'
+        });
+        console.log(`[Tareas:SSE] publishAll reached ${broadCount} connections.`);
+      } catch (err) {
+        console.error(`[Tareas:SSE] Error in postToggleReaccion SSE:`, err.message);
+        req.log?.error('tareas.postToggleReaccion:sse:err', { err: err?.message });
+      }
+    })();
   } catch (e) { next(e); }
 };
 

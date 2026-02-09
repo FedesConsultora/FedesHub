@@ -554,19 +554,59 @@ export default function RealtimeProvider({ children }) {
 
   // ---- Effects de Inicialización
   useEffect(() => {
-    if (!user || !booted) return
-    let es = new EventSource('/api/realtime/stream', { withCredentials: true })
-    const forward = (ev) => {
-      const type = ev?.type || 'message'
-      let payload = {}
-      try { payload = JSON.parse(ev?.data || '{}') } catch { }
-      if (!payload.type) payload.type = type
-      window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }))
+    // LOG DE ESTADO CRÍTICO: ¿Por qué no conecta?
+    console.log('[SSE:INIT] Checking conditions:', {
+      hasUser: !!user,
+      userId: user?.id,
+      email: user?.email,
+      booted,
+      origin: window.location.origin
+    });
+
+    if (!user || !booted) {
+      console.warn('[SSE:INIT] ⏸ Connection delayed: waiting for user/booted');
+      return;
     }
-    const TYPES = ['message', 'ping', 'chat.typing', 'chat.message.created', 'chat.message.edited', 'chat.message.deleted', 'chat.message.pin', 'chat.channel.updated', 'chat.channel.read']
-    TYPES.forEach(t => es.addEventListener(t, forward))
-    return () => { try { es.close() } catch { } }
-  }, [user, booted])
+
+    console.log('[SSE:INIT] 🚀 Starting EventSource at /api/realtime/stream...');
+    let es = new EventSource('/api/realtime/stream', { withCredentials: true });
+
+    es.onopen = () => console.log('[SSE:STATE] ✅ Connection established and open');
+    es.onerror = (err) => {
+      console.error('[SSE:STATE] ❌ Connection error or lost. ReadyState:', es.readyState);
+      if (es.readyState === EventSource.CLOSED) console.error('[SSE:STATE] Connection was DEAD CLOSED');
+      if (es.readyState === EventSource.CONNECTING) console.warn('[SSE:STATE] Attempting to RECONNECT...');
+    };
+
+    const forward = (ev) => {
+      const eventType = ev?.type || 'message';
+      let payload = {};
+      try {
+        payload = JSON.parse(ev?.data || '{}');
+      } catch (e) {
+        console.error('[SSE:PARSE_ERR] Error parsing JSON:', e, { type: eventType, data: ev?.data });
+      }
+
+      console.log(`[SSE:EV] 📢 Received "${eventType}":`, payload);
+
+      if (!payload.type) payload.type = eventType;
+      window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }));
+    };
+
+    // Escuchamos TODO para no perder nada durante debug
+    const TYPES = [
+      'message', 'ping', 'hello', 'chat.typing', 'chat.message.created', 'chat.message.edited',
+      'chat.message.deleted', 'chat.message.pin', 'chat.channel.updated', 'chat.channel.read',
+      'tarea.comentario.creado', 'tarea.comentario.reaccion'
+    ];
+
+    TYPES.forEach(t => es.addEventListener(t, forward));
+
+    return () => {
+      console.log('[SSE:INIT] 🛑 Cleaning up / Closing connection');
+      try { es.close(); } catch { }
+    };
+  }, [user, booted]);
 
   useEffect(() => {
     const handler = (ev) => onIncoming(ev?.detail || {})

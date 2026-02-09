@@ -36,6 +36,24 @@ export function useTaskComments(taskId, cat) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Real-time Sync
+  useEffect(() => {
+    const handlePush = (e) => {
+      const payload = e.detail || {};
+      const { type, tarea_id } = payload;
+
+      console.log('[Realtime:Comments] Received push event:', type, payload);
+
+      if ((type === 'tarea.comentario.creado' || type === 'tarea.comentario.reaccion') && Number(tarea_id) === Number(taskId)) {
+        console.log('[Realtime:Comments] Match found for taskId:', taskId, '- Loading comments...');
+        load();
+      }
+    };
+
+    window.addEventListener('fh:push', handlePush);
+    return () => window.removeEventListener('fh:push', handlePush);
+  }, [taskId, load]);
+
   const add = useCallback(async ({ contenido, adjuntos = [], files = [], reply_to_id = null }) => {
     const tipoId = cat?.comentario_tipos?.[0]?.id;
     if (!contenido?.trim() && adjuntos.length === 0 && files.length === 0) return;

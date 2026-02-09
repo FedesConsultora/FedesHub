@@ -11,6 +11,8 @@ const m = await initModels();
 
 // GET /api/realtime/stream
 router.get('/stream', requireAuth, (req, res) => {
+  console.log(`[SSE:ROUTER] New /stream request from user ${req.user.id} (${req.user.email})`);
+
   // Cabeceras SSE
   res.set({
     'Content-Type': 'text/event-stream',
@@ -22,15 +24,28 @@ router.get('/stream', requireAuth, (req, res) => {
 
   // Primer "hola"
   res.write(`event: hello\ndata: {"ok":true}\n\n`);
+  console.log(`[SSE:ROUTER] Sent initial hello to user ${req.user.id}`);
 
   const detach = attach(req.user.id, res);
 
   // Heartbeat cada 25s
   const iv = setInterval(() => {
-    try { res.write(`event: ping\ndata: {}\n\n`); } catch {}
+    try {
+      res.write(`event: ping\ndata: {}\n\n`);
+    } catch (err) {
+      console.error(`[SSE:ROUTER] Heartbeat failed for user ${req.user.id}:`, err.message);
+    }
   }, 25000);
 
-  req.on('close', () => { clearInterval(iv); detach(); });
+  req.on('close', () => {
+    console.log(`[SSE:ROUTER] Connection closed by user ${req.user.id} or client`);
+    clearInterval(iv);
+    detach();
+  });
+
+  req.on('error', (err) => {
+    console.error(`[SSE:ROUTER] Stream error for user ${req.user.id}:`, err.message);
+  });
 });
 
 // opcional: endpoint de ping
@@ -60,8 +75,8 @@ setInterval(async () => {
       const last = new Date(r.last_seen_at || r.updated_at).getTime();
       const ms = now - last;
       let status = r.status;
-      if (ms > 15*60*1000) status = 'offline';
-      else if (ms > 3*60*1000 && r.status === 'online') status = 'away';
+      if (ms > 15 * 60 * 1000) status = 'offline';
+      else if (ms > 3 * 60 * 1000 && r.status === 'online') status = 'away';
       if (status !== r.status) {
         await r.update({ status, updated_at: new Date() });
       }
