@@ -759,13 +759,13 @@ $text: $fh-text;
 
               &.link-styled {
                 color: #3b82f6; // Blue
-                font-weight: 700; // Bold
+                font-weight: 500; // Bold
                 text-decoration: none;
                 transition: color 0.2s ease;
 
                 &:hover {
                   color: #60a5fa;
-                  text-decoration: underline;
+                  text-decoration: underline !important;
                 }
               }
             }
