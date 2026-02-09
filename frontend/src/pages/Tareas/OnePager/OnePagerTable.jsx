@@ -309,9 +309,14 @@ export default function OnePagerTable({ data, loading, filterType, catalog, onOp
 
                         // Status filtering: Collaborators/Responsibles (non-directors) cannot Approve or Cancel
                         const availableStatuses = (catalog?.estados || []).filter(s => {
-                            if (isDirectivo) return true;
+                            if (isDirectivo) {
+                                if (s.codigo === 'desarrollado' && t.tipo !== 'IT') return false;
+                                return true;
+                            }
                             // Only directors can set to 'aprobada' or 'cancelada'
                             if (s.codigo === 'aprobada' || s.codigo === 'cancelada') return false;
+                            // 'desarrollado' only for IT
+                            if (s.codigo === 'desarrollado' && t.tipo !== 'IT') return false;
                             return true;
                         });
 

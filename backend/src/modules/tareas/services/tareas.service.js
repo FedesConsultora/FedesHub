@@ -1464,6 +1464,11 @@ const setEstado = async (id, estado_id, feder_id, cancelacion_motivo = null) => 
       transaction: t
     });
 
+    // REGLA: El estado 'desarrollado' solo es válido para tareas tipo IT
+    if (nuevoEstado?.codigo === 'desarrollado' && tarea.tipo !== 'IT') {
+      throw Object.assign(new Error('El estado "Desarrollado" solo está disponible para tareas de tipo IT.'), { status: 400 });
+    }
+
     // Solo actualizar y registrar si cambió
     if (estadoAnterior !== estado_id) {
       if (nuevoEstado?.codigo === 'finalizada') {

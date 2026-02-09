@@ -234,27 +234,7 @@ export default function TaskList({
     <div className="TaskList-grouped" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {groups.map((group, idx) => (
         <div key={group.id} className={`client-group-container ${collapsedGroups[group.id] ? 'is-minimized' : ''}`}>
-          <div className="group-header">
-            <div className="left-info">
-              <span className="client-name">{group.name}</span>
-              <span className="task-count">{group.tasks.length}</span>
-            </div>
-            <div className="actions">
-              {groupByClient && (
-                <>
-                  <button className="reorder-btn" onClick={() => moveGroup(group.id, -1)} disabled={idx === 0} title="Mover arriba">
-                    <FiArrowUp />
-                  </button>
-                  <button className="reorder-btn" onClick={() => moveGroup(group.id, 1)} disabled={idx === groups.length - 1} title="Mover abajo">
-                    <FiArrowDown />
-                  </button>
-                </>
-              )}
-              <button className="toggle-btn" onClick={() => toggleGroup(group.id)}>
-                {collapsedGroups[group.id] ? <FiChevronDown /> : <FiChevronUp />}
-              </button>
-            </div>
-          </div>
+
           <div className="group-content">
             {renderTable(group.tasks, group.id)}
           </div>

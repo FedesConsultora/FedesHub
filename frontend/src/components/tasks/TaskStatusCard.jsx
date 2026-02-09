@@ -11,6 +11,7 @@ import './TaskStatusCard.scss'
 const MAP = {
   pendiente: { name: 'Pendiente', dot: '#7A1B9F' },
   en_curso: { name: 'En curso', dot: '#9F1B50' },
+  desarrollado: { name: 'Desarrollado', dot: '#3b82f6' },
   revision: { name: 'En Revisión', dot: '#1B6D9F' },
   aprobada: { name: 'Aprobada', dot: '#1B9F4E' },
   cancelada: { name: 'Cancelada', dot: '#9F1B1B' }
@@ -28,7 +29,8 @@ export default function TaskStatusCard({
   onPick,
   isResponsible = false,
   isCollaborator = false,
-  isNivelB = false
+  isNivelB = false,
+  tipo = 'STD'
 }) {
   const [busy, setBusy] = useState(null)
   const modal = useModal()
@@ -96,8 +98,10 @@ export default function TaskStatusCard({
         return isCollaborator || isResponsible
 
       case 'en_curso':
+      case 'desarrollado':
       case 'pendiente':
-        // Colaboradores y responsables pueden pasar a en curso o pendiente
+        // Colaboradores y responsables pueden pasar a en curso, desarrollado (si es IT) o pendiente
+        if (code === 'desarrollado' && tipo !== 'IT') return false;
         return isCollaborator || isResponsible
 
       default:
@@ -165,7 +169,12 @@ export default function TaskStatusCard({
           }}
         >
           {Object.entries(MAP)
-            .filter(([code]) => code !== active)
+            .filter(([code]) => {
+              if (code === active) return false;
+              // Si el estado es desarrollado, solo mostrar si el tipo es IT
+              if (code === 'desarrollado' && tipo !== 'IT') return false;
+              return true;
+            })
             .map(([code, info]) => {
               const canChange = canChangeTo(code);
 
