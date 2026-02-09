@@ -230,16 +230,106 @@ export default function TaskList({
     );
   }
 
+  const [currentTab, setCurrentTab] = useState('all');
+
   return (
     <div className="TaskList-grouped" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {groups.map((group, idx) => (
-        <div key={group.id} className={`client-group-container ${collapsedGroups[group.id] ? 'is-minimized' : ''}`}>
-
-          <div className="group-content">
-            {renderTable(group.tasks, group.id)}
-          </div>
+      {groupByClient && groups.length > 1 && (
+        <div className="client-tabs" style={{
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          paddingBottom: '12px',
+          marginBottom: '8px',
+          scrollbarWidth: 'none'
+        }}>
+          <button
+            className={`client-tab-pill ${currentTab === 'all' ? 'active' : ''}`}
+            onClick={() => setCurrentTab('all')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              whiteSpace: 'nowrap',
+              border: '1px solid var(--fh-border)',
+              backgroundColor: currentTab === 'all' ? 'var(--fh-accent)' : 'transparent',
+              color: currentTab === 'all' ? 'white' : 'var(--fh-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Todas ({data.length})
+          </button>
+          {groups.map(g => (
+            <button
+              key={g.id}
+              className={`client-tab-pill ${currentTab === String(g.id) ? 'active' : ''}`}
+              onClick={() => setCurrentTab(String(g.id))}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                border: '1px solid var(--fh-border)',
+                backgroundColor: currentTab === String(g.id) ? 'var(--fh-accent)' : 'transparent',
+                color: currentTab === String(g.id) ? 'white' : 'var(--fh-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {g.name} ({g.tasks.length})
+            </button>
+          ))}
         </div>
-      ))}
+      )}
+
+      {groups
+        .filter(g => currentTab === 'all' || currentTab === String(g.id))
+        .map((group, idx) => (
+          <div key={group.id} className={`client-group-container ${collapsedGroups[group.id] ? 'is-minimized' : ''}`}>
+            {groupByClient && currentTab === 'all' && (
+              <div
+                className="group-header"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  borderRadius: '16px 16px 0 0',
+                  borderBottom: '1px solid var(--fh-border)',
+                  cursor: 'pointer'
+                }}
+                onClick={() => toggleGroup(group.id)}
+              >
+                <div style={{ marginRight: '10px' }}>
+                  {collapsedGroups[group.id] ? <FiChevronDown /> : <FiChevronUp />}
+                </div>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{group.name}</span>
+                <Badge variant="secondary" style={{ marginLeft: '10px', opacity: 0.6 }}>{group.tasks.length}</Badge>
+
+                <div className="drag-handle" style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); moveGroup(group.id, -1); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--fh-muted)', cursor: 'pointer' }}
+                  >
+                    <FiArrowUp />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); moveGroup(group.id, 1); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--fh-muted)', cursor: 'pointer' }}
+                  >
+                    <FiArrowDown />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="group-content">
+              {renderTable(group.tasks, group.id)}
+            </div>
+          </div>
+        ))}
       {!groups.length && (
         <div className="p-8 text-center text-muted-foreground border rounded-3xl">
           No hay tareas para mostrar.
