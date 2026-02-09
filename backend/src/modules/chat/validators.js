@@ -102,6 +102,10 @@ export const editMessageSchema = z.object({
   body_json: z.record(z.any()).optional()
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para editar' });
 
+export const forwardMessageSchema = z.object({
+  target_canal_ids: z.array(z.number().int().positive()).min(1)
+});
+
 export const reactionSchema = z.object({ emoji: z.string().min(1).max(80) });
 
 export const readChannelSchema = z.object({

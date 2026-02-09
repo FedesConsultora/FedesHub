@@ -9,6 +9,8 @@ import { FaRegTrashCan } from "react-icons/fa6";
 
 import { LuReply } from "react-icons/lu";
 
+import { RiShareForwardLine } from "react-icons/ri";
+
 import { useSetRead, useEditMessage, useDeleteMessage, usePinMessage, useToggleReaction } from '../../../hooks/useChat'
 import ReactionBar, { CenteredPicker } from './ReactionBar'
 import EmojiPicker from '../../common/EmojiPicker'
@@ -21,6 +23,7 @@ import { fullName, displayName, pickAvatar } from '../../../utils/people'
 import { escapeHtml, linkify } from '../../../utils/security'
 import AttendanceBadge from '../../common/AttendanceBadge.jsx'
 import useAttendanceStatus, { getStatus } from '../../../hooks/useAttendanceStatus.js'
+import ForwardModal from './ForwardModal'
 import './Timeline.scss'
 
 const fmtDay = (d) =>
@@ -78,6 +81,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   const rootRef = useRef(null)
   const [atBottom, setAtBottom] = useState(true)
   const [showJump, setShowJump] = useState(false)
+  const [forwardMsg, setForwardMsg] = useState(null)
   const setRead = useSetRead()
   const lastSentRef = useRef({ canal_id: null, id: 0 })
   const timerRef = useRef(null)
@@ -193,6 +197,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
               statuses={statuses}
               canPin={canPin}
               canReply={canReply}
+              onForward={() => setForwardMsg(m)}
             />
           ))}
         </div>
@@ -205,11 +210,18 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
           <FaArrowDown />
         </button>
       )}
+
+      {forwardMsg && (
+        <ForwardModal
+          message={forwardMsg}
+          onClose={() => setForwardMsg(null)}
+        />
+      )}
     </div>
   )
 }
 
-function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canReply }) {
+function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canReply, onForward }) {
   const ts = new Date(m.created_at || m.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const { setReplyTo } = useContext(ChatActionCtx)
 
@@ -346,6 +358,11 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
               <BsPinAngle size={12} /> fijado
             </span>
           )}
+          {!isDeleted && m.body_json?.forward_data?.is_forwarded && (
+            <span className="forwardedBadge">
+              <RiShareForwardLine size={12} /> reenviado
+            </span>
+          )}
         </div>
 
         <div className="bubbleContainer">
@@ -400,6 +417,9 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
                 <button className="actionBtn" title="Reaccionar" onClick={() => setPickerOpen(true)}>
                   <CiFaceSmile />
                 </button>
+                <button className="actionBtn" title="Reenviar" onClick={onForward}>
+                  <RiShareForwardLine />
+                </button>
                 {canPin && (
                   <button
                     className={`actionBtn ${isPinned ? 'active' : ''}`}
@@ -440,37 +460,41 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
             />
           )}
         </div>
-      </div>
+      </div >
 
-      {pickerOpen && (
-        <CenteredPicker onClose={() => setPickerOpen(false)}>
-          <EmojiPicker
-            theme="dark"
-            width="350px"
-            height="450px"
-            onSelect={handleToggleReaction}
-            onClickOutside={() => setPickerOpen(false)}
-          />
-        </CenteredPicker>
-      )}
+      {
+        pickerOpen && (
+          <CenteredPicker onClose={() => setPickerOpen(false)}>
+            <EmojiPicker
+              theme="dark"
+              width="350px"
+              height="450px"
+              onSelect={handleToggleReaction}
+              onClickOutside={() => setPickerOpen(false)}
+            />
+          </CenteredPicker>
+        )
+      }
 
       {/* Delete confirmation modal */}
-      {showDeleteConfirm && (
-        <div className="deleteConfirmOverlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="deleteConfirmModal" onClick={(e) => e.stopPropagation()}>
-            <h3>¿Eliminar mensaje?</h3>
-            <p>Esta acción no se puede deshacer.</p>
-            <div className="modalActions">
-              <button className="cancelBtn" onClick={() => setShowDeleteConfirm(false)}>
-                Cancelar
-              </button>
-              <button className="deleteBtn" onClick={handleDelete} disabled={deleteMessage.isPending}>
-                Eliminar
-              </button>
+      {
+        showDeleteConfirm && (
+          <div className="deleteConfirmOverlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="deleteConfirmModal" onClick={(e) => e.stopPropagation()}>
+              <h3>¿Eliminar mensaje?</h3>
+              <p>Esta acción no se puede deshacer.</p>
+              <div className="modalActions">
+                <button className="cancelBtn" onClick={() => setShowDeleteConfirm(false)}>
+                  Cancelar
+                </button>
+                <button className="deleteBtn" onClick={handleDelete} disabled={deleteMessage.isPending}>
+                  Eliminar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   )
 }

@@ -138,6 +138,29 @@
       .time {
         opacity: 0.6;
       }
+
+      &.pinnedBadge,
+      &.forwardedBadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      &.pinnedBadge {
+        background: rgba(255, 193, 7, 0.12);
+        color: #ffc107;
+      }
+
+      &.forwardedBadge {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+      }
     }
 
     .bubbleContainer {
