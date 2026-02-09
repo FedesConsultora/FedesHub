@@ -238,17 +238,21 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
     const currentResponsables = peopleForm.responsables || []
     const currentColaboradores = peopleForm.colaboradores || []
 
-    const isResp = currentResponsables.some(r =>
-      (r.id === user.id) || (r.feder_id === user.id)
-    )
+    const myIds = [user.id ? String(user.id) : null, user.feder_id ? String(user.feder_id) : null].filter(Boolean);
 
-    const isColab = currentColaboradores.some(c =>
-      (c.id === user.id) || (c.feder_id === user.id)
-    )
+    const isResp = currentResponsables.some(r => {
+      const rIds = [r.id ? String(r.id) : null, r.feder_id ? String(r.feder_id) : null].filter(Boolean);
+      return rIds.some(rid => myIds.includes(rid));
+    })
+
+    const isColab = currentColaboradores.some(c => {
+      const cIds = [c.id ? String(c.id) : null, c.feder_id ? String(c.feder_id) : null].filter(Boolean);
+      return cIds.some(cid => myIds.includes(cid));
+    })
 
     setIsResponsible(isResp)
     setIsCollaborator(isColab)
-  }, [peopleForm.responsables, peopleForm.colaboradores, user?.id])
+  }, [peopleForm.responsables, peopleForm.colaboradores, user?.id, user?.feder_id])
 
 
   // contentEditable
@@ -713,57 +717,68 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
 
         <div className="titleWrap">
           {/* Título con truncamiento visual */}
-          <div className="titleSection" title={form.titulo} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {task?.tipo === 'TC' && <span className="fh-chip primary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>TC</span>}
-            {task?.tipo === 'IT' && <span className="fh-chip secondary" style={{ fontSize: '0.65rem', padding: '1px 8px', flexShrink: 0 }}>IT</span>}
-            <div
-              className="ttl editable"
-              data-placeholder="Escribí un título…"
-              contentEditable
-              suppressContentEditableWarning
-              spellCheck={false}
-              role="textbox"
-              aria-label="Título de la tarea"
-              ref={titleCE.ref}
-              onInput={(e) => {
-                const text = e.currentTarget.textContent || '';
+          <div className="titleSection" title={form.titulo} style={{ position: 'relative', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0 }}>
+              <InlineType
+                value={task?.tipo || 'STD'}
+                onChange={(next) => performSave({ tipo: next }, 'manual')}
+                disabled={!isResponsible && !isDirectivo}
+                isResponsible={isResponsible}
+                isDirectivo={isDirectivo}
+                user={user}
+                peopleForm={peopleForm}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+              <div
+                className="ttl editable"
+                data-placeholder="Escribí un título…"
+                contentEditable
+                suppressContentEditableWarning
+                spellCheck={false}
+                role="textbox"
+                aria-label="Título de la tarea"
+                ref={titleCE.ref}
+                onInput={(e) => {
+                  const text = e.currentTarget.textContent || '';
 
-                // Limitar a 50 caracteres
-                if (text.length > 50) {
-                  e.currentTarget.textContent = text.substring(0, 50);
-                  // Mover cursor al final
-                  const range = document.createRange();
-                  const sel = window.getSelection();
-                  range.selectNodeContents(e.currentTarget);
-                  range.collapse(false);
-                  sel?.removeAllRanges();
-                  sel?.addRange(range);
-                  return;
-                }
+                  // Limitar a 50 caracteres
+                  if (text.length > 50) {
+                    e.currentTarget.textContent = text.substring(0, 50);
+                    // Mover cursor al final
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(e.currentTarget);
+                    range.collapse(false);
+                    sel?.removeAllRanges();
+                    sel?.addRange(range);
+                    return;
+                  }
 
-                titleCE.handleInput(e);
-              }}
-              onBlur={(e) => {
-                const text = e.currentTarget.textContent?.trim() || '';
-                if (!text) {
-                  // Evitar título vacío
-                  e.currentTarget.textContent = task?.titulo || 'Sin título';
-                  setForm(f => ({ ...f, titulo: task?.titulo || 'Sin título' }));
-                  toast?.error('El título no puede estar vacío');
-                  return;
-                }
-                flushTitleOnBlur();
-              }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
-              onPaste={(e) => {
-                e.preventDefault()
-                const txt = (e.clipboardData?.getData('text/plain') ?? '').replace(/\n/g, ' ')
-                // Limitar a 50 caracteres al pegar
-                const limited = txt.substring(0, 50);
-                document.execCommand?.('insertText', false, limited)
-              }}
-            />
-            <TitleTooltip />
+                  titleCE.handleInput(e);
+                }}
+                onBlur={(e) => {
+                  const text = e.currentTarget.textContent?.trim() || '';
+                  if (!text) {
+                    // Evitar título vacío
+                    e.currentTarget.textContent = task?.titulo || 'Sin título';
+                    setForm(f => ({ ...f, titulo: task?.titulo || 'Sin título' }));
+                    toast?.error('El título no puede estar vacío');
+                    return;
+                  }
+                  flushTitleOnBlur();
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
+                onPaste={(e) => {
+                  e.preventDefault()
+                  const txt = (e.clipboardData?.getData('text/plain') ?? '').replace(/\n/g, ' ')
+                  // Limitar a 50 caracteres al pegar
+                  const limited = txt.substring(0, 50);
+                  document.execCommand?.('insertText', false, limited)
+                }}
+              />
+              <TitleTooltip />
+            </div>
           </div>
 
           {/* Meta info - ahora puede hacer wrap */}
@@ -1610,4 +1625,75 @@ function InlineTCMultiSelect({ values = [], options = [], onChange }) {
       </div>
     </div>
   );
+}
+
+/* === componente inline para tipo de tarea === */
+function InlineType({ value, onChange, disabled = false, isResponsible, isDirectivo, user, peopleForm }) {
+  const toast = useToast()
+
+  const typeStyles = {
+    'STD': { bg: 'rgba(255,255,255,0.05)', color: '#fff', border: 'rgba(255,255,255,0.1)' },
+    'TC': { bg: '#3B82F6', color: '#fff', border: '#3B82F6' },
+    'IT': { bg: '#10B981', color: '#fff', border: '#10B981' }
+  }
+
+  const currentStyle = typeStyles[value] || typeStyles['STD']
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <select
+        className="typeSelect"
+        disabled={disabled}
+        style={{
+          fontSize: '9px',
+          padding: '0 8px 0 2px',
+          background: currentStyle.bg,
+          color: currentStyle.color,
+          border: `1px solid ${currentStyle.border}`,
+          borderRadius: '3px',
+          maxHeight: '14px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontWeight: 700,
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          width: 'auto',
+          minWidth: '30px',
+          lineHeight: '14px',
+          outline: 'none',
+          transform: 'scale(0.9)',
+          textTransform: 'uppercase',
+          opacity: disabled ? 0.6 : 1,
+          transformOrigin: 'left center'
+        }}
+        value={value}
+        onClick={(e) => {
+          if (disabled) {
+            e.preventDefault();
+            toast?.error("No tienes permisos para editar el tipo de tarea.");
+          }
+        }}
+        onChange={e => {
+          onChange?.(e.target.value)
+        }}
+        title={disabled ? "No tenés permisos para cambiar el tipo de tarea" : "Cambiar tipo de tarea"}
+      >
+        <option value="STD" style={{ fontSize: '10px', background: '#1a202c' }}>ESTÁNDAR</option>
+        <option value="TC" style={{ fontSize: '10px', background: '#1a202c' }}>TC</option>
+        <option value="IT" style={{ fontSize: '10px', background: '#1a202c' }}>IT</option>
+      </select>
+      {
+        !disabled && (
+          <MdKeyboardArrowDown
+            size={7} // Flecha aún más pequeña
+            style={{
+              position: 'absolute',
+              right: '6px',
+              pointerEvents: 'none',
+              color: '#fff'
+            }}
+          />
+        )
+      }
+    </div >
+  )
 }

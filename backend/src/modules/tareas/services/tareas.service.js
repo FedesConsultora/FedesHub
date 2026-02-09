@@ -832,7 +832,7 @@ const updateTask = async (id, payload, feder_id = null, currentUser = null) => {
     const mappingTarea = [
       'cliente_id', 'lead_id', 'hito_id', 'tarea_padre_id', 'titulo', 'descripcion',
       'estado_id', 'requiere_aprobacion', 'impacto_id', 'urgencia_id',
-      'fecha_inicio', 'vencimiento', 'progreso_pct', 'is_archivada'
+      'fecha_inicio', 'vencimiento', 'progreso_pct', 'is_archivada', 'tipo'
     ];
 
     for (const field of mappingTarea) {

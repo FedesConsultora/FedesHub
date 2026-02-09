@@ -155,6 +155,7 @@ export const updateTaskSchema = z.object({
   progreso_pct: z.coerce.number().min(0).max(100).optional(),
   orden_kanban: z.coerce.number().int().optional(),
   is_archivada: z.boolean().optional(),
+  tipo: z.enum(['STD', 'TC', 'IT']).optional(),
   tc: tcUpdateDataSchema.optional()
 }).transform((data) => {
   const result = { ...data };
