@@ -17,7 +17,7 @@ const APPS = [
   { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
   { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true, directivosOnly: true },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
-  { code: 'chat', name: 'Chat', to: '/chat', directivosOnly: true },
+  { code: 'chat', name: 'Chat', to: '/chat' },
   { code: 'comercial', name: 'Comercial', to: '/comercial/leads', directivosOnly: true },
   { code: 'onboarding', name: 'Onboarding', to: '/onboarding', directivosOnly: true },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
