@@ -801,6 +801,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
               vencimientoISO={vencimientoISO}
               etiquetas={etiquetas}
               estadosCatalog={catalog?.estados || catalog?.tareaEstados || []}
+              tipo={task?.tipo}
               onPick={handleEstado}
               isResponsible={isResponsible}
               isCollaborator={isCollaborator}
