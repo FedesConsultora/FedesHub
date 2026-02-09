@@ -17,7 +17,6 @@ import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
 import useAttendanceStatus from "../../hooks/useAttendanceStatus";
-import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye, FiTrash2, FiStar as FiStarIcon } from "react-icons/fi";
 import { FaStar, FaTrash } from "react-icons/fa";
 import './components/modal-panel.scss';
 
@@ -53,8 +52,14 @@ export default function TasksPage() {
   const toast = useToast();
   const modal = useModal();
 
-  // Verificar si es directivo
-  const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB');
+  // Verificar si es directivo (case-insensitive para robustez)
+  const isDirectivo = useMemo(() => {
+    if (!Array.isArray(roles)) return false;
+    return roles.some(r => {
+      const role = String(r).toUpperCase();
+      return role === 'NIVELA' || role === 'NIVELB' || role === 'DIRECTIVO' || role === 'ADMIN';
+    });
+  }, [roles]);
 
   const [catalog, setCatalog] = useState({
     clientes: [],
