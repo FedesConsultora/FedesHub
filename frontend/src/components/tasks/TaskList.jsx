@@ -230,66 +230,12 @@ export default function TaskList({
     );
   }
 
-  const [currentTab, setCurrentTab] = useState('all');
-
   return (
     <div className="TaskList-grouped" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {groupByClient && groups.length > 1 && (
-        <div className="client-tabs" style={{
-          display: 'flex',
-          gap: '8px',
-          overflowX: 'auto',
-          paddingBottom: '12px',
-          marginBottom: '8px',
-          scrollbarWidth: 'none'
-        }}>
-          <button
-            className={`client-tab-pill ${currentTab === 'all' ? 'active' : ''}`}
-            onClick={() => setCurrentTab('all')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              fontWeight: '600',
-              whiteSpace: 'nowrap',
-              border: '1px solid var(--fh-border)',
-              backgroundColor: currentTab === 'all' ? 'var(--fh-accent)' : 'transparent',
-              color: currentTab === 'all' ? 'white' : 'var(--fh-muted)',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            Todas ({data.length})
-          </button>
-          {groups.map(g => (
-            <button
-              key={g.id}
-              className={`client-tab-pill ${currentTab === String(g.id) ? 'active' : ''}`}
-              onClick={() => setCurrentTab(String(g.id))}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                whiteSpace: 'nowrap',
-                border: '1px solid var(--fh-border)',
-                backgroundColor: currentTab === String(g.id) ? 'var(--fh-accent)' : 'transparent',
-                color: currentTab === String(g.id) ? 'white' : 'var(--fh-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {g.name} ({g.tasks.length})
-            </button>
-          ))}
-        </div>
-      )}
-
       {groups
-        .filter(g => currentTab === 'all' || currentTab === String(g.id))
         .map((group, idx) => (
           <div key={group.id} className={`client-group-container ${collapsedGroups[group.id] ? 'is-minimized' : ''}`}>
-            {groupByClient && currentTab === 'all' && (
+            {groupByClient && (
               <div
                 className="group-header"
                 style={{
@@ -311,14 +257,28 @@ export default function TaskList({
 
                 <div className="drag-handle" style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
                   <button
-                    onClick={(e) => { e.stopPropagation(); moveGroup(group.id, -1); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--fh-muted)', cursor: 'pointer' }}
+                    onClick={(e) => { e.stopPropagation(); moveGroup(String(group.id), -1); }}
+                    disabled={idx === 0}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: idx === 0 ? 'rgba(255,255,255,0.1)' : 'var(--fh-muted)',
+                      cursor: idx === 0 ? 'default' : 'pointer'
+                    }}
+                    title="Subir grupo"
                   >
                     <FiArrowUp />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); moveGroup(group.id, 1); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--fh-muted)', cursor: 'pointer' }}
+                    onClick={(e) => { e.stopPropagation(); moveGroup(String(group.id), 1); }}
+                    disabled={idx === groups.length - 1}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: idx === groups.length - 1 ? 'rgba(255,255,255,0.1)' : 'var(--fh-muted)',
+                      cursor: idx === groups.length - 1 ? 'default' : 'pointer'
+                    }}
+                    title="Bajar grupo"
                   >
                     <FiArrowDown />
                   </button>
