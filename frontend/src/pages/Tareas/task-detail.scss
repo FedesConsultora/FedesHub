@@ -756,6 +756,18 @@ $text: $fh-text;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
+
+              &.link-styled {
+                color: #3b82f6; // Blue
+                font-weight: 700; // Bold
+                text-decoration: none;
+                transition: color 0.2s ease;
+
+                &:hover {
+                  color: #60a5fa;
+                  text-decoration: underline;
+                }
+              }
             }
           }
 

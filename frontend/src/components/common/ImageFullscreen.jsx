@@ -150,6 +150,18 @@ export default function ImageFullscreen({ src, alt, type = 'image', driveId = nu
                     <span className="file-name">{alt}</span>
                 </div>
                 <div className="action-buttons">
+                    {(driveId || src) && (
+                        <button
+                            className="action-btn"
+                            onClick={() => {
+                                const url = driveId ? `https://drive.google.com/file/d/${driveId}/view` : src;
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
+                            title="Abrir en pestaña nueva"
+                        >
+                            <MdLink size={24} />
+                        </button>
+                    )}
                     <button className="action-btn" onClick={handleCopy} title={copied ? "¡Copiado!" : "Copiar"}>
                         <MdContentCopy size={22} />
                         {copied && <span className="tooltip">¡Copiado!</span>}

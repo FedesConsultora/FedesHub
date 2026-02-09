@@ -1196,15 +1196,32 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
                     <div key={file.id} className="raw-file-item">
                       <div className="file-info-icon">
                         <Icon style={{ color: iconColor }} />
-                        <span className="file-name">{file.nombre || 'Archivo'}</span>
+                        {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? (
+                          <a
+                            href={file.drive_url || getFileUrl(file)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="file-name link-styled"
+                          >
+                            {file.nombre || 'Archivo'}
+                          </a>
+                        ) : (
+                          <span className="file-name">{file.nombre || 'Archivo'}</span>
+                        )}
                       </div>
                       <div className="file-actions">
                         <button
                           className="view-btn"
                           onClick={() => {
-                            if (type === 'folder') {
-                              window.open(getFileUrl(file), '_blank');
+                            const isDrive = !!file.drive_url;
+                            const isImageOrVideo = type === 'image' || type === 'video';
+
+                            // Si es un link de Drive o carpeta, o un archivo que no es imagen/video y tiene URL externa, abrir en nueva pestaña
+                            if (type === 'folder' || (isDrive && !isImageOrVideo)) {
+                              window.open(file.drive_url || getFileUrl(file), '_blank');
                             } else {
+                              // Solo abrir en fullscreen si es imagen/video o PDF/HTML (que tienen preview)
+                              // Para el resto (word, excel, etc), si tienen driveId se ven por iframe en Fullscreen
                               setRawFullscreen({
                                 url: getFileUrl(file),
                                 name: file.nombre || 'Archivo',
@@ -1214,7 +1231,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
                             }
                           }}
                         >
-                          {type === 'folder' ? 'Abrir' : 'Ver'}
+                          {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? 'Abrir' : 'Ver'}
                         </button>
                         <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
                       </div>
