@@ -211,7 +211,17 @@ export default function ContentGallery({
     };
 
     const handleMainClick = () => {
-        if (mainImage && !isUploading) {
+        if (!mainImage || isUploading) return;
+
+        const type = getFileType(mainImage);
+        const isDrive = !!(mainImage.drive_url || mainImage.drive_file_id);
+        const isImageOrVideo = type === 'image' || type === 'video';
+
+        // Si es una carpeta o un link de Drive que no es imagen/video, abrir directamente
+        if (type === 'folder' || (isDrive && !isImageOrVideo)) {
+            const url = mainImage.drive_url || getProxyUrl(mainImage);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
             setFullscreenImage(mainImage);
         }
     };
@@ -236,7 +246,17 @@ export default function ContentGallery({
             return (
                 <div className={`file-icon-wrapper ${className} folder`} onClick={() => window.open(url, '_blank')}>
                     <FaFolder size={isThumbnail ? 32 : 64} style={{ color: '#FFD700' }} />
-                    {!isThumbnail && <span className="file-name-label">{file.nombre}</span>}
+                    {!isThumbnail && (
+                        <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="file-name-label link-styled"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {file.nombre}
+                        </a>
+                    )}
                     {isThumbnail && <span className="folder-indicator">📁</span>}
                 </div>
             );
@@ -293,7 +313,17 @@ export default function ContentGallery({
         return (
             <div className={`file-icon-wrapper ${className} ${type}`} onClick={onClick}>
                 <Icon size={isThumbnail ? 32 : 64} style={{ color: iconColor }} />
-                {!isThumbnail && <span className="file-name-label">{file.nombre}</span>}
+                {!isThumbnail && (
+                    <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="file-name-label link-styled"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {file.nombre}
+                    </a>
+                )}
             </div>
         );
     };

@@ -12,7 +12,6 @@ export function attach(userId, res, sid) {
   if (!connections.has(uid)) connections.set(uid, new Set());
   const set = connections.get(uid);
   set.add(res);
-  console.log(`[SSE:BUS] [sid:${sid}] Attached connection for user ${uid}. User connections: ${set.size}. Total users: ${connections.size}`);
 
   return () => {
     try {
@@ -20,10 +19,9 @@ export function attach(userId, res, sid) {
       if (s) {
         s.delete(res);
         if (s.size === 0) connections.delete(uid);
-        console.log(`[SSE:BUS] [sid:${sid}] Detached connection for user ${uid}. Remaining for user: ${s ? s.size : 0}. Total users: ${connections.size}`);
       }
     } catch (err) {
-      console.error(`[SSE:BUS] [sid:${sid}] Error during detach:`, err.message);
+      console.error(`[SSE:BUS] Error during detach:`, err.message);
     }
   };
 }
@@ -33,17 +31,13 @@ export function publishUser(userId, payload) {
   const set = connections.get(uid);
   const eventName = payload?.type || 'message';
 
-  console.log(`[SSE:BUS] Publishing "${eventName}" to user ${uid}. Found ${set ? set.size : 0} connections.`);
-
   if (!set || set.size === 0) return 0;
 
-  // Usamos el type como nombre de evento SSE para que sea más fácil de filtrar en el front
   const data = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
 
   for (const res of set) {
     try {
-      const ok = res.write(data);
-      if (!ok) console.warn(`[SSE:BUS] Write returned false (buffer full) for user ${uid}`);
+      res.write(data);
     } catch (err) {
       console.error(`[SSE:BUS] Write FAILED for user ${uid}:`, err.message);
     }
