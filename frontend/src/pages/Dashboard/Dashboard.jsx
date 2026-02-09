@@ -232,7 +232,7 @@ export default function Dashboard() {
             headerActions={
               <div className="miniTabs" >
                 <button className={tipoTarea === 'TODAS' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TODAS') }}>Todas</button>
-                <button className={tipoTarea === 'COM' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('COM') }}>Comercial</button>
+                <button className={tipoTarea === 'STD' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('STD') }}>Comercial</button>
                 <button className={tipoTarea === 'TC' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('TC') }}>TC</button>
                 <button className={tipoTarea === 'IT' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoChange('IT') }}>IT</button>
               </div>
@@ -251,7 +251,7 @@ export default function Dashboard() {
             headerActions={
               <div className="miniTabs" >
                 <button className={tipoOverdue === 'TODAS' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('TODAS') }}>Todas</button>
-                <button className={tipoOverdue === 'COM' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('COM') }}>Comercial</button>
+                <button className={tipoOverdue === 'STD' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('STD') }}>Comercial</button>
                 <button className={tipoOverdue === 'TC' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('TC') }}>TC</button>
                 <button className={tipoOverdue === 'IT' ? 'active' : ''} onClick={(e) => { e.stopPropagation(); handleTipoOverdueChange('IT') }}>IT</button>
               </div>
