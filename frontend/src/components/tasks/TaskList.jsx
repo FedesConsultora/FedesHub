@@ -7,6 +7,7 @@ import { getPriorityMeta } from "./priority-utils";
 const STATUS_COLORS = {
   pendiente: '#7A1B9F',
   en_curso: '#9F1B50',
+  desarrollado: '#3b82f6',
   revision: '#1B6D9F',
   aprobada: '#1B9F4E',
   cancelada: '#9F1B1B',
