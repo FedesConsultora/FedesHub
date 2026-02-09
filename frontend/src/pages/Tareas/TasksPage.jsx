@@ -17,7 +17,6 @@ import { useAuthCtx } from "../../context/AuthContext";
 import { useToast } from "../../components/toast/ToastProvider";
 import { useModal } from "../../components/modal/ModalProvider";
 import useAttendanceStatus from "../../hooks/useAttendanceStatus";
-import { FiLock, FiCheckCircle, FiClock, FiArrowLeft, FiGitBranch, FiPlus, FiEye, FiTrash2, FiStar as FiStarIcon } from "react-icons/fi";
 import { FaStar, FaTrash } from "react-icons/fa";
 import './components/modal-panel.scss';
 
@@ -53,8 +52,14 @@ export default function TasksPage() {
   const toast = useToast();
   const modal = useModal();
 
-  // Verificar si es directivo
-  const isDirectivo = roles?.includes('NivelA') || roles?.includes('NivelB');
+  // Verificar si es directivo (case-insensitive para robustez)
+  const isDirectivo = useMemo(() => {
+    if (!Array.isArray(roles)) return false;
+    return roles.some(r => {
+      const role = String(r).toUpperCase();
+      return role === 'NIVELA' || role === 'NIVELB' || role === 'DIRECTIVO' || role === 'ADMIN';
+    });
+  }, [roles]);
 
   const [catalog, setCatalog] = useState({
     clientes: [],
@@ -242,6 +247,26 @@ export default function TasksPage() {
 
   const { board, rows, loading, moveTask, canChangeTo, refetch } = useTasksBoard(boardFilters);
 
+  // Calcular conteos por cliente y clientes ordenados
+  const clientCounts = useMemo(() => {
+    const counts = {};
+    rows.forEach(t => {
+      const cid = t.cliente_id || 'unassigned';
+      counts[cid] = (counts[cid] || 0) + 1;
+    });
+    return counts;
+  }, [rows]);
+
+  const sortedClients = useMemo(() => {
+    if (!catalog.clientes?.length) return [];
+    return catalog.clientes
+      .filter(c => clientCounts[c.id])
+      .sort((a, b) => (clientCounts[b.id] || 0) - (clientCounts[a.id] || 0));
+  }, [catalog.clientes, clientCounts]);
+
+  // Estado para el "ver más" de Kanban
+  const [showAllKanbanClients, setShowAllKanbanClients] = useState(false);
+
   // Recolectar todos los feder_ids únicos de la vista actual para el estado de asistencia
   const allFederIds = useMemo(() => {
     const ids = new Set();
@@ -270,6 +295,7 @@ export default function TasksPage() {
         id: t.id,
         titulo: t.titulo,
         cliente_nombre: t.cliente_nombre,
+        cliente_id: t.cliente_id,
         estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
         estado_id: t.estado_id,
         estado_codigo: t.estado_codigo,
@@ -330,7 +356,6 @@ export default function TasksPage() {
           <h1>Tareas</h1>
           <div className="counter">{countTxt}</div>
         </div>
-
         <div className="center">
           <TareasFilters
             value={filters}
@@ -461,6 +486,42 @@ export default function TasksPage() {
         </div>
       </div>
 
+      {view === "kanban" && sortedClients.length > 0 && (
+        <div className="kanban-client-filter">
+          <div className={`clients-row ${showAllKanbanClients ? 'expanded' : ''}`}>
+            <button
+              className={`client-pill ${!filters.cliente_id ? 'active' : ''}`}
+              onClick={() => setFilters({ ...filters, cliente_id: undefined })}
+            >
+              Todos ({rows.length})
+            </button>
+            {sortedClients.map(c => (
+              <button
+                key={c.id}
+                className={`client-pill ${Number(filters.cliente_id) === Number(c.id) ? 'active' : ''}`}
+                onClick={() => setFilters({ ...filters, cliente_id: c.id })}
+                title={c.nombre}
+              >
+                {c.nombre} ({clientCounts[c.id]})
+              </button>
+            ))}
+            {clientCounts['unassigned'] && (
+              <button
+                className={`client-pill ${filters.cliente_id === 'unassigned' ? 'active' : ''}`}
+                onClick={() => setFilters({ ...filters, cliente_id: 'unassigned' })}
+              >
+                Sin cliente ({clientCounts['unassigned']})
+              </button>
+            )}
+          </div>
+          {sortedClients.length > 5 && (
+            <button className="ver-mas-btn" onClick={() => setShowAllKanbanClients(!showAllKanbanClients)}>
+              {showAllKanbanClients ? 'Ver menos' : 'Ver más'}
+            </button>
+          )}
+        </div>
+      )}
+
       <section className="results" data-view={view}>
         {view === "kanban" ? (
           <KanbanBoard
@@ -479,6 +540,10 @@ export default function TasksPage() {
             loading={loading}
             onRowClick={(t) => setOpenTaskId(t.id)}
             attendanceStatuses={attendanceStatuses}
+            catalog={catalog}
+            filters={filters}
+            setFilters={setFilters}
+            groupByClient={true}
           />
         ) : view === "month" ? (
           <TaskMonthlyView
@@ -495,7 +560,6 @@ export default function TasksPage() {
           <TrashView onRestore={refetch} />
         )}
       </section>
-
       {showCreate && (
         <CreateTaskModal
           initialData={initialData}
@@ -510,7 +574,6 @@ export default function TasksPage() {
           }}
         />
       )}
-
       {openTaskId && (
         <ModalPanel
           open={!!openTaskId}

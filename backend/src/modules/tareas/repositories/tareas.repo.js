@@ -59,6 +59,8 @@ export const buildListSQL = (params = {}, currentUser) => {
     finalizada_from, finalizada_to,
     // prioridad
     prioridad_min, prioridad_max,
+    // tipo
+    tipo,
     // orden/paginación
     orden_by = 'prioridad', sort = 'desc', limit = 50, offset = 0
   } = params;
@@ -70,6 +72,7 @@ export const buildListSQL = (params = {}, currentUser) => {
     SELECT
       t.id, t.titulo, t.descripcion, t.cliente_id, t.hito_id, t.tarea_padre_id,
       t.estado_id, te.codigo AS estado_codigo, te.nombre AS estado_nombre,
+      t.tipo,
       t.impacto_id, it.puntos AS impacto_puntos, t.urgencia_id, ut.puntos AS urgencia_puntos,
       t.aprobacion_estado_id,
       t.prioridad_num, t.vencimiento, t.fecha_inicio, t.finalizada_at, t.is_archivada,
@@ -218,6 +221,8 @@ export const buildListSQL = (params = {}, currentUser) => {
   // Prioridad
   if (typeof prioridad_min === 'number') { where.push(`t.prioridad_num >= :pmin`); repl.pmin = prioridad_min; }
   if (typeof prioridad_max === 'number') { where.push(`t.prioridad_num <= :pmax`); repl.pmax = prioridad_max; }
+
+  if (tipo) { where.push(`t.tipo = :tipo`); repl.tipo = tipo; }
 
   if (where.length) sql += ` WHERE ${where.join(' AND ')}\n`;
 
