@@ -7,10 +7,11 @@ import { useToast } from '../components/toast/ToastProvider'
 export const STAGES = [
   { code: 'pendiente', name: 'Pendiente' },
   { code: 'en_curso', name: 'En curso' },
+  { code: 'desarrollado', name: 'Desarrollado' },
   { code: 'revision', name: 'En Revisión' },
   { code: 'aprobada', name: 'Aprobada' },
   { code: 'cancelada', name: 'Cancelada' },
-]
+];
 
 const emptyColumns = () => Object.fromEntries(STAGES.map(s => [s.code, []]))
 

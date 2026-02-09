@@ -275,6 +275,7 @@ export default function TasksPage() {
         id: t.id,
         titulo: t.titulo,
         cliente_nombre: t.cliente_nombre,
+        cliente_id: t.cliente_id,
         estado_nombre: t.estado_nombre === 'Revisión' ? 'En Revisión' : t.estado_nombre,
         estado_id: t.estado_id,
         estado_codigo: t.estado_codigo,
