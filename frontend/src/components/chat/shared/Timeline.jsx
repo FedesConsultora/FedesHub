@@ -187,19 +187,33 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
       {groups.map(({ k, label, items }) => (
         <div key={k} className="dayGroup">
           <div className="daySep">{label}</div>
-          {items.map(m => (
-            <MessageItem
-              key={m.id}
-              m={m}
-              canal_id={canal_id}
-              my_user_id={my_user_id}
-              members={members}
-              statuses={statuses}
-              canPin={canPin}
-              canReply={canReply}
-              onForward={() => setForwardMsg(m)}
-            />
-          ))}
+          {items.map((m, idx) => {
+            const prev = items[idx - 1]
+            const mUser = toNum(m.user_id ?? m.autor?.id)
+            const pUser = prev ? toNum(prev.user_id ?? prev.autor?.id) : null
+
+            const isGrouped = !!(prev &&
+              mUser === pUser &&
+              !prev.deleted_at &&
+              !m.deleted_at &&
+              (new Date(m.created_at || m.updated_at) - new Date(prev.created_at || prev.updated_at) < 5 * 60 * 1000) // 5 minutos máx
+            )
+
+            return (
+              <MessageItem
+                key={m.id}
+                m={m}
+                canal_id={canal_id}
+                my_user_id={my_user_id}
+                members={members}
+                statuses={statuses}
+                canPin={canPin}
+                canReply={canReply}
+                onForward={() => setForwardMsg(m)}
+                isGrouped={isGrouped}
+              />
+            )
+          })}
         </div>
       ))}
 
@@ -221,7 +235,7 @@ export default function Timeline({ rows = [], loading = false, canal_id = null, 
   )
 }
 
-function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canReply, onForward }) {
+function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canReply, onForward, isGrouped }) {
   const ts = new Date(m.created_at || m.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const { setReplyTo } = useContext(ChatActionCtx)
 
@@ -258,14 +272,38 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
 
   const renderBody = (texto = '') => {
     let html = escapeHtml(texto).replace(/\n/g, '<br/>')
-    const repl = (_, id) => `<span class="mentions">@${memberByUserId.get(Number(id))?.nombre || id}</span>`
+    // 👉 El regex busca @user:ID o simplemente @ID si viniera de un sistema legacy
+    const repl = (_, id) => {
+      const idNum = Number(id)
+      const mem = memberByUserId.get(idNum)
+      if (mem) {
+        return `<span class="mentions">@${displayName(mem)}</span>`
+      }
+      // Fallback: buscar en los Miembros del canal (members prop) por si acaso el map no lo tiene
+      const fallbackMem = members?.find(m => Number(m.user_id) === idNum)
+      if (fallbackMem) {
+        return `<span class="mentions">@${displayName(fallbackMem)}</span>`
+      }
+      return `<span class="mentions">@${id}</span>`
+    }
     html = html.replace(/@user:(\d+)\b/g, repl).replace(/@(\d+)\b/g, repl)
     return { __html: linkify(html) }
   }
   const renderReplyExcerpt = (texto = '') => {
     let html = escapeHtml(texto.replace(/\s+/g, ' '))
-    html = html.replace(/@user:(\d+)\b/g, (_, id) => `<span class="mentions">@${memberByUserId.get(Number(id))?.nombre || id}</span>`)
-      .replace(/@(\d+)\b/g, (_, id) => `<span class="mentions">@${memberByUserId.get(Number(id))?.nombre || id}</span>`)
+    const repl = (_, id) => {
+      const idNum = Number(id)
+      const mem = memberByUserId.get(idNum)
+      if (mem) {
+        return `<span class="mentions">@${displayName(mem)}</span>`
+      }
+      const fallbackMem = members?.find(m => Number(m.user_id) === idNum)
+      if (fallbackMem) {
+        return `<span class="mentions">@${displayName(fallbackMem)}</span>`
+      }
+      return `<span class="mentions">@${id}</span>`
+    }
+    html = html.replace(/@user:(\d+)\b/g, repl).replace(/@(\d+)\b/g, repl)
     return { __html: linkify(html) }
   }
 
@@ -337,33 +375,37 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
   }
 
   return (
-    <div id={`msg-${m.id}`} className={'msgWrapper' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '')}>
-      <div className="msgAvatarContainer" style={{ position: 'relative' }}>
-        <Avatar
-          src={pickAvatar(member) || pickAvatar(m)}
-          name={author}
-          size={32}
-          federId={authorFederId}
-        />
-        <AttendanceBadge {...getStatus(statuses, authorFederId)} size={12} />
-      </div>
+    <div id={`msg-${m.id}`} className={'msgWrapper' + (isMine ? ' mine' : '') + (isDeleted ? ' deleted' : '') + (isPinned ? ' pinned' : '') + (isGrouped ? ' is-grouped' : '')}>
+      {!isGrouped && (
+        <div className="msgAvatarContainer" style={{ position: 'relative' }}>
+          <Avatar
+            src={pickAvatar(member) || pickAvatar(m)}
+            name={author}
+            size={32}
+            federId={authorFederId}
+          />
+          <AttendanceBadge {...getStatus(statuses, authorFederId)} size={12} />
+        </div>
+      )}
 
       <div className="msgBody">
-        <div className="msgMeta">
-          <span className="author">{author}</span>
-          <span className="time">{ts}</span>
-          {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
-          {!isDeleted && isPinned && (
-            <span className="pinnedBadge">
-              <BsPinAngle size={12} /> fijado
-            </span>
-          )}
-          {!isDeleted && m.body_json?.forward_data?.is_forwarded && (
-            <span className="forwardedBadge">
-              <RiShareForwardLine size={12} /> reenviado
-            </span>
-          )}
-        </div>
+        {!isGrouped && (
+          <div className="msgMeta">
+            <span className="author">{author}</span>
+            <span className="time">{ts}</span>
+            {!isDeleted && isEdited && <span className="editedLabel">(editado)</span>}
+            {!isDeleted && isPinned && (
+              <span className="pinnedBadge">
+                <BsPinAngle size={12} /> fijado
+              </span>
+            )}
+            {!isDeleted && m.body_json?.forward_data?.is_forwarded && (
+              <span className="forwardedBadge">
+                <RiShareForwardLine size={12} /> reenviado
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="bubbleContainer">
           <div className="bubble">
@@ -399,7 +441,13 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
               </div>
             ) : (
               <>
-                <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
+                {m.body_json?.type === 'sticker' && m.body_json?.sticker?.url ? (
+                  <div className="sticker-render">
+                    <img src={m.body_json.sticker.url} alt={m.body_json.sticker.name || 'sticker'} />
+                  </div>
+                ) : (
+                  <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
+                )}
                 <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
               </>
             )}
@@ -408,7 +456,7 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
           {!isDeleted && !isEditing && (
             <>
               {canReply && (
-                <button className="alwaysVisibleReply" title="Responder" onClick={() => setReplyTo(m)}>
+                <button className="alwaysVisibleReply is-prominent" title="Responder" onClick={() => setReplyTo(m)}>
                   <LuReply />
                 </button>
               )}

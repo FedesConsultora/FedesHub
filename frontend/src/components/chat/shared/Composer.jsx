@@ -1,4 +1,4 @@
-import React, { forwardRef, useContext, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useCallback, useEffect } from 'react'
 import { useSendMessage, useChannelMembers } from '../../../hooks/useChat'
 import { useTypingEmitter } from '../../../hooks/useTypingEmitter'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
@@ -6,10 +6,12 @@ import { useToast } from '../../toast/ToastProvider'
 import { FiSend, FiSmile, FiX, FiMic } from 'react-icons/fi'
 import { FaRegFile } from 'react-icons/fa'
 import EmojiPicker from '../../common/EmojiPicker'
+import StickerPicker from './StickerPicker'
 import AttachmentIcon from './AttachmentIcon'
 import AudioRecorderModal from './AudioRecorderModal'
 import { ChatActionCtx } from './context'
 import MentionInput from './MentionInput'
+import { CenteredPicker } from './ReactionBar'
 import { fullName, displayName, pickAvatar, getEmail } from '../../../utils/people'
 import './Composer.scss'
 
@@ -42,6 +44,7 @@ function normalizeMentions(plainText = '', feders = []) {
 const Composer = forwardRef(function Composer({ canal_id, canal, disabled = false, reason = '' }, ref) {
   const [text, setText] = useState('')
   const [openEmoji, setOpenEmoji] = useState(false)
+  const [pickerTab, setPickerTab] = useState('emoji') // 'emoji' | 'sticker'
   const [openAudio, setOpenAudio] = useState(false)
   const [files, setFiles] = useState([])
   const send = useSendMessage()
@@ -59,6 +62,17 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     ttl: 5,
     debugSelf: process.env.NODE_ENV !== 'production'
   })
+
+  // Autofocus logic
+  const inputRef = useRef(null)
+  useEffect(() => {
+    if (canal_id && inputRef.current) {
+      // Small timeout to ensure the tab/channel is transitionally settled
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
+  }, [canal_id])
 
   useImperativeHandle(ref, () => ({ addFiles: (arr = []) => setFiles(prev => prev.concat(arr)) }))
 
@@ -159,7 +173,29 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     typing.ping()
   }
   const onBlur = () => { typing.stop() }
-  const addEmoji = (em) => setText(t => (t + em))
+  const addEmoji = useCallback((em) => setText(t => (t + em)), [])
+
+  const onSelectSticker = async (sticker) => {
+    try {
+      const payload = {
+        body_text: "", // Mandamos vacío explícito por si el backend lo requiere
+        body_json: {
+          type: 'sticker',
+          sticker: {
+            id: sticker.id,
+            url: sticker.url,
+            name: sticker.name
+          }
+        },
+        parent_id: replyTo?.id || null
+      }
+      await send.mutateAsync({ canal_id, body: payload })
+      // setOpenEmoji(false) // Dejar abierto según pedido
+      setReplyTo(null)
+    } catch (err) {
+      toast?.error('Error al enviar sticker')
+    }
+  }
   const onPickFiles = (e) => { const arr = Array.from(e.target.files || []); setFiles(prev => prev.concat(arr)); e.target.value = '' }
   const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx))
   const onDragOver = (e) => { e.preventDefault(); if (disabled) return }
@@ -192,6 +228,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
         )}
 
         <MentionInput
+          inputRef={inputRef}
           value={text}
           onChange={onChange}
           onKeyDown={onKeyDown}
@@ -200,6 +237,18 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
           disabled={disabled}
           placeholder="Escribí un mensaje… (@ para mencionar)"
         />
+
+        <div className="emojiIn">
+          <button
+            type="button"
+            className="emojiBtn"
+            disabled={disabled}
+            title="Emojis y Stickers"
+            onClick={() => setOpenEmoji(true)}
+          >
+            <FiSmile />
+          </button>
+        </div>
 
         {!!files.length && (
           <div className="attachPreview">
@@ -246,6 +295,44 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
         onClose={() => setOpenAudio(false)}
         onSend={(file) => setFiles(prev => [...prev, file])}
       />
+
+      {openEmoji && (
+        <CenteredPicker
+          onClose={() => setOpenEmoji(false)}
+          className="composer-picker-panel"
+          layerClassName="composer-picker-layer"
+        >
+          <div className="composer-popover">
+            <div className="popover-tabs">
+              <button
+                type="button"
+                className={pickerTab === 'emoji' ? 'active' : ''}
+                onClick={() => setPickerTab('emoji')}
+              >
+                Emojis
+              </button>
+              <button
+                type="button"
+                className={pickerTab === 'sticker' ? 'active' : ''}
+                onClick={() => setPickerTab('sticker')}
+              >
+                Stickers
+              </button>
+            </div>
+            <div className="popover-content">
+              {pickerTab === 'emoji' ? (
+                <EmojiPicker
+                  onSelect={(em) => {
+                    addEmoji(em)
+                  }}
+                />
+              ) : (
+                <StickerPicker onSelect={onSelectSticker} />
+              )}
+            </div>
+          </div>
+        </CenteredPicker>
+      )}
     </form>
   )
 })

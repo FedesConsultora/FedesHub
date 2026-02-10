@@ -179,7 +179,9 @@ export default function UnreadDmBubbles({ limit = 1 }) {
             onClick={() => {
               console.log('[Sidebar] Clicking bubble for canal:', it.canal_id)
               clearUnreadFor(it.canal_id)
-              nav(`/chat/c/${it.canal_id}`)
+              window.dispatchEvent(new CustomEvent('fh:chat:quick', {
+                detail: { canal_id: it.canal_id }
+              }))
             }}
             aria-label={`Abrir DM con ${title}. ${countTxt} sin leer`}
             style={it.avatar ? { backgroundImage: `url(${it.avatar})`, backgroundSize: 'cover', backgroundPosition: 'center', color: 'transparent' } : {}}

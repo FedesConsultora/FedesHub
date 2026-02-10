@@ -1,0 +1,271 @@
+@use "../../../styles/variables" as v;
+
+.quickChatModal {
+    width: 320px;
+    height: 400px;
+    background: v.$fh-bg;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: v.$shadow-2xl;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: qcModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: fixed;
+    z-index: 10005;
+    user-select: none;
+
+    &.minimized {
+        height: 45px;
+        width: 200px;
+        border-radius: 32px;
+        box-shadow: v.$shadow-lg;
+
+        .qcBody {
+            display: none;
+        }
+
+        .qcHeader {
+            background: v.$fh-primary;
+            color: white;
+            border: none;
+            height: 100%;
+
+            .mainIcon,
+            .ttl {
+                color: white;
+            }
+
+            .minBtn,
+            .closeBtn {
+                border: none;
+                background: transparent !important;
+                background-color: transparent !important;
+                color: rgba(255, 255, 255, 0.7);
+
+                &:hover {
+                    color: white;
+                }
+            }
+        }
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        pointer-events: none;
+    }
+}
+
+@keyframes qcModalIn {
+    from {
+        transform: scale(0.9) translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.qcHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(v.$fh-card, 0.8);
+    backdrop-filter: blur(10px);
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    .left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+
+        .mainIcon {
+            color: v.$fh-primary;
+        }
+
+        .ttl {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+    }
+
+    .qcActions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+
+        button {
+            background-color: transparent;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            color: v.$fh-muted;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s;
+
+            &:hover {
+                color: v.$fh-text;
+            }
+
+            &.closeBtn:hover {
+                color: #9a3e3e;
+            }
+        }
+    }
+}
+
+.qcBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    user-select: text;
+
+    .listView.empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        color: v.$fh-muted;
+        gap: 16px;
+
+        p {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+    }
+
+    .chatView {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        .timelineWrap {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .composerWrap {
+            max-height: 90px;
+            padding: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: v.$fh-card;
+        }
+    }
+}
+
+.quickChatModal {
+    .chat-composer {
+        max-height: 70px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        gap: 2px;
+
+        .mentionInput {
+
+            max-height: 40px;
+
+            font-size: .7rem !important;
+
+            .emojiBtn {
+                transform: scale(.7)
+            }
+
+            * {
+                transform: scale(.8)
+            }
+        }
+    }
+
+    .controlsRight,
+    .controlsLeft {
+        gap: 4px;
+
+        button {
+            transform: scale(.7)
+        }
+    }
+
+    .chat-timeline {
+        padding: 10px;
+        gap: 4px;
+    }
+
+    // Optimize timeline for small window
+    .msgWrapper {
+        max-width: 100%;
+
+        .bubble {
+            max-width: 90%;
+        }
+    }
+}
+
+
+// Ajuste de posición del picker cuando se abre desde Quick Chat
+.quickChatModal {
+    .composer-picker-layer {
+        // Posicionar el picker cerca del modal de Quick Chat (abajo-izquierda)
+        display: flex !important;
+        align-items: flex-end !important;
+        justify-content: flex-start !important;
+        padding: 20px !important;
+
+        .emojiPanel {
+            margin: 0 !important;
+            transform: none !important;
+        }
+    }
+}
+
+
+@media (max-width: 600px) {
+    .quickChatModal {
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        top: auto !important;
+        height: 50vh !important;
+        border-radius: 24px 24px 0 0;
+
+        &.minimized {
+            height: 40px !important;
+            width: 80% !important;
+            border-radius: 0;
+        }
+    }
+}

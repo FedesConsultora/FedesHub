@@ -97,13 +97,14 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
     color: v.$fh-text;
-    padding: 12px 44px 12px 14px;
+    padding: 12px 48px 12px 14px; // Espacio a la derecha para el botón de emojis
     min-height: 44px;
-    max-height: 120px;
+    max-height: 140px; // Aproximadamente el triple de la altura original
     font-family: inherit;
     font-size: 0.95rem;
     line-height: 1.4;
     transition: all 0.2s;
+    overflow-y: auto;
 
     &:focus {
       outline: none;
@@ -120,21 +121,27 @@
   .emojiIn {
     position: absolute;
     right: 8px;
-    bottom: 4px;
+    bottom: 20px; // Alineado a la base del input incluso cuando crece
+    z-index: 2;
 
     .emojiBtn {
       width: 36px;
       height: 36px;
-      border-radius: 50%;
+      border: none; // Menos circular para alinearse mejor con el borde del input
       display: grid;
       place-items: center;
       background: transparent;
       color: v.$fh-muted;
       padding: 0;
       cursor: pointer;
+      transition: color 0.2s;
 
       &:hover {
         color: v.$fh-text;
+      }
+
+      svg {
+        font-size: 1.25rem;
       }
     }
   }
@@ -197,6 +204,7 @@
     cursor: pointer;
     transition: all 0.2s;
     padding: 0;
+
     &:hover:not(:disabled) {
       transform: scale(1.05);
       background: color.adjust(v.$fh-primary, $lightness: 5%);
@@ -217,6 +225,73 @@
   &.is-disabled {
     opacity: 0.5;
     pointer-events: none;
+  }
+}
+
+/* Popover para Emoji y Stickers */
+.emojiPanel.composer-picker-panel {
+  background: #1a222c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.composer-popover {
+  width: 350px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+
+  .popover-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    gap: 4px;
+
+    button {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: v.$fh-muted;
+      padding: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+      }
+
+      &.active {
+        background: v.$fh-primary;
+        color: white;
+      }
+    }
+  }
+
+  .popover-content {
+    flex: 1;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+
+    /* Forzar al EmojiPickerLib a ocupar el ancho total */
+    .fh-emojiPicker-pop {
+      width: 100% !important;
+      position: static !important;
+      box-shadow: none !important;
+
+      aside {
+        width: 100% !important;
+        border: none !important;
+        background: transparent !important;
+      }
+    }
   }
 }
 

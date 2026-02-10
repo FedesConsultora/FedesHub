@@ -159,6 +159,12 @@
   /* ♥ centro real */
   padding: 12px;
   /* margen con bordes de viewport */
+
+  &.composer-picker-layer {
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 24px 24px 80px 24px; // Espacio para que no tape el input
+  }
 }
 
 .emojiPanel {

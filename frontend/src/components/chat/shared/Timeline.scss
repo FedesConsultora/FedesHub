@@ -8,7 +8,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
   min-height: 0;
 
   .loading,
@@ -22,7 +22,7 @@
   .dayGroup {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 4px;
   }
 
   .daySep {
@@ -90,6 +90,24 @@
 
     &.deleted {
       opacity: 0.5;
+    }
+
+    &.is-grouped {
+      margin-top: -2px; // Pegar más a la burbuja anterior
+
+      &:not(.mine) {
+        padding-left: 44px; // 34px (avatar) + 10px (gap)
+        gap: 0;
+      }
+
+      &.mine {
+        padding-right: 44px;
+        gap: 0;
+      }
+
+      .bubble {
+        border-radius: 18px !important; // Burbujas intermedias más redondeadas
+      }
     }
 
     &.pinned {
@@ -172,7 +190,7 @@
     }
 
     .bubble {
-      padding: 10px 14px;
+      padding: 6px 12px;
       background: v.$fh-card;
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 4px 18px 18px 18px;
@@ -185,12 +203,34 @@
       transition: all 0.2s;
 
       .txt {
+        font-size: 0.95rem;
+        line-height: 1.5;
         white-space: pre-wrap;
+        word-break: break-word;
+
+        &.deleted {
+          font-style: italic;
+          opacity: 0.7;
+        }
+
+        .mentions {
+          color: v.$fh-primary;
+          background: rgba(v.$fh-primary, 0.1);
+          padding: 0 4px;
+          border-radius: 4px;
+          font-weight: 700;
+        }
       }
 
-      .txt.deleted {
-        font-style: italic;
-        opacity: 0.7;
+      .sticker-render {
+        padding: 4px;
+
+        img {
+          max-width: 140px;
+          max-height: 140px;
+          display: block;
+          border-radius: 8px;
+        }
       }
     }
 
@@ -200,17 +240,29 @@
       justify-content: center;
       background: transparent;
       border: none;
-      color: #ffffff;
+      color: v.$fh-muted;
       cursor: pointer;
       padding: 6px;
       border-radius: 50%;
       transition: all 0.2s;
-      opacity: 0.5;
+      opacity: 0;
+      visibility: hidden;
+
+      &.is-prominent {
+        opacity: 0.4;
+        visibility: visible;
+        color: v.$fh-text;
+
+        &:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
 
       &:hover {
         background: transparent;
         color: #ffffff;
-        opacity: 1;
+        opacity: 1 !important;
         transform: scale(1.1);
       }
 

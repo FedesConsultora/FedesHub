@@ -60,7 +60,9 @@ export default function MentionInput({
     const display = `@${(f?.nombre || "") + " " + (f?.apellido || "")}`
       .replace(/\s+/g, " ")
       .trim();
-    const token = `${display} `; // espacio para cerrar la mención
+    // 👉 Guardamos @user:ID para que el renderer sepa quién es, 
+    // pero el regex del renderer buscará @user:(\d+)
+    const token = `@user:${f.id} `;
     const next = `${left}${token}${right}`;
     const pos = (left + token).length;
 
@@ -121,6 +123,21 @@ export default function MentionInput({
       e.target.form?.requestSubmit();
     }
   };
+
+  // Efecto para auto-crecimiento del textarea
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Resetear altura para calcular scrollHeight correctamente
+    el.style.height = "auto";
+
+    // Obtener la altura del contenido
+    const scHeight = el.scrollHeight;
+
+    // Aplicar la altura calculada (CSS limitará el máximo)
+    el.style.height = `${scHeight}px`;
+  }, [value]);
 
   return (
     <div className={`mentionWrap ${className || ""}`}>
