@@ -47,6 +47,7 @@ export const chatApi = {
     react: (mensaje_id, body) => api.post(`${base}/messages/${mensaje_id}/react`, body).then(r => r.data),
     pin: (mensaje_id, body) => api.post(`${base}/messages/${mensaje_id}/pin`, body).then(r => r.data),
     save: (mensaje_id, body) => api.post(`${base}/messages/${mensaje_id}/save`, body).then(r => r.data),
+    forward: (mensaje_id, body) => api.post(`${base}/messages/${mensaje_id}/forward`, body).then(r => r.data),
   },
 
   threads: {

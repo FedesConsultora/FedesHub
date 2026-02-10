@@ -307,6 +307,60 @@ export const svcEditMessage = async (id, payload, user) => {
   return row;
 };
 
+export const svcForwardMessage = async (msg_id, target_canal_ids, user) => {
+  const originalMsg = await mReg.ChatMensaje.findByPk(msg_id, {
+    include: [{ model: mReg.ChatAdjunto, as: 'adjuntos' }]
+  });
+  if (!originalMsg) throw Object.assign(new Error('Mensaje original no encontrado'), { status: 404 });
+
+  const results = [];
+  for (const canal_id of target_canal_ids) {
+    const t = await sequelize.transaction();
+    try {
+      const canal = await getCanalWithMiembro(canal_id, user.id, t);
+      if (!canal) throw Object.assign(new Error(`No tenés acceso al canal ${canal_id}`), { status: 403 });
+
+      const payload = {
+        body_text: originalMsg.body_text,
+        body_json: {
+          ...(originalMsg.body_json || {}),
+          forward_data: {
+            is_forwarded: true,
+            original_msg_id: originalMsg.id,
+            original_author_id: originalMsg.user_id,
+            forwarded_by_id: user.id,
+            forwarded_at: new Date()
+          }
+        },
+        attachments: originalMsg.adjuntos?.map(a => ({
+          file_url: a.file_url,
+          file_name: a.file_name,
+          mime_type: a.mime_type,
+          size_bytes: a.size_bytes,
+          width: a.width,
+          height: a.height,
+          duration_sec: a.duration_sec
+        }))
+      };
+
+      const newMsg = await createMessage(canal, payload, user, t);
+      await t.commit();
+      results.push(newMsg);
+
+      // Realtime y Notif
+      try {
+        await publishMessageCreated(canal_id, newMsg, { except_user_id: user.id });
+        await _notifyNewMessage(canal_id, newMsg, user);
+      } catch (err) { console.error('[svcForwardMessage] realtime/notif', err); }
+
+    } catch (e) {
+      await t.rollback();
+      throw e;
+    }
+  }
+  return results;
+};
+
 export const svcDeleteMessage = async (id, user) => {
   const t = await sequelize.transaction();
   let r, msg;

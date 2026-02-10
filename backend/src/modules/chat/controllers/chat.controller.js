@@ -3,7 +3,7 @@ import { initModels } from '../../../models/registry.js';
 import {
   listCatalogQuery, listCanalesQuery, upsertCanalSchema, updateCanalSettingsSchema,
   memberUpsertSchema, memberPatchSchema,
-  listMessagesQuery, postMessageSchema, editMessageSchema, reactionSchema,
+  listMessagesQuery, postMessageSchema, editMessageSchema, forwardMessageSchema, reactionSchema,
   readChannelSchema, saveSchema, pinSchema, typingSchema, presenceSchema,
   createInvitationSchema, invitationTokenParam, meetingSchema,
   idParam, midParam
@@ -12,7 +12,7 @@ import {
 import {
   svcCatalogos, svcListCanales, svcUpsertCanal, svcArchiveCanal, svcUpdateCanalSettings, svcDeleteCanal,
   svcListMiembros, svcAddOrUpdateMiembro, svcRemoveMiembro, svcJoin, svcLeave,
-  svcListMessages, svcSearchMessages, svcListPins, svcPostMessage, svcEditMessage, svcDeleteMessage,
+  svcListMessages, svcSearchMessages, svcListPins, svcPostMessage, svcEditMessage, svcForwardMessage, svcDeleteMessage,
   svcReact, svcPin, svcSave, svcFollowThread, svcSetRead, svcSetReadAll,
   svcSetPresence, svcTyping,
   svcInvite, svcAcceptInvitation, svcDeclineInvitation,
@@ -203,6 +203,15 @@ export const putMessage = async (req, res, next) => {
     const { id } = midParam.parse(req.params);
     const body = editMessageSchema.parse(req.body);
     res.json(await svcEditMessage(id, body, req.user));
+  } catch (e) { next(e); }
+};
+
+export const postForwardMessage = async (req, res, next) => {
+  try {
+    const { id } = midParam.parse(req.params);
+    const body = forwardMessageSchema.parse(req.body);
+    const results = await svcForwardMessage(id, body.target_canal_ids, req.user);
+    res.json(results);
   } catch (e) { next(e); }
 };
 

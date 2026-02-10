@@ -24,6 +24,17 @@ export function useChannels(params = {}) {
   })
 }
 
+export function useCreateChannel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body) => chatApi.channels.create(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
+    }
+  })
+}
+
 export function useChannelMembers(canal_id) {
   return useQuery({
     queryKey: ['chat', 'members', canal_id],
@@ -85,6 +96,24 @@ export function useDeleteMessage() {
         qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
         qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
       }
+    }
+  })
+}
+
+export function useForwardMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mensaje_id, target_canal_ids }) =>
+      chatApi.messages.forward(mensaje_id, { target_canal_ids }),
+    onSuccess: (results) => {
+      // Invalidad los canales destino
+      if (Array.isArray(results)) {
+        for (const msg of results) {
+          qc.invalidateQueries({ queryKey: ['chat', 'msgs', Number(msg.canal_id)] })
+        }
+      }
+      qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      qc.invalidateQueries({ queryKey: ['chat', 'dms'] })
     }
   })
 }
