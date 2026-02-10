@@ -348,22 +348,26 @@ export default function RealtimeProvider({ children }) {
     console.log(`[🔔 NOTIF] 🚀 [Lv${priority}] Nuclear Hunter:`, { title: authorName, tag, icon })
     if (foundIcon) console.log('[🔔 NOTIF] 🎯 Avatar Hunter found target:', foundIcon)
 
-    const isUpdate = currentLevel >= 1
+    // AUDIO INTELIGENTE (Gmail-style):
+    // Si la pestaña NO es visible, dejamos que la notificación del sistema haga ruido (silent: false).
+    // Si la pestaña ES visible, la app hará el pitido custom y la notificación será silenciosa.
+    const isSilenced = windowVisible;
+
     const options = {
       body: String(textBody).slice(0, 150),
       icon,
       badge: window.location.origin + '/favicon.ico',
       tag,
       renotify: true,
-      silent: true, // 🔊 SIEMPRE SILENCIO: Evitamos el "doble pitido" (Browser + Sistema) ya que disparamos playSoundFor manualmente.
+      silent: isSilenced,
       timestamp: Date.now(),
       data: { canalId, url: `/chat/${canalId}` }
     }
 
-    // DISPARO DE AUDIO FIABLE
-    // Solo hacemos sonido si es el PRIMER aviso (Lv1) para evitar el doble pitido.
-    // Además, forzamos que sea el Master Tab quien pita.
-    if (!isUpdate && !muted && isMasterTabRef.current) {
+    // DISPARO DE AUDIO LOCAL
+    // Solo hacemos sonido local (MP3) si la ventana ES visible y es el primer aviso.
+    // Si no es visible, el "silent: false" de la notificación nativa se encargará.
+    if (!isUpdate && !muted && isMasterTabRef.current && windowVisible) {
       playSoundFor({ ...d, chat_canal_id: canalId })
     }
 

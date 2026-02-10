@@ -39,7 +39,7 @@ messaging.onBackgroundMessage(async (payload) => {
       badge: '/favicon.ico',
       vibrate: [200, 100, 200], // Vibración en móviles
       requireInteraction: false,
-      silent: true // 🔊 SIEMPRE SILENCIO: La app (si está viva) pitará.
+      silent: false // 🔊 AUDIO DESBLOQUEADO: Para que suene cuando no hay ninguna pestaña en foco.
     })
   }
 
