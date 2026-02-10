@@ -1,7 +1,7 @@
 services:
-  db:
+  fedeshub-db:
     image: postgres:16
-    container_name: fedes-hub_db
+    container_name: fedeshub-db
     restart: always
     env_file: .env
     volumes:
@@ -20,7 +20,7 @@ services:
     env_file: ./backend/.env
     command: npm start
     depends_on:
-      db:
+      fedeshub-db:
         condition: service_healthy
     networks:
       - fedes-net

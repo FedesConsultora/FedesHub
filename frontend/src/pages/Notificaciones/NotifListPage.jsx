@@ -169,7 +169,7 @@ function TableRow({ r, onChanged }) {
 
   const handleOpen = async (e) => {
     e.preventDefault()
-    const url = n.link_url || ''
+    let url = n.link_url || ''
 
     // Marcar como leída
     if (!r.read_at && n.id) {

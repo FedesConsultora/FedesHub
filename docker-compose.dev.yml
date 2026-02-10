@@ -1,7 +1,7 @@
 services:
   fedeshub-db:
     image: postgres:16
-    container_name: fedeshub-db-dev
+    container_name: fedeshub-db
     environment:
       - POSTGRES_USER=${DB_USER:-fedeshub}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-fedeshub}
