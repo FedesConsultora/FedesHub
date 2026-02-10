@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MdClose, MdDownload, MdContentCopy } from 'react-icons/md';
+import { MdClose, MdDownload, MdContentCopy, MdLink } from 'react-icons/md';
 import { FaFileWord, FaFileExcel, FaFileArchive, FaFileAlt } from 'react-icons/fa';
 import './ImageFullscreen.scss';
 

@@ -124,6 +124,7 @@ export default function RealtimeProvider({ children }) {
   const [notifPermission, setNotifPermission] = useState(() =>
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   )
+  const [unreadCountTotal, setUnreadCountTotal] = useState(0)
 
   // ---- Helpers de Gestión Automática
   const checkSeenOnce = (key, ttl = 5000) => {
@@ -226,6 +227,25 @@ export default function RealtimeProvider({ children }) {
       window.removeEventListener('blur', handleBlur)
     }
   }, [])
+
+  // ---- Tab Pulsing (Title Flash)
+  useEffect(() => {
+    if (windowVisible || unreadCountTotal === 0) {
+      document.title = 'FedesHub'
+      return
+    }
+
+    let isFlashing = false
+    const interval = setInterval(() => {
+      document.title = isFlashing ? 'FedesHub' : '¡Mensaje nuevo! 📩'
+      isFlashing = !isFlashing
+    }, 1000)
+
+    return () => {
+      clearInterval(interval)
+      document.title = 'FedesHub'
+    }
+  }, [windowVisible, unreadCountTotal])
 
   // ---- Audio Unlock (Captura invisible del primer click)
   useEffect(() => {
@@ -401,9 +421,12 @@ export default function RealtimeProvider({ children }) {
     const now = Date.now()
     const last = lastPlayByKeyRef.current.get(key) || 0
 
-    // throttle de 2.5s: SSE y FCM suelen llegar con < 1s de diferencia.
-    if (now - last < 2500) {
-      console.log(`[🔊 AUDIO] 🔇 SKIP (Throttle ${now - last}ms < 2500ms) for key: ${key}`)
+    // Si es un canal diferente, permitimos un throttle más corto (1s)
+    // Pero si es el MISMO canal, mantenemos 2.5s para no aturdir
+    const throttleTime = (cid && lastPlayByKeyRef.current.has(key)) ? 2500 : 1200
+
+    if (now - last < throttleTime) {
+      console.log(`[🔊 AUDIO] 🔇 SKIP (Throttle ${now - last}ms < ${throttleTime}ms) for key: ${key}`)
       return
     }
 
@@ -617,7 +640,10 @@ export default function RealtimeProvider({ children }) {
   }, [booted, user])
 
   useEffect(() => {
-    const hasAny = Object.values(unreadByCanal || {}).some(v => (v | 0) > 0)
+    const unreads = Object.values(unreadByCanal || {}).map(v => v | 0)
+    const total = unreads.reduce((a, b) => a + b, 0)
+    setUnreadCountTotal(total)
+    const hasAny = total > 0
     window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: hasAny } }))
   }, [unreadByCanal])
 

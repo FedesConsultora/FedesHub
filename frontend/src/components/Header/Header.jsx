@@ -48,7 +48,7 @@ function AudioStatusIndicator({ onClick }) {
 
   return (
     <button
-      className={`audioStatusIndicator status-${status}`}
+      className={`audioStatusIndicator status-${status} ${status !== 'ready' ? 'pulse' : ''}`}
       onClick={onClick}
       title={title}
     >

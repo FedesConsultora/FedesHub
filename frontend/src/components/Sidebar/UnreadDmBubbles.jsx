@@ -128,9 +128,9 @@ export default function UnreadDmBubbles({ limit = 1 }) {
 
 
     arr.sort((a, b) => b.last - a.last)
-    // "debe marcar solo el ultimo": mostramos solo la notificación/burbuja más reciente 
-    // para no saturar el sidebar si hay muchos DMs pendientes.
-    return arr.slice(0, 1)
+    // "debe marcar solo el ultimo": mostramos hasta 3 notificaciones/burbujas más recientes 
+    // para que sea más fácil detectar quién escribió si hay varios chats pendientes.
+    return arr.slice(0, 3)
   }, [dmByCanal, derivedUnread, unreadByCanal, mentionByCanal, suppressedCanals, currentCanal, chById, limit])
 
   // Animación sutil al aparecer

@@ -12,8 +12,12 @@ function pickFeder(o) {
   if (!o || typeof o !== 'object') return null
 
   // 1) Estructura anidada más común en miembros de canal
-  const uFed = o?.user?.feder
+  const uFed = o?.user?.feder || o?.usuario?.feder
   if (uFed && (uFed.nombre || uFed.apellido)) return uFed
+
+  // 1b) Feder dentro de usuario/user directamente
+  const uDir = o?.user || o?.usuario
+  if (uDir && (uDir.nombre || uDir.apellido)) return uDir
 
   // 2) Feder al tope (ej: candidatos DM o algunos payloads)
   const topFed = o?.feder
@@ -23,9 +27,17 @@ function pickFeder(o) {
   const aFed = o?.autor?.feder
   if (aFed && (aFed.nombre || aFed.apellido)) return aFed
 
-  // 4) Nombre/apellido directo en el objeto
+  // 4) Nombre/apellido directo en el ojo del huracán (payloads planos)
   if (o?.nombre || o?.apellido) {
     return { nombre: o.nombre || '', apellido: o.apellido || '' }
+  }
+
+  // 4b) Campos alternativos de FCM
+  if (o?.author_name || o?.fcm_title) {
+    const nameStr = o.author_name || o.fcm_title
+    if (nameStr && nameStr !== 'FedesHub') {
+      return { nombre: nameStr, apellido: '' }
+    }
   }
 
   // 5) Nombre/apellido directo dentro de autor
