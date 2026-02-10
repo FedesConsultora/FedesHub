@@ -20,7 +20,7 @@ const emptyColumns = () => Object.fromEntries(STAGES.map(s => [s.code, []]))
  * p.ej.: { solo_mias:true, include_archivadas:false, q, cliente_id, estado_id, limit, orden_by, sort }
  */
 export default function useTasksBoard(
-  params = { solo_mias: true, include_archivadas: false, include_finalizadas: false, limit: 200, orden_by: 'prioridad', sort: 'desc' }
+  params = { solo_mias: true, include_archivadas: false, include_finalizadas: false, limit: 200, orden_by: 'vencimiento', sort: 'asc' }
 ) {
   const { user, roles } = useAuthCtx() || {}
   const toast = useToast()

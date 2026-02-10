@@ -142,7 +142,7 @@ const buildListSQL = (params = {}, currentUser) => {
     // prioridad
     prioridad_min, prioridad_max,
     // orden/paginación
-    orden_by = 'prioridad', sort = 'desc', limit = 50, offset = 0
+    orden_by = 'vencimiento', sort = 'asc', limit = 50, offset = 0
   } = params;
 
   const repl = { limit, offset };

@@ -91,7 +91,8 @@ a[href^="tel:"],
   }
 }
 
-button {
+button,
+.cursor-pointer {
   cursor: pointer;
 }
 
@@ -136,6 +137,10 @@ button {
 .fh-table thead th {
   color: $fh-muted;
   font-size: .9rem;
+}
+
+.fh-table tbody tr.cursor-pointer:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Segmentado simple */

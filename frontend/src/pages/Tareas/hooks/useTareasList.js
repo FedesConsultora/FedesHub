@@ -7,8 +7,8 @@ export const PageSize = 24
 
 const parseParams = (search) => {
   const p = new URLSearchParams(search)
-  const pick = (k, d='') => p.get(k) ?? d
-  const num  = (k) => { const v = p.get(k); return v ? Number(v) : '' }
+  const pick = (k, d = '') => p.get(k) ?? d
+  const num = (k) => { const v = p.get(k); return v ? Number(v) : '' }
   return {
     q: pick('q'),
     cliente_id: num('cliente_id'),
@@ -16,28 +16,28 @@ const parseParams = (search) => {
     impacto_id: num('impacto_id'),
     urgencia_id: num('urgencia_id'),
     vencimiento_from: pick('vencimiento_from'),
-    vencimiento_to:   pick('vencimiento_to'),
-    order_by: pick('order_by','prioridad'),
-    sort:     pick('sort','desc'),
-    page:     Number(p.get('page') ?? 0)
+    vencimiento_to: pick('vencimiento_to'),
+    orden_by: pick('orden_by', 'vencimiento'),
+    sort: pick('sort', 'asc'),
+    page: Number(p.get('page') ?? 0)
   }
 }
 
 const toQuery = (f) => {
   const p = new URLSearchParams()
-  for (const [k,v] of Object.entries(f)) {
+  for (const [k, v] of Object.entries(f)) {
     if (v === '' || v == null) continue
     p.set(k, v)
   }
   return p.toString()
 }
 
-export function useTareasList(){
+export function useTareasList() {
   const { search } = useLocation()
   const navigate = useNavigate()
 
   const [filters, setFilters] = useState(() => parseParams(search))
-  const [catalog, setCatalog] = useState({ estados:[], impactos:[], urgencias:[], clientes:[] })
+  const [catalog, setCatalog] = useState({ estados: [], impactos: [], urgencias: [], clientes: [] })
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -49,23 +49,23 @@ export function useTareasList(){
   // fetch catálogo una vez
   useEffect(() => {
     (async () => {
-      try{
+      try {
         const cat = await tareasApi.catalog()
         setCatalog(cat)
-      }catch(e){ console.error(e) }
+      } catch (e) { console.error(e) }
     })()
   }, [])
 
   const fetchList = useCallback(async (cur) => {
     setLoading(true); setError('')
-    try{
-      const params = { ...cur, limit: PageSize, offset: (cur.page||0) * PageSize }
+    try {
+      const params = { ...cur, limit: PageSize, offset: (cur.page || 0) * PageSize }
       const res = await tareasApi.list(params)
       setRows(res.rows || [])
       setTotal(res.total || 0)
-    }catch(e){
+    } catch (e) {
       console.error(e); setError('No se pudo cargar el listado')
-    }finally{
+    } finally {
       setLoading(false)
     }
   }, [])
@@ -75,12 +75,12 @@ export function useTareasList(){
 
   const setFilter = (patch) => {
     const next = { ...filters, ...patch, page: 0 }
-    navigate({ search: toQuery(next) }, { replace:false })
+    navigate({ search: toQuery(next) }, { replace: false })
   }
 
   const setPage = (page) => {
     const next = { ...filters, page }
-    navigate({ search: toQuery(next) }, { replace:false })
+    navigate({ search: toQuery(next) }, { replace: false })
   }
 
   const refetch = () => fetchList(filters)
