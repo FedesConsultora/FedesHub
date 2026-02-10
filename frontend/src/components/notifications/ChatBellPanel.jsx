@@ -85,7 +85,9 @@ export default function ChatBellPanel({ closeAll }) {
     // Mata huérfanos inmediatamente
     clearUnreadFor(id)
     closeAll?.()
-    nav(`/chat/c/${id}`)
+    window.dispatchEvent(new CustomEvent('fh:chat:quick', {
+      detail: { canal_id: id }
+    }))
   }
 
   return (

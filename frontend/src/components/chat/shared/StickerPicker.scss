@@ -1,0 +1,92 @@
+@use "../../../styles/variables" as v;
+
+.fh-stickerPicker {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #1a222c;
+    border-radius: 12px;
+    overflow: hidden;
+
+    .sticker-categories {
+        display: flex;
+        overflow-x: auto;
+        padding: 8px;
+        gap: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.2);
+
+        &::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .category-btn {
+            white-space: nowrap;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            color: v.$fh-muted;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05);
+                color: white;
+            }
+
+            &.active {
+                background: v.$fh-primary;
+                color: white;
+                border-color: v.$fh-primary;
+            }
+        }
+    }
+
+    .sticker-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px;
+        overflow-y: auto;
+        flex: 1;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .sticker-item {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05);
+                transform: scale(1.05);
+            }
+
+            img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+        }
+    }
+}

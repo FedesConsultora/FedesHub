@@ -3,6 +3,7 @@ import Header from '../components/Header/Header.jsx'
 import Sidebar from '../components/Sidebar/Sidebar.jsx'
 import GlobalLoader from '../components/loader/GlobalLoader.jsx'
 import FloatingBubbles from '../components/chat/FloatingBubbles.jsx'
+import QuickChatModal from '../components/chat/shared/QuickChatModal.jsx'
 import './AppLayout.scss'
 
 export default function AppLayout() {
@@ -18,6 +19,7 @@ export default function AppLayout() {
           <Outlet />
           {!isChat && <GlobalLoader />}
           <FloatingBubbles />
+          <QuickChatModal />
         </main>
       </div>
     </div>

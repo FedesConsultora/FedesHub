@@ -340,7 +340,9 @@ function NotifItem({ row, closeAll }) {
     // Detectar link de chat: /chat/c/123
     const chatMatch = url.match(/\/chat\/c\/(\d+)/)
     if (chatMatch) {
-      navigate(url)
+      window.dispatchEvent(new CustomEvent('fh:chat:quick', {
+        detail: { canal_id: chatMatch[1] }
+      }))
       return
     }
 

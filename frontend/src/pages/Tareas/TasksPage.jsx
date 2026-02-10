@@ -102,7 +102,7 @@ export default function TasksPage() {
     feder_ids: [],
     include_archivadas: false,
     include_finalizadas: false,
-    sort: "desc",
+    sort: "asc",
     // TC
     tipo: undefined,
     tc_red_social_id: undefined,
@@ -113,7 +113,7 @@ export default function TasksPage() {
     responsable_feder_ids: undefined,
     colaborador_feder_ids: undefined,
     limit: 500,
-    orden_by: "prioridad",
+    orden_by: "vencimiento",
   });
 
   const [initialCommentId, setInitialCommentId] = useState(null);

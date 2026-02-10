@@ -1,4 +1,4 @@
-import app from './app.js';
+import app from './app.js'; // Sync comment
 import { logger } from './core/logger.js';
 import { sequelize } from './core/db.js';
 import { initModels } from './models/registry.js';

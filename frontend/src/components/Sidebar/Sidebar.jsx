@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthCtx } from '../../context/AuthContext.jsx'
 import { useUploadContext } from '../../context/UploadProvider.jsx'
@@ -24,6 +24,7 @@ const APPS = [
 ]
 
 export default function Sidebar() {
+  const location = useLocation()
   const { hasPerm, roles } = useAuthCtx()
   const uploadCtx = useUploadContext()
   const toast = useToast()

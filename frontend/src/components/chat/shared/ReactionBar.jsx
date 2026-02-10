@@ -132,12 +132,15 @@ function ChipWithHoverList({ emoji, count, mine, users = [], onToggleMine }) {
 }
 
 /* ---------------- Picker centrado por CSS (portal) ---------------- */
-export function CenteredPicker({ onClose, children }) {
+export function CenteredPicker({ onClose, children, className = '', layerClassName = '' }) {
   return createPortal(
     <>
       <div className="emojiPortalBackdrop" onClick={onClose} />
-      <div className="emojiPortalLayer">
-        <div className="emojiPanel">
+      <div
+        className={`emojiPortalLayer ${layerClassName}`}
+        onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      >
+        <div className={`emojiPanel ${className}`}>
           {children}
         </div>
       </div>
