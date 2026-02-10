@@ -196,7 +196,7 @@
 
         .mentionInput {
 
-            max-height: 40px;
+            max-height: 50px;
 
             font-size: .7rem !important;
 
@@ -212,7 +212,7 @@
 
     .controlsRight,
     .controlsLeft {
-        gap: 4px;
+        gap: 0px;
 
         button {
             transform: scale(.7)
