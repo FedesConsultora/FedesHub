@@ -348,10 +348,17 @@ export default function RealtimeProvider({ children }) {
     console.log(`[🔔 NOTIF] 🚀 [Lv${priority}] Nuclear Hunter:`, { title: authorName, tag, icon })
     if (foundIcon) console.log('[🔔 NOTIF] 🎯 Avatar Hunter found target:', foundIcon)
 
-    // AUDIO INTELIGENTE (Gmail-style):
-    // Si la pestaña NO es visible, dejamos que la notificación del sistema haga ruido (silent: false).
-    // Si la pestaña ES visible, la app hará el pitido custom y la notificación será silenciosa.
-    const isSilenced = windowVisible;
+    // 1. INTENTO PROACTIVO DE SONIDO CUSTOM (MP3)
+    // Intentamos pitar siempre. Si playSoundFor retorna true, es que el navegador dejó sonar el MP3.
+    let playedLocal = false
+    if (!isUpdate && !muted && isMasterTabRef.current) {
+      playedLocal = await playSoundFor({ ...d, chat_canal_id: canalId })
+    }
+
+    // 2. AUDIO INTELIGENTE v2 (Gmail-style):
+    // Si logramos pitar localmente -> Notificación silenciosa (silent: true).
+    // Si NO se pudo pitar (pestaña en background/bloqueada) -> Notificación ruidosa de sistema (silent: false).
+    const isSilenced = playedLocal
 
     const options = {
       body: String(textBody).slice(0, 150),
@@ -362,13 +369,6 @@ export default function RealtimeProvider({ children }) {
       silent: isSilenced,
       timestamp: Date.now(),
       data: { canalId, url: `/chat/${canalId}` }
-    }
-
-    // DISPARO DE AUDIO LOCAL
-    // Solo hacemos sonido local (MP3) si la ventana ES visible y es el primer aviso.
-    // Si no es visible, el "silent: false" de la notificación nativa se encargará.
-    if (!isUpdate && !muted && isMasterTabRef.current && windowVisible) {
-      playSoundFor({ ...d, chat_canal_id: canalId })
     }
 
     try {
@@ -431,7 +431,7 @@ export default function RealtimeProvider({ children }) {
 
     if (now - last < throttleTime) {
       console.log(`[🔊 AUDIO] 🔇 SKIP (Throttle ${now - last}ms < ${throttleTime}ms) for key: ${key}`)
-      return
+      return false // No se pitó por throttle
     }
 
     console.log(`[🔊 AUDIO] 🔊 PLAY AUDIO for buzon: ${buzon}, key: ${key}`)
@@ -443,14 +443,17 @@ export default function RealtimeProvider({ children }) {
       try {
         const a = new Audio(src); a.volume = volume
         await a.play()
-        return
-      } catch { }
+        return true // ÉXITO: El navegador permitió el audio
+      } catch (e) {
+        console.warn('[🔊 AUDIO] 🔇 Autoplay blocked or failure via Audio object:', e)
+      }
     }
 
     if (audioContextRef.current) {
       try {
         const audioCtx = audioContextRef.current
         if (audioCtx.state === 'suspended') await audioCtx.resume()
+
         const res = await fetch(src)
         const buf = await audioCtx.decodeAudioData(await res.arrayBuffer())
         const source = audioCtx.createBufferSource()
@@ -460,329 +463,335 @@ export default function RealtimeProvider({ children }) {
         source.connect(gainNode)
         gainNode.connect(audioCtx.destination)
         source.start(0)
-        return
-      } catch { }
+        return true // ÉXITO: El navegador permitió el audio via AudioContext
+      } catch (e) {
+        console.warn('[🔊 AUDIO] 🔇 failure via AudioContext:', e)
+      }
     }
-    // Si el audio web falla, mandamos un Lv0    // NO lanzamos banner Lv0 aquí si es CHAT, para evitar ráfagas prohibidas en macOS.
-    // Solo permitimos Lv0 si es algo genérico (tareas, etc.)
-    if (!data?.chat_canal_id && !data?.canal_id) {
-      console.log('[🔊 AUDIO] Fallback to Lv0 Banner for generic notification sound.')
-      showNotification(data, 0)
-    }
+
+    return false // FALLO: El sonido no se pudo reproducir
+  }
+}
+// Si el audio web falla, mandamos un Lv0    // NO lanzamos banner Lv0 aquí si es CHAT, para evitar ráfagas prohibidas en macOS.
+// Solo permitimos Lv0 si es algo genérico (tareas, etc.)
+if (!data?.chat_canal_id && !data?.canal_id) {
+  console.log('[🔊 AUDIO] Fallback to Lv0 Banner for generic notification sound.')
+  showNotification(data, 0)
+}
   }
 
-  // ---- Main Handler
-  async function onIncoming(anyData) {
-    const data = anyData?.data ?? anyData ?? {}
-    const type = String(data?.type || data?.Tipo || data?.evento || data?.tipo || '').toLowerCase()
-    const myId = Number(user?.id || 0)
+// ---- Main Handler
+async function onIncoming(anyData) {
+  const data = anyData?.data ?? anyData ?? {}
+  const type = String(data?.type || data?.Tipo || data?.evento || data?.tipo || '').toLowerCase()
+  const myId = Number(user?.id || 0)
 
-    const dKey = buildDedupKey(anyData)
-    const isRich = !!data.fcm_title
-    const isDuplicate = checkSeenOnce(dKey)
+  const dKey = buildDedupKey(anyData)
+  const isRich = !!data.fcm_title
+  const isDuplicate = checkSeenOnce(dKey)
 
-    // Si es un duplicado y NO es una notificación rica (FCM), ignoramos por completo
-    if (isDuplicate && !isRich) return
+  // Si es un duplicado y NO es una notificación rica (FCM), ignoramos por completo
+  if (isDuplicate && !isRich) return
 
-    if (type !== 'ping') console.log('[Realtime] incoming:', type, 'isDuplicate:', isDuplicate, data)
+  if (type !== 'ping') console.log('[Realtime] incoming:', type, 'isDuplicate:', isDuplicate, data)
 
-    // 1. ACTUALIZACIONES DE ESTADO Y CACHÉ (Solo una vez por ID de mensaje)
-    if (!isDuplicate) {
-      // Invalidaciones de Query
-      if (type.startsWith('chat.')) {
-        const cid = data?.canal_id ? Number(data.canal_id) : null
-        if (/chat\.message\.(created|edited|deleted|pin)/.test(type) && cid) {
-          qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
-          qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
-        }
-        if (/chat\.channel\./.test(type) && cid) {
-          qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
-          qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
-        }
+  // 1. ACTUALIZACIONES DE ESTADO Y CACHÉ (Solo una vez por ID de mensaje)
+  if (!isDuplicate) {
+    // Invalidaciones de Query
+    if (type.startsWith('chat.')) {
+      const cid = data?.canal_id ? Number(data.canal_id) : null
+      if (/chat\.message\.(created|edited|deleted|pin)/.test(type) && cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'pins', cid] })
       }
-
-      if (type === 'chat.channel.read') {
-        const cid = Number(data?.canal_id || 0)
-        if (cid && Number(data?.user_id || 0) === myId) {
-          setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-          setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-          flushChatNotifsForCanal(cid).catch(() => { })
-        }
+      if (/chat\.channel\./.test(type) && cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        qc.invalidateQueries({ queryKey: ['chat', 'members', cid] })
       }
-
-      const looksLikeChat = type === 'chat.message.created' || (type === 'chat_mensaje' && !!data?.chat_canal_id)
-      if (looksLikeChat) {
-        const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
-        const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
-
-        // Si el mensaje es propio (desde cualquier sesión), limpiar estado y salir
-        if (aid === myId && cid) {
-          setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-          setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
-          qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
-          window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
-          setSuppressedCanals(prev => { if (prev.has(cid)) return prev; const next = new Set(prev); next.add(cid); return next })
-          return
-        }
-
-        if (cid && myId && (aid || !isLikelySelfEcho(cid))) {
-          if (currentCanalRef.current !== cid) {
-            const nId = Number(data?.notificacion_id || 0)
-            if (nId) rememberNotifForCanal(cid, nId)
-
-            const mentions = extractMentionsFromPayload(data)
-            setUnreadByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
-            if (mentions.has(myId)) setMentionByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
-
-            setSuppressedCanals(prev => { if (!prev.has(cid)) return prev; const next = new Set(prev); next.delete(cid); return next })
-          }
-        }
-      }
-
-      qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
-      qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
     }
 
-    // 2. NOTIFICACIONES (BANNERS)
-    // Esto sí puede ejecutarse dos veces si el segundo es "isRich" (FCM), para hacer el upgrade del banner.
+    if (type === 'chat.channel.read') {
+      const cid = Number(data?.canal_id || 0)
+      if (cid && Number(data?.user_id || 0) === myId) {
+        setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        flushChatNotifsForCanal(cid).catch(() => { })
+      }
+    }
+
     const looksLikeChat = type === 'chat.message.created' || (type === 'chat_mensaje' && !!data?.chat_canal_id)
     if (looksLikeChat) {
       const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
       const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
 
-      if (aid !== myId && cid && currentCanalRef.current !== cid) {
-        const bKey = `banner:${cid}`
-        if (isRich) {
-          if (pendingBannersRef.current.has(bKey)) {
-            clearTimeout(pendingBannersRef.current.get(bKey))
-            pendingBannersRef.current.delete(bKey)
-          }
-          showNotification(data, 2)
-        } else {
-          if (pendingBannersRef.current.has(bKey)) clearTimeout(pendingBannersRef.current.get(bKey))
-          const timer = setTimeout(() => {
-            showNotification(data, 1)
-            pendingBannersRef.current.delete(bKey)
-          }, 450)
-          pendingBannersRef.current.set(bKey, timer)
+      // Si el mensaje es propio (desde cualquier sesión), limpiar estado y salir
+      if (aid === myId && cid) {
+        setUnreadByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        setMentionByCanal(prev => { if (!prev[cid]) return prev; const n = { ...prev }; delete n[cid]; return n })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+        window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: cid } }))
+        setSuppressedCanals(prev => { if (prev.has(cid)) return prev; const next = new Set(prev); next.add(cid); return next })
+        return
+      }
+
+      if (cid && myId && (aid || !isLikelySelfEcho(cid))) {
+        if (currentCanalRef.current !== cid) {
+          const nId = Number(data?.notificacion_id || 0)
+          if (nId) rememberNotifForCanal(cid, nId)
+
+          const mentions = extractMentionsFromPayload(data)
+          setUnreadByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
+          if (mentions.has(myId)) setMentionByCanal(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }))
+
+          setSuppressedCanals(prev => { if (!prev.has(cid)) return prev; const next = new Set(prev); next.delete(cid); return next })
         }
       }
     }
 
-    const looksLikeTarea = /tarea/.test(type) || !!data?.tarea_id
-    if (looksLikeTarea && !looksLikeChat) {
-      showNotification({
-        ...data,
-        author_name: data.author_name || data.titulo || 'FedesHub',
-        fcm_body: data.mensaje || data.titulo || 'Nueva notificación de tarea'
-      }, 1)
+    qc.invalidateQueries({ queryKey: ['notif', 'counts'] })
+    qc.invalidateQueries({ queryKey: ['notif', 'inbox'] })
+  }
+
+  // 2. NOTIFICACIONES (BANNERS)
+  // Esto sí puede ejecutarse dos veces si el segundo es "isRich" (FCM), para hacer el upgrade del banner.
+  const looksLikeChat = type === 'chat.message.created' || (type === 'chat_mensaje' && !!data?.chat_canal_id)
+  if (looksLikeChat) {
+    const cid = Number(data?.canal_id ?? data?.message?.canal_id ?? data?.mensaje?.canal_id ?? data?.chat_canal_id ?? 0)
+    const aid = Number(data?.user_id ?? data?.message?.user_id ?? data?.mensaje?.user_id ?? data?.author_id ?? 0)
+
+    if (aid !== myId && cid && currentCanalRef.current !== cid) {
+      const bKey = `banner:${cid}`
+      if (isRich) {
+        if (pendingBannersRef.current.has(bKey)) {
+          clearTimeout(pendingBannersRef.current.get(bKey))
+          pendingBannersRef.current.delete(bKey)
+        }
+        showNotification(data, 2)
+      } else {
+        if (pendingBannersRef.current.has(bKey)) clearTimeout(pendingBannersRef.current.get(bKey))
+        const timer = setTimeout(() => {
+          showNotification(data, 1)
+          pendingBannersRef.current.delete(bKey)
+        }, 450)
+        pendingBannersRef.current.set(bKey, timer)
+      }
     }
   }
 
-  // ---- Effects de Inicialización
-  useEffect(() => {
-    if (!user || !booted) return;
+  const looksLikeTarea = /tarea/.test(type) || !!data?.tarea_id
+  if (looksLikeTarea && !looksLikeChat) {
+    showNotification({
+      ...data,
+      author_name: data.author_name || data.titulo || 'FedesHub',
+      fcm_body: data.mensaje || data.titulo || 'Nueva notificación de tarea'
+    }, 1)
+  }
+}
 
-    let es = new EventSource('/api/realtime/stream', { withCredentials: true });
+// ---- Effects de Inicialización
+useEffect(() => {
+  if (!user || !booted) return;
 
-    es.onopen = () => console.log('[SSE] ✅ Connected');
-    es.onerror = (err) => {
-      if (es.readyState === EventSource.CLOSED) console.error('[SSE] ❌ Connection closed');
-    };
+  let es = new EventSource('/api/realtime/stream', { withCredentials: true });
 
-    const forward = (ev) => {
-      const eventType = ev?.type || 'message';
-      let payload = {};
-      try {
-        payload = JSON.parse(ev?.data || '{}');
-      } catch (e) { }
+  es.onopen = () => console.log('[SSE] ✅ Connected');
+  es.onerror = (err) => {
+    if (es.readyState === EventSource.CLOSED) console.error('[SSE] ❌ Connection closed');
+  };
 
-      if (!payload.type) payload.type = eventType;
-      window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }));
-    };
+  const forward = (ev) => {
+    const eventType = ev?.type || 'message';
+    let payload = {};
+    try {
+      payload = JSON.parse(ev?.data || '{}');
+    } catch (e) { }
 
-    const TYPES = [
-      'message', 'ping', 'hello', 'chat.typing', 'chat.message.created', 'chat.message.edited',
-      'chat.message.deleted', 'chat.message.pin', 'chat.channel.updated', 'chat.channel.read',
-      'tarea.comentario.creado', 'tarea.comentario.reaccion'
-    ];
+    if (!payload.type) payload.type = eventType;
+    window.dispatchEvent(new CustomEvent('fh:push', { detail: payload }));
+  };
 
-    TYPES.forEach(t => es.addEventListener(t, forward));
+  const TYPES = [
+    'message', 'ping', 'hello', 'chat.typing', 'chat.message.created', 'chat.message.edited',
+    'chat.message.deleted', 'chat.message.pin', 'chat.channel.updated', 'chat.channel.read',
+    'tarea.comentario.creado', 'tarea.comentario.reaccion'
+  ];
 
-    return () => { try { es.close(); } catch { } };
-  }, [user, booted]);
+  TYPES.forEach(t => es.addEventListener(t, forward));
 
-  useEffect(() => {
-    const handler = (ev) => onIncoming(ev?.detail || {})
-    const onChatSent = (ev) => { if (ev.detail?.canal_id) markSelfSend(ev.detail.canal_id) }
-    window.addEventListener('fh:push', handler)
-    window.addEventListener('fh:chat:sent', onChatSent)
+  return () => { try { es.close(); } catch { } };
+}, [user, booted]);
 
-    // 📡 Listener para mensajes del Service Worker (FCM en primer plano)
-    const onSwMessage = (e) => {
-      if (e.data && e.data.type === 'fh:push') {
-        onIncoming(e.data.data || {})
-      }
+useEffect(() => {
+  const handler = (ev) => onIncoming(ev?.detail || {})
+  const onChatSent = (ev) => { if (ev.detail?.canal_id) markSelfSend(ev.detail.canal_id) }
+  window.addEventListener('fh:push', handler)
+  window.addEventListener('fh:chat:sent', onChatSent)
+
+  // 📡 Listener para mensajes del Service Worker (FCM en primer plano)
+  const onSwMessage = (e) => {
+    if (e.data && e.data.type === 'fh:push') {
+      onIncoming(e.data.data || {})
     }
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', onSwMessage)
+  }
+
+  return () => {
+    window.removeEventListener('fh:push', handler)
+    window.removeEventListener('fh:chat:sent', onChatSent)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', onSwMessage)
+      navigator.serviceWorker.removeEventListener('message', onSwMessage)
     }
+  }
+}, [user?.id])  // Removido onIncoming de dependencias - la función tiene acceso al closure
 
-    return () => {
-      window.removeEventListener('fh:push', handler)
-      window.removeEventListener('fh:chat:sent', onChatSent)
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', onSwMessage)
+useEffect(() => {
+  if (booted && user) {
+    initFCM().then(() => registerStoredPushToken()).catch(() => { })
+  }
+}, [booted, user])
+
+useEffect(() => {
+  const unreads = Object.values(unreadByCanal || {}).map(v => v | 0)
+  const total = unreads.reduce((a, b) => a + b, 0)
+  setUnreadCountTotal(total)
+  const hasAny = total > 0
+  window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: hasAny } }))
+}, [unreadByCanal])
+
+// ---- Master Tab Coordination via BroadcastChannel
+useEffect(() => {
+  if (!user || !booted) return
+
+  const bc = new BroadcastChannel('fh:audio:master')
+  broadcastChannelRef.current = bc
+
+  const claimMaster = () => {
+    isMasterTabRef.current = true
+    setIsMasterTab(true)
+    bc.postMessage({ type: 'claim_master', tabId })
+    console.log(`[🔊 AUDIO] Esta pestaña (${tabId}) es ahora MASTER de audio`)
+  }
+
+  // Escuchar mensajes
+  bc.onmessage = (e) => {
+    const msg = e.data || {}
+    if (msg.type === 'ping') {
+      bc.postMessage({ type: 'pong', tabId, isMaster: isMasterTabRef.current })
+    } else if (msg.type === 'claim_master') {
+      if (msg.tabId < tabId) {
+        isMasterTabRef.current = false
+        setIsMasterTab(false)
+        console.log(`[🔊 AUDIO] Pestaña (${tabId}) cedió el trono a (${msg.tabId})`)
+      } else if (isMasterTabRef.current) {
+        bc.postMessage({ type: 'claim_master', tabId })
+      }
+    } else if (msg.type === 'pong' && msg.isMaster) {
+      if (msg.tabId < tabId) {
+        isMasterTabRef.current = false
+        setIsMasterTab(false)
       }
     }
-  }, [user?.id])  // Removido onIncoming de dependencias - la función tiene acceso al closure
+  }
 
-  useEffect(() => {
-    if (booted && user) {
-      initFCM().then(() => registerStoredPushToken()).catch(() => { })
+  bc.postMessage({ type: 'ping', tabId })
+
+  const masterTimer = setTimeout(() => {
+    if (!isMasterTabRef.current) {
+      claimMaster()
     }
-  }, [booted, user])
+  }, 600)
 
-  useEffect(() => {
-    const unreads = Object.values(unreadByCanal || {}).map(v => v | 0)
-    const total = unreads.reduce((a, b) => a + b, 0)
-    setUnreadCountTotal(total)
-    const hasAny = total > 0
-    window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: hasAny } }))
-  }, [unreadByCanal])
+  return () => {
+    clearTimeout(masterTimer)
+    bc.close()
+  }
+}, [user, booted, tabId])
 
-  // ---- Master Tab Coordination via BroadcastChannel
-  useEffect(() => {
-    if (!user || !booted) return
+// ---- AudioContext Keep-Alive
+useEffect(() => {
+  if (!audioContextRef.current || !isMasterTab) return
 
-    const bc = new BroadcastChannel('fh:audio:master')
-    broadcastChannelRef.current = bc
-
-    const claimMaster = () => {
-      isMasterTabRef.current = true
-      setIsMasterTab(true)
-      bc.postMessage({ type: 'claim_master', tabId })
-      console.log(`[🔊 AUDIO] Esta pestaña (${tabId}) es ahora MASTER de audio`)
-    }
-
-    // Escuchar mensajes
-    bc.onmessage = (e) => {
-      const msg = e.data || {}
-      if (msg.type === 'ping') {
-        bc.postMessage({ type: 'pong', tabId, isMaster: isMasterTabRef.current })
-      } else if (msg.type === 'claim_master') {
-        if (msg.tabId < tabId) {
-          isMasterTabRef.current = false
-          setIsMasterTab(false)
-          console.log(`[🔊 AUDIO] Pestaña (${tabId}) cedió el trono a (${msg.tabId})`)
-        } else if (isMasterTabRef.current) {
-          bc.postMessage({ type: 'claim_master', tabId })
-        }
-      } else if (msg.type === 'pong' && msg.isMaster) {
-        if (msg.tabId < tabId) {
-          isMasterTabRef.current = false
-          setIsMasterTab(false)
-        }
-      }
-    }
-
-    bc.postMessage({ type: 'ping', tabId })
-
-    const masterTimer = setTimeout(() => {
-      if (!isMasterTabRef.current) {
-        claimMaster()
-      }
-    }, 600)
-
-    return () => {
-      clearTimeout(masterTimer)
-      bc.close()
-    }
-  }, [user, booted, tabId])
-
-  // ---- AudioContext Keep-Alive
-  useEffect(() => {
-    if (!audioContextRef.current || !isMasterTab) return
-
-    const keepAlive = setInterval(async () => {
-      if (audioContextRef.current?.state === 'suspended') {
-        console.log('[🔊 AUDIO] Detectado AudioContext suspendido, intentando reanudar...')
-        try {
-          await audioContextRef.current.resume()
-          audioContextStateRef.current = audioContextRef.current.state
-          console.log('[🔊 AUDIO] AudioContext reanudado exitosamente')
-        } catch (err) {
-          console.error('[🔊 AUDIO] Error al reanudar AudioContext:', err)
-        }
-      }
-    }, 3000)
-
-    return () => clearInterval(keepAlive)
-  }, [isMasterTab])
-
-  const value = useMemo(() => ({
-    muted, setMuted, volume, setVolume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals,
-    notifPermission, requestNotificationPermission, isMasterTab, audioUnlocked,
-    clearUnreadFor: (cid) => {
-      const id = Number(cid)
-      setUnreadByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
-      setMentionByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
-      setSuppressedCanals(prev => { if (prev.has(id)) return prev; const n = new Set(prev); n.add(id); return n })
-      flushChatNotifsForCanal(id).catch(() => { })
-      window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: id } }))
-    },
-    setCurrentCanal: (id) => {
-      currentCanalRef.current = id
-      setCurrentCanalState(id)
-    },
-    markSelfSend,
-    flushChatNotifsForCanal,
-    getHealthReport: () => ({
-      permission: notifPermission,
-      audioUnlocked,
-      audioContextState: audioContextStateRef.current,
-      lastInteraction: lastInteractionRef.current ? new Date(lastInteractionRef.current).toISOString() : 'none',
-      isWindowVisible: document.visibilityState === 'visible',
-      swReady: !!('serviceWorker' in navigator),
-      hasController: !!navigator.serviceWorker?.controller,
-      isMasterTab: isMasterTabRef.current
-    }),
-    playTest: (delay = 0) => {
-      const run = () => {
-        onIncoming({
-          type: 'chat_mensaje',
-          chat_canal_id: 1,
-          author_name: 'Test de Diagnóstico',
-          mensaje: { body_text: 'Esto es una notificación de prueba para verificar sonidos y banners.', id: Date.now() },
-          fcm_title: 'Prueba de Sistema',
-          fcm_body: 'Si ves esto, las notificaciones funcionan correctamente.',
-          author_avatar: null
-        })
-      }
-      if (delay > 0) {
-        console.log(`[🔔 NOTIF] Test scheduled in ${delay}ms...`)
-        setTimeout(run, delay)
-      } else {
-        run()
-      }
-    },
-    unlockAudioManually: async () => {
-      if (audioContextRef.current?.state === 'suspended') {
+  const keepAlive = setInterval(async () => {
+    if (audioContextRef.current?.state === 'suspended') {
+      console.log('[🔊 AUDIO] Detectado AudioContext suspendido, intentando reanudar...')
+      try {
         await audioContextRef.current.resume()
+        audioContextStateRef.current = audioContextRef.current.state
+        console.log('[🔊 AUDIO] AudioContext reanudado exitosamente')
+      } catch (err) {
+        console.error('[🔊 AUDIO] Error al reanudar AudioContext:', err)
       }
-      const a = new Audio(SOUND_MAP.default);
-      a.volume = volume;
-      await a.play();
-      setAudioUnlocked(true)
-      audioContextStateRef.current = audioContextRef.current?.state || 'ready';
-    },
-    clearAllChatUnreads: () => {
-      setUnreadByCanal({})
-      setMentionByCanal({})
-      setSuppressedCanals(new Set())
-      window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: false } }))
     }
-  }), [muted, volume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, notifPermission, audioUnlocked])
+  }, 3000)
 
-  return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>
+  return () => clearInterval(keepAlive)
+}, [isMasterTab])
+
+const value = useMemo(() => ({
+  muted, setMuted, volume, setVolume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals,
+  notifPermission, requestNotificationPermission, isMasterTab, audioUnlocked,
+  clearUnreadFor: (cid) => {
+    const id = Number(cid)
+    setUnreadByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
+    setMentionByCanal(p => { if (!p[id]) return p; const n = { ...p }; delete n[id]; return n })
+    setSuppressedCanals(prev => { if (prev.has(id)) return prev; const n = new Set(prev); n.add(id); return n })
+    flushChatNotifsForCanal(id).catch(() => { })
+    window.dispatchEvent(new CustomEvent('fh:chat:channel:cleared', { detail: { canal_id: id } }))
+  },
+  setCurrentCanal: (id) => {
+    currentCanalRef.current = id
+    setCurrentCanalState(id)
+  },
+  markSelfSend,
+  flushChatNotifsForCanal,
+  getHealthReport: () => ({
+    permission: notifPermission,
+    audioUnlocked,
+    audioContextState: audioContextStateRef.current,
+    lastInteraction: lastInteractionRef.current ? new Date(lastInteractionRef.current).toISOString() : 'none',
+    isWindowVisible: document.visibilityState === 'visible',
+    swReady: !!('serviceWorker' in navigator),
+    hasController: !!navigator.serviceWorker?.controller,
+    isMasterTab: isMasterTabRef.current
+  }),
+  playTest: (delay = 0) => {
+    const run = () => {
+      onIncoming({
+        type: 'chat_mensaje',
+        chat_canal_id: 1,
+        author_name: 'Test de Diagnóstico',
+        mensaje: { body_text: 'Esto es una notificación de prueba para verificar sonidos y banners.', id: Date.now() },
+        fcm_title: 'Prueba de Sistema',
+        fcm_body: 'Si ves esto, las notificaciones funcionan correctamente.',
+        author_avatar: null
+      })
+    }
+    if (delay > 0) {
+      console.log(`[🔔 NOTIF] Test scheduled in ${delay}ms...`)
+      setTimeout(run, delay)
+    } else {
+      run()
+    }
+  },
+  unlockAudioManually: async () => {
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume()
+    }
+    const a = new Audio(SOUND_MAP.default);
+    a.volume = volume;
+    await a.play();
+    setAudioUnlocked(true)
+    audioContextStateRef.current = audioContextRef.current?.state || 'ready';
+  },
+  clearAllChatUnreads: () => {
+    setUnreadByCanal({})
+    setMentionByCanal({})
+    setSuppressedCanals(new Set())
+    window.dispatchEvent(new CustomEvent('fh:chat:hasUnread', { detail: { hasUnread: false } }))
+  }
+}), [muted, volume, unreadByCanal, mentionByCanal, currentCanal, suppressedCanals, notifPermission, audioUnlocked])
+
+return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>
 }
