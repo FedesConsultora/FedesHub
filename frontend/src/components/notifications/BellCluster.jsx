@@ -302,7 +302,7 @@ function NotifItem({ row, closeAll }) {
   const handleOpenLink = async (e) => {
     e.preventDefault()
     closeAll?.()
-    const url = n.link_url || ''
+    let url = n.link_url || ''
 
     // Marcar como leída la notificación
     if (!row.read_at && n.id) {

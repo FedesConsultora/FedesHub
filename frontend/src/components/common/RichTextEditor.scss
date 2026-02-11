@@ -81,10 +81,17 @@
             align-items: center !important;
             justify-content: center !important;
             margin: 0 !important;
+            white-space: nowrap !important;
 
             svg {
                 width: 16px;
                 height: 16px;
+            }
+
+            .btn-label {
+                font-size: 0.8rem;
+                font-weight: 600;
+                margin-left: 4px;
             }
 
             &:hover {
@@ -95,6 +102,26 @@
             &.active {
                 background: rgba($fh-primary, 0.2);
                 color: $fh-primary;
+            }
+
+            &.font-size-btn {
+                width: auto !important;
+                padding: 0 8px !important;
+                gap: 4px;
+
+                span {
+                    font-size: 0.85rem;
+                    min-width: 32px;
+                    text-align: center;
+                }
+            }
+
+            // Style for text-based buttons like H1, H2, H3
+            &:not(:has(svg)) {
+                font-family: 'Inter', sans-serif;
+                font-size: 0.85rem;
+                font-weight: bold;
+                letter-spacing: -0.5px;
             }
         }
 
@@ -214,6 +241,75 @@
     .editor-listitem {
         margin: 4px 0;
         line-height: 1.6;
+    }
+
+    .editor-checklist {
+        padding: 0;
+        margin: 0 0 8px 0;
+        list-style-type: none;
+
+        .editor-listitem {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin: 4px 0;
+            cursor: pointer;
+
+            &::before {
+                content: '';
+                width: 16px;
+                height: 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+                margin-right: 12px;
+                margin-top: 4px;
+                flex-shrink: 0;
+                transition: all 0.15s ease;
+            }
+
+            &[value="checked"] {
+                color: rgba(255, 255, 255, 0.4);
+                text-decoration: line-through;
+
+                &::before {
+                    background: $fh-primary;
+                    border-color: $fh-primary;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+                    background-size: 12px;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                }
+            }
+        }
+    }
+
+    .editor-table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        max-width: 100%;
+        overflow-y: scroll;
+        table-layout: fixed;
+        width: 100%;
+        margin: 16px 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+
+        .editor-table-cell {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            position: relative;
+            text-align: left;
+            vertical-align: top;
+            background: rgba(255, 255, 255, 0.02);
+
+            &.editor-table-cell-header {
+                background: rgba(255, 255, 255, 0.08);
+                color: $fh-primary;
+                font-weight: 700;
+            }
+        }
     }
 
     .editor-quote {
@@ -415,6 +511,59 @@
 
                 &:hover {
                     background: #5ab1ff;
+                }
+            }
+        }
+    }
+}
+
+// Slash Menu / Typeahead
+.typeahead-menu {
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    z-index: 200000;
+    overflow: hidden;
+
+    ul {
+        list-style: none;
+        padding: 4px;
+        margin: 0;
+
+        li.item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            color: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            font-size: 0.9rem;
+
+            .icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 1.2rem;
+            }
+
+            .text {
+                font-weight: 500;
+            }
+
+            &:hover,
+            &.selected {
+                background: rgba($fh-primary, 0.15);
+                color: $fh-primary;
+
+                .icon {
+                    color: $fh-primary;
                 }
             }
         }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFederStatus } from '../../../hooks/useStatus';
 import { format, isToday } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es } from 'date-fns/locale/es';
 import './StatusBanner.scss';
 
 export default function StatusBanner({ feder_id, federName }) {

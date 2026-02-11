@@ -10,58 +10,12 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
+// import { TableNode, TableCellNode, TableRowNode } from '@lexical/table';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $insertNodes, $createParagraphNode, TextNode, ParagraphNode, $isTextNode } from 'lexical';
-
-class ExtendedTextNode extends TextNode {
-    static getType() {
-        return 'extended-text';
-    }
-
-    static clone(node) {
-        const clone = new ExtendedTextNode(node.__text, node.__key);
-        // Copiar todas las propiedades internas para que Lexical no se pierda
-        clone.__format = node.__format;
-        clone.__style = node.__style;
-        clone.__detail = node.__detail;
-        clone.__mode = node.__mode;
-        clone.__parent = node.__parent;
-        return clone;
-    }
-
-    static importDOM() {
-        const importers = TextNode.importDOM();
-        return {
-            ...importers,
-            span: () => ({
-                conversion: (domNode) => {
-                    const style = domNode.getAttribute('style');
-                    if (style) {
-                        return {
-                            forChild: (lexicalNode) => {
-                                if ($isTextNode(lexicalNode)) {
-                                    lexicalNode.setStyle(style);
-                                }
-                                return lexicalNode;
-                            },
-                        };
-                    }
-                    return null;
-                },
-                priority: 1,
-            }),
-        };
-    }
-
-    static importJSON(serializedNode) {
-        return TextNode.importJSON(serializedNode);
-    }
-
-    exportJSON() {
-        return super.exportJSON();
-    }
-}
+// import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
+import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import CharacterLimitPlugin from './plugins/CharacterLimitPlugin';
@@ -87,7 +41,15 @@ const getEditorConfig = () => ({
             ul: 'editor-list-ul',
             ol: 'editor-list-ol',
             listitem: 'editor-listitem',
+            nested: {
+                listitem: 'editor-nested-listitem',
+            },
+            checklist: 'editor-checklist',
         },
+        table: 'editor-table',
+        tableRow: 'editor-table-row',
+        tableCell: 'editor-table-cell',
+        tableCellHeader: 'editor-table-cell-header',
         quote: 'editor-quote',
     },
     nodes: [
@@ -99,6 +61,9 @@ const getEditorConfig = () => ({
         LinkNode,
         AutoLinkNode,
         FileNode,
+        /* TableNode,
+        TableCellNode,
+        TableRowNode, */
     ],
     onError(error) {
         console.error('Lexical Error:', error);
@@ -330,6 +295,8 @@ export default function RichTextEditor({
                         <HistoryPlugin />
                         <LinkPlugin />
                         <ListPlugin />
+                        <CheckListPlugin />
+                        {/* <TablePlugin /> */}
                         <AutoLinkPlugin />
                         <CharacterLimitPlugin maxLength={maxLength} />
                         <OnChangeHTMLPlugin onChange={onChange} />

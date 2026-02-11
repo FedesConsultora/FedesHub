@@ -11,6 +11,8 @@ import {
     FORMAT_ELEMENT_COMMAND,
 } from 'lexical';
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
+import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
+import { $patchStyleText, $setBlocksType } from '@lexical/selection';
 import {
     INSERT_ORDERED_LIST_COMMAND,
     INSERT_UNORDERED_LIST_COMMAND,
@@ -31,15 +33,18 @@ import {
     MdFormatAlignRight,
     MdFormatAlignJustify,
     MdFormatColorText,
+    MdFormatSize,
+    MdFormatQuote,
     MdTextFields,
     MdAttachFile
 } from 'react-icons/md';
 import { INSERT_FILE_COMMAND } from './FilePlugin';
 
-const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+const FONT_SIZES = ['10px', '12px', '14px', '16px', '18px', '20px', '22px', '24px', '26px', '28px', '32px', '36px', '40px', '48px'];
 
 export default function ToolbarPlugin() {
     const [editor] = useLexicalComposerContext();
+    // ... rest of state ...
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
     const [isUnderline, setIsUnderline] = useState(false);
@@ -76,18 +81,17 @@ export default function ToolbarPlugin() {
                 const style = node.getStyle() || '';
                 const colorMatch = style.match(/color:\s*([^;]+)/i);
                 if (colorMatch) setCurrentColor(colorMatch[1].trim());
-                else setCurrentColor('#ffffff'); // reset to default if no color
+                else setCurrentColor('#ffffff');
 
                 const sizeMatch = style.match(/font-size:\s*([^;]+)/i);
                 if (sizeMatch) setCurrentFontSize(sizeMatch[1].trim());
                 else setCurrentFontSize('16px');
             }
 
-            // Check if in list - simplified
+            // Check if in list
             let element = node;
             let foundList = false;
             let listType = null;
-
             while (element) {
                 if (element.__type === 'list') {
                     foundList = true;
@@ -96,7 +100,6 @@ export default function ToolbarPlugin() {
                 }
                 element = element.getParent();
             }
-
             setIsBulletList(foundList && listType === 'bullet');
             setIsNumberList(foundList && listType === 'number');
         }
@@ -111,12 +114,38 @@ export default function ToolbarPlugin() {
     const toggleList = (type) => {
         const command = type === 'bullet' ? INSERT_UNORDERED_LIST_COMMAND : INSERT_ORDERED_LIST_COMMAND;
         const isActive = type === 'bullet' ? isBulletList : isNumberList;
-
         if (isActive) {
             editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
         } else {
             editor.dispatchCommand(command, undefined);
         }
+    };
+
+    const formatHeading = (headingSize) => {
+        editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createHeadingNode(headingSize));
+            }
+        });
+    };
+
+    const formatQuote = () => {
+        editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createQuoteNode());
+            }
+        });
+    };
+
+    const formatParagraph = () => {
+        editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createParagraphNode());
+            }
+        });
     };
 
     const handleInsertLink = () => {
@@ -133,93 +162,59 @@ export default function ToolbarPlugin() {
     const applyColor = (color) => {
         editor.update(() => {
             const selection = $getSelection();
-            if (!$isRangeSelection(selection) || selection.isCollapsed()) {
-                return;
-            }
-
-            // Get nodes in proper order regardless of selection direction
+            if (!$isRangeSelection(selection) || selection.isCollapsed()) return;
             const nodes = selection.getNodes();
-            if (!nodes.length) return;
-
-            // For proper offset handling, we need to ensure anchor comes before focus
-            const anchorNode = selection.anchor.getNode();
-            const focusNode = selection.focus.getNode();
             const anchorOffset = selection.anchor.offset;
             const focusOffset = selection.focus.offset;
-
-            // Determine if selection is backwards
             const isBackward = selection.isBackward();
             const startOffset = isBackward ? focusOffset : anchorOffset;
             const endOffset = isBackward ? anchorOffset : focusOffset;
 
             nodes.forEach((node, index) => {
                 if (!$isTextNode(node)) return;
-
                 const isFirst = index === 0;
                 const isLast = index === nodes.length - 1;
-                const textContent = node.getTextContent();
-                const nodeLength = textContent.length;
-
+                const nodeLength = node.getTextContentSize();
                 let targetNode = node;
                 let sliceStart = 0;
                 let sliceEnd = nodeLength;
 
-                // Calculate the slice for this node
                 if (isFirst && isLast) {
-                    // Only one node - use both offsets
                     sliceStart = Math.min(startOffset, endOffset);
                     sliceEnd = Math.max(startOffset, endOffset);
                 } else if (isFirst) {
-                    // First node - start from offset to end
-                    sliceStart = isBackward ? focusOffset : anchorOffset;
-                    sliceEnd = nodeLength;
+                    sliceStart = startOffset; sliceEnd = nodeLength;
                 } else if (isLast) {
-                    // Last node - from start to offset
-                    sliceStart = 0;
-                    sliceEnd = isBackward ? anchorOffset : focusOffset;
+                    sliceStart = 0; sliceEnd = endOffset;
                 }
-                // Middle nodes get full selection (sliceStart = 0, sliceEnd = nodeLength)
 
-                // Split if needed
                 if (sliceStart > 0) {
                     const [, rightNode] = node.splitText(sliceStart);
-                    if (rightNode) {
-                        targetNode = rightNode;
-                        sliceEnd = sliceEnd - sliceStart;
-                        sliceStart = 0;
-                    }
+                    if (rightNode) { targetNode = rightNode; sliceEnd -= sliceStart; }
                 }
-
-                if (sliceEnd < targetNode.getTextContent().length) {
+                if (sliceEnd < targetNode.getTextContentSize()) {
                     const [leftNode] = targetNode.splitText(sliceEnd);
-                    if (leftNode) {
-                        targetNode = leftNode;
-                    }
+                    if (leftNode) targetNode = leftNode;
                 }
 
-                // Apply color to target node
                 const existingStyle = targetNode.getStyle() || '';
                 const styleWithoutColor = existingStyle.replace(/color:\s*[^;]+;?/gi, '').trim();
-                const newStyle = styleWithoutColor
-                    ? `${styleWithoutColor}; color: ${color}`
-                    : `color: ${color}`;
-                targetNode.setStyle(newStyle);
+                targetNode.setStyle(styleWithoutColor ? `${styleWithoutColor}; color: ${color}` : `color: ${color}`);
             });
         });
         setCurrentColor(color);
-        // NO cerramos automáticamente para permitir ajustar tono y luego saturación/valor
     };
 
     const applyFontSize = (size) => {
+        console.log('[ToolbarPlugin] Applying font size:', size);
         editor.update(() => {
             const selection = $getSelection();
-            if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+            if (!$isRangeSelection(selection)) {
+                console.warn('[ToolbarPlugin] No range selection found');
                 return;
             }
 
             const nodes = selection.getNodes();
-            if (!nodes.length) return;
-
             const anchorOffset = selection.anchor.offset;
             const focusOffset = selection.focus.offset;
             const isBackward = selection.isBackward();
@@ -231,7 +226,7 @@ export default function ToolbarPlugin() {
 
                 const isFirst = index === 0;
                 const isLast = index === nodes.length - 1;
-                const nodeLength = node.getTextContent().length;
+                const nodeLength = node.getTextContentSize();
 
                 let targetNode = node;
                 let sliceStart = 0;
@@ -241,22 +236,22 @@ export default function ToolbarPlugin() {
                     sliceStart = Math.min(startOffset, endOffset);
                     sliceEnd = Math.max(startOffset, endOffset);
                 } else if (isFirst) {
-                    sliceStart = isBackward ? focusOffset : anchorOffset;
+                    sliceStart = startOffset;
                     sliceEnd = nodeLength;
                 } else if (isLast) {
                     sliceStart = 0;
-                    sliceEnd = isBackward ? anchorOffset : focusOffset;
+                    sliceEnd = endOffset;
                 }
 
                 if (sliceStart > 0) {
                     const [, rightNode] = node.splitText(sliceStart);
                     if (rightNode) {
                         targetNode = rightNode;
-                        sliceEnd = sliceEnd - sliceStart;
+                        sliceEnd -= sliceStart;
                     }
                 }
 
-                if (sliceEnd < targetNode.getTextContent().length) {
+                if (sliceEnd < targetNode.getTextContentSize()) {
                     const [leftNode] = targetNode.splitText(sliceEnd);
                     if (leftNode) {
                         targetNode = leftNode;
@@ -268,6 +263,7 @@ export default function ToolbarPlugin() {
                 const newStyle = styleWithoutSize
                     ? `${styleWithoutSize}; font-size: ${size}`
                     : `font-size: ${size}`;
+
                 targetNode.setStyle(newStyle);
             });
         });
@@ -300,11 +296,20 @@ export default function ToolbarPlugin() {
                     type="button"
                     ref={fontSizeBtnRef}
                     onClick={() => setShowFontSizePicker(!showFontSizePicker)}
-                    className="tb"
+                    className="tb font-size-btn"
                     title="Tamaño de fuente"
                 >
                     <MdTextFields />
+                    <span>{currentFontSize}</span>
                 </button>
+
+                <div className="divider" />
+
+                <button type="button" onClick={() => formatHeading('h1')} className="tb" title="Título 1" style={{ fontWeight: '900' }}>H1</button>
+                <button type="button" onClick={() => formatHeading('h2')} className="tb" title="Título 2" style={{ fontWeight: '700' }}>H2</button>
+                <button type="button" onClick={() => formatHeading('h3')} className="tb" title="Título 3" style={{ fontWeight: '500' }}>H3</button>
+                <button type="button" onClick={formatParagraph} className="tb" title="Texto normal"><MdFormatSize /></button>
+                <button type="button" onClick={formatQuote} className="tb" title="Cita"><MdFormatQuote /></button>
 
                 <div className="divider" />
 
@@ -403,6 +408,7 @@ export default function ToolbarPlugin() {
                             <button
                                 type="button"
                                 key={size}
+                                onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => applyFontSize(size)}
                                 className={`size-option ${currentFontSize === size ? 'active' : ''}`}
                                 style={{ fontSize: size }}
