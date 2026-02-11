@@ -14,8 +14,7 @@
         transition: border-color 0.2s ease;
         max-width: 100%;
         overflow: visible;
-        display: flex;
-        flex-direction: column;
+        display: block; // Change from flex to block for better sticky reliability in some contexts
 
         &:focus-within {
             border-color: $fh-primary;
@@ -41,14 +40,14 @@
 
     .toolbar {
         position: sticky !important;
-        top: 80px !important; // Accounts for the sticky header height
-        z-index: 10 !important;
+        top: var(--editor-toolbar-top, 80px) !important; // Accounts for the sticky header height by default
+        z-index: 100000 !important; // Absolute maximum to avoid being covered
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         gap: 2px !important;
-        padding: 4px 6px !important;
+        padding: 0px 6px !important;
         background: #121820 !important; // Darker and more opaque to cover text
         border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 8px 8px 0 0 !important;
@@ -108,127 +107,6 @@
 
         .dropdown {
             display: contents;
-        }
-    }
-
-    // Portals (rendered in body)
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 9999;
-    }
-
-    .color-picker-simple {
-        .chrome-picker {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-        }
-    }
-
-    .font-size-picker {
-        background: #1a1f2e;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 8px;
-        padding: 4px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        min-width: 100px;
-
-        .size-option {
-            background: transparent;
-            border: none;
-            color: $fh-text;
-            padding: 8px 12px;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.15s ease;
-            font-weight: 500;
-
-            &:hover {
-                background: rgba(255, 255, 255, 0.08);
-            }
-
-            &.active {
-                background: rgba($fh-primary, 0.2);
-                color: $fh-primary;
-            }
-        }
-    }
-
-    .link-modal {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #1a1f2e;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        padding: 24px;
-        min-width: 400px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-        z-index: 10000;
-
-        h3 {
-            margin: 0 0 16px 0;
-            color: $fh-text;
-            font-size: 1.1rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 6px;
-            color: $fh-text;
-            font-size: 0.95rem;
-            margin-bottom: 16px;
-
-            &:focus {
-                outline: none;
-                border-color: $fh-primary;
-                box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
-            }
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-
-            button {
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 0.9rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.15s ease;
-                border: none;
-
-                &.btn-cancel {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: rgba(255, 255, 255, 0.7);
-
-                    &:hover {
-                        background: rgba(255, 255, 255, 0.12);
-                    }
-                }
-
-                &.btn-insert {
-                    background: $fh-primary;
-                    color: white;
-
-                    &:hover {
-                        background: color.adjust($fh-primary, $lightness: 5%);
-                    }
-                }
-            }
         }
     }
 
@@ -414,5 +292,131 @@
 
     50% {
         transform: scale(1.05);
+    }
+}
+
+// Portals (rendered in body) - Moved outside .richTextEditor to ensure they apply correctly
+.editor-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent !important; // FORCE TRANSPARENT to avoid conflict with global modal overlays
+    z-index: 15000;
+}
+
+.color-picker-simple {
+    z-index: 15100;
+
+    .chrome-picker {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    }
+}
+
+.editor-font-size-picker {
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 100px;
+    z-index: 15100;
+    position: fixed;
+
+    .size-option {
+        background: transparent;
+        border: none;
+        color: $fh-text;
+        padding: 8px 12px;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+        font-weight: 500;
+        font-family: inherit;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        &.active {
+            background: rgba($fh-primary, 0.2);
+            color: $fh-primary;
+        }
+    }
+}
+
+.editor-link-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 15100;
+
+    h3 {
+        margin: 0 0 16px 0;
+        color: $fh-text;
+        font-size: 1.1rem;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        color: $fh-text;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+
+        &:focus {
+            outline: none;
+            border-color: $fh-primary;
+            box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
+        }
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+
+        button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: none;
+
+            &.btn-cancel {
+                background: rgba(255, 255, 255, 0.08);
+                color: rgba(255, 255, 255, 0.7);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.12);
+                }
+            }
+
+            &.btn-insert {
+                background: $fh-primary;
+                color: white;
+
+                &:hover {
+                    background: #5ab1ff;
+                }
+            }
+        }
     }
 }

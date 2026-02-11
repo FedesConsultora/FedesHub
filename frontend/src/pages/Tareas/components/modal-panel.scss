@@ -9,6 +9,7 @@
 }
 
 .modalPanel {
+  --editor-toolbar-top: 0px;
   position: relative;
   width: 920px;
   max-width: 100%;
@@ -40,6 +41,7 @@
   transition: all 0.2s;
   line-height: 1;
   padding: 0;
+
   p {
     position: relative;
     bottom: 2.5px;

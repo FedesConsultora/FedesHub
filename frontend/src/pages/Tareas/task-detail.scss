@@ -89,6 +89,7 @@ $text: $fh-text;
 
 /* ====== Task Detail ====== */
 .taskDetail {
+  --editor-toolbar-top: 120px; // Ajustado para que quede un poco más abajo del título al scrollear
   position: relative;
   color: $text;
   padding: 1rem;

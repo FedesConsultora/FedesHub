@@ -352,7 +352,7 @@ export default function ToolbarPlugin() {
             {showColorPicker && colorBtnRef.current && createPortal(
                 <>
                     <div
-                        className="modal-overlay"
+                        className="editor-modal-overlay"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowColorPicker(false);
@@ -383,14 +383,14 @@ export default function ToolbarPlugin() {
             {showFontSizePicker && fontSizeBtnRef.current && createPortal(
                 <>
                     <div
-                        className="modal-overlay"
+                        className="editor-modal-overlay"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowFontSizePicker(false);
                         }}
                     />
                     <div
-                        className="font-size-picker"
+                        className="editor-font-size-picker"
                         onMouseDown={(e) => e.preventDefault()}
                         style={{
                             position: 'fixed',
@@ -419,13 +419,13 @@ export default function ToolbarPlugin() {
             {showLinkModal && createPortal(
                 <>
                     <div
-                        className="modal-overlay"
+                        className="editor-modal-overlay"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowLinkModal(false);
                         }}
                     />
-                    <div className="link-modal">
+                    <div className="editor-link-modal">
                         <h3>Insertar Link</h3>
                         <input
                             type="url"
