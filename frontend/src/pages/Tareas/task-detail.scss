@@ -1520,9 +1520,9 @@ $text: $fh-text;
     display: flex;
     flex-direction: column !important;
     align-items: flex-start;
-    gap: 1.5rem;
-    padding-top: 2rem;
-    margin-top: auto; // Empujar al fondo si hay espacio
+    gap: 1rem;
+    padding-top: 1rem;
+    margin-top: 0;
   }
 
   .commentsToggleBtn {
