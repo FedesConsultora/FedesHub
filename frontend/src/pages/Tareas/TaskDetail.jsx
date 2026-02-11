@@ -1375,7 +1375,10 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
             modalTitle="Nueva Subtarea"
             parentTaskId={Number(createSubtaskParentId)}
             initialData={{
-              cliente_id: task?.cliente_id || task?.cliente?.id || null
+              cliente_id: task?.cliente_id || task?.cliente?.id || null,
+              tipo: task?.tipo || 'STD',
+              responsables: (task?.Responsables || task?.responsables || []).map(r => r.id ?? r.feder_id),
+              colaboradores: (task?.Colaboradores || task?.colaboradores || []).map(c => c.id ?? c.feder_id)
             }}
             onClose={() => setCreateSubtaskParentId(null)}
             onCreated={(newTask) => {
