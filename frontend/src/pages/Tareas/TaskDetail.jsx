@@ -1036,113 +1036,78 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
           )}
 
           {/* Contenido Crudo - Material en bruto */}
-          <div className={`content-section raw-content ${(rawUploading || hasRawActiveUploads) ? 'uploading' : ''}`}>
-            <div className="section-header">
-              <h3>Contenido Crudo</h3>
-              <span className="hint">Material en bruto para editar</span>
-            </div>
-
-            {/* Error message */}
-            {rawUploadError && (
-              <div className="upload-error">
-                <span>{rawUploadError}</span>
-                <button onClick={() => setRawUploadError(null)}>✕</button>
+          {task?.tipo !== 'IT' && (
+            <div className={`content-section raw-content ${(rawUploading || hasRawActiveUploads) ? 'uploading' : ''}`}>
+              <div className="section-header">
+                <h3>Contenido Crudo</h3>
+                <span className="hint">Material en bruto para editar</span>
               </div>
-            )}
 
-            {/* Loading overlay with progress */}
-            {(rawUploading || hasRawActiveUploads) && (
-              <div className="upload-overlay">
-                {rawActiveUploads.length > 0 ? (
-                  <div className="upload-progress-list">
-                    {rawActiveUploads.map(u => (
-                      <div key={u.id} className="upload-progress-item">
-                        <div className="upload-info">
-                          <span className="file-name">{u.fileName}</span>
-                          <span className="progress-text">
-                            {u.status === 'processing' ? 'Procesando...' : `${u.progress}%`}
-                          </span>
+              {/* Error message */}
+              {rawUploadError && (
+                <div className="upload-error">
+                  <span>{rawUploadError}</span>
+                  <button onClick={() => setRawUploadError(null)}>✕</button>
+                </div>
+              )}
+
+              {/* Loading overlay with progress */}
+              {(rawUploading || hasRawActiveUploads) && (
+                <div className="upload-overlay">
+                  {rawActiveUploads.length > 0 ? (
+                    <div className="upload-progress-list">
+                      {rawActiveUploads.map(u => (
+                        <div key={u.id} className="upload-progress-item">
+                          <div className="upload-info">
+                            <span className="file-name">{u.fileName}</span>
+                            <span className="progress-text">
+                              {u.status === 'processing' ? 'Procesando...' : `${u.progress}%`}
+                            </span>
+                          </div>
+                          <div className="progress-bar-container">
+                            <div
+                              className={`progress-bar ${u.status === 'processing' ? 'processing' : ''}`}
+                              style={{ width: `${u.progress}%` }}
+                            />
+                            {u.status === 'uploading' && (
+                              <button
+                                className="cancel-btn"
+                                onClick={() => uploadContext?.cancelUpload(u.id)}
+                                title="Cancelar subida"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="progress-bar-container">
-                          <div
-                            className={`progress-bar ${u.status === 'processing' ? 'processing' : ''}`}
-                            style={{ width: `${u.progress}%` }}
-                          />
-                          {u.status === 'uploading' && (
-                            <button
-                              className="cancel-btn"
-                              onClick={() => uploadContext?.cancelUpload(u.id)}
-                              title="Cancelar subida"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="spinner"></div>
-                    <p>Subiendo archivo...</p>
-                    <p className="hint">Archivos grandes pueden tardar varios minutos</p>
-                  </>
-                )}
-              </div>
-            )}
+                      ))}
+                      <p className="hint">Archivos grandes pueden tardar varios minutos</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="spinner"></div>
+                      <p>Subiendo archivo...</p>
+                      <p className="hint">Archivos grandes pueden tardar varios minutos</p>
+                    </>
+                  )}
+                </div>
+              )}
 
-            <div
-              className={`raw-dropzone ${isOver ? 'is-over' : ''}`}
-              onDrop={async (e) => {
-                e.preventDefault();
-                setIsOver(false);
-                setRawUploadError(null);
-                if (rawUploading) return;
-
-                const filesArray = Array.from(e.dataTransfer?.files || []);
-                if (!filesArray.length) return;
-
-                // Validate file sizes
-                const tooBig = filesArray.filter(f => f.size > MAX_FILE_SIZE);
-                if (tooBig.length > 0) {
-                  setRawUploadError(`Archivos muy grandes (máx ${formatFileSize(MAX_FILE_SIZE)}): ${tooBig.map(f => f.name).join(', ')}`);
-                  return;
-                }
-
-                setRawUploading(true);
-                try {
-                  await upload(filesArray, false);
-                } catch (err) {
-                  setRawUploadError(err.message || 'Error al subir archivo');
-                } finally {
-                  setRawUploading(false);
-                }
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (!rawUploading) setIsOver(true);
-              }}
-              onDragLeave={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false);
-              }}
-            >
-              <input
-                type="file"
-                id="raw-content-input"
-                multiple
-                style={{ display: 'none' }}
-                disabled={rawUploading}
-                onChange={async (e) => {
+              <div
+                className={`raw-dropzone ${isOver ? 'is-over' : ''}`}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setIsOver(false);
                   setRawUploadError(null);
-                  const filesArray = Array.from(e.target.files || []);
+                  if (rawUploading) return;
+
+                  const filesArray = Array.from(e.dataTransfer?.files || []);
                   if (!filesArray.length) return;
 
                   // Validate file sizes
                   const tooBig = filesArray.filter(f => f.size > MAX_FILE_SIZE);
                   if (tooBig.length > 0) {
                     setRawUploadError(`Archivos muy grandes (máx ${formatFileSize(MAX_FILE_SIZE)}): ${tooBig.map(f => f.name).join(', ')}`);
-                    e.target.value = '';
                     return;
                   }
 
@@ -1154,93 +1119,130 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
                   } finally {
                     setRawUploading(false);
                   }
-                  e.target.value = '';
                 }}
-              />
-              <p>Arrastra archivos o <label htmlFor="raw-content-input" className="file-select">selecciona</label></p>
-              <button
-                className="add-link-btn-inline"
-                type="button"
-                onClick={(e) => {
+                onDragOver={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
-                  handleAddLink(false);
+                  if (!rawUploading) setIsOver(true);
                 }}
-                title="Agregar link (Drive/Carpeta)"
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false);
+                }}
               >
-                <MdLink size={20} /> Agregar link
-              </button>
-            </div>
+                <input
+                  type="file"
+                  id="raw-content-input"
+                  multiple
+                  style={{ display: 'none' }}
+                  disabled={rawUploading}
+                  onChange={async (e) => {
+                    setRawUploadError(null);
+                    const filesArray = Array.from(e.target.files || []);
+                    if (!filesArray.length) return;
 
-            {/* Lista de archivos crudos */}
-            {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
-              <div className="raw-files-list">
-                {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
-                  const type = getFileType(file);
-                  const Icon = type === 'pdf' ? FaFilePdf :
-                    type === 'word' ? FaFileWord :
-                      type === 'excel' ? FaFileExcel :
-                        type === 'zip' ? FaFileArchive :
-                          type === 'html' ? FaFileCode :
-                            type === 'folder' ? FaFolder :
-                              type === 'video' ? FiEye : FaFileAlt;
+                    // Validate file sizes
+                    const tooBig = filesArray.filter(f => f.size > MAX_FILE_SIZE);
+                    if (tooBig.length > 0) {
+                      setRawUploadError(`Archivos muy grandes (máx ${formatFileSize(MAX_FILE_SIZE)}): ${tooBig.map(f => f.name).join(', ')}`);
+                      e.target.value = '';
+                      return;
+                    }
 
-                  const iconColor = type === 'pdf' ? '#ff3d00' :
-                    type === 'word' ? '#2b579a' :
-                      type === 'excel' ? '#217346' :
-                        type === 'zip' ? '#fb8c00' :
-                          type === 'html' ? '#e44d26' :
-                            type === 'folder' ? '#FFD700' : '#94a3b8';
-
-                  return (
-                    <div key={file.id} className="raw-file-item">
-                      <div className="file-info-icon">
-                        <Icon style={{ color: iconColor }} />
-                        {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? (
-                          <a
-                            href={file.drive_url || getFileUrl(file)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="file-name link-styled"
-                          >
-                            {file.nombre || 'Archivo'}
-                          </a>
-                        ) : (
-                          <span className="file-name">{file.nombre || 'Archivo'}</span>
-                        )}
-                      </div>
-                      <div className="file-actions">
-                        <button
-                          className="view-btn"
-                          onClick={() => {
-                            const isDrive = !!file.drive_url;
-                            const isImageOrVideo = type === 'image' || type === 'video';
-
-                            // Si es un link de Drive o carpeta, o un archivo que no es imagen/video y tiene URL externa, abrir en nueva pestaña
-                            if (type === 'folder' || (isDrive && !isImageOrVideo)) {
-                              window.open(file.drive_url || getFileUrl(file), '_blank');
-                            } else {
-                              // Solo abrir en fullscreen si es imagen/video o PDF/HTML (que tienen preview)
-                              // Para el resto (word, excel, etc), si tienen driveId se ven por iframe en Fullscreen
-                              setRawFullscreen({
-                                url: getFileUrl(file),
-                                name: file.nombre || 'Archivo',
-                                type: type,
-                                driveId: file.drive_file_id
-                              });
-                            }
-                          }}
-                        >
-                          {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? 'Abrir' : 'Ver'}
-                        </button>
-                        <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    setRawUploading(true);
+                    try {
+                      await upload(filesArray, false);
+                    } catch (err) {
+                      setRawUploadError(err.message || 'Error al subir archivo');
+                    } finally {
+                      setRawUploading(false);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                <p>Arrastra archivos o <label htmlFor="raw-content-input" className="file-select">selecciona</label></p>
+                <button
+                  className="add-link-btn-inline"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddLink(false);
+                  }}
+                  title="Agregar link (Drive/Carpeta)"
+                >
+                  <MdLink size={20} /> Agregar link
+                </button>
               </div>
-            )}
-          </div>
+
+              {/* Lista de archivos crudos */}
+              {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).length > 0 && (
+                <div className="raw-files-list">
+                  {adjuntos.filter(a => !a.es_embebido && !a.comentario_id).map(file => {
+                    const type = getFileType(file);
+                    const Icon = type === 'pdf' ? FaFilePdf :
+                      type === 'word' ? FaFileWord :
+                        type === 'excel' ? FaFileExcel :
+                          type === 'zip' ? FaFileArchive :
+                            type === 'html' ? FaFileCode :
+                              type === 'folder' ? FaFolder :
+                                type === 'video' ? FiEye : FaFileAlt;
+
+                    const iconColor = type === 'pdf' ? '#ff3d00' :
+                      type === 'word' ? '#2b579a' :
+                        type === 'excel' ? '#217346' :
+                          type === 'zip' ? '#fb8c00' :
+                            type === 'html' ? '#e44d26' :
+                              type === 'folder' ? '#FFD700' : '#94a3b8';
+
+                    return (
+                      <div key={file.id} className="raw-file-item">
+                        <div className="file-info-icon">
+                          <Icon style={{ color: iconColor }} />
+                          {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? (
+                            <a
+                              href={file.drive_url || getFileUrl(file)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="file-name link-styled"
+                            >
+                              {file.nombre || 'Archivo'}
+                            </a>
+                          ) : (
+                            <span className="file-name">{file.nombre || 'Archivo'}</span>
+                          )}
+                        </div>
+                        <div className="file-actions">
+                          <button
+                            className="view-btn"
+                            onClick={() => {
+                              const isDrive = !!file.drive_url;
+                              const isImageOrVideo = type === 'image' || type === 'video';
+
+                              // Si es un link de Drive o carpeta, o un archivo que no es imagen/video y tiene URL externa, abrir en nueva pestaña
+                              if (type === 'folder' || (isDrive && !isImageOrVideo)) {
+                                window.open(file.drive_url || getFileUrl(file), '_blank');
+                              } else {
+                                // Solo abrir en fullscreen si es imagen/video o PDF/HTML (que tienen preview)
+                                // Para el resto (word, excel, etc), si tienen driveId se ven por iframe en Fullscreen
+                                setRawFullscreen({
+                                  url: getFileUrl(file),
+                                  name: file.nombre || 'Archivo',
+                                  type: type,
+                                  driveId: file.drive_file_id
+                                });
+                              }
+                            }}
+                          >
+                            {(type === 'folder' || (!!file.drive_url && type !== 'image' && type !== 'video')) ? 'Abrir' : 'Ver'}
+                          </button>
+                          <button className="remove-btn" onClick={() => remove(file.id)}>✕</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Fullscreen modal for raw content */}
           {rawFullscreen && (
@@ -1288,7 +1290,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
                 console.error('Error removing:', err);
               }
             }}
-            title="Contenido Listo"
+            title={task?.tipo === 'IT' ? 'Archivos adjuntos' : 'Contenido Listo'}
             showAddButton={true}
             onAddLink={() => handleAddLink(true)}
           />
