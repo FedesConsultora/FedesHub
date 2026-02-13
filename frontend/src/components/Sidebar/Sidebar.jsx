@@ -21,6 +21,7 @@ const APPS = [
   { code: 'comercial', name: 'Comercial', to: '/comercial/leads', directivosOnly: true },
   { code: 'onboarding', name: 'Onboarding', to: '/onboarding', directivosOnly: true },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
+  { code: 'gastos', name: 'Gastos', to: '/gastos', inDev: true },
 ]
 
 export default function Sidebar() {

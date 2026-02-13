@@ -15,13 +15,15 @@ const __dirname = path.dirname(__filename);
  */
 export const registerModels = async (sequelize) => {
   const models = {};
-  const LOG_FILES = process.env.LOG_MODELS === '1';
 
   const load = async (dir) => {
     const abs = path.join(__dirname, dir);
     if (!fs.existsSync(abs)) return;
-    for (const file of fs.readdirSync(abs)) {
+    const files = fs.readdirSync(abs);
+
+    for (const file of files) {
       const full = path.join(abs, file);
+
       if (fs.statSync(full).isDirectory()) {
         await load(path.join(dir, file));
         continue;
@@ -30,16 +32,16 @@ export const registerModels = async (sequelize) => {
       if (file === 'index.js' || file === 'associations.js') continue;
 
       const url = pathToFileURL(full).href;
-      const mod = await import(url);
-      const def = mod.default;
-      if (typeof def !== 'function') continue;
+      try {
+        const mod = await import(url);
+        const def = mod.default;
+        if (typeof def !== 'function') continue;
 
-      const model = def(sequelize, DataTypes);
-      models[model.name] = model;
-
-      if (LOG_FILES) {
-        const rel = path.relative(__dirname, full);
-        console.log('[models] registrado', model.name, '←', rel);
+        const model = def(sequelize, DataTypes);
+        if (!model || !model.name) continue;
+        models[model.name] = model;
+      } catch (err) {
+        console.error('[models] ERROR IMPORTANDO:', url, err.message);
       }
     }
   };

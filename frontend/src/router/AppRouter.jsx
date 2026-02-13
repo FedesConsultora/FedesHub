@@ -1,3 +1,4 @@
+import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 // Guards / layout
@@ -25,8 +26,6 @@ import ResetPassword from '../pages/passwordRecovery/ResetPassword.jsx'
 import AdminTabs from '../pages/Admin/AdminTabs.jsx'
 import FedersTabs from '../pages/Feders/FedersTabs.jsx'
 import FedersOverviewPage from '../pages/Feders/FedersOverviewPage.jsx'
-// import CelulasListPage from '../pages/Feders/CelulasListPage.jsx'
-// import CelulaDetailPage from '../pages/Feders/CelulaDetailPage.jsx'
 import FederDetailPage from '../pages/Feders/FederDetailPage.jsx'
 import ClientesListPage from '../pages/Clientes/ClientesListPage.jsx'
 import ClienteDetailPage from '../pages/Clientes/ClienteDetailPage.jsx'
@@ -40,9 +39,12 @@ import OnboardingListPage from '../pages/Onboarding/OnboardingListPage.jsx'
 import NotificacionesTabs from '../pages/Notificaciones/NotificacionesTabs.jsx'
 import NotifListPage from '../pages/Notificaciones/NotifListPage.jsx'
 
-import ChatPage from '../pages/Chat/ChatPage.jsx'   // NUEVO
+import ChatPage from '../pages/Chat/ChatPage.jsx'
 import PerfilPage from '../pages/Perfil/PerfilPage.jsx'
 import OnePagerPage from '../pages/Tareas/OnePager/OnePagerPage.jsx'
+
+const GastosListPage = React.lazy(() => import('../pages/gastos/GastosListPage.jsx'))
+const GastoDetailPage = React.lazy(() => import('../pages/gastos/GastoDetailPage.jsx'))
 
 export default function AppRouter() {
   return (
@@ -66,8 +68,6 @@ export default function AppRouter() {
           >
             <Route index element={<FedersOverviewPage />} />
             <Route path="listado" element={<FedersList />} />
-            {/* <Route path="celulas" element={<CelulasListPage />} />
-            <Route path="celulas/:id" element={<CelulaDetailPage />} /> */}
             <Route path="view/:id" element={<FederDetailPage />} />
             <Route
               path="cargos"
@@ -128,6 +128,11 @@ export default function AppRouter() {
 
           <Route path="/clientes" element={<ClientesListPage />} />
           <Route path="/clientes/:id" element={<ClienteDetailPage />} />
+
+          {/* Gastos */}
+          <Route path="/gastos" element={<GastosListPage />} />
+          <Route path="/gastos/:id" element={<GastoDetailPage />} />
+
           <Route
             path="admin"
             element={<RequirePerm modulo="auth" accion="assign"><AdminTabs /></RequirePerm>}
