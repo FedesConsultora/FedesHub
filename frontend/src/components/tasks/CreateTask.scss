@@ -223,6 +223,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   max-width: 100%;
   min-width: 0; // Prevent pushing
   cursor: text;
+  position: relative;
   transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
   // overflow: hidden;
 
@@ -236,6 +237,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     border-color: $fh-primary;
     box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
     background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    z-index: 200001;
   }
 
 
@@ -352,6 +354,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
     border-color: $fh-primary;
     box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
     background: linear-gradient(180deg, #1c2531 0%, #11171f 100%);
+    z-index: 200001;
   }
 
   &.is-error {
@@ -479,7 +482,7 @@ $shadow-soft: 0 10px 35px rgba(0, 0, 0, .35);
   position: absolute;
   inset-inline: 0;
   top: calc(100% + 4px);
-  z-index: 1000;
+  z-index: 200000;
   background: linear-gradient(165deg, rgba(26, 34, 46, 0.98) 0%, rgba(15, 23, 32, 0.98) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

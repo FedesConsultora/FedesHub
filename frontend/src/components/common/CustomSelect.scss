@@ -8,6 +8,10 @@ $fh-muted: if(variable-exists(fh-muted), $fh-muted, #a9b7c7);
 .msWrap {
     position: relative;
     width: 100%;
+
+    &.is-open {
+        z-index: 10000; // Above standard content
+    }
 }
 
 .select-field {
@@ -35,6 +39,8 @@ $fh-muted: if(variable-exists(fh-muted), $fh-muted, #a9b7c7);
         border-color: $fh-primary !important;
         box-shadow: 0 0 0 3px rgba($fh-primary, 0.15);
         background: linear-gradient(180deg, #1c2531 0%, #11171f 100%) !important;
+        position: relative;
+        z-index: 10001; // Just above wrap
     }
 
     &.is-disabled {
@@ -108,7 +114,7 @@ $fh-muted: if(variable-exists(fh-muted), $fh-muted, #a9b7c7);
     position: absolute;
     inset-inline: 0;
     top: calc(100% + 4px);
-    z-index: 1000;
+    z-index: 10002; // Top of the stack
     background: linear-gradient(165deg, rgba(26, 34, 46, 0.98) 0%, rgba(15, 23, 32, 0.98) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);

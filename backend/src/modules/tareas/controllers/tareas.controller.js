@@ -589,17 +589,31 @@ export const postComentario = async (req, res, next) => {
         }
         req.log?.info('tareas.postComentario:notif:menciones', { mencionFederIds });
 
-        if (!mencionFederIds.length) {
-          req.log?.info('tareas.postComentario:notif:sin-menciones');
-          return;
-        }
 
-        // --- 1) Resolver destinos (sólo usuarios válidos y distintos del autor)
-        const destinos = await federIdsToDestinos(mencionFederIds, req);
-        req.log?.info('tareas.postComentario:notif:destinos', { destinos });
+        // --- 1) Resolver destinos (menciones + involucrados)
+        const involucradosUserIds = await getTaskInvolvedUserIds(id);
+        const destinosInvolucrados = (await models.Feder.findAll({
+          where: { user_id: involucradosUserIds, is_activo: true },
+          attributes: ['id', 'user_id']
+        })).map(f => ({ user_id: f.user_id, feder_id: f.id }));
+
+        const destinosMenciones = await federIdsToDestinos(mencionFederIds, req);
+
+        // Combinar destinos evitando duplicados y excluyendo al autor
+        const meUserId = req.user?.id;
+        const allDestinosMap = new Map();
+
+        [...destinosInvolucrados, ...destinosMenciones].forEach(d => {
+          if (d.user_id && d.user_id !== meUserId) {
+            allDestinosMap.set(d.user_id, d);
+          }
+        });
+
+        const destinos = Array.from(allDestinosMap.values());
+        req.log?.info('tareas.postComentario:notif:destinos', { total: destinos.length, destinos });
 
         if (!destinos.length) {
-          req.log?.warn('tareas.postComentario:notif:sin-destinos', { mencionFederIds });
+          req.log?.info('tareas.postComentario:notif:sin-destinos');
           return;
         }
 
@@ -608,16 +622,22 @@ export const postComentario = async (req, res, next) => {
         const baseUrl = buildBaseUrl(req);
         const linkUrl = baseUrl ? `${baseUrl}/tareas?open=${id}&c=${cm.id}` : undefined;
 
+        // --- 3) Título dinámico
+        const tieneMenciones = mencionFederIds.length > 0;
+        const titulo = tieneMenciones
+          ? `Mención en "${tarea?.titulo || 'tarea'}"`
+          : `Nuevo comentario en "${tarea?.titulo || 'tarea'}"`;
+
         req.log?.info('tareas.postComentario:notif:payload', {
           tipo_codigo: 'tarea_comentario',
           linkUrl,
           canales: ['in_app', 'push']
         });
 
-        // --- 3) Crear notificación (in_app + push)
+        // --- 4) Crear notificación (in_app + push)
         await notifCreate({
           tipo_codigo: 'tarea_comentario',
-          titulo: `Mención en "${tarea?.titulo || 'tarea'}"`,
+          titulo,
           mensaje: (body.contenido || '').slice(0, 180),
           data: { comentario: body.contenido, comentario_id: cm.id, tarea_id: Number(id) },
           link_url: linkUrl,

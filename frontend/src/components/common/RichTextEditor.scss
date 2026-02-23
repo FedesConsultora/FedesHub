@@ -41,7 +41,7 @@
     .toolbar {
         position: sticky !important;
         top: var(--editor-toolbar-top, 80px) !important; // Accounts for the sticky header height by default
-        z-index: 100000 !important; // Absolute maximum to avoid being covered
+        z-index: 2000 !important; // Lowered to allow modals/dropdowns to overtake it
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;

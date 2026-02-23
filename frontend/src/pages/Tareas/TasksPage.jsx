@@ -158,6 +158,11 @@ export default function TasksPage() {
   // Manejar el param 'open' para abrir una tarea directamente
   // Este effect reacciona a cambios en searchParams para funcionar aunque ya estés en /tareas
   useEffect(() => {
+    const commentId = searchParams.get("c") || searchParams.get("commentId");
+    if (commentId) {
+      setInitialCommentId(commentId);
+    }
+
     const openParam = searchParams.get("open");
     if (openParam) {
       const taskId = parseInt(openParam, 10);
