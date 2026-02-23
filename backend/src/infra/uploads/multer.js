@@ -32,7 +32,7 @@ const ALLOWED_MIMES = [
   'application/zip', 'application/x-zip-compressed',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',      // xlsx
-  'text/plain', 'text/csv'
+  'text/plain', 'text/csv', 'text/html'
 ];
 
 const upload = multer({
