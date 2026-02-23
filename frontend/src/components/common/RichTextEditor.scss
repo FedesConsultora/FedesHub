@@ -5,6 +5,7 @@
     position: relative;
     max-width: 100%;
     width: 100%;
+    z-index: 1; // Creates a stacking context that keeps children (like toolbar) behind elevated siblings
 
     .editor-container {
         background: rgba(255, 255, 255, 0.02);

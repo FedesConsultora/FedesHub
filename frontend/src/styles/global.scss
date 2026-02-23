@@ -261,7 +261,7 @@ select {
     background: linear-gradient(180deg, #222d3c 0%, #151d28 100%) !important;
     box-shadow: 0 0 0 3px rgba($fh-primary, 0.15) !important;
     outline: none !important;
-    z-index: 200001;
+    z-index: 9999;
   }
 
   // Ensure children also behave
