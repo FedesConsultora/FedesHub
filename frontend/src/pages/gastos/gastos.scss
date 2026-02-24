@@ -380,17 +380,19 @@
 // ══════════════════════════════════════════
 // ── Detail page ──
 // ══════════════════════════════════════════
+.detail-top-bar {
+  margin: 0 auto 1.5rem;
+  max-width: 1020px;
+}
+
 .gasto-detail-card {
   background: $fh-card;
   border: 1px solid rgba($fh-primary, 0.15);
   border-radius: 16px;
   padding: 1.75rem;
   box-shadow: $shadow-md;
-  max-width: 720px;
-
-  .detail-top-bar {
-    margin-bottom: 1rem;
-  }
+  margin: 0 auto;
+  max-width: 1020px;
 
   .detail-header {
     display: flex;

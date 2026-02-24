@@ -80,7 +80,7 @@ export default function GastoDetailPage() {
 
     const isOwner = user?.feder_id === gasto.feder_id
     const canEdit = isOwner
-    const canDelete = isOwner && !isDirectivo
+    const canDelete = isOwner && !isDirectivo && gasto.estado === 'pendiente'
 
     const handleReject = () => {
         if (!rejectMotivo.trim()) return
@@ -88,6 +88,10 @@ export default function GastoDetailPage() {
     }
 
     const startEdit = (field) => {
+        if (gasto.estado !== 'pendiente') {
+            toast?.warn('Sólo se pueden editar gastos pendientes')
+            return
+        }
         setEditingField(field)
         if (field === 'fecha') {
             setEditValue(gasto.fecha ? gasto.fecha.split('T')[0] : '')
