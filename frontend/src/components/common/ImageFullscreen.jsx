@@ -96,7 +96,6 @@ export default function ImageFullscreen({ src, alt, type = 'image', driveId = nu
                         src={src}
                         controls
                         autoPlay
-                        loop
                         onClick={(e) => e.stopPropagation()}
                     />
                 );

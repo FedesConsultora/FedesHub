@@ -21,12 +21,12 @@ export default function AttachList({ items = [] }) {
                 alt={a.nombre}
                 src={url}
                 loading="lazy"
-                onClick={() => setFullscreen({ url, name: a.nombre, isVideo: false })}
+                onClick={() => setFullscreen({ url, name: a.nombre, type: 'image' })}
                 style={{ cursor: 'pointer' }}
               />
             ) : type === 'video' && url ? (
               /* Video preview with play icon */
-              <div className="video-thumb" onClick={() => setFullscreen({ url, name: a.nombre, isVideo: true })}>
+              <div className="video-thumb" onClick={() => setFullscreen({ url, name: a.nombre, type: 'video' })}>
                 <video src={url} muted preload="metadata" />
                 <MdPlayArrow className="play-icon" />
               </div>
@@ -45,7 +45,7 @@ export default function AttachList({ items = [] }) {
         <ImageFullscreen
           src={fullscreen.url}
           alt={fullscreen.name}
-          isVideo={fullscreen.isVideo}
+          type={fullscreen.type}
           onClose={() => setFullscreen(null)}
         />
       )}
