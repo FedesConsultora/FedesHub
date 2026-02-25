@@ -718,7 +718,7 @@ export default function TaskDetail({ taskId, onUpdated, onClose, initialCommentI
         <div className="titleWrap">
           {/* Título con truncamiento visual */}
           <div className="titleSection" title={form.titulo} style={{ position: 'relative', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
-            <div style={{ position: 'absolute', top: 0, left: 0 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0 }} className='typeSelector'>
               <InlineType
                 value={task?.tipo || 'STD'}
                 onChange={(next) => performSave({ tipo: next }, 'manual')}

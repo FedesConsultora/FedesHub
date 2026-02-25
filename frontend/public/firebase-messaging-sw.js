@@ -38,7 +38,7 @@ messaging.onBackgroundMessage(async (payload) => {
       icon,
       badge: '/favicon.ico',
       vibrate: [200, 100, 200], // Vibración en móviles
-      requireInteraction: false,
+      requireInteraction: true, // Persistente como Gmail
       silent: false // 🔊 AUDIO DESBLOQUEADO: Para que suene cuando no hay ninguna pestaña en foco.
     })
   }
@@ -61,6 +61,7 @@ self.addEventListener('message', (event) => {
 
     event.waitUntil((async () => {
       try {
+        console.log(`[SW] Preparando notificación: "${title}"`, options)
         // En Lv1 (sin tag en RealtimeProvider), options.tag será undefined o no colisionará
         if (options.tag) {
           const currentNotifs = await self.registration.getNotifications({ tag: options.tag })
@@ -69,8 +70,9 @@ self.addEventListener('message', (event) => {
 
         await self.registration.showNotification(title, {
           ...options,
-          silent: options.silent !== undefined ? options.silent : true,
-          renotify: !!options.tag
+          silent: options.silent === true, // Si nos piden silencio (isSilenced=true), lo respetamos. Si no, auditivo por defecto.
+          renotify: true,
+          requireInteraction: options.requireInteraction ?? true
         })
       } catch (err) {
         console.error('[SW] Notification Error:', err)

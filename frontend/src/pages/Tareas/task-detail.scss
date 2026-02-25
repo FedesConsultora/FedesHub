@@ -173,12 +173,15 @@ $text: $fh-text;
     overflow: visible; // Avoid clipping dropdowns or causing scrollbars
 
     .titleSection {
-      flex: 1 1 auto; // Crece para llenar espacio disponible
-      min-width: 0; // Permite que flex funcione correctamente
-      max-width: 100%; // No exceder contenedor
+      flex: 1 1 auto; 
+      min-width: 0; 
+      max-width: 100%; 
       position: relative;
       // overflow: hidden; // Cortaba el tooltip
-
+      .typeSelector{
+        display: flex;
+        
+      }
       .ttl {
         font-weight: 600;
         font-size: 1.5rem;
