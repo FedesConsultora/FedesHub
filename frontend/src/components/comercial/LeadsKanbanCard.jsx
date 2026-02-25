@@ -2,7 +2,7 @@
 import React from 'react'
 import { FiUser, FiClock, FiExternalLink, FiCheckCircle } from 'react-icons/fi'
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es } from 'date-fns/locale/es'
 import ContextMenu from '../common/ContextMenu'
 
 export default function LeadsKanbanCard({ lead, onPointerDown, onClick }) {

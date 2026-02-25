@@ -10,10 +10,7 @@ export async function initModels() {
     // 1) Cargar/registrar todos los modelos
     const m = await registerModels(sequelize);
 
-    // 2) Listar modelos cargados (para verificar que no falte ninguno)
-    const names = Object.keys(m).sort();
-
-    // 3) Asociaciones (con try/catch por si algo peta)
+    // 2) Asociaciones
     try {
       setupAssociations(m);
     } catch (e) {

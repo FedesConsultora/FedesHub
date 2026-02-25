@@ -16,7 +16,7 @@ import {
     addWeeks,
     subWeeks
 } from "date-fns";
-import { es } from "date-fns/locale";
+import { es } from "date-fns/locale/es";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlus, FiX } from "react-icons/fi";
 import CreateTaskModal from "./CreateTaskModal";
 import "./TaskMonthlyView.scss";

@@ -263,14 +263,15 @@ export default function ContentGallery({
         }
 
         if (type === 'video') {
+            const isMain = className === 'main-image';
             return (
                 <div className={`video-wrapper ${className}`} onClick={onClick}>
                     <video
                         src={url}
                         className={className}
-                        controls={className === 'main-image'}
-                        muted
-                        loop
+                        controls={isMain}
+                        muted={!isMain}
+                        loop={!isMain}
                         playsInline
                         preload={isThumbnail ? "metadata" : "auto"}
                         onLoadedData={() => handleImageLoad(imageId)}

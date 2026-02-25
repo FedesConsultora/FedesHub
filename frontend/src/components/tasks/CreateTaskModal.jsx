@@ -249,9 +249,18 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {}, 
     if (initialData?.cliente_id) setClienteId(initialData.cliente_id);
     if (initialData?.lead_id) setLeadId(initialData.lead_id);
     if (initialData?.titulo) setTitulo(initialData.titulo);
-    // Si no hay responsables y tenemos nuestro ID, nos ponemos nosotros
-    if (responsables.length === 0 && myId) {
+
+    // Si vienen responsables en initialData, usarlos
+    if (initialData?.responsables?.length > 0) {
+      setResponsables(initialData.responsables.map(String));
+    } else if (responsables.length === 0 && myId) {
+      // Si no hay responsables y tenemos nuestro ID, nos ponemos nosotros (comportamiento original)
       setResponsables([String(myId)])
+    }
+
+    // Si vienen colaboradores en initialData, usarlos
+    if (initialData?.colaboradores?.length > 0) {
+      setColaboradores(initialData.colaboradores.map(String));
     }
   }, [initialData, myId, parentTaskId])
 

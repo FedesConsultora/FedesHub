@@ -22,11 +22,8 @@ pids
 *.pid.lock
 
 # ─── Env / secrets ────────────────────────
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+!.env.example
 
 # ─── DB / Sequelize ───────────────────────
 /src/migrations/*.js.map

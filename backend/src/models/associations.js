@@ -746,4 +746,32 @@ export const setupAssociations = (m) => {
     m.ComercialObjetivoMes.belongsTo(m.ComercialEECC, { foreignKey: 'eecc_id', as: 'eecc' })
   );
 
+  // ===== Módulo 14: Gastos =====
+  link(m.Gasto && m.Feder, 'Gasto → Feder (feder_id)', () =>
+    m.Gasto.belongsTo(m.Feder, { foreignKey: 'feder_id', as: 'feder' })
+  );
+  link(m.Gasto && m.User, 'Gasto → User (aprobado_por/rechazado_por/reintegrado_por)', () => {
+    m.Gasto.belongsTo(m.User, { foreignKey: 'aprobado_por_user_id', as: 'aprobadoPor' });
+    m.Gasto.belongsTo(m.User, { foreignKey: 'rechazado_por_user_id', as: 'rechazadoPor' });
+    m.Gasto.belongsTo(m.User, { foreignKey: 'reintegrado_por_user_id', as: 'reintegradoPor' });
+  });
+
+  link(m.Gasto && m.GastoAdjunto, 'Gasto ↔ GastoAdjunto', () => {
+    m.Gasto.hasMany(m.GastoAdjunto, { foreignKey: 'gasto_id', as: 'adjuntos' });
+    m.GastoAdjunto.belongsTo(m.Gasto, { foreignKey: 'gasto_id', as: 'gasto' });
+  });
+
+  link(m.GastoAdjunto && m.Feder, 'GastoAdjunto → Feder (subido_por_feder_id)', () =>
+    m.GastoAdjunto.belongsTo(m.Feder, { foreignKey: 'subido_por_feder_id', as: 'subidoPor' })
+  )
+
+  link(m.Gasto && m.GastoHistorial, 'Gasto ↔ GastoHistorial', () => {
+    m.Gasto.hasMany(m.GastoHistorial, { foreignKey: 'gasto_id', as: 'historial' });
+    m.GastoHistorial.belongsTo(m.Gasto, { foreignKey: 'gasto_id', as: 'gasto' });
+  });
+
+  link(m.GastoHistorial && m.User, 'GastoHistorial → User (user_id)', () =>
+    m.GastoHistorial.belongsTo(m.User, { foreignKey: 'user_id', as: 'user' })
+  );
+
 };

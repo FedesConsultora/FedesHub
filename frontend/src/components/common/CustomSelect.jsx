@@ -74,7 +74,7 @@ export default function CustomSelect({
         : options
 
     return (
-        <div className="msWrap" ref={wrapRef} style={{ width: '100%' }}>
+        <div className={`msWrap ${open ? 'is-open' : ''}`} ref={wrapRef} style={{ width: '100%' }}>
             {/* Trigger */}
             <div
                 id={controlId}
