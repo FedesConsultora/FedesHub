@@ -2,14 +2,16 @@ import { GastosService } from '../services/GastosService.js';
 
 const getRoles = (user) => user.roles || [];
 const isDirectivo = (user) => getRoles(user).some(r => ['NivelA', 'NivelB', 'Directivo', 'RRHH'].includes(r));
+const isGastoManager = (user) => (user.perms || []).includes('gastos.manage') || (user.perms || []).includes('*.*');
 
 export const getGastos = async (req, res) => {
     try {
         const { user } = req;
         const filters = req.query;
+        const isManager = isGastoManager(user);
         const list = await GastosService.list({
             feder_id: user.feder_id,
-            isDirectivo: isDirectivo(user),
+            isDirectivo: isManager, // Solo el Manager ve todo
             filters
         });
         res.json(list);
@@ -22,9 +24,10 @@ export const getGastoById = async (req, res) => {
     try {
         const { id } = req.params;
         const { user } = req;
+        const isManager = isGastoManager(user);
         const gasto = await GastosService.getById(id, {
             feder_id: user.feder_id,
-            isDirectivo: isDirectivo(user)
+            isDirectivo: isManager // Solo el Manager ve detalles ajenos
         });
         res.json(gasto);
     } catch (error) {
@@ -53,9 +56,11 @@ export const updateGasto = async (req, res) => {
     try {
         const { id } = req.params;
         const { user } = req;
+        const isManager = isGastoManager(user);
         const gasto = await GastosService.update(id, req.body, user.id, {
             feder_id: user.feder_id,
-            isDirectivo: isDirectivo(user)
+            isDirectivo: isManager,
+            isGastoManager: isManager
         });
         res.json(gasto);
     } catch (error) {
@@ -67,9 +72,11 @@ export const deleteGasto = async (req, res) => {
     try {
         const { id } = req.params;
         const { user } = req;
+        const isManager = isGastoManager(user);
         await GastosService.delete(id, {
             feder_id: user.feder_id,
-            isDirectivo: isDirectivo(user)
+            isDirectivo: isManager,
+            isGastoManager: isManager
         });
         res.status(204).send();
     } catch (error) {
@@ -83,7 +90,9 @@ export const updateStatus = async (req, res) => {
         const { estado, motivo } = req.body;
         const { user } = req;
 
-        if (!isDirectivo(user)) return res.status(403).json({ error: 'Solo directivos pueden cambiar el estado' });
+        if (!isGastoManager(user)) {
+            return res.status(403).json({ error: 'Solo el Responsable de Gastos puede cambiar el estado' });
+        }
 
         const gasto = await GastosService.updateStatus(id, { estado, motivo }, user.id);
         res.json(gasto);
@@ -95,14 +104,15 @@ export const updateStatus = async (req, res) => {
 export const getSummary = async (req, res) => {
     try {
         const { user } = req;
-        const direc = isDirectivo(user);
-        const federId = direc && req.query.feder_id ? req.query.feder_id : user.feder_id;
+        const isManager = isGastoManager(user);
+        const federId = isManager && req.query.feder_id ? req.query.feder_id : user.feder_id;
         const summary = await GastosService.getSummary({
             feder_id: federId,
-            isDirectivo: direc && !req.query.feder_id
+            isDirectivo: isManager && !req.query.feder_id
         });
         res.json(summary);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+

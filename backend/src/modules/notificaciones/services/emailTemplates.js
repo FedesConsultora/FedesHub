@@ -222,5 +222,88 @@ export const templates = {
     </div>
     
     <a href="${link}" style="${buttonStyle(colors.danger)}">Ver detalles en FedesHub</a>
+  `),
+
+  gasto_creado: ({ gasto, feder_nombre, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.primary}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">💰 Nuevo Gasto Registrado</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Solicitud pendiente de revisión</h2>
+    </div>
+    
+    <div style="background: rgba(77, 208, 225, 0.05); border-left: 4px solid ${colors.primary}; padding: 24px; border-radius: 12px; margin: 24px 0;">
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Feder</div>
+        <div style="color: ${colors.text}; font-weight: 600; font-size: 16px;">👤 ${feder_nombre || 'Usuario'}</div>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Importe</div>
+        <div style="color: ${colors.text}; font-weight: 800; font-size: 20px;">${gasto?.moneda || '$'} ${gasto?.monto || '0'}</div>
+      </div>
+      <div style="margin-bottom: 0;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Descripción</div>
+        <div style="color: ${colors.text}; font-size: 14px; line-height: 1.5;">${gasto?.descripcion || 'Sin descripción'}</div>
+      </div>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle()}">Revisar en FedesHub</a>
+  `),
+
+  gasto_aprobado: ({ gasto, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.success}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">✅ Gasto Aprobado</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Tu gasto fue aprobado</h2>
+    </div>
+    
+    <div style="background: rgba(34, 197, 94, 0.05); border-left: 4px solid ${colors.success}; padding: 24px; border-radius: 12px; margin: 24px 0;">
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Importe Aprobado</div>
+        <div style="color: ${colors.text}; font-weight: 800; font-size: 20px;">${gasto?.moneda || '$'} ${gasto?.monto || '0'}</div>
+      </div>
+      <p style="margin: 0; color: ${colors.muted}; font-size: 14px; line-height: 1.5;">
+        Tu rendición ha sido procesada correctamente y se encuentra lista para el siguiente paso administrativo.
+      </p>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle(colors.success)}">Ver en FedesHub</a>
+  `),
+
+  gasto_rechazado: ({ gasto, motivo, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.danger}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">❌ Gasto Rechazado</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Acción requerida</h2>
+    </div>
+    
+    <div style="background: rgba(239, 68, 68, 0.05); border-left: 4px solid ${colors.danger}; padding: 24px; border-radius: 12px; margin: 24px 0;">
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Importe</div>
+        <div style="color: ${colors.text}; font-weight: 600; font-size: 16px;">${gasto?.moneda || '$'} ${gasto?.monto || '0'}</div>
+      </div>
+      
+      <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Motivo del rechazo</div>
+        <p style="margin: 0; color: ${colors.text}; font-size: 15px; line-height: 1.6; font-style: italic;">"${motivo || 'No se especificó un motivo.'}"</p>
+      </div>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle(colors.danger)}">Revisar y editar</a>
+  `),
+
+  gasto_reintegrado: ({ gasto, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.success}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">💸 Gasto Reintegrado</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Reintegro completado</h2>
+    </div>
+    
+    <div style="background: rgba(34, 197, 94, 0.05); border-left: 4px solid ${colors.success}; padding: 24px; border-radius: 12px; margin: 24px 0;">
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Importe Reintegrado</div>
+        <div style="color: ${colors.text}; font-weight: 800; font-size: 20px;">${gasto?.moneda || '$'} ${gasto?.monto || '0'}</div>
+      </div>
+      <p style="margin: 0; color: ${colors.muted}; font-size: 14px; line-height: 1.5;">
+        El proceso de reintegro de tu gasto ha finalizado exitosamente.
+      </p>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle(colors.success)}">Ver en FedesHub</a>
   `)
 };

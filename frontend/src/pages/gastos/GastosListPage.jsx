@@ -22,11 +22,13 @@ export default function GastosListPage() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const toast = useToast()
-    const { roles } = useAuthCtx() || {}
+    const { roles, hasPerm } = useAuthCtx() || {}
     const isDirectivo = (roles || []).some(r => DIRECTIVO_ROLES.includes(r))
+    const isGastoManager = hasPerm('gastos', 'manage') || hasPerm('*', '*')
+    const canSeeAll = isGastoManager // Solo el manager ve el panel administrativo
 
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [statusFilter, setStatusFilter] = useState(null)
+    const [statusFilter, setStatusFilter] = useState(() => isGastoManager ? 'pendiente' : null)
     const [selectedFederIds, setSelectedFederIds] = useState([])
 
     // Reject modal state
@@ -59,7 +61,7 @@ export default function GastosListPage() {
     const { data: feders } = useQuery({
         queryKey: ['feders-list'],
         queryFn: () => federsApi.list(),
-        enabled: isDirectivo,
+        enabled: canSeeAll,
         staleTime: 5 * 60 * 1000
     })
 
@@ -115,11 +117,13 @@ export default function GastosListPage() {
         { key: null, label: 'Total', value: summary?.count || 0, monto: summary?.total, type: 'total', showMonto: true },
         { key: 'pendiente', label: 'Pendientes', value: summary?.pendiente || 0, monto: summary?.monto_pendiente, type: 'pendiente', showMonto: true },
         { key: 'aprobado', label: 'Aprobados', value: summary?.aprobado || 0, monto: summary?.monto_aprobado, type: 'aprobado', showMonto: true },
-        { key: 'rechazado', label: 'Rechazados', value: summary?.rechazado || 0, monto: summary?.monto_rechazado, type: 'rechazado', showMonto: isDirectivo },
+        { key: 'rechazado', label: 'Rechazados', value: summary?.rechazado || 0, monto: summary?.monto_rechazado, type: 'rechazado', showMonto: canSeeAll },
         { key: 'reintegrado', label: 'Reintegrados', value: summary?.reintegrado || 0, monto: summary?.monto_reintegrado, type: 'reintegrado', showMonto: true },
     ]
 
     const federsArray = Array.isArray(feders) ? feders : (feders?.rows || feders?.data || [])
+
+    const countTxt = `${(gastos || []).length} resultados`
 
     return (
         <div className="gastos-page">
@@ -133,16 +137,21 @@ export default function GastosListPage() {
                 </div>
             )}
 
-            <div className="header-actions">
-                <h1>{isDirectivo ? 'Gastos — Panel de Administración' : 'Mis Gastos'}</h1>
-                <button
-                    className="fh-btn"
-                    style={{ background: 'linear-gradient(135deg, #44718D, #3a6179)', borderColor: 'rgba(68,113,141,0.5)' }}
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    + Nuevo Gasto
-                </button>
-            </div>
+            <header className="toolbar card">
+                <div className="left">
+                    <h1>{canSeeAll ? 'Gastos — Panel Administrativo' : 'Mis Gastos'}</h1>
+                    <div className="counter">{countTxt}</div>
+                </div>
+
+                <div className="right">
+                    <button
+                        className="submit"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        + Nuevo Gasto
+                    </button>
+                </div>
+            </header>
 
             <div className="summary-cards">
                 {cards.map(c => (
@@ -160,43 +169,42 @@ export default function GastosListPage() {
                 ))}
             </div>
 
-            {/* Avatar bubbles filter for directivo - MOVED BELOW CARDS */}
-            {isDirectivo && federsArray.length > 0 && (
-                <div className="feder-bubbles-section">
-                    <FederBubblesFilter
-                        feders={federsArray}
-                        selectedIds={selectedFederIds}
-                        onChange={handleFederChange}
-                    />
-                </div>
-            )}
+            <div className="filters-and-bubbles">
+                <div className="filter-actions-group">
+                    {/* Active status filter badge */}
+                    {statusFilter && (
+                        <div className="active-filter-badge">
+                            Filtrando: <span className={`status-badge ${statusFilter}`}>{statusFilter}</span>
+                            <button className="clear-filter" onClick={() => setStatusFilter(null)}>✕</button>
+                        </div>
+                    )}
 
-            {/* Active status filter badge */}
-            {statusFilter && (
-                <div className="filter-bar">
-                    <div className="active-filter">
-                        Filtrando: <span className={`status-badge ${statusFilter}`}>{statusFilter}</span>
-                        <button className="clear-filter" onClick={() => setStatusFilter(null)}>✕</button>
-                    </div>
+                    {canSeeAll && federsArray.length > 0 && (
+                        <FederBubblesFilter
+                            feders={federsArray}
+                            selectedIds={selectedFederIds}
+                            onChange={handleFederChange}
+                        />
+                    )}
                 </div>
-            )}
+            </div>
 
             <div className="gastos-table">
                 <table>
                     <thead>
                         <tr>
                             <th>Fecha</th>
-                            {isDirectivo && <th>Solicitante</th>}
+                            {canSeeAll && <th>Solicitante</th>}
                             <th>Descripción</th>
                             <th>Monto</th>
                             <th>Estado</th>
-                            {isDirectivo && <th>Acciones</th>}
+                            {isGastoManager && <th>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {(gastos || []).length === 0 ? (
                             <tr className="empty-row">
-                                <td colSpan={isDirectivo ? 6 : 5}>
+                                <td colSpan={isGastoManager ? 6 : (canSeeAll ? 5 : 4)}>
                                     {statusFilter ? `No hay gastos con estado "${statusFilter}"` : 'No hay gastos registrados'}
                                 </td>
                             </tr>
@@ -206,8 +214,8 @@ export default function GastosListPage() {
                                     <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
                                         {g.fecha ? format(new Date(g.fecha), 'dd/MM/yyyy') : '-'}
                                     </td>
-                                    {isDirectivo && (
-                                        <td className="solicitante-cell">
+                                    {canSeeAll && (
+                                        <td className="solicitante-cell" onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
                                             {g.feder?.avatar_url && (
                                                 <img src={g.feder.avatar_url} alt="" className="solicitante-avatar" />
                                             )}
@@ -220,10 +228,10 @@ export default function GastosListPage() {
                                     <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
                                         ${parseFloat(g.monto).toLocaleString()} {g.moneda}
                                     </td>
-                                    <td>
+                                    <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
                                         <span className={`status-badge ${g.estado}`}>{g.estado}</span>
                                     </td>
-                                    {isDirectivo && (
+                                    {isGastoManager && (
                                         <td className="actions-cell">
                                             {g.estado !== 'aprobado' && g.estado !== 'reintegrado' && (
                                                 <button className="action-btn approve" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'aprobado') }} title="Aprobar">✓</button>

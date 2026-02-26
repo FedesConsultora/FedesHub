@@ -16,8 +16,10 @@ export default function GastoDetailPage() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const toast = useToast()
-    const { roles, user } = useAuthCtx() || {}
+    const { roles, user, hasPerm } = useAuthCtx() || {}
     const isDirectivo = (roles || []).some(r => DIRECTIVO_ROLES.includes(r))
+    const isGastoManager = hasPerm('gastos', 'manage')
+    const canSeeAll = isDirectivo || isGastoManager
 
     // Modals
     const [showRejectModal, setShowRejectModal] = useState(false)
@@ -79,8 +81,8 @@ export default function GastoDetailPage() {
     if (!gasto) return <div className="gastos-page"><div className="detail-loading">Gasto no encontrado</div></div>
 
     const isOwner = user?.feder_id === gasto.feder_id
-    const canEdit = isOwner
-    const canDelete = isOwner && !isDirectivo && gasto.estado === 'pendiente'
+    const canEdit = isOwner || isGastoManager
+    const canDelete = (isOwner && !isDirectivo && gasto.estado === 'pendiente') || isGastoManager
 
     const handleReject = () => {
         if (!rejectMotivo.trim()) return
@@ -271,8 +273,8 @@ export default function GastoDetailPage() {
                     </div>
                 )}
 
-                {/* Directivo actions — show at all times, allow changing any estado */}
-                {isDirectivo && (
+                {/* GastoManager actions */}
+                {isGastoManager && (
                     <div className="detail-actions">
                         {gasto.estado !== 'aprobado' && (
                             <button className="action-btn-lg approve" onClick={() => statusMutation.mutate({ estado: 'aprobado' })}>
@@ -299,8 +301,12 @@ export default function GastoDetailPage() {
                 )}
             </div>
 
-            {/* Historial — solo directivos */}
-            {isDirectivo && gasto.historial?.length > 0 && (
+            {/* Historial — visible for everyone who can see the gasto, but maybe more detailed for managers? 
+                User requested: "Solo aparece cuando registras un gasto o cambias el estado"
+                Actually, the user said "cuando el historial de los gastos detecte si alguien edita un gasto cuando está en pendiente aún, Solo aparece cuando registras un gasto o cambias el estado"
+                Wait, I think they mean they WANT to see edits in the history now. 
+            */}
+            {canSeeAll && gasto.historial?.length > 0 && (
                 <div className="gasto-detail-card" style={{ marginTop: '1.5rem' }}>
                     <div className="detail-header">
                         <h3>Historial de cambios</h3>

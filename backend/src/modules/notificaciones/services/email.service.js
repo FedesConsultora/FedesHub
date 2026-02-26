@@ -171,6 +171,54 @@ export const renderEmail = async ({ tipo_id, idioma = 'es', payload = {}, link_u
       break;
     }
 
+    /* Gastos */
+    case 'gasto_creado':
+      subject = '💰 Nuevo gasto registrado';
+      html = templates.gasto_creado({
+        gasto: {
+          monto: payload?.monto,
+          moneda: payload?.moneda,
+          descripcion: payload?.descripcion
+        },
+        feder_nombre: payload?.feder_nombre,
+        link: link_url
+      });
+      break;
+
+    case 'gasto_aprobado':
+      subject = '✅ Gasto aprobado';
+      html = templates.gasto_aprobado({
+        gasto: {
+          monto: payload?.monto,
+          moneda: payload?.moneda
+        },
+        link: link_url
+      });
+      break;
+
+    case 'gasto_rechazado':
+      subject = '❌ Gasto rechazado';
+      html = templates.gasto_rechazado({
+        gasto: {
+          monto: payload?.monto,
+          moneda: payload?.moneda
+        },
+        motivo: payload?.motivo,
+        link: link_url
+      });
+      break;
+
+    case 'gasto_reintegrado':
+      subject = '💸 Gasto reintegrado';
+      html = templates.gasto_reintegrado({
+        gasto: {
+          monto: payload?.monto,
+          moneda: payload?.moneda
+        },
+        link: link_url
+      });
+      break;
+
     default:
       subject = subject || 'FedesHub';
       html = templates.confirmEmail({ name: payload?.name || 'Fede', link: link_url || '#' });

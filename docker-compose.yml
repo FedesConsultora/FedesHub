@@ -12,6 +12,8 @@ services:
       retries: 10
     networks:
       - fedes-net
+    ports:
+      - "5432:5432"
 
   backend:
     build: ./backend
@@ -24,6 +26,8 @@ services:
         condition: service_healthy
     networks:
       - fedes-net
+    ports:
+      - "4000:4000"
     volumes:
       - ./backend/public/avatars:/usr/src/app/public/avatars
       - ./backend/uploads:/usr/src/app/uploads
@@ -34,6 +38,8 @@ services:
     restart: always
     networks:
       - fedes-net
+    ports:
+      - "3000:80"
     volumes:
       - ./backend/public/avatars:/usr/share/nginx/html/avatars:ro
       - ./backend/uploads:/usr/share/nginx/html/uploads:ro

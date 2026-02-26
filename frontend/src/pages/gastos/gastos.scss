@@ -1,178 +1,197 @@
 @use '../../styles/variables' as *;
 
 .gastos-page {
-  padding: 2rem;
+  padding: 1rem;
   position: relative;
   min-height: 300px;
 
-  .header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-
-    h1 {
-      margin: 0;
-      font-weight: 700;
-      color: $fh-text;
-    }
+  .card {
+    background: $fh-card;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: $radius-2xl;
+    padding: 12px;
+    box-shadow: $shadow-soft;
   }
 
-  .detail-loading {
-    padding: 3rem;
-    text-align: center;
-    color: $fh-muted;
-    font-size: 0.95rem;
+  .toolbar {
+    position: relative;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    overflow: visible;
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+      min-width: fit-content;
+      flex-shrink: 0;
+      padding-right: 4px;
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.1;
+        color: $fh-text;
+        white-space: nowrap;
+        margin-left: 12px;
+      }
+
+      .counter {
+        color: $fh-muted;
+        font-size: .75rem;
+        white-space: nowrap;
+        margin-left: 12px;
+      }
+    }
+
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .submit {
+      padding: 10px 18px !important;
+      font-size: 14px !important;
+      font-weight: 800;
+      border-radius: 12px !important;
+      background: $fh-primary;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: lighten($fh-primary, 5%);
+      }
+    }
   }
 
   // ── Summary cards ──
   .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
-    margin-bottom: 1.25rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 
     .card {
-      padding: 1.15rem;
-      border-radius: 14px;
-      backdrop-filter: blur(8px);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      padding: 1rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
-      user-select: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
 
       &:hover {
+        background: rgba(255, 255, 255, 0.06);
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
       }
 
       &.active {
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 8px 24px rgba(0, 0, 0, 0.3);
+        background: rgba($fh-primary, 0.1);
+        border-color: rgba($fh-primary, 0.4);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         transform: translateY(-2px);
       }
 
       .label {
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         color: $fh-muted;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: 0.5px;
       }
 
       .value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        margin-top: 0.35rem;
+        font-size: 1.4rem;
+        font-weight: 900;
+        line-height: 1;
       }
 
       .card-monto {
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         color: $fh-muted;
-        margin-top: 4px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
+        font-weight: 500;
         opacity: 0.8;
       }
 
-      &.total {
-        background: linear-gradient(135deg, rgba($fh-primary, 0.15), rgba($fh-primary, 0.05));
-        border: 1px solid rgba($fh-primary, 0.25);
-
-        .value {
-          color: $fh-text;
-        }
-
-        &.active {
-          border-color: $fh-primary;
-        }
+      &.pendiente .value {
+        color: $fh-warning;
       }
 
-      &.pendiente {
-        background: linear-gradient(135deg, rgba($fh-warning, 0.12), rgba($fh-warning, 0.03));
-        border: 1px solid rgba($fh-warning, 0.2);
-
-        .value {
-          color: $fh-warning;
-        }
-
-        &.active {
-          border-color: $fh-warning;
-        }
+      &.aprobado .value {
+        color: $fh-success;
       }
 
-      &.aprobado {
-        background: linear-gradient(135deg, rgba($fh-success, 0.12), rgba($fh-success, 0.03));
-        border: 1px solid rgba($fh-success, 0.2);
-
-        .value {
-          color: $fh-success;
-        }
-
-        &.active {
-          border-color: $fh-success;
-        }
+      &.rechazado .value {
+        color: $fh-danger;
       }
 
-      &.rechazado {
-        background: linear-gradient(135deg, rgba($fh-danger, 0.12), rgba($fh-danger, 0.03));
-        border: 1px solid rgba($fh-danger, 0.2);
-
-        .value {
-          color: $fh-danger;
-        }
-
-        &.active {
-          border-color: $fh-danger;
-        }
-      }
-
-      &.reintegrado {
-        background: linear-gradient(135deg, rgba($fh-accent, 0.12), rgba($fh-accent, 0.03));
-        border: 1px solid rgba($fh-accent, 0.2);
-
-        .value {
-          color: $fh-accent;
-        }
-
-        &.active {
-          border-color: $fh-accent;
-        }
+      &.reintegrado .value {
+        color: $fh-accent;
       }
     }
   }
 
-  // ── Filter bar ──
-  .filter-bar {
+  .filters-and-bubbles {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 1rem;
+    padding: 0 1rem;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
-  }
 
-  .active-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 10px;
-    background: rgba($fh-primary, 0.08);
-    border: 1px solid rgba($fh-primary, 0.15);
-    font-size: 0.82rem;
-    color: $fh-muted;
+    .filter-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex: 1;
+      justify-content: space-between;
+    }
 
-    .clear-filter {
-      background: transparent;
-      border: none;
-      color: $fh-muted;
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 2px 6px;
-      border-radius: 6px;
-      transition: all 0.15s ease;
+    .active-filter-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba($fh-primary, 0.1);
+      border: 1px solid rgba($fh-primary, 0.2);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: $fh-text;
 
-      &:hover {
-        background: rgba($fh-danger, 0.15);
-        color: $fh-danger;
+      .status-badge {
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+      }
+
+      .clear-filter {
+        background: transparent;
+        border: none;
+        color: $fh-muted;
+        cursor: pointer;
+        padding: 0 4px;
+        font-size: 1rem;
+
+        &:hover {
+          color: $fh-danger;
+        }
       }
     }
   }
@@ -185,11 +204,12 @@
 
   // ── Table ──
   .gastos-table {
-    background: $fh-card;
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 18px;
     overflow: hidden;
-    border: 1px solid rgba($fh-primary, 0.15);
-    box-shadow: $shadow-md;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: $shadow-soft;
+    margin-top: 0.5rem;
 
     table {
       width: 100%;
@@ -197,38 +217,45 @@
 
       th,
       td {
-        padding: 0.85rem 1.25rem;
+        padding: 1rem 1.25rem;
         text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       th {
-        background: rgba($fh-primary, 0.1);
-        font-weight: 600;
+        background: rgba(255, 255, 255, 0.03);
+        font-weight: 800;
         color: $fh-muted;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.8px;
       }
 
       tbody tr {
-        transition: background 0.15s ease;
+        transition: all 0.2s;
 
         &:hover {
-          background: rgba($fh-primary, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        &:last-child td {
+          border-bottom: none;
         }
       }
 
       td {
         color: $fh-text;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
+        font-weight: 500;
       }
     }
 
     .empty-row td {
       text-align: center;
-      padding: 3rem;
+      padding: 4rem;
       color: $fh-muted;
+      font-weight: 600;
+      opacity: 0.6;
     }
   }
 

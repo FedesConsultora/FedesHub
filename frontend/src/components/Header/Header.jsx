@@ -74,8 +74,8 @@ export default function Header() {
 
   const onLogout = async () => { await logout(); nav('/login') }
 
-  // Check if user can access admin
-  const isAdmin = hasPerm('auth', 'manage') || hasPerm('rrhh', 'manage')
+  // Check if user can access admin: auth.manage, rrhh.manage, o permiso wildcard
+  const isAdmin = hasPerm('auth', 'manage') || hasPerm('rrhh', 'manage') || hasPerm('*', '*')
 
   const handleSupportClick = () => {
     window.open(SUPPORT_URL, '_blank', 'noopener,noreferrer')

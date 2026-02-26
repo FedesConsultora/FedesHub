@@ -35,6 +35,8 @@ import { sendNotificationEmails } from '../../notificaciones/services/email.serv
 export const registerCorePermissions = async () => {
   try {
     await ensurePermission('rrhh', 'manage', 'Administrar RRHH', 'Permite asignar cupos y ver historial de ausencias');
+    await ensurePermission('gastos', 'manage', 'Administrar Gastos', 'Permite aprobar, rechazar o reintegrar rendiciones de gastos');
+
     // console.log('[AuthService] Core permissions registered');
   } catch (e) {
     console.error('[AuthService] Error registering core permissions:', e.message);

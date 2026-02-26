@@ -100,3 +100,21 @@ export const listUsersWithRoles = async ({ limit = 50, offset = 0, q, is_activo 
   `, { type: QueryTypes.SELECT, replacements: repl });
   return rows;
 };
+
+export const getUsersWithPermission = async (modulo, accion) => {
+  const rows = await sequelize.query(`
+    SELECT DISTINCT u.id, u.email
+    FROM "User" u
+    JOIN "UserRol" ur ON ur.user_id = u.id
+    JOIN "RolPermiso" rp ON rp.rol_id = ur.rol_id
+    JOIN "Permiso" p ON p.id = rp.permiso_id
+    JOIN "Modulo" m ON m.id = p.modulo_id
+    JOIN "Accion" a ON a.id = p.accion_id
+    WHERE m.codigo = :modulo AND a.codigo = :accion
+      AND u.is_activo = true
+  `, {
+    type: QueryTypes.SELECT,
+    replacements: { modulo, accion }
+  });
+  return rows;
+};

@@ -1,6 +1,7 @@
 import { initModels } from '../../../models/registry.js';
 import { Op } from 'sequelize';
 import path from 'node:path';
+import { getUsersWithPermission } from '../../auth/repositories/user.repo.js';
 
 const getModels = async () => await initModels();
 
@@ -52,7 +53,7 @@ export const GastosService = {
     },
 
     async create(data, user_id, feder_id, files = []) {
-        const { Gasto, GastoHistorial, GastoAdjunto } = await getModels();
+        const { Gasto, GastoHistorial, GastoAdjunto, Feder } = await getModels();
         const gasto = await Gasto.create({ ...data, feder_id, estado: 'pendiente' });
 
         // Save adjuntos
@@ -77,22 +78,72 @@ export const GastosService = {
             descripcion: 'Gasto registrado'
         });
 
+        // 🔔 Notificar a GastoManagers
+        try {
+            const { svcCreate } = await import('../../notificaciones/services/notificaciones.service.js');
+            const managers = await getUsersWithPermission('gastos', 'manage');
+            const feder = await Feder.findByPk(feder_id);
+
+            if (managers.length > 0) {
+                await svcCreate({
+                    tipo_codigo: 'gasto_creado',
+                    destinos: managers.map(m => m.id),
+                    data: {
+                        gasto_id: gasto.id,
+                        feder_nombre: `${feder.nombre} ${feder.apellido}`,
+                        monto: gasto.monto,
+                        moneda: gasto.moneda,
+                        fecha: gasto.fecha,
+                        descripcion: gasto.descripcion
+                    },
+                    link_url: `/gastos/${gasto.id}`
+                }, { id: user_id });
+            }
+        } catch (e) {
+            console.error('[GastosService] Error enviando notificacion de gasto creado:', e);
+        }
+
         // Reload with adjuntos
         return await Gasto.findByPk(gasto.id, {
             include: [{ model: GastoAdjunto, as: 'adjuntos' }]
         });
     },
 
-    async update(id, data, user_id, { feder_id, isDirectivo }) {
+    async update(id, data, user_id, { feder_id, isDirectivo, isGastoManager }) {
         const { Gasto, GastoHistorial } = await getModels();
         const gasto = await Gasto.findByPk(id);
         if (!gasto) throw new Error('Gasto no encontrado');
-        if (!isDirectivo && gasto.feder_id !== feder_id) throw new Error('No tienes permiso para editar este gasto');
-        if (gasto.estado !== 'pendiente' && !isDirectivo) throw new Error('No se puede editar un gasto que no está pendiente');
+
+        // Solo el dueño o el GastoManager pueden editar. Directivos que no son GastoManager solo ven.
+        if (!isGastoManager && gasto.feder_id !== feder_id) {
+            throw new Error('No tienes permiso para editar este gasto');
+        }
+
+        // Si no es GastoManager, solo puede editar si está pendiente
+        if (gasto.estado !== 'pendiente' && !isGastoManager) {
+            throw new Error('No se puede editar un gasto que no está pendiente');
+        }
 
         const anterior = gasto.toJSON();
         await gasto.update(data);
         const nuevo = gasto.toJSON();
+
+        // Construir descripción detallada de cambios
+        const cambios = [];
+        if (data.monto && parseFloat(data.monto) !== parseFloat(anterior.monto)) {
+            cambios.push(`monto: ${anterior.monto} -> ${data.monto}`);
+        }
+        if (data.moneda && data.moneda !== anterior.moneda) {
+            cambios.push(`moneda: ${anterior.moneda} -> ${data.moneda}`);
+        }
+        if (data.fecha && data.fecha !== anterior.fecha) {
+            cambios.push(`fecha: ${anterior.fecha.split('T')[0]} -> ${data.fecha}`);
+        }
+        if (data.descripcion && data.descripcion !== anterior.descripcion) {
+            cambios.push(`descripción editada`);
+        }
+
+        const desc = cambios.length > 0 ? `Campos actualizados: ${cambios.join(', ')}` : 'Gasto actualizado (sin cambios en campos principales)';
 
         await GastoHistorial.create({
             gasto_id: gasto.id,
@@ -101,25 +152,33 @@ export const GastosService = {
             accion: 'updated',
             valor_anterior: anterior,
             valor_nuevo: nuevo,
-            descripcion: 'Gasto actualizado'
+            descripcion: desc
         });
 
         return gasto;
     },
 
-    async delete(id, { feder_id, isDirectivo }) {
+    async delete(id, { feder_id, isDirectivo, isGastoManager }) {
         const { Gasto } = await getModels();
         const gasto = await Gasto.findByPk(id);
         if (!gasto) throw new Error('Gasto no encontrado');
-        if (!isDirectivo && gasto.feder_id !== feder_id) throw new Error('No tienes permiso para eliminar este gasto');
-        if (gasto.estado !== 'pendiente' && !isDirectivo) throw new Error('No se puede eliminar un gasto que no está pendiente');
+
+        // Solo el dueño o el GastoManager pueden eliminar
+        if (!isGastoManager && gasto.feder_id !== feder_id) {
+            throw new Error('No tienes permiso para eliminar este gasto');
+        }
+
+        // Si no es GastoManager, solo puede eliminar si está pendiente
+        if (gasto.estado !== 'pendiente' && !isGastoManager) {
+            throw new Error('No se puede eliminar un gasto que no está pendiente');
+        }
 
         return await gasto.destroy();
     },
 
     async updateStatus(id, { estado, motivo }, user_id) {
-        const { Gasto, GastoHistorial } = await getModels();
-        const gasto = await Gasto.findByPk(id);
+        const { Gasto, GastoHistorial, Feder } = await getModels();
+        const gasto = await Gasto.findByPk(id, { include: [{ model: Feder, as: 'feder' }] });
         if (!gasto) throw new Error('Gasto no encontrado');
 
         const anterior = gasto.estado;
@@ -148,6 +207,34 @@ export const GastosService = {
             valor_nuevo: { estado, motivo },
             descripcion: `Estado cambiado de ${anterior} a ${estado}`
         });
+
+        // 🔔 Notificar al dueño
+        try {
+            const { svcCreate } = await import('../../notificaciones/services/notificaciones.service.js');
+            const tipoMap = {
+                'aprobado': 'gasto_aprobado',
+                'rechazado': 'gasto_rechazado',
+                'reintegrado': 'gasto_reintegrado'
+            };
+
+            const tipo_codigo = tipoMap[estado];
+            if (tipo_codigo && gasto.feder?.user_id) {
+                await svcCreate({
+                    tipo_codigo,
+                    destinos: [gasto.feder.user_id],
+                    data: {
+                        gasto_id: gasto.id,
+                        monto: gasto.monto,
+                        moneda: gasto.moneda,
+                        motivo: motivo || null,
+                        actualizador_id: user_id
+                    },
+                    link_url: `/gastos/${gasto.id}`
+                }, { id: user_id });
+            }
+        } catch (e) {
+            console.error(`[GastosService] Error enviando notificacion de gasto ${estado}:`, e);
+        }
 
         return gasto;
     },
