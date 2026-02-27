@@ -24,7 +24,7 @@ const escapeRe = (s = '') => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 function normalizeMentions(plainText = '', feders = []) {
   if (!plainText || !plainText.includes('@')) return plainText
 
-  // Lista (id, nombre completo) válida y ordenada por longitud desc (evita colisiones: "Ana" vs "Ana María")
+  // Lista (id, nombre completo) válida y ordenada por longitud desc
   const list = feders.map(f => ({
     id: Number(f.id),
     full: `${f?.nombre || ''} ${f?.apellido || ''}`.replace(/\s+/g, ' ').trim()
@@ -35,7 +35,11 @@ function normalizeMentions(plainText = '', feders = []) {
 
   let out = plainText
   for (const f of list) {
-    const re = new RegExp(`(^|\\s)@${escapeRe(f.full)}(?=(\\s|[.,!?;:]|$))`, 'gi')
+    // Escapar nombre para el regex
+    const escaped = escapeRe(f.full)
+    // Regex que busca @Nombre pero se asegura de que no sea parte de un token @user:ID previo
+    // Usamos negative lookahead para no pisar tokens ya existentes
+    const re = new RegExp(`(^|\\s)@${escaped}(?=(\\s|[.,!?;:]|$))`, 'gi')
     out = out.replace(re, (_, p1) => `${p1}@user:${f.id}`)
   }
   return out
@@ -80,7 +84,8 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     id: m.user_id,
     nombre: m?.user?.feder?.nombre ?? m?.feder?.nombre ?? '',
     apellido: m?.user?.feder?.apellido ?? m?.feder?.apellido ?? '',
-    email: m?.user?.email || ''
+    email: m?.user?.email || '',
+    avatar_url: m?.user?.feder?.avatar_url ?? m?.feder?.avatar_url ?? null
   }))
 
   // Capta imágenes del portapapeles (incluye blobs sin nombre)
@@ -178,7 +183,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const onSelectSticker = async (sticker) => {
     try {
       const payload = {
-        body_text: "", // Mandamos vacío explícito por si el backend lo requiere
+        body_text: "",
         body_json: {
           type: 'sticker',
           sticker: {
@@ -190,7 +195,7 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
         parent_id: replyTo?.id || null
       }
       await send.mutateAsync({ canal_id, body: payload })
-      // setOpenEmoji(false) // Dejar abierto según pedido
+      setOpenEmoji(false)
       setReplyTo(null)
     } catch (err) {
       toast?.error('Error al enviar sticker')

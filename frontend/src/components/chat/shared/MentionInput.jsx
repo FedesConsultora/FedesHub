@@ -60,9 +60,10 @@ export default function MentionInput({
     const display = `@${(f?.nombre || "") + " " + (f?.apellido || "")}`
       .replace(/\s+/g, " ")
       .trim();
-    // 👉 Guardamos @user:ID para que el renderer sepa quién es, 
-    // pero el regex del renderer buscará @user:(\d+)
-    const token = `@user:${f.id} `;
+
+    // 👉 Insertamos el nombre legible para el usuario.
+    // El Composer se encargará de normalizarlo a @user:ID antes de enviar.
+    const token = `${display} `;
     const next = `${left}${token}${right}`;
     const pos = (left + token).length;
 
@@ -169,10 +170,21 @@ export default function MentionInput({
               aria-selected={i === sel}
               title={f.email || ""}
             >
-              <div className="nm">
-                {f.full || `${f.nombre || ""} ${f.apellido || ""}`}
+              <div className="m-avatar">
+                {f.avatar_url ? (
+                  <img src={f.avatar_url} alt={f.full} />
+                ) : (
+                  <div className="m-initials">
+                    {(f.nombre?.[0] || f.email?.[0] || "?").toUpperCase()}
+                  </div>
+                )}
               </div>
-              <div className="sub">{f.email || ""}</div>
+              <div className="m-info">
+                <div className="nm">
+                  {f.full || `${f.nombre || ""} ${f.apellido || ""}`}
+                </div>
+                <div className="sub">{f.email || ""}</div>
+              </div>
             </button>
           ))}
         </div>

@@ -222,16 +222,30 @@
         }
       }
 
-      .sticker-render {
+      .sticker-only {
         padding: 4px;
+        background: transparent !important;
 
         img {
-          max-width: 140px;
-          max-height: 140px;
+          max-width: 160px;
+          max-height: 160px;
           display: block;
-          border-radius: 8px;
+          border-radius: 0;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
       }
+    }
+
+    &.mine .bubble:has(.sticker-only) {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .bubble:has(.sticker-only) {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
     }
 
     .alwaysVisibleReply {

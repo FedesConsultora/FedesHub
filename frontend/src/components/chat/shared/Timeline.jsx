@@ -272,38 +272,47 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
 
   const renderBody = (texto = '') => {
     let html = escapeHtml(texto).replace(/\n/g, '<br/>')
-    // 👉 El regex busca @user:ID o simplemente @ID si viniera de un sistema legacy
+    // 👉 El regex busca @user:ID (token oficial) o solo @ID (legacy)
     const repl = (_, id) => {
       const idNum = Number(id)
-      const mem = memberByUserId.get(idNum)
+
+      // 1) Buscar en el mapa de miembros (por canal)
+      let mem = memberByUserId.get(idNum)
+
+      // 2) Fallback: buscar en el array de miembros (por si acaso el Map no sincronizó)
+      if (!mem) {
+        mem = members?.find(m => Number(m.user_id) === idNum)
+      }
+
       if (mem) {
         return `<span class="mentions">@${displayName(mem)}</span>`
       }
-      // Fallback: buscar en los Miembros del canal (members prop) por si acaso el map no lo tiene
-      const fallbackMem = members?.find(m => Number(m.user_id) === idNum)
-      if (fallbackMem) {
-        return `<span class="mentions">@${displayName(fallbackMem)}</span>`
+
+      // 3) Si id === my_user_id y no estamos en members (raro pero posible), poner "Yo" o nombre
+      if (idNum === Number(my_user_id)) {
+        return `<span class="mentions">@Tú</span>`
       }
-      return `<span class="mentions">@${id}</span>`
+
+      return `<span class="mentions">@usuario:${id}</span>`
     }
-    html = html.replace(/@user:(\d+)\b/g, repl).replace(/@(\d+)\b/g, repl)
+
+    // Primero @user:ID, luego @ID (si no fue capturado por el anterior)
+    html = html.replace(/@user:(\d+)\b/g, repl)
+    // No usamos /@(\d+)\b/g porque puede colisionar con montos o números comunes. 
+    // Solo si explícitamente el sistema lo mandó así en el pasado.
     return { __html: linkify(html) }
   }
+
   const renderReplyExcerpt = (texto = '') => {
-    let html = escapeHtml(texto.replace(/\s+/g, ' '))
+    let html = escapeHtml((texto || '').replace(/\s+/g, ' '))
     const repl = (_, id) => {
       const idNum = Number(id)
-      const mem = memberByUserId.get(idNum)
-      if (mem) {
-        return `<span class="mentions">@${displayName(mem)}</span>`
-      }
-      const fallbackMem = members?.find(m => Number(m.user_id) === idNum)
-      if (fallbackMem) {
-        return `<span class="mentions">@${displayName(fallbackMem)}</span>`
-      }
-      return `<span class="mentions">@${id}</span>`
+      const mem = memberByUserId.get(idNum) || members?.find(m => Number(m.user_id) === idNum)
+      if (mem) return `@${displayName(mem)}`
+      if (idNum === Number(my_user_id)) return `@Tú`
+      return `@usuario:${id}`
     }
-    html = html.replace(/@user:(\d+)\b/g, repl).replace(/@(\d+)\b/g, repl)
+    html = html.replace(/@user:(\d+)\b/g, repl)
     return { __html: linkify(html) }
   }
 
@@ -439,15 +448,14 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
                   </button>
                 </div>
               </div>
+            ) : m.body_json?.type === 'sticker' && m.body_json?.sticker?.url ? (
+              // 👉 Stickers sin burbuja (clase especial)
+              <div className="sticker-only">
+                <img src={m.body_json.sticker.url} alt={m.body_json.sticker.name || 'sticker'} />
+              </div>
             ) : (
               <>
-                {m.body_json?.type === 'sticker' && m.body_json?.sticker?.url ? (
-                  <div className="sticker-render">
-                    <img src={m.body_json.sticker.url} alt={m.body_json.sticker.name || 'sticker'} />
-                  </div>
-                ) : (
-                  <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
-                )}
+                <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
                 <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
               </>
             )}
