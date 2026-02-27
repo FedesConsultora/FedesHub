@@ -114,14 +114,14 @@ export const GastosService = {
         const gasto = await Gasto.findByPk(id);
         if (!gasto) throw new Error('Gasto no encontrado');
 
-        // Solo el dueño o el GastoManager pueden editar. Directivos que no son GastoManager solo ven.
-        if (!isGastoManager && gasto.feder_id !== feder_id) {
-            throw new Error('No tienes permiso para editar este gasto');
+        // 🔥 El GastoManager NO puede editar el contenido (monto, desc, fecha). Solo el dueño puede.
+        if (gasto.feder_id !== feder_id) {
+            throw new Error('Solo el propietario puede editar el contenido del gasto');
         }
 
-        // Si no es GastoManager, solo puede editar si está pendiente
-        if (gasto.estado !== 'pendiente' && !isGastoManager) {
-            throw new Error('No se puede editar un gasto que no está pendiente');
+        // Solo puede editar si está pendiente
+        if (gasto.estado !== 'pendiente') {
+            throw new Error('Solo se puede editar un gasto que se encuentra en estado pendiente');
         }
 
         const anterior = gasto.toJSON();
@@ -262,5 +262,42 @@ export const GastosService = {
             monto_reintegrado: sumByEstado('reintegrado'),
             monto_rechazado: sumByEstado('rechazado')
         };
+    },
+
+    async requestReceipt(id, user_id) {
+        const { Gasto, Feder, GastoHistorial } = await getModels();
+        const gasto = await Gasto.findByPk(id, { include: [{ model: Feder, as: 'feder' }] });
+        if (!gasto) throw new Error('Gasto no encontrado');
+
+        // Notificar al dueño
+        try {
+            const { svcCreate } = await import('../../notificaciones/services/notificaciones.service.js');
+            if (gasto.feder?.user_id) {
+                await svcCreate({
+                    tipo_codigo: 'gasto_comprobante_requerido',
+                    destinos: [gasto.feder.user_id],
+                    data: {
+                        gasto_id: gasto.id,
+                        monto: gasto.monto,
+                        moneda: gasto.moneda,
+                        descripcion: gasto.descripcion
+                    },
+                    link_url: `/gastos/${gasto.id}`
+                }, { id: user_id });
+            }
+
+            await GastoHistorial.create({
+                gasto_id: gasto.id,
+                user_id,
+                tipo_cambio: 'comprobante',
+                accion: 'receipt_requested',
+                descripcion: 'Se solicitó comprobante del gasto al propietario'
+            });
+        } catch (e) {
+            console.error('[GastosService] Error solicitando comprobante:', e);
+            throw e;
+        }
+
+        return gasto;
     }
 };

@@ -305,5 +305,28 @@ export const templates = {
     </div>
     
     <a href="${link}" style="${buttonStyle(colors.success)}">Ver en FedesHub</a>
+  `),
+
+  gasto_comprobante_requerido: ({ gasto, link }) => baseLayout(`
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 13px; color: ${colors.warning}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">📎 Acción Requerida</div>
+      <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800; color: ${colors.text};">Comprobante faltante</h2>
+    </div>
+    
+    <div style="background: rgba(245, 158, 11, 0.05); border-left: 4px solid ${colors.warning}; padding: 24px; border-radius: 12px; margin: 24px 0;">
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Gasto</div>
+        <div style="color: ${colors.text}; font-weight: 600; font-size: 16px;">${gasto?.descripcion || 'Sin descripción'}</div>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: ${colors.muted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Importe</div>
+        <div style="color: ${colors.text}; font-weight: 700; font-size: 18px;">${gasto?.moneda || '$'} ${gasto?.monto || '0'}</div>
+      </div>
+      <p style="margin: 0; color: ${colors.muted}; font-size: 14px; line-height: 1.6;">
+        El Responsable de Gastos ha solicitado que adjuntes el comprobante (ticket, factura o foto) correspondiente a este gasto para poder proceder con su aprobación.
+      </p>
+    </div>
+    
+    <a href="${link}" style="${buttonStyle(colors.warning)}">Adjuntar Comprobante</a>
   `)
 };
