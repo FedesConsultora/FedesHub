@@ -1,5 +1,6 @@
 // /backend/src/modules/chat/controllers/chat.controller.js
 import { initModels } from '../../../models/registry.js';
+import { logger } from '../../../core/logger.js';
 import {
   listCatalogQuery, listCanalesQuery, upsertCanalSchema, updateCanalSettingsSchema,
   memberUpsertSchema, memberPatchSchema,
@@ -180,23 +181,42 @@ export const postMessage = async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
 
-    const body = postMessageSchema.parse({
+    // console.log para asegurar visibilidad en docker logs si pino falla
+    console.log(`[CHAT] postMessage incoming. id: ${id}, user: ${req.user?.id}, type: ${req.headers['content-type']}`);
+
+    let bodyJson = req.body?.body_json;
+    if (typeof bodyJson === 'string') {
+      try {
+        bodyJson = JSON.parse(bodyJson);
+      } catch (e) {
+        console.warn('[CHAT] Failed to parse body_json string');
+      }
+    }
+
+    const bodyObj = {
       ...req.body,
-      __has_files: (req.files?.length || 0) > 0,  // 👈 clave
-      ...(typeof req.body?.body_json === 'string'
-        ? { body_json: safeParseJSON(req.body.body_json) }
-        : {})
-    });
+      body_json: bodyJson,
+      __has_files: (req.files?.length || 0) > 0
+    };
+
+    const body = postMessageSchema.parse(bodyObj);
 
     const row = await svcPostMessage(id, body, req.user, req.files || []);
     res.status(201).json(row);
-  } catch (e) { next(e); }
+  } catch (e) {
+    console.error('[CHAT] postMessage ERROR:', e);
+
+    logger.error({
+      msg: 'chat:postMessage:err',
+      canal_id: req.params?.id,
+      user_id: req.user?.id,
+      err: e?.message,
+      zod_error: e?.name === 'ZodError' ? e.errors : undefined
+    });
+    next(e);
+  }
 };
 
-
-function safeParseJSON(s) {
-  try { return JSON.parse(s); } catch { return undefined; }
-}
 
 export const putMessage = async (req, res, next) => {
   try {

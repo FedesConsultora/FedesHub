@@ -3,23 +3,40 @@ import { z } from 'zod';
 
 export const scopeEnum = z.enum(['mine', 'canal', 'cliente', 'dm', 'all']);
 
-const asArrayOfInts = (v) => {
-  if (Array.isArray(v)) return v.map(Number).filter(Number.isFinite);
-  if (typeof v === 'string') return v.split(',').map(n => parseInt(n, 10)).filter(Number.isFinite);
-  return undefined;
-};
+const asInt = z.preprocess((v) => {
+  if (v === undefined || v === null) return undefined;
+  const n = parseInt(v, 10);
+  return isNaN(n) ? v : n;
+}, z.number().int().positive());
 
-export const idParam = z.object({ id: z.coerce.number().int().positive() });
-export const midParam = z.object({ id: z.coerce.number().int().positive() });
-export const intId = z.coerce.number().int().positive();
+const asIntMaybe = z.preprocess((v) => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = parseInt(v, 10);
+  return isNaN(n) ? v : n;
+}, z.number().int().positive().optional());
+
+const asBool = z.preprocess((v) => {
+  if (v === 'true' || v === '1' || v === true) return true;
+  if (v === 'false' || v === '0' || v === false) return false;
+  return v;
+}, z.boolean().optional().default(false));
+
+const asDate = z.preprocess((v) => {
+  if (!v) return v;
+  return new Date(v);
+}, z.date());
+
+export const idParam = z.object({ id: asInt });
+export const midParam = z.object({ id: asInt });
+export const intId = asInt;
 
 export const listCatalogQuery = z.object({});
 
 export const listCanalesQuery = z.object({
   scope: scopeEnum.default('mine'),
-  canal_id: z.coerce.number().int().positive().optional(),
-  cliente_id: z.coerce.number().int().positive().optional(),
-  include_archivados: z.coerce.boolean().optional().default(false),
+  canal_id: asIntMaybe,
+  cliente_id: asIntMaybe,
+  include_archivados: asBool,
   q: z.string().trim().max(160).optional()
 }).refine(v => {
   if (v.scope === 'canal') return !!v.canal_id;
@@ -38,7 +55,7 @@ export const upsertCanalSchema = z.object({
   only_mods_can_post: z.boolean().optional(),
   slowmode_seconds: z.number().int().min(0).max(86400).optional(),
   cliente_id: z.number().int().optional(),
-  invited_user_ids: z.array(z.number().int().positive()).optional().default([]) // miembros iniciales
+  invited_user_ids: z.array(z.number().int().positive()).optional().default([])
 }).refine(v => {
   if (v.tipo_codigo === 'cliente') return !!v.cliente_id;
   if (v.tipo_codigo === 'dm') return (v.invited_user_ids?.length ?? 0) === 1;
@@ -67,28 +84,29 @@ export const memberPatchSchema = z.object({
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para actualizar' });
 
 export const listMessagesQuery = z.object({
-  before_id: z.coerce.number().int().positive().optional(),
-  after_id: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
-  thread_root_id: z.coerce.number().int().positive().optional()
+  before_id: asIntMaybe,
+  after_id: asIntMaybe,
+  limit: z.preprocess((v) => {
+    const n = parseInt(v, 10);
+    return isNaN(n) ? 50 : n;
+  }, z.number().int().min(1).max(100).default(50)),
+  thread_root_id: asIntMaybe
 });
 
 export const postMessageSchema = z.object({
   body_text: z.string().optional(),
-  body_json: z.record(z.any()).optional(),
+  body_json: z.any().optional(), // Más flexible para stickers
   parent_id: z.number().int().positive().nullable().optional(),
   attachments: z.array(z.object({
     file_url: z.string().url(),
     file_name: z.string().max(255).optional(),
     mime_type: z.string().max(160).optional(),
-    size_bytes: z.coerce.number().int().optional(),
-    width: z.coerce.number().int().optional(),
-    height: z.coerce.number().int().optional(),
-    duration_sec: z.coerce.number().int().optional()
+    size_bytes: z.any().optional(), // No coercing needed here, can be any
+    width: z.any().optional(),
+    height: z.any().optional(),
+    duration_sec: z.any().optional()
   })).optional().default([]),
-
-  // 👇 campo interno solo para validar (no se persiste)
-  __has_files: z.coerce.boolean().optional().default(false)
+  __has_files: z.any().optional().default(false)
 }).refine(v =>
   (v.body_text?.trim()?.length ?? 0) > 0
   || !!v.body_json
@@ -96,10 +114,9 @@ export const postMessageSchema = z.object({
   || v.__has_files === true
   , { message: 'mensaje vacío' });
 
-
 export const editMessageSchema = z.object({
   body_text: z.string().optional(),
-  body_json: z.record(z.any()).optional()
+  body_json: z.any().optional()
 }).refine(v => Object.keys(v).length > 0, { message: 'Nada para editar' });
 
 export const forwardMessageSchema = z.object({
@@ -115,7 +132,10 @@ export const readChannelSchema = z.object({
 export const saveSchema = z.object({ on: z.boolean() });
 export const pinSchema = z.object({ on: z.boolean(), orden: z.number().int().nullable().optional() });
 
-export const typingSchema = z.object({ on: z.boolean(), ttl_seconds: z.number().int().min(1).max(15).default(5) });
+export const typingSchema = z.object({
+  on: z.boolean(),
+  ttl_seconds: z.preprocess((v) => parseInt(v, 10), z.number().int().min(1).max(15).default(5))
+});
 
 export const presenceSchema = z.object({
   status: z.enum(['online', 'away', 'dnd', 'offline']).default('online'),
@@ -125,13 +145,13 @@ export const presenceSchema = z.object({
 export const createInvitationSchema = z.object({
   invited_user_id: z.number().int().optional(),
   invited_email: z.string().email().optional()
-}).refine(v => !!v.invited_user_id || !!v.invited_email, { message: 'invited_user_id o invited_email requerido' });
+}).refine(v => !!v.invited_user_id || !!v.invited_email, { message: 'invited_user_id o invitado_email requerido' });
 
 export const invitationTokenParam = z.object({ token: z.string().min(10) });
 
 export const meetingSchema = z.object({
   provider_codigo: z.string().max(30).default('internal'),
   titulo: z.string().min(1).max(200).default('Reunión de canal'),
-  starts_at: z.coerce.date(),
-  ends_at: z.coerce.date()
+  starts_at: asDate,
+  ends_at: asDate
 }).refine(v => v.ends_at > v.starts_at, { message: 'ends_at debe ser mayor que starts_at' });
