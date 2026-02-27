@@ -2,13 +2,20 @@ import { GastosService } from '../services/GastosService.js';
 
 const getRoles = (user) => user.roles || [];
 const isDirectivo = (user) => getRoles(user).some(r => ['NivelA', 'NivelB', 'Directivo', 'RRHH'].includes(r));
-const isGastoManager = (user) => (user.perms || []).includes('gastos.manage') || (user.perms || []).includes('*.*');
+const isGastoManager = (user) => {
+    const p = user.perms || user.permisos || [];
+    console.log('[DEBUG-GASTOS] User perms:', p);
+    console.log('[DEBUG-GASTOS] User roles:', user.roles);
+    return p.includes('gastos.manage') || p.includes('*.*');
+};
 
 export const getGastos = async (req, res) => {
     try {
         const { user } = req;
         const filters = req.query;
+        console.log('[DEBUG-GASTOS] Req query:', filters);
         const isManager = isGastoManager(user);
+        console.log('[DEBUG-GASTOS] isManager:', isManager);
         const list = await GastosService.list({
             feder_id: user.feder_id,
             isDirectivo: isManager, // Solo el Manager ve todo
@@ -41,10 +48,6 @@ export const createGasto = async (req, res) => {
         if (!user.feder_id) return res.status(400).json({ error: 'El usuario no tiene un Feder asociado' });
 
         const files = req.files || [];
-        if (files.length === 0) {
-            return res.status(400).json({ error: 'Debe adjuntar al menos una constancia del gasto' });
-        }
-
         const gasto = await GastosService.create(req.body, user.id, user.feder_id, files);
         res.status(201).json(gasto);
     } catch (error) {
@@ -116,3 +119,18 @@ export const getSummary = async (req, res) => {
     }
 };
 
+export const requestReceipt = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { user } = req;
+
+        if (!isGastoManager(user)) {
+            return res.status(403).json({ error: 'Solo el Responsable de Gastos puede solicitar comprobantes' });
+        }
+
+        const gasto = await GastosService.requestReceipt(id, user.id);
+        res.json(gasto);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

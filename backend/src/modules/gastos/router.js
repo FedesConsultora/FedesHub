@@ -6,7 +6,8 @@ import {
     updateGasto,
     deleteGasto,
     updateStatus,
-    getSummary
+    getSummary,
+    requestReceipt
 } from './controllers/GastosController.js';
 import { requireAuth } from '../auth/middlewares/requireAuth.js';
 import { uploadFiles, multerErrorHandler } from '../../infra/uploads/multer.js';
@@ -22,5 +23,6 @@ router.post('/', uploadFiles, createGasto, multerErrorHandler);
 router.put('/:id', updateGasto);
 router.delete('/:id', deleteGasto);
 router.patch('/:id/status', updateStatus);
+router.post('/:id/request-receipt', requestReceipt);
 
 export default router;

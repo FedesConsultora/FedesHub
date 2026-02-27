@@ -63,6 +63,7 @@ export const requireAuth = async (req, res, next) => {
       email: auth.email,
       roles: auth.roles,
       permisos: auth.perms,
+      perms: auth.perms, // Alias para compatibilidad
       feder_id: feder?.id ?? null,
       avatar_url: feder?.avatar_url ?? null,
       nombre: feder?.nombre ?? null,
