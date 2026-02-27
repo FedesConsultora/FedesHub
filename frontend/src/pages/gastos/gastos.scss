@@ -1,5 +1,80 @@
 @use '../../styles/variables' as *;
 
+// ── Helper classes used by GastoDetail (mirror task-detail patterns) ──
+
+// Field labels (same visual as task-detail's section labels)
+.section-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 6px;
+}
+
+// Status badge - large variant for the detail header
+.status-badge.lg {
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// History timeline - vertical list used in GastoDetail
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  padding-left: 8px;
+
+  .history-item {
+    position: relative;
+    padding-left: 24px;
+    padding-bottom: 1.5rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.06);
+
+    &:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+
+    .dot {
+      position: absolute;
+      left: -7px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #44718D;
+      border: 2px solid #0B0F15;
+      box-shadow: 0 0 10px rgba(68, 113, 141, 0.5);
+    }
+
+    .history-content {
+      .time {
+        font-size: 0.73rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .desc {
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.5;
+      }
+
+      .user {
+        font-size: 0.76rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
 .gastos-page {
   padding: 1rem;
   position: relative;
@@ -215,38 +290,44 @@
       width: 100%;
       border-collapse: collapse;
 
-      th,
-      td {
-        padding: 1rem 1.25rem;
-        text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-
       th {
         background: rgba(255, 255, 255, 0.03);
-        font-weight: 800;
-        color: $fh-muted;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-      }
-
-      tbody tr {
-        transition: all 0.2s;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        &:last-child td {
-          border-bottom: none;
-        }
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       }
 
       td {
-        color: $fh-text;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.92rem;
-        font-weight: 500;
+        transition: all 0.2s ease;
+
+        &.solicitante-cell {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .solicitante-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
       }
     }
 
@@ -257,651 +338,632 @@
       font-weight: 600;
       opacity: 0.6;
     }
+
+    .actions-cell {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+
+      .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: $transition-all;
+        font-size: 1rem;
+        padding: 0;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: #fff;
+          transform: translateY(-2px);
+          box-shadow: $shadow-soft;
+        }
+
+        &.approve:hover {
+          background: rgba($fh-success, 0.15);
+          color: $fh-success;
+          border-color: rgba($fh-success, 0.3);
+        }
+
+        &.reject:hover {
+          background: rgba($fh-danger, 0.15);
+          color: $fh-danger;
+          border-color: rgba($fh-danger, 0.3);
+        }
+
+        &.reimburse:hover {
+          background: rgba($fh-accent, 0.15);
+          color: $fh-accent;
+          border-color: rgba($fh-accent, 0.3);
+        }
+
+        &.reset:hover {
+          background: rgba($fh-warning, 0.15);
+          color: $fh-warning;
+          border-color: rgba($fh-warning, 0.3);
+        }
+      }
+    }
+  }
+}
+
+// ── Drawer Container (Slide-out) ──
+.gasto-detail-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0f172a; // Deep slate matching Tareas
+  color: #f8fafc;
+  position: relative;
+
+  .detail-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.01);
+
+    .header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #fff;
+        letter-spacing: -0.01em;
+      }
+
+      .header-badges {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    }
   }
 
-  .solicitante-cell {
+  .detail-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+  }
+
+  .section-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 1rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
-  }
 
-  .solicitante-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid rgba($fh-primary, 0.3);
-  }
-
-  .actions-cell {
-    display: flex;
-    gap: 6px;
-  }
-
-  .action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.15s ease;
-
-    &.approve {
-      background: rgba($fh-success, 0.1);
-      color: $fh-success;
-      border-color: rgba($fh-success, 0.2);
+    .edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      opacity: 0.4;
+      transition: opacity 0.2s;
 
       &:hover {
-        background: rgba($fh-success, 0.25);
-      }
-    }
-
-    &.reject {
-      background: rgba($fh-danger, 0.1);
-      color: $fh-danger;
-      border-color: rgba($fh-danger, 0.2);
-
-      &:hover {
-        background: rgba($fh-danger, 0.25);
-      }
-    }
-
-    &.reimburse {
-      background: rgba($fh-accent, 0.1);
-      color: $fh-accent;
-      border-color: rgba($fh-accent, 0.2);
-
-      &:hover {
-        background: rgba($fh-accent, 0.25);
+        opacity: 1;
       }
     }
   }
 
-  // ── Status badges ──
-  .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: capitalize;
-
-    &.pendiente {
-      background: rgba($fh-warning, 0.15);
-      color: $fh-warning;
-    }
-
-    &.aprobado {
-      background: rgba($fh-success, 0.15);
-      color: $fh-success;
-    }
-
-    &.rechazado {
-      background: rgba($fh-danger, 0.15);
-      color: $fh-danger;
-    }
-
-    &.reintegrado {
-      background: rgba($fh-accent, 0.15);
-      color: $fh-accent;
-    }
-
-    &.lg {
-      font-size: 0.88rem;
-      padding: 0.35rem 1rem;
-    }
-  }
-
-  // ── Blurred overlay loader ──
-  .gastos-loader-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 50;
+  // Solicitante
+  .solicitante-data {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(#0d1117, 0.55);
-    backdrop-filter: blur(6px);
-    border-radius: 14px;
-  }
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: $radius-xl;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 
-  .gastos-spinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-
-    span {
-      font-size: 0.88rem;
-      color: $fh-muted;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.1);
     }
-  }
 
-  .spinner-ring {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba($fh-primary, 0.15);
-    border-top-color: $fh-accent;
-    border-radius: 50%;
-    animation: spinRing 0.85s linear infinite;
-  }
+    .info {
+      display: flex;
+      flex-direction: column;
 
-  @keyframes spinRing {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  // ── Feder bubbles ──
-  .feder-bubbles-section {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-// ══════════════════════════════════════════
-// ── Detail page ──
-// ══════════════════════════════════════════
-.detail-top-bar {
-  margin: 0 auto 1.5rem;
-  max-width: 1020px;
-}
-
-.gasto-detail-card {
-  background: $fh-card;
-  border: 1px solid rgba($fh-primary, 0.15);
-  border-radius: 16px;
-  padding: 1.75rem;
-  box-shadow: $shadow-md;
-  margin: 0 auto;
-  max-width: 1020px;
-
-  .detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 12px;
-
-    h2,
-    h3 {
-      margin: 0;
-      color: $fh-text;
-      font-weight: 700;
-      font-size: 1.15rem;
-    }
-  }
-
-  .detail-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-
-  .icon-btn {
-    width: 36px;
-    height: 34px;
-    padding: 0;
-    border-radius: 12px;
-    border: 1px solid transparent;
-    background: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.05rem;
-    transition: all 0.15s ease;
-
-    &.trash {
-      svg {
-        color: rgba($fh-danger, 0.8);
+      .name {
+        font-weight: 600;
+        color: #fff;
+        font-size: 1rem;
       }
 
-      &:hover {
+      .email {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
 
-        svg {
-          color: rgba($fh-danger, 1);
+  // Grid Data
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+
+    .grid-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.25rem;
+      border-radius: $radius-lg;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+
+      .label {
+        @extend .section-label;
+        margin-bottom: 0.5rem;
+      }
+
+      .value {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #fff;
+
+        &.accent {
+          color: $fh-primary;
+          font-weight: 600;
         }
       }
     }
   }
 
-  .detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
+  .description-text {
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.01);
+    padding: 1.25rem;
+    border-radius: $radius-lg;
+    border-left: 3px solid rgba($fh-primary, 0.3);
   }
 
-  .detail-field {
+  // Inline Edits
+  .inline-edit {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-  }
-
-  .detail-label {
-    font-size: 0.72rem;
-    color: $fh-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .inline-edit-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 0.72rem;
-    padding: 0;
-    opacity: 0.5;
-    transition: opacity 0.15s;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-
-  .inline-edit-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    .fh-input {
-      flex: 1;
-      min-width: 0;
-    }
-  }
-
-  .inline-save,
-  .inline-cancel {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.88rem;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-  }
-
-  .inline-save {
-    background: rgba($fh-success, 0.1);
-    color: $fh-success;
-    border-color: rgba($fh-success, 0.2);
-
-    &:hover {
-      background: rgba($fh-success, 0.25);
-    }
-  }
-
-  .inline-cancel {
-    background: rgba($fh-danger, 0.1);
-    color: $fh-danger;
-    border-color: rgba($fh-danger, 0.2);
-
-    &:hover {
-      background: rgba($fh-danger, 0.25);
-    }
-  }
-
-  .detail-value {
-    font-size: 1rem;
-    color: $fh-text;
-    font-weight: 600;
-
-    &.accent {
-      color: $fh-accent;
-      font-size: 1.3rem;
-      font-weight: 800;
-    }
-  }
-
-  .detail-solicitante {
-    display: flex;
-    align-items: center;
     gap: 8px;
 
-    .solicitante-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1px solid rgba($fh-primary, 0.3);
+    input,
+    select,
+    textarea {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #fff !important;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+
+      button {
+        flex: 1;
+        padding: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        color: #fff;
+        cursor: pointer;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
     }
   }
 
-  .detail-section {
-    margin-bottom: 1.5rem;
-  }
+  .inline-edit-block {
+    @extend .inline-edit;
 
-  .detail-description {
-    margin-top: 6px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    background: rgba($fh-primary, 0.06);
-    border: 1px solid rgba($fh-primary, 0.1);
-    color: $fh-text;
-    font-style: italic;
-    font-size: 0.92rem;
-    line-height: 1.5;
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+
+    .actions {
+      justify-content: flex-end;
+
+      button {
+        flex: none;
+        padding: 8px 16px;
+        min-width: 100px;
+
+        &.save {
+          background: $fh-primary;
+          border: none;
+          font-weight: 600;
+        }
+      }
+    }
   }
 
   // Adjuntos
-  .detail-adjuntos {
+  .adjuntos-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-    margin-top: 8px;
-  }
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
 
-  .adjunto-item {
-    display: flex;
-    flex-direction: column;
-    border-radius: 12px;
-    overflow: hidden;
-    background: rgba($fh-primary, 0.06);
-    border: 1px solid rgba($fh-primary, 0.15);
-    text-decoration: none;
-    transition: all 0.2s ease;
+    .adjunto-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      transition: all 0.2s;
 
-    &:hover {
-      border-color: $fh-primary;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      &:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba($fh-primary, 0.3);
+      }
+
+      img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+      }
+
+      .file-icon {
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .meta {
+        padding: 10px;
+
+        .filename {
+          display: block;
+          font-size: 0.75rem;
+          color: #fff;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .size {
+          font-size: 0.65rem;
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
     }
-  }
-
-  .adjunto-thumb {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    background: rgba(0, 0, 0, 0.2);
-  }
-
-  .adjunto-icon {
-    width: 100%;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    background: rgba(0, 0, 0, 0.1);
-  }
-
-  .adjunto-meta {
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .adjunto-name {
-    font-size: 0.78rem;
-    color: $fh-text;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .adjunto-size {
-    font-size: 0.7rem;
-    color: $fh-muted;
   }
 
   // Reject banner
-  .detail-reject-banner {
-    margin-top: 1.25rem;
-    padding: 14px 16px;
-    border-radius: 12px;
+  .reject-banner {
     background: rgba($fh-danger, 0.08);
     border: 1px solid rgba($fh-danger, 0.2);
-
-    .reject-title {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: $fh-danger;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-
-    .reject-body {
-      font-size: 0.9rem;
-      color: $fh-text;
-      line-height: 1.5;
-    }
-  }
-
-  // Action buttons (large, for detail)
-  .detail-actions {
+    border-radius: $radius-xl;
+    padding: 1.5rem;
     display: flex;
-    gap: 12px;
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid rgba($fh-primary, 0.1);
-  }
+    gap: 1rem;
+    align-items: flex-start;
 
-  .action-btn-lg {
-    flex: 1;
-    padding: 12px 20px;
-    border-radius: 12px;
-    border: 1px solid transparent;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-
-    &.approve {
-      background: rgba($fh-success, 0.12);
-      color: $fh-success;
-      border-color: rgba($fh-success, 0.25);
-
-      &:hover {
-        background: rgba($fh-success, 0.25);
-      }
-    }
-
-    &.reject {
-      background: rgba($fh-danger, 0.12);
+    .icon {
       color: $fh-danger;
-      border-color: rgba($fh-danger, 0.25);
-
-      &:hover {
-        background: rgba($fh-danger, 0.25);
-      }
+      font-size: 1.5rem;
+      margin-top: 2px;
     }
 
-    &.reimburse {
-      background: rgba($fh-accent, 0.12);
-      color: $fh-accent;
-      border-color: rgba($fh-accent, 0.25);
+    .content {
+      strong {
+        color: $fh-danger;
+        font-size: 0.95rem;
+        display: block;
+        margin-bottom: 4px;
+      }
 
-      &:hover {
-        background: rgba($fh-accent, 0.25);
+      p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        line-height: 1.5;
       }
     }
   }
 
-  // Historial timeline
-  .historial-list {
+  // Manager Actions
+  .manager-actions {
+    margin-top: auto;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+
+      .btn-action {
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: $transition-all;
+
+        svg {
+          font-size: 1.1rem;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          transform: translateY(-2px);
+        }
+
+        &.approve {
+          background: rgba($fh-success, 0.1);
+          color: #fff; // Keep text white for premium feel
+          border-color: rgba($fh-success, 0.3);
+
+          &:hover {
+            background: $fh-success;
+            box-shadow: 0 4px 15px rgba($fh-success, 0.4);
+          }
+        }
+
+        &.reject {
+          background: rgba($fh-danger, 0.1);
+          border-color: rgba($fh-danger, 0.3);
+
+          &:hover {
+            background: $fh-danger;
+            box-shadow: 0 4px 15px rgba($fh-danger, 0.4);
+          }
+        }
+
+        &.reimburse {
+          background: rgba($fh-accent, 0.1);
+          border-color: rgba($fh-accent, 0.3);
+
+          &:hover {
+            background: $fh-accent;
+            box-shadow: 0 4px 15px rgba($fh-accent, 0.4);
+          }
+        }
+
+        &.reset {
+          background: rgba($fh-warning, 0.1);
+          border-color: rgba($fh-warning, 0.3);
+
+          &:hover {
+            background: $fh-warning;
+            color: #000;
+            box-shadow: 0 4px 15px rgba($fh-warning, 0.4);
+          }
+        }
+      }
+    }
+  }
+
+  // History timeline
+  .history-timeline {
     display: flex;
     flex-direction: column;
-    gap: 0;
-  }
+    padding-left: 8px;
 
-  .historial-item {
-    padding: 10px 0 10px 16px;
-    border-left: 2px solid rgba($fh-primary, 0.2);
-    position: relative;
+    .history-item {
+      position: relative;
+      padding-left: 24px;
+      padding-bottom: 2rem;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: -5px;
-      top: 14px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: $fh-primary;
+      &:last-child {
+        border-left-color: transparent;
+      }
+
+      .dot {
+        position: absolute;
+        left: -5px;
+        top: 4px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: $fh-primary;
+        box-shadow: 0 0 10px rgba($fh-primary, 0.4);
+      }
+
+      .history-content {
+        .time {
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.3);
+          margin-bottom: 4px;
+        }
+
+        .desc {
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 2px;
+        }
+
+        .user {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
     }
-
-    &:last-child {
-      border-left-color: transparent;
-    }
-  }
-
-  .historial-date {
-    font-size: 0.75rem;
-    color: $fh-muted;
-    font-weight: 600;
-  }
-
-  .historial-desc {
-    font-size: 0.88rem;
-    color: $fh-text;
-    font-weight: 500;
-    margin-top: 2px;
-  }
-
-  .historial-user {
-    font-size: 0.72rem;
-    color: $fh-muted;
-    margin-top: 2px;
-    font-style: italic;
   }
 }
 
 // ══════════════════════════════════════════
 // ── Modal form styles ──
 // ══════════════════════════════════════════
-.gasto-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-
-    label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: $fh-muted;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-}
 
 // ── File upload ──
-.gasto-upload-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1.5px dashed rgba($fh-primary, 0.4);
-  background: rgba($fh-primary, 0.06);
-  color: $fh-muted;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
+// Legacy styles removed in favor of CreateTask.scss patterns
 
-  &:hover {
-    border-color: $fh-primary;
-    background: rgba($fh-primary, 0.12);
-    color: $fh-text;
+// --- PREMIUM GASTO DETAIL EXTENSIONS (Matching Tareas Architecture) ---
+.manager-actions-sidebar {
+  .actions-grid-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .btn-action-premium {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+      svg {
+        font-size: 1.2rem;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.07);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+
+      &.approve {
+        background: rgba(76, 175, 80, 0.12);
+        border-color: rgba(76, 175, 80, 0.3);
+
+        &:hover {
+          background: #4caf50;
+          border-color: #4caf50;
+        }
+      }
+
+      &.reject {
+        background: rgba(244, 67, 54, 0.12);
+        border-color: rgba(244, 67, 54, 0.3);
+
+        &:hover {
+          background: #f44336;
+          border-color: #f44336;
+        }
+      }
+
+      &.reimburse {
+        background: rgba(33, 150, 243, 0.12);
+        border-color: rgba(33, 150, 243, 0.3);
+
+        &:hover {
+          background: #2196f3;
+          border-color: #2196f3;
+        }
+      }
+
+      &.reset {
+        background: rgba(255, 193, 7, 0.12);
+        border-color: rgba(255, 193, 7, 0.3);
+
+        &:hover {
+          background: #ffc107;
+          border-color: #ffc107;
+          color: #000;
+        }
+      }
+    }
   }
 }
 
-.gasto-file-list {
+.history-timeline-compact {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
-}
+  padding-left: 6px;
+  margin-top: 10px;
 
-.gasto-file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba($fh-primary, 0.08);
-  border: 1px solid rgba($fh-primary, 0.15);
-}
+  .history-item {
+    position: relative;
+    padding-left: 24px;
+    padding-bottom: 1.8rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.05);
 
-.gasto-file-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-}
+    &:last-child {
+      border-left-color: transparent;
+    }
 
-.gasto-file-icon {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
+    .dot {
+      position: absolute;
+      left: -7px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0081f1;
+      border: 2px solid #0a0a0b;
+      box-shadow: 0 0 12px rgba(0, 129, 241, 0.5);
+      z-index: 2;
+    }
 
-.gasto-file-name {
-  font-size: 0.84rem;
-  color: $fh-text;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    .history-content {
+      .time {
+        font-size: 0.74rem;
+        color: rgba(255, 255, 255, 0.25);
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
 
-.gasto-file-size {
-  font-size: 0.75rem;
-  color: $fh-muted;
-  flex-shrink: 0;
-}
+      .desc {
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.4;
+      }
 
-.gasto-file-remove {
-  background: transparent;
-  border: none;
-  color: $fh-muted;
-  cursor: pointer;
-  font-size: 0.85rem;
-  padding: 2px 6px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    background: rgba($fh-danger, 0.15);
-    color: $fh-danger;
+      .user {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.35);
+        margin-top: 4px;
+        font-weight: 500;
+      }
+    }
   }
-}
-
-.gasto-file-hint {
-  font-size: 0.78rem;
-  color: $fh-muted;
-  margin-top: 4px;
-  font-style: italic;
 }

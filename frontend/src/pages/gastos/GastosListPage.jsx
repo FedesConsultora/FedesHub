@@ -3,19 +3,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { gastosApi } from '../../api/gastos'
 import { federsApi } from '../../api/feders'
 import { format } from 'date-fns'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthCtx } from '../../context/AuthContext'
 import { useToast } from '../../components/toast/ToastProvider'
 import Modal from '../../components/ui/Modal'
+import ModalPanel from '../Tareas/components/ModalPanel'
 import FederBubblesFilter from '../../components/common/FederBubblesFilter'
 import GastoForm from './GastoForm'
+import GastoDetail from './GastoDetail'
+import { FiCheck, FiX, FiDollarSign, FiClock } from 'react-icons/fi'
+import FHTooltip from '../../components/common/FHTooltip'
 import './gastos.scss'
 
 const DIRECTIVO_ROLES = ['NivelA', 'NivelB', 'Directivo', 'RRHH']
 
-const formatMoney = (n) => {
+const formatMoney = (n, currency = 'ARS') => {
     if (!n && n !== 0) return '$0'
-    return '$' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    const symbolMap = { ARS: '$', USD: 'u$s', EUR: '€' }
+    const symbol = symbolMap[currency] || symbolMap.ARS
+    return symbol + ' ' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 export default function GastosListPage() {
@@ -30,6 +36,17 @@ export default function GastosListPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [statusFilter, setStatusFilter] = useState(() => isGastoManager ? 'pendiente' : null)
     const [selectedFederIds, setSelectedFederIds] = useState([])
+    const { id: routeId } = useParams()
+    const [openGastoId, setOpenGastoId] = useState(null)
+
+    // Sync openGastoId with routeId
+    React.useEffect(() => {
+        if (routeId) {
+            setOpenGastoId(Number(routeId))
+        } else {
+            setOpenGastoId(null)
+        }
+    }, [routeId])
 
     // Reject modal state
     const [rejectTarget, setRejectTarget] = useState(null)
@@ -210,41 +227,48 @@ export default function GastosListPage() {
                             </tr>
                         ) : (
                             gastos.map(g => (
-                                <tr key={g.id}>
-                                    <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
+                                <tr key={g.id} onClick={() => setOpenGastoId(g.id)} style={{ cursor: 'pointer' }}>
+                                    <td>
                                         {g.fecha ? format(new Date(g.fecha), 'dd/MM/yyyy') : '-'}
                                     </td>
                                     {canSeeAll && (
-                                        <td className="solicitante-cell" onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
+                                        <td className="solicitante-cell">
                                             {g.feder?.avatar_url && (
                                                 <img src={g.feder.avatar_url} alt="" className="solicitante-avatar" />
                                             )}
                                             <span>{g.feder?.nombre} {g.feder?.apellido}</span>
                                         </td>
                                     )}
-                                    <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
+                                    <td>
                                         {g.descripcion}
                                     </td>
-                                    <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
-                                        ${parseFloat(g.monto).toLocaleString()} {g.moneda}
+                                    <td>
+                                        {formatMoney(g.monto, g.moneda)}
                                     </td>
-                                    <td onClick={() => navigate(`/gastos/${g.id}`)} style={{ cursor: 'pointer' }}>
+                                    <td>
                                         <span className={`status-badge ${g.estado}`}>{g.estado}</span>
                                     </td>
                                     {isGastoManager && (
                                         <td className="actions-cell">
                                             {g.estado !== 'aprobado' && g.estado !== 'reintegrado' && (
-                                                <button className="action-btn approve" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'aprobado') }} title="Aprobar">✓</button>
+                                                <FHTooltip text="Aprobar">
+                                                    <button className="action-btn approve" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'aprobado') }}><FiCheck /></button>
+                                                </FHTooltip>
                                             )}
                                             {g.estado !== 'rechazado' && (
-                                                <button className="action-btn reject" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'rechazado') }} title="Rechazar">✕</button>
+                                                <FHTooltip text="Rechazar">
+                                                    <button className="action-btn reject" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'rechazado') }}><FiX /></button>
+                                                </FHTooltip>
                                             )}
                                             {g.estado === 'aprobado' && (
-                                                <button className="action-btn reimburse" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'reintegrado') }} title="Reintegrar">💰</button>
+                                                <FHTooltip text="Reintegrar">
+                                                    <button className="action-btn reimburse" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'reintegrado') }}><FiDollarSign /></button>
+                                                </FHTooltip>
                                             )}
                                             {g.estado !== 'pendiente' && (
-                                                <button className="action-btn" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'pendiente') }} title="Volver a pendiente"
-                                                    style={{ background: 'rgba(255,183,77,0.1)', color: '#ffb74d', borderColor: 'rgba(255,183,77,0.2)' }}>↩</button>
+                                                <FHTooltip text="Volver a pendiente">
+                                                    <button className="action-btn reset" onClick={e => { e.stopPropagation(); handleChangeStatus(g.id, 'pendiente') }}><FiClock /></button>
+                                                </FHTooltip>
                                             )}
                                         </td>
                                     )}
@@ -298,6 +322,29 @@ export default function GastosListPage() {
                     queryClient.invalidateQueries({ queryKey: ['gastos-summary'] })
                 }}
             />
+
+            {/* Detail Drawer */}
+            {openGastoId && (
+                <ModalPanel
+                    open={!!openGastoId}
+                    onClose={() => {
+                        setOpenGastoId(null)
+                        navigate('/gastos')
+                    }}
+                >
+                    <GastoDetail
+                        taskId={openGastoId}
+                        onClose={() => {
+                            setOpenGastoId(null)
+                            navigate('/gastos')
+                        }}
+                        onUpdated={() => {
+                            queryClient.invalidateQueries({ queryKey: ['gastos'] })
+                            queryClient.invalidateQueries({ queryKey: ['gastos-summary'] })
+                        }}
+                    />
+                </ModalPanel>
+            )}
         </div>
     )
 }

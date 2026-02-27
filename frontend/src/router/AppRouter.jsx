@@ -44,7 +44,6 @@ import PerfilPage from '../pages/Perfil/PerfilPage.jsx'
 import OnePagerPage from '../pages/Tareas/OnePager/OnePagerPage.jsx'
 
 const GastosListPage = React.lazy(() => import('../pages/gastos/GastosListPage.jsx'))
-const GastoDetailPage = React.lazy(() => import('../pages/gastos/GastoDetailPage.jsx'))
 
 export default function AppRouter() {
   return (
@@ -131,7 +130,7 @@ export default function AppRouter() {
 
           {/* Gastos */}
           <Route path="/gastos" element={<GastosListPage />} />
-          <Route path="/gastos/:id" element={<GastoDetailPage />} />
+          <Route path="/gastos/:id" element={<GastosListPage />} />
 
           <Route
             path="admin"
