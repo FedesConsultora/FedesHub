@@ -75,7 +75,7 @@ export function useActiveChips(v, catalog) {
       chips.push({ key: 'include_finalizadas', label: 'Ver finalizadas' });
     }
     if (v.tipo && v.tipo !== '') {
-      const typeLabels = { STD: 'Estándar', TC: 'Publicación (TC)', IT: 'IT' };
+      const typeLabels = { STD: 'Estándar', TC: 'Publicación (TC)', IT: 'IT', ONB: 'Onboarding' };
       chips.push({ key: 'tipo', label: `Tipo: ${typeLabels[v.tipo] || v.tipo}` });
     }
     if (v.tc_red_social_id) {
@@ -410,6 +410,7 @@ export default function TareasFilters({ value, catalog, onChange, hideChips = fa
                       <option value="">Todos los tipos</option>
                       <option value="STD">Estándar</option>
                       <option value="TC">Publicación (TC)</option>
+                      <option value="ONB">Onboarding</option>
                       <option value="IT">IT</option>
                     </select>
                   </Field>

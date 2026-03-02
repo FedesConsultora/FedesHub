@@ -181,10 +181,12 @@ export default function TasksPage() {
     const createFromLead = searchParams.get("createFromLead");
     if (createFromLead) {
       const leadName = searchParams.get("leadName") || 'Lead';
+      const tipo = searchParams.get("tipo") || 'STD';
       setInitialData({
         lead_id: parseInt(createFromLead, 10),
         leadName: decodeURIComponent(leadName),
         fromLead: true,
+        tipo: tipo,
         titulo: `Seguimiento: ${decodeURIComponent(leadName)}`,
         vencimiento: new Date().toISOString().split('T')[0]
       });
@@ -193,6 +195,7 @@ export default function TasksPage() {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("createFromLead");
       newParams.delete("leadName");
+      newParams.delete("tipo");
       setSearchParams(newParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
