@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FiSmile } from 'react-icons/fi'
 import EmojiPicker from '../../common/EmojiPicker'
@@ -133,12 +133,18 @@ function ChipWithHoverList({ emoji, count, mine, users = [], onToggleMine }) {
 
 /* ---------------- Picker centrado por CSS (portal) ---------------- */
 export function CenteredPicker({ onClose, children, className = '', layerClassName = '' }) {
+  const mouseDownTarget = React.useRef(null)
   return createPortal(
     <>
-      <div className="emojiPortalBackdrop" onClick={onClose} />
+      <div className="emojiPortalBackdrop" onMouseDown={e => mouseDownTarget.current = e.target} onClick={e => {
+        if (mouseDownTarget.current === e.currentTarget && e.target === e.currentTarget) onClose()
+      }} />
       <div
         className={`emojiPortalLayer ${layerClassName}`}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        onMouseDown={e => mouseDownTarget.current = e.target}
+        onClick={(e) => {
+          if (mouseDownTarget.current === e.currentTarget && e.target === e.currentTarget) onClose()
+        }}
       >
         <div className={`emojiPanel ${className}`}>
           {children}
