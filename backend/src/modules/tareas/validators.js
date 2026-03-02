@@ -66,7 +66,7 @@ export const listTasksQuerySchema = z.object({
   prioridad_max: z.coerce.number().int().min(0).optional(),
 
   // tipo
-  tipo: z.enum(['STD', 'TC', 'IT']).optional(),
+  tipo: z.enum(['STD', 'TC', 'IT', 'ONB']).optional(),
 
   // filtros TC (solo si tipo=TC, pero permitimos opcionales en root para simplicidad)
   tc_red_social_ids: z.array(intId).optional(),
@@ -109,7 +109,7 @@ const tcUpdateDataSchema = z.object({
 });
 
 export const createTaskSchema = z.object({
-  tipo: z.enum(['STD', 'TC', 'IT']).optional().default('STD'),
+  tipo: z.enum(['STD', 'TC', 'IT', 'ONB']).optional().default('STD'),
   cliente_id: intId.nullish(),
   lead_id: intId.nullish(),
   hito_id: intId.nullish(),
@@ -155,7 +155,7 @@ export const updateTaskSchema = z.object({
   progreso_pct: z.coerce.number().min(0).max(100).optional(),
   orden_kanban: z.coerce.number().int().optional(),
   is_archivada: z.boolean().optional(),
-  tipo: z.enum(['STD', 'TC', 'IT']).optional(),
+  tipo: z.enum(['STD', 'TC', 'IT', 'ONB']).optional(),
   tc: tcUpdateDataSchema.optional()
 }).transform((data) => {
   const result = { ...data };
