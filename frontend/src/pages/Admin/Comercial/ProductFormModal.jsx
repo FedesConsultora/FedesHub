@@ -18,8 +18,12 @@ export default function ProductFormModal({ product, onClose, onSave }) {
         onSave(formData)
     }
 
+    const mouseDownTarget = React.useRef(null)
+
     return createPortal(
-        <div className="AdminModal modal-overlay" onClick={onClose}>
+        <div className="AdminModal modal-overlay" onMouseDown={e => mouseDownTarget.current = e.target} onClick={e => {
+            if (mouseDownTarget.current === e.currentTarget && e.target === e.currentTarget) onClose()
+        }}>
             <div className="modal-content-card premium-modal" onClick={e => e.stopPropagation()}>
                 <header className="modal-header">
                     <div className="brand">
