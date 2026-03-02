@@ -434,7 +434,14 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {}, 
   const lblRespsId = 'lbl-resps'
   const lblColabsId = 'lbl-colabs'
 
+  const mouseDownTarget = useRef(null)
+
   const handleOverlayClick = (e) => {
+    // Solo cerrar si el mousedown original Y el click final fueron en el overlay
+    if (mouseDownTarget.current !== e.currentTarget || e.target !== e.currentTarget) {
+      return
+    }
+
     // No cerrar si el click es en elementos del editor (portales de color picker, font size, etc)
     const targetEl = e.target;
 
@@ -462,7 +469,7 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {}, 
   }, [])
 
   const modalContent = (
-    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea" onClick={handleOverlayClick}>
+    <div className="taskModalWrap" role="dialog" aria-modal="true" aria-label="Crear tarea" onMouseDown={(e) => mouseDownTarget.current = e.target} onClick={handleOverlayClick}>
       <form ref={formRef} className="tcCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="tcHeader">
           <div className="brand">
@@ -474,55 +481,101 @@ export default function CreateTaskModal({ onClose, onCreated, initialData = {}, 
 
         <div className="tcBody">
           {/* Selector de Tipo */}
-          <div className="segmented-tabs" role="tablist" aria-label="Tipo de tarea">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tipo === 'STD'}
-              className={tipo === 'STD' ? 'active' : ''}
-              onClick={() => setTipo('STD')}
-            >
-              Estándar
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tipo === 'TC'}
-              className={tipo === 'TC' ? 'active' : ''}
-              onClick={() => setTipo('TC')}
-            >
-              Publicación (TC)
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tipo === 'IT'}
-              className={tipo === 'IT' ? 'active' : ''}
-              onClick={() => setTipo('IT')}
-            >
-              IT
-            </button>
-          </div>
+          {initialData?.fromLead ? (
+            <div className="segmented-tabs" role="tablist" aria-label="Tipo de tarea comercial">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'TC'}
+                className={tipo === 'TC' ? 'active' : ''}
+                onClick={() => setTipo('TC')}
+              >
+                Comercial (TC)
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'ONB'}
+                className={tipo === 'ONB' ? 'active' : ''}
+                onClick={() => setTipo('ONB')}
+              >
+                Onboarding
+              </button>
+            </div>
+          ) : (
+            <div className="segmented-tabs" role="tablist" aria-label="Tipo de tarea">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'STD'}
+                className={tipo === 'STD' ? 'active' : ''}
+                onClick={() => setTipo('STD')}
+              >
+                Estándar
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'IT'}
+                className={tipo === 'IT' ? 'active' : ''}
+                onClick={() => setTipo('IT')}
+              >
+                IT
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'TC'}
+                className={tipo === 'TC' ? 'active' : ''}
+                onClick={() => setTipo('TC')}
+              >
+                Comercial (TC)
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tipo === 'ONB'}
+                className={tipo === 'ONB' ? 'active' : ''}
+                onClick={() => setTipo('ONB')}
+              >
+                Onboarding
+              </button>
+            </div>
+          )}
 
           <div className="tcGrid">
             {/* Columna izquierda */}
             <div className="col">
 
               {/* Cliente selector - solo si NO viene de Lead */}
+              {/* Cliente/Lead selector - solo si NO viene de Lead inicial */}
               {!initialData?.fromLead && (
                 <CustomSelect
                   id="ms-cliente"
                   labelId={lblClienteId}
                   leftIcon={<FiBriefcase className="ico" aria-hidden style={S.ico} />}
-                  options={(cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))}
-                  value={clienteId ? [String(clienteId)] : []}
+                  options={
+                    (tipo === 'TC' || tipo === 'ONB')
+                      ? (cat.leads || []).map(l => ({ value: String(l.id), label: `Lead: ${l.empresa || l.nombre}` }))
+                      : (cat.clientes || []).map(c => ({ value: String(c.id), label: c.nombre }))
+                  }
+                  value={
+                    (tipo === 'TC' || tipo === 'ONB')
+                      ? (leadId ? [String(leadId)] : [])
+                      : (clienteId ? [String(clienteId)] : [])
+                  }
                   onChange={(next) => {
                     const first = (next && next.length) ? String(next[next.length - 1]) : ''
-                    setClienteId(first)
-                    if (first) setLeadId('')
+                    if (tipo === 'TC' || tipo === 'ONB') {
+                      setLeadId(first)
+                      setClienteId('')
+                    } else {
+                      setClienteId(first)
+                      setLeadId('')
+                    }
                   }}
-                  placeholder="Clientes"
-                  disabled={loading || !!leadId}
+                  placeholder={(tipo === 'TC' || tipo === 'ONB') ? "Seleccionar Lead / Onboarding" : "Seleccionar Cliente"}
+                  disabled={loading}
                   multi={false}
                 />
               )}
