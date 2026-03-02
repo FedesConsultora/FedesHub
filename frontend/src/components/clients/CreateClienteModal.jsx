@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import useClientesCatalog from '../../pages/Clientes/hooks/useClientesCatalog'
 import { clientesApi } from '../../api/clientes'
@@ -12,8 +12,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
   const [apiError, setApiError] = useState(null)
 
   const toast = useToast()
-  const formRef = useRef(null)
-  const firstFieldRef = useRef(null)
+  const formRef = React.useRef(null)
+  const firstFieldRef = React.useRef(null)
 
   // campos
   const [nombre, setNombre] = useState('')
@@ -116,6 +116,15 @@ export default function CreateClienteModal({ onClose, onCreated }) {
     }
   }
 
+  const mouseDownTarget = React.useRef(null)
+
+  const handleOverlayClick = (e) => {
+    if (mouseDownTarget.current !== e.currentTarget || e.target !== e.currentTarget) {
+      return
+    }
+    onClose?.()
+  }
+
   // Scroll lock
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -123,8 +132,8 @@ export default function CreateClienteModal({ onClose, onCreated }) {
   }, [])
 
   const modalContent = (
-    <div className="clienteModalWrap" role="dialog" aria-modal="true" aria-label="Crear cliente">
-      <form ref={formRef} className="ccCard" onSubmit={onSubmit} noValidate>
+    <div className="clienteModalWrap" role="dialog" aria-modal="true" aria-label="Crear cliente" onMouseDown={(e) => mouseDownTarget.current = e.target} onClick={handleOverlayClick}>
+      <form ref={formRef} className="ccCard" onSubmit={onSubmit} noValidate onClick={(e) => e.stopPropagation()}>
         <header className="ccHeader">
           <div className="brand">
             <div className="logo">Nuevo cliente</div>
@@ -140,14 +149,12 @@ export default function CreateClienteModal({ onClose, onCreated }) {
           <div className="ccGrid">
             {/* Columna izquierda */}
             <div className="col">
-              {/* Célula removed */}
-
               {/* Tipo */}
               {(cat.tipos || []).length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="tipo">Tipo</label>
-                  <div className="field">
-                    <FiTag className="ico" aria-hidden />
+                <div className="field has-label">
+                  <FiTag className="ico" aria-hidden />
+                  <div className="field-content">
+                    <span className="field-label">Tipo</span>
                     <select
                       id="tipo" name="tipo_id" value={tipoId}
                       onChange={(e) => setTipoId(e.target.value)}
@@ -155,20 +162,19 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                     >
                       <option value="">— Automático —</option>
                       {(cat.tipos || []).map(t => (
-                        <option key={t.id} value={t.id}>{t.nombre} (pond. {t.ponderacion})</option>
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
                       ))}
                     </select>
-                    <div className="addon" aria-hidden />
                   </div>
-                </>
+                </div>
               )}
 
               {/* Estado */}
               {(cat.estados || []).length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="estado">Estado</label>
-                  <div className="field">
-                    <FiTag className="ico" aria-hidden />
+                <div className="field has-label">
+                  <FiTag className="ico" aria-hidden />
+                  <div className="field-content">
+                    <span className="field-label">Estado</span>
                     <select
                       id="estado" name="estado_id" value={estadoId}
                       onChange={(e) => setEstadoId(e.target.value)}
@@ -179,17 +185,16 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                         <option key={e.id} value={e.id}>{e.nombre}</option>
                       ))}
                     </select>
-                    <div className="addon" aria-hidden />
                   </div>
-                </>
+                </div>
               )}
 
               {/* Ponderación */}
               {(cat.ponderaciones || []).length > 0 && (
-                <>
-                  <label className="lbl" htmlFor="pond">Ponderación</label>
-                  <div className="field">
-                    <FiTag className="ico" aria-hidden />
+                <div className="field has-label">
+                  <FiTag className="ico" aria-hidden />
+                  <div className="field-content">
+                    <span className="field-label">Ponderación</span>
                     <select
                       id="pond" name="ponderacion" value={ponderacion}
                       onChange={(e) => setPonderacion(e.target.value)}
@@ -199,101 +204,120 @@ export default function CreateClienteModal({ onClose, onCreated }) {
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
-                    <div className="addon" aria-hidden />
                   </div>
-                </>
+                </div>
               )}
 
               {/* Color */}
-              <label className="lbl" htmlFor="color">Color</label>
-              <div className="field" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input
-                  id="color"
-                  name="color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  disabled={loading || submitting}
-                  style={{ width: '60px', height: '38px', border: 'none', cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  placeholder="#3B82F6"
-                  maxLength={7}
-                  pattern="^#[0-9A-Fa-f]{6}$"
-                  disabled={loading || submitting}
-                  style={{ flex: 1 }}
-                />
+              <div className="field has-label">
+                <FiTag className="ico" aria-hidden />
+                <div className="field-content">
+                  <span className="field-label">Color de Marca</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
+                    <div className="color-input-wrapper" style={{ position: 'relative', width: '28px', height: '28px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.15)' }}>
+                      <input
+                        id="color"
+                        name="color"
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        disabled={loading || submitting}
+                        style={{ position: 'absolute', top: '-50%', left: '-50%', width: '200%', height: '200%', cursor: 'pointer', border: 'none', background: 'none' }}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      placeholder="#3B82F6"
+                      maxLength={7}
+                      pattern="^#[0-9A-Fa-f]{6}$"
+                      disabled={loading || submitting}
+                      style={{ flex: 1, fontSize: '15px', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Columna derecha */}
             <div className="col">
               {/* Nombre */}
-              <label className="lbl" htmlFor="nombre">Nombre <span className="req">*</span></label>
-              <div className={'field ' + (nombreError ? 'is-error' : '')}>
+              <div className={'field has-label ' + (nombreError ? 'is-error' : '')}>
                 <FiBriefcase className="ico" aria-hidden />
-                <input
-                  id="nombre" name="nombre" type="text"
-                  value={nombre} onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Acme Corp" maxLength={160}
-                  aria-invalid={!!nombreError}
-                  aria-describedby={nombreError ? 'err-nombre' : undefined}
-                  disabled={loading || submitting}
-                />
-                <div className="addon" aria-hidden />
+                <div className="field-content">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="field-label">Nombre <span className="req">*</span></span>
+                    {nombreError && <span style={{ fontSize: '10px', color: '#ff9080', fontWeight: 'bold', textTransform: 'uppercase' }}>{nombreError}</span>}
+                  </div>
+                  <input
+                    id="nombre" name="nombre" type="text"
+                    value={nombre} onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Acme Corp" maxLength={160}
+                    aria-invalid={!!nombreError}
+                    disabled={loading || submitting}
+                    ref={firstFieldRef}
+                  />
+                </div>
               </div>
-              {nombreError && <div id="err-nombre" className="help error-inline">{nombreError}</div>}
 
               {/* Alias */}
-              <label className="lbl" htmlFor="alias">Alias</label>
-              <div className="field">
+              <div className="field has-label">
                 <FiTag className="ico" aria-hidden />
-                <input id="alias" name="alias" type="text" value={alias}
-                  onChange={(e) => setAlias(e.target.value)}
-                  disabled={loading || submitting} />
-                <div className="addon" aria-hidden />
+                <div className="field-content">
+                  <span className="field-label">Alias</span>
+                  <input id="alias" name="alias" type="text" value={alias}
+                    onChange={(e) => setAlias(e.target.value)}
+                    placeholder="Nombre corto..."
+                    disabled={loading || submitting} />
+                </div>
               </div>
 
               {/* Email */}
-              <label className="lbl" htmlFor="email">Email</label>
-              <div className="field">
+              <div className="field has-label">
                 <FiMail className="ico" aria-hidden />
-                <input id="email" name="email" type="email" value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading || submitting} />
-                <div className="addon" aria-hidden />
+                <div className="field-content">
+                  <span className="field-label">Email</span>
+                  <input id="email" name="email" type="email" value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="contacto@empresa.com"
+                    disabled={loading || submitting} />
+                </div>
               </div>
 
               {/* Teléfono */}
-              <label className="lbl" htmlFor="tel">Teléfono</label>
-              <div className="field">
+              <div className="field has-label">
                 <FiPhone className="ico" aria-hidden />
-                <input id="tel" name="telefono" type="tel" value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  disabled={loading || submitting} />
-                <div className="addon" aria-hidden />
+                <div className="field-content">
+                  <span className="field-label">Teléfono</span>
+                  <input id="tel" name="telefono" type="tel" value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                    placeholder="+54..."
+                    disabled={loading || submitting} />
+                </div>
               </div>
 
               {/* Sitio web */}
-              <label className="lbl" htmlFor="web">Sitio web</label>
-              <div className="field">
+              <div className="field has-label">
                 <FiGlobe className="ico" aria-hidden />
-                <input id="web" name="sitio_web" type="url" value={sitioWeb}
-                  onChange={(e) => setSitioWeb(e.target.value)}
-                  disabled={loading || submitting} placeholder="https://…" />
-                <div className="addon" aria-hidden />
+                <div className="field-content">
+                  <span className="field-label">Sitio web</span>
+                  <input id="web" name="sitio_web" type="url" value={sitioWeb}
+                    onChange={(e) => setSitioWeb(e.target.value)}
+                    disabled={loading || submitting} placeholder="https://…" />
+                </div>
               </div>
 
               {/* Descripción */}
-              <label className="lbl" htmlFor="desc">Descripción</label>
-              <div className="field area">
+              <div className="field area has-label">
                 <FiTag className="ico" aria-hidden />
-                <textarea id="desc" name="descripcion" rows={5} value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  disabled={loading || submitting} />
+                <div className="field-content">
+                  <span className="field-label">Descripción</span>
+                  <textarea id="desc" name="descripcion" rows={3} value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                    placeholder="Notas adicionales..."
+                    disabled={loading || submitting} />
+                </div>
               </div>
             </div>
           </div>
@@ -309,7 +333,7 @@ export default function CreateClienteModal({ onClose, onCreated }) {
           </button>
         </footer>
       </form>
-    </div >
+    </div>
   )
 
   return createPortal(modalContent, document.body)

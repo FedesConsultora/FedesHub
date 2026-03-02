@@ -1,5 +1,5 @@
 // frontend/src/components/comercial/CreateLeadModal.jsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { comercialApi } from '../../api/comercial.js'
 import { federsApi } from '../../api/feders.js'
 import { useToast } from '../toast/ToastProvider'
@@ -62,8 +62,12 @@ export default function CreateLeadModal({ onClose, onCreated }) {
         }
     }
 
+    const mouseDownTarget = React.useRef(null)
+
     return (
-        <div className="CreateLeadModal">
+        <div className="CreateLeadModal" onMouseDown={(e) => mouseDownTarget.current = e.target} onClick={(e) => {
+            if (mouseDownTarget.current === e.currentTarget && e.target === e.currentTarget) onClose()
+        }}>
             <div className="tcCard">
                 <header className="tcHeader">
                     <div className="brand">
