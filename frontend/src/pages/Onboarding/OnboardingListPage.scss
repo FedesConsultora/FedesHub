@@ -252,9 +252,11 @@
                 margin-top: auto;
                 padding-top: 1.25rem;
                 border-top: 1px solid rgba(255, 255, 255, 0.03);
+                display: flex;
+                gap: 12px;
 
                 .btn-detail {
-                    width: 100%;
+                    flex: 1;
                     background: transparent;
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     color: v.$fh-muted;
@@ -264,6 +266,35 @@
                     font-size: 0.85rem;
                     cursor: pointer;
                     transition: all 0.2s;
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.05);
+                        color: white;
+                    }
+                }
+
+                .btn-add-task {
+                    flex: 1;
+                    background: rgba(v.$fh-primary, 0.1);
+                    border: 1px solid rgba(v.$fh-primary, 0.2);
+                    color: v.$fh-primary;
+                    padding: 10px;
+                    border-radius: 10px;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s;
+
+                    &:hover {
+                        background: v.$fh-primary;
+                        color: white;
+                        border-color: v.$fh-primary;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(v.$fh-primary, 0.3);
+                    }
                 }
             }
         }

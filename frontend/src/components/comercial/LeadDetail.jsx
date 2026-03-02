@@ -118,7 +118,9 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
     const handleCreateTask = () => {
         // Navegar a /tareas con params para abrir modal de creación
         const leadName = lead.empresa || lead.nombre || 'Lead'
-        navigate(`/tareas?createFromLead=${leadId}&leadName=${encodeURIComponent(leadName)}`)
+        const base = `/tareas?createFromLead=${leadId}&leadName=${encodeURIComponent(leadName)}`
+        const finalUrl = lead.onboarding_status ? `${base}&tipo=ONB` : base
+        navigate(finalUrl)
     }
 
     if (loading && !lead) return <GlobalLoader size={100} />
@@ -188,15 +190,21 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
 
                     {!isClosed && (
                         <div className="outcome-btns">
-                            <button className="btn-lose" onClick={() => setShowNegotiation('lose')}>
-                                <FiXCircle /> Perder
-                            </button>
-                            <button className="btn-win" onClick={() => setShowNegotiation('win')}>
-                                <FiCheckCircle /> Ganar
-                            </button>
-                            <button className="btn-task" onClick={handleCreateTask}>
-                                <FiPlus /> Crear Tarea
-                            </button>
+                            {!lead.onboarding_status && (
+                                <>
+                                    <button className="btn-lose" onClick={() => setShowNegotiation('lose')}>
+                                        <FiXCircle /> Perder
+                                    </button>
+                                    <button className="btn-win" onClick={() => setShowNegotiation('win')}>
+                                        <FiCheckCircle /> Ganar
+                                    </button>
+                                </>
+                            )}
+                            {!lead.onboarding_status && (
+                                <button className="btn-task" onClick={handleCreateTask}>
+                                    <FiPlus /> Crear Tarea
+                                </button>
+                            )}
                             <button className="btn-delete" onClick={handleDelete} title="Eliminar definitivamente">
                                 <FiXCircle />
                             </button>
@@ -287,15 +295,15 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                         </div>
                     </section>
 
-                    {lead.onboarding_status && (
+                    {(lead.onboarding_status || lead.ruta_post_negociacion === 'onboarding') && (
                         <section className="onboarding-box">
                             <header>
-                                <h4>Onboarding {lead.onboarding_tipo}</h4>
-                                <span className="onb-status" data-status={lead.onboarding_status}>
-                                    {lead.onboarding_status.replace('_', ' ')}
+                                <h4>Onboarding {lead.onboarding_tipo || 'General'}</h4>
+                                <span className="onb-status" data-status={lead.onboarding_status || 'activo'}>
+                                    {(lead.onboarding_status || 'activo').replace('_', ' ')}
                                 </span>
                             </header>
-                            <p className="onb-meta">Vence: {new Date(lead.onboarding_due_at).toLocaleDateString()}</p>
+                            <p className="onb-meta">Vence: {lead.onboarding_due_at ? new Date(lead.onboarding_due_at).toLocaleDateString() : '—'}</p>
 
                             <div className="onb-actions">
                                 {lead.onboarding_status === 'revision_pendiente' && (
@@ -303,11 +311,14 @@ export default function LeadDetail({ leadId, onClose, onUpdated }) {
                                         Resolver Pendiente
                                     </button>
                                 )}
-                                {(lead.onboarding_status === 'activo' || lead.onboarding_status === 'vencido') && (
+                                {(lead.onboarding_status === 'activo' || lead.onboarding_status === 'vencido' || !lead.onboarding_status) && (
                                     <button className="btn-resolve success" onClick={() => setShowResolveOnboarding(true)}>
                                         <FiCheckCircle /> Finalizar y Convertir
                                     </button>
                                 )}
+                                <button className="btn-onb-task" onClick={handleCreateTask}>
+                                    <FiPlus /> Nueva Tarea de Onboarding
+                                </button>
                             </div>
                         </section>
                     )}

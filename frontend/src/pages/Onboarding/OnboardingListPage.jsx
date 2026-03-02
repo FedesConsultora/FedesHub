@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { comercialApi } from '../../api/comercial.js'
+import { useNavigate } from 'react-router-dom'
 import { federsApi } from '../../api/feders.js'
 import { useToast } from '../../components/toast/ToastProvider'
 import ModalPanel from '../Tareas/components/ModalPanel.jsx'
 import LeadDetail from '../../components/comercial/LeadDetail'
 import FederBubblesFilter from '../../components/common/FederBubblesFilter'
-import { FiClock, FiCheckCircle, FiUser, FiBriefcase } from 'react-icons/fi'
+import { FiClock, FiCheckCircle, FiUser, FiBriefcase, FiPlus } from 'react-icons/fi'
 import { differenceInDays, format } from 'date-fns'
 import { useLoading } from '../../context/LoadingContext.jsx'
 import OnboardingFilters from './components/OnboardingFilters'
@@ -13,6 +14,7 @@ import GlobalLoader from '../../components/loader/GlobalLoader'
 import './OnboardingListPage.scss'
 
 export default function OnboardingListPage() {
+    const navigate = useNavigate()
     const [leads, setLeads] = useState([])
     const [feders, setFeders] = useState([])
     const [loading, setLoading] = useState(true)
@@ -142,6 +144,16 @@ export default function OnboardingListPage() {
 
                                 <div className="card-footer">
                                     <button className="btn-detail">Ver Detalle</button>
+                                    <button
+                                        className="btn-add-task"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const leadName = lead.empresa || lead.nombre || 'Lead';
+                                            navigate(`/tareas?createFromLead=${lead.id}&leadName=${encodeURIComponent(leadName)}&tipo=ONB`);
+                                        }}
+                                    >
+                                        <FiPlus style={{ marginRight: 4 }} /> Nueva Tarea
+                                    </button>
                                 </div>
                             </div>
                         )
