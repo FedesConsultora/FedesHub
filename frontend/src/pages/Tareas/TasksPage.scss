@@ -521,9 +521,10 @@
 
   .filter-actions-group {
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: space-between; // Pole to pole
-    flex: 1; // Stretch to allow space-between
+    flex: 1; 
     gap: 1.25rem;
     flex-wrap: wrap;
 

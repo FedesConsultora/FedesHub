@@ -7,8 +7,8 @@
     .bubbles-scroll {
         display: flex;
         gap: 0.75rem;
-        flex-wrap: wrap; // Changed from overflow-x: auto to wrap
-        justify-content: flex-end; // Align bubbles to the right
+        flex-wrap: wrap;
+        justify-content: flex-end;
         padding: 0.25rem;
 
         .bubble-item {
