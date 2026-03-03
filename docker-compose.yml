@@ -24,6 +24,9 @@ services:
     container_name: fedes-hub
     restart: always
     env_file: ./backend/.env
+    environment:
+      - DB_HOST=fedeshub-db
+      - DB_PORT=5432
     command: npm start
     depends_on:
       fedeshub-db:
