@@ -6,9 +6,19 @@ echo "  FedesHub - Deploy to Production"
 echo "====================================="
 echo ""
 
+# Move up to the project root (assumes the script is in /scripts)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 # Pull latest changes
 echo "📥 Pulling latest changes from Git..."
 git pull origin main
+
+# Check if .env files exist where expected
+if [ ! -f "backend/.env" ]; then
+    echo "❌ Error: backend/.env not found. Please create it first."
+    exit 1
+fi
 
 # Rebuild and restart containers
 echo ""
