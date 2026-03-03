@@ -17,7 +17,7 @@ import {
   svcReact, svcPin, svcSave, svcFollowThread, svcSetRead, svcSetReadAll,
   svcSetPresence, svcTyping,
   svcInvite, svcAcceptInvitation, svcDeclineInvitation,
-  svcScheduleMeeting, svcListDmCandidates
+  svcScheduleMeeting, svcCreateInstantMeet, svcListDmCandidates
 } from '../services/chat.service.js';
 
 import { saveUploadedFiles } from '../../../infra/storage/index.js'
@@ -336,6 +336,14 @@ export const postMeeting = async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const body = meetingSchema.parse(req.body);
     const r = await svcScheduleMeeting(id, body, req.user);
+    res.status(201).json(r);
+  } catch (e) { next(e); }
+};
+
+export const postInstantMeet = async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const r = await svcCreateInstantMeet(id, req.user);
     res.status(201).json(r);
   } catch (e) { next(e); }
 };

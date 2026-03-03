@@ -1,9 +1,9 @@
 import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useCallback, useEffect } from 'react'
-import { useSendMessage, useChannelMembers } from '../../../hooks/useChat'
+import { useSendMessage, useChannelMembers, useCreateInstantMeet } from '../../../hooks/useChat'
 import { useTypingEmitter } from '../../../hooks/useTypingEmitter'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
 import { useToast } from '../../toast/ToastProvider'
-import { FiSend, FiSmile, FiX, FiMic } from 'react-icons/fi'
+import { FiSend, FiSmile, FiX, FiMic, FiPlus, FiVideo } from 'react-icons/fi'
 import { FaRegFile } from 'react-icons/fa'
 import EmojiPicker from '../../common/EmojiPicker'
 import StickerPicker from './StickerPicker'
@@ -50,10 +50,13 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const [openEmoji, setOpenEmoji] = useState(false)
   const [pickerTab, setPickerTab] = useState('emoji') // 'emoji' | 'sticker'
   const [openAudio, setOpenAudio] = useState(false)
+  const [openPlus, setOpenPlus] = useState(false)
   const [files, setFiles] = useState([])
   const send = useSendMessage()
+  const createMeet = useCreateInstantMeet()
   const toast = useToast()
   const fileRef = useRef(null)
+  const plusRef = useRef(null)
   const { replyTo, setReplyTo } = useContext(ChatActionCtx)
 
   const { data: members = [] } = useChannelMembers(canal_id)
@@ -206,6 +209,33 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const onDragOver = (e) => { e.preventDefault(); if (disabled) return }
   const onDrop = (e) => { e.preventDefault(); if (disabled) return; const arr = Array.from(e.dataTransfer?.files || []); if (arr.length) setFiles(prev => prev.concat(arr)) }
 
+  // ---- Plus menu: close on outside click
+  useEffect(() => {
+    if (!openPlus) return
+    const handler = (e) => {
+      if (plusRef.current && !plusRef.current.contains(e.target)) setOpenPlus(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [openPlus])
+
+  const handleMeet = async () => {
+    setOpenPlus(false)
+    try {
+      await createMeet.mutateAsync({ canal_id })
+      window.dispatchEvent(new CustomEvent('fh:chat:sent', { detail: { canal_id } }))
+    } catch (err) {
+      const code = err?.response?.data?.code || err?.code
+      if (code === 'GOOGLE_NOT_CONNECTED') {
+        // Fallback: abrir meet.google.com/new
+        toast?.info('Abriendo Google Meet… pegá el link acá cuando lo tengas.')
+        window.open('https://meet.google.com/new', '_blank')
+      } else {
+        toast?.error(err?.response?.data?.message || err?.message || 'Error al crear reunión')
+      }
+    }
+  }
+
   const replyAuthor = fullName(replyTo) || displayName(replyTo) || 'alguien'
 
   return (
@@ -216,11 +246,24 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
       onDrop={onDrop}
       onPasteCapture={addClipboardImages} /* captura aunque el input hijo no propague */
     >
-      <div className="controlsLeft">
-        <button type="button" className="attachBtn" disabled={disabled} title="Adjuntar archivos" onClick={() => fileRef.current?.click()}>
-          <FaRegFile />
+      <div className="controlsLeft" ref={plusRef}>
+        <button type="button" className="plusBtn" disabled={disabled} title="Más opciones" onClick={() => setOpenPlus(p => !p)}>
+          <FiPlus className={openPlus ? 'rotated' : ''} />
         </button>
         <input ref={fileRef} type="file" multiple hidden onChange={onPickFiles} />
+
+        {openPlus && (
+          <div className="plusMenu">
+            <button type="button" onClick={() => { setOpenPlus(false); fileRef.current?.click() }}>
+              <FaRegFile />
+              <span>Adjuntar archivo</span>
+            </button>
+            <button type="button" onClick={handleMeet} disabled={createMeet.isPending}>
+              <FiVideo />
+              <span>{createMeet.isPending ? 'Creando…' : 'Google Meet'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="inputWrap">

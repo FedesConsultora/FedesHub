@@ -89,6 +89,7 @@ router.post('/invitations/:token/decline', requireAuth, requirePermission('chat'
 
 // Meetings desde el canal
 router.post('/channels/:id/meetings', requireAuth, requirePermission('chat', 'create'), chat.postMeeting);
+router.post('/channels/:id/meet', requireAuth, requirePermission('chat', 'create'), chat.postInstantMeet);
 
 router.get('/channels/:id/attachments', requireAuth, chat.listAttachments)
 

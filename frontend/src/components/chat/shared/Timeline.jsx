@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef, useState, useContext } from 'react'
 import { FaArrowDown } from 'react-icons/fa'
-import { FiX, FiCheck } from 'react-icons/fi'
+import { FiX, FiCheck, FiVideo } from 'react-icons/fi'
 import { CiFaceSmile } from "react-icons/ci";
 import { MdOutlineModeEdit } from "react-icons/md";
 import { BsPinAngle } from "react-icons/bs";
@@ -450,14 +450,35 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
               </div>
             ) : m.body_json?.type === 'sticker' && m.body_json?.sticker?.url ? (
               // 👉 Stickers sin burbuja (clase especial)
-              <div className="sticker-only">
+              <div className="sticker-render">
                 <img src={m.body_json.sticker.url} alt={m.body_json.sticker.name || 'sticker'} />
+              </div>
+            ) : m.body_json?.type === 'meeting' ? (
+              <div className="meeting-card">
+                <div className="meeting-icon">
+                  <FiVideo />
+                </div>
+                <div className="meeting-info">
+                  <div className="meeting-title">Google Meet</div>
+                  <div className="meeting-subtitle">Reunión de video</div>
+                </div>
+                <a
+                  href={m.body_json.meeting?.join_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="meeting-join-btn"
+                >
+                  Unirme a la reunión
+                </a>
               </div>
             ) : (
               <>
                 <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
-                <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
               </>
+            )}
+            {/* MessageAttachments should always render if not deleted/editing, regardless of message type */}
+            {!isDeleted && !isEditing && (m.body_json?.type !== 'sticker' && m.body_json?.type !== 'meeting') && (
+              <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
             )}
           </div>
 

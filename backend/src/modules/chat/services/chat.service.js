@@ -589,6 +589,114 @@ export const svcScheduleMeeting = async (canal_id, body, user) => {
   return { evento, meet };
 };
 
+// -------- Instant Meet (link rápido desde el chat)
+export const svcCreateInstantMeet = async (canal_id, user) => {
+  // 1. Verificar membresía
+  const canal = await getCanalWithMiembro(canal_id, user.id);
+  if (!canal) throw Object.assign(new Error('Canal no encontrado'), { status: 404 });
+
+  // 2. Buscar GoogleCuenta del usuario
+  const acct = await mReg.GoogleCuenta.findOne({ where: { user_id: user.id } });
+  if (!acct || !acct.refresh_token_enc) {
+    throw Object.assign(
+      new Error('No tenés una cuenta de Google conectada. Conectá tu cuenta desde Calendario.'),
+      { status: 400, code: 'GOOGLE_NOT_CONNECTED' }
+    );
+  }
+
+  // 3. Crear evento efímero en Google Calendar para generar Meet link
+  let join_url, external_meeting_id;
+  try {
+    const { default: pkg } = await import('@googleapis/calendar');
+    const { google } = pkg;
+    const { OAuth2 } = google.auth;
+    const auth = new OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    auth.setCredentials({ refresh_token: acct.refresh_token_enc });
+    const cal = google.calendar({ version: 'v3', auth });
+
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000); // 1h
+
+    const canalName = canal.nombre || canal.slug || `Canal #${canal_id}`;
+    const event = await cal.events.insert({
+      calendarId: 'primary',
+      conferenceDataVersion: 1,
+      requestBody: {
+        summary: `Reunión rápida – ${canalName}`,
+        start: { dateTime: now.toISOString() },
+        end: { dateTime: end.toISOString() },
+        conferenceData: {
+          createRequest: {
+            requestId: `fh-meet-${canal_id}-${Date.now()}`,
+            conferenceSolutionKey: { type: 'hangoutsMeet' }
+          }
+        }
+      }
+    });
+
+    join_url = event.data?.hangoutLink
+      || event.data?.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri
+      || null;
+    external_meeting_id = event.data?.conferenceData?.conferenceId || event.data?.id || null;
+  } catch (err) {
+    console.error('[svcCreateInstantMeet] google api', err?.message || err);
+    throw Object.assign(
+      new Error('Error al crear la reunión de Google Meet. Intentá de nuevo.'),
+      { status: 502 }
+    );
+  }
+
+  if (!join_url) {
+    throw Object.assign(new Error('No se pudo generar el link de Meet'), { status: 502 });
+  }
+
+  // 4. Registrar en ChatMeeting
+  const meet = await mReg.ChatMeeting.create({
+    canal_id,
+    provider_codigo: 'google_meet',
+    external_meeting_id,
+    join_url,
+    created_by_user_id: user.id,
+    starts_at: new Date(),
+    ends_at: null,
+    evento_id: null,
+    mensaje_id: null
+  });
+
+  // 5. Enviar como mensaje especial
+  const t = await sequelize.transaction();
+  let msg;
+  try {
+    msg = await createMessage(canal, {
+      body_text: `📹 Reunión de Google Meet`,
+      body_json: {
+        type: 'meeting',
+        meeting: {
+          id: meet.id,
+          join_url,
+          provider: 'google_meet',
+          external_meeting_id
+        }
+      }
+    }, user, t);
+    // Actualizar el meeting con el mensaje_id
+    await meet.update({ mensaje_id: msg.id }, { transaction: t });
+    await t.commit();
+  } catch (e) { await t.rollback(); throw e; }
+
+  // 6. Realtime
+  try { await publishMessageCreated(canal_id, msg, { except_user_id: user.id }); } catch (err) {
+    console.error('sse instant meet', err);
+  }
+
+  // 7. Notificar
+  try { await _notifyNewMessage(canal_id, msg, user); } catch (e) {
+    console.error('notif instant meet', e);
+  }
+
+  return { meet: meet.toJSON?.() ?? meet, message: msg };
+};
+
 // -------- Helpers de notificación de mensajes (emails/push)
 async function _notifyNewMessage(canal_id, msg, user) {
 

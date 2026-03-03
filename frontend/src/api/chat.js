@@ -71,7 +71,8 @@ export const chatApi = {
   },
 
   meetings: {
-    schedule: (canal_id, body) => api.post(`${base}/channels/${canal_id}/meetings`, body).then(r => r.data)
+    schedule: (canal_id, body) => api.post(`${base}/channels/${canal_id}/meetings`, body).then(r => r.data),
+    createInstant: (canal_id) => api.post(`${base}/channels/${canal_id}/meet`).then(r => r.data)
   },
 
   dmsList: () => api.get(`${base}/dms`).then(r => r.data),

@@ -341,6 +341,21 @@ export function useAddMember() {
   })
 }
 
+/* ---- Instant Meet (link rápido desde el chat) */
+export function useCreateInstantMeet() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ canal_id }) => chatApi.meetings.createInstant(canal_id),
+    onSuccess: (_r, { canal_id }) => {
+      const cid = Number(canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      }
+    }
+  })
+}
+
 export function useDeleteChannel() {
   const qc = useQueryClient()
   return useMutation({
