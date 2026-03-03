@@ -31,7 +31,7 @@ services:
     networks:
       - fedes-net
     ports:
-      - "4000:4000"
+      - "4004:4000"
     volumes:
       - ./backend/public/avatars:/usr/src/app/public/avatars
       - ./backend/uploads:/usr/src/app/uploads
@@ -43,7 +43,7 @@ services:
     networks:
       - fedes-net
     ports:
-      - "3000:80"
+      - "3004:80"
     volumes:
       - ./backend/public/avatars:/usr/share/nginx/html/avatars:ro
       - ./backend/uploads:/usr/share/nginx/html/uploads:ro
