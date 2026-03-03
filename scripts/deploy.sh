@@ -47,6 +47,16 @@ echo ""
 echo "📝 Ultimas lineas del backend:"
 docker compose logs backend --tail 20
 
+# Run migrations automatically
+echo ""
+echo "🔄 Running database migrations..."
+sleep 5 # Wait for backend to be fully ready
+if docker exec fedes-hub npm run migrate; then
+    echo "✅ Migrations applied successfully."
+else
+    echo "⚠️  Migrations failed or none to apply."
+fi
+
 echo ""
 echo "📝 To view all logs, run:"
 docker compose logs -f
