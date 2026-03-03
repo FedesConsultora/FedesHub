@@ -24,7 +24,7 @@ fi
 echo ""
 echo "🔨 Rebuilding and restarting containers..."
 # Usamos --build con up -d para recrear solo lo necesario sin tirar la red
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 
 # Reload del proxy global para refrescar IPs de los contenedores
 echo ""
@@ -44,5 +44,9 @@ echo "📊 Container status:"
 docker compose ps
 
 echo ""
-echo "📝 To view logs, run:"
-echo "   docker compose logs -f"
+echo "📝 Ultimas lineas del backend:"
+docker compose logs backend --tail 20
+
+echo ""
+echo "📝 To view all logs, run:"
+docker compose logs -f

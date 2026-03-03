@@ -17,7 +17,7 @@ services:
     networks:
       - fedes-net
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   backend:
     build: ./backend
