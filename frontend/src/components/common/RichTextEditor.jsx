@@ -20,6 +20,7 @@ import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import CharacterLimitPlugin from './plugins/CharacterLimitPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
+import SlashMenuPlugin from './plugins/SlashMenuPlugin';
 import FilePlugin from './plugins/FilePlugin';
 import { FileNode } from './nodes/FileNode';
 import './RichTextEditor.scss';
@@ -45,6 +46,8 @@ const getEditorConfig = () => ({
                 listitem: 'editor-nested-listitem',
             },
             checklist: 'editor-checklist',
+            listitemChecked: 'editor-listitem-checked',
+            listitemUnchecked: 'editor-listitem-unchecked',
         },
         table: 'editor-table',
         tableRow: 'editor-table-row',
@@ -298,6 +301,7 @@ export default function RichTextEditor({
                         <CheckListPlugin />
                         {/* <TablePlugin /> */}
                         <AutoLinkPlugin />
+                        <SlashMenuPlugin />
                         <CharacterLimitPlugin maxLength={maxLength} />
                         <OnChangeHTMLPlugin onChange={onChange} />
                         <ClickableLinkPlugin />

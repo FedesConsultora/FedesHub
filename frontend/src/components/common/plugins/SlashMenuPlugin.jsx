@@ -27,27 +27,32 @@ import {
     $getSelection,
     $isRangeSelection,
     $createParagraphNode,
+    $createTextNode,
 } from 'lexical';
 import {
-    INSERT_TABLE_COMMAND,
-} from '@lexical/table';
-import {
     INSERT_CHECK_LIST_COMMAND,
+    INSERT_UNORDERED_LIST_COMMAND,
+    INSERT_ORDERED_LIST_COMMAND,
 } from '@lexical/list';
 import {
     MdTitle,
     MdFormatListBulleted,
-    MdGridOn,
+    MdFormatListNumbered,
     MdFormatQuote,
-    MdCheckBox
+    MdCheckBox,
+    MdTextFields,
+    MdHorizontalRule,
+    MdAutoAwesome,
 } from 'react-icons/md';
 
 class SlashMenuItem extends TypeaheadOption {
-    constructor(title, { icon, onSelect }) {
+    constructor(title, { icon, description, onSelect, disabled = false }) {
         super(title);
         this.title = title;
         this.icon = icon;
+        this.description = description || '';
         this.onSelect = onSelect;
+        this.disabled = disabled;
     }
 }
 
@@ -59,9 +64,9 @@ function SlashMenuItemElement({
     option,
 }) {
     let className = 'item';
-    if (isSelected) {
-        className += ' selected';
-    }
+    if (isSelected) className += ' selected';
+    if (option.disabled) className += ' disabled';
+
     return (
         <li
             key={option.key}
@@ -69,9 +74,18 @@ function SlashMenuItemElement({
             className={className}
             ref={option.setRefElement}
             onMouseEnter={onMouseEnter}
-            onClick={onClick}>
+            onClick={option.disabled ? undefined : onClick}
+        >
             <span className="icon">{option.icon}</span>
-            <span className="text">{option.title}</span>
+            <div className="text-wrap">
+                <span className="text">{option.title}</span>
+                {option.description && (
+                    <span className="description">{option.description}</span>
+                )}
+            </div>
+            {option.disabled && (
+                <span className="badge-soon">Próximamente</span>
+            )}
         </li>
     );
 }
@@ -88,6 +102,7 @@ export default function SlashMenuPlugin() {
         const baseOptions = [
             new SlashMenuItem('Título 1', {
                 icon: <MdTitle />,
+                description: 'Encabezado grande',
                 onSelect: () => {
                     editor.update(() => {
                         const selection = $getSelection();
@@ -99,6 +114,7 @@ export default function SlashMenuPlugin() {
             }),
             new SlashMenuItem('Título 2', {
                 icon: <MdTitle style={{ fontSize: '0.8em' }} />,
+                description: 'Encabezado mediano',
                 onSelect: () => {
                     editor.update(() => {
                         const selection = $getSelection();
@@ -110,6 +126,7 @@ export default function SlashMenuPlugin() {
             }),
             new SlashMenuItem('Título 3', {
                 icon: <MdTitle style={{ fontSize: '0.6em' }} />,
+                description: 'Encabezado pequeño',
                 onSelect: () => {
                     editor.update(() => {
                         const selection = $getSelection();
@@ -119,24 +136,42 @@ export default function SlashMenuPlugin() {
                     });
                 },
             }),
-            /* new SlashMenuItem('Tabla', {
-                icon: <MdGridOn />,
+            new SlashMenuItem('Texto normal', {
+                icon: <MdTextFields />,
+                description: 'Párrafo de texto',
                 onSelect: () => {
-                    editor.dispatchCommand(INSERT_TABLE_COMMAND, {
-                        columns: '3',
-                        rows: '3',
-                        includeHeader: true,
+                    editor.update(() => {
+                        const selection = $getSelection();
+                        if ($isRangeSelection(selection)) {
+                            $setBlocksType(selection, () => $createParagraphNode());
+                        }
                     });
                 },
-            }), */
+            }),
+            new SlashMenuItem('Lista con viñetas', {
+                icon: <MdFormatListBulleted />,
+                description: 'Lista desordenada',
+                onSelect: () => {
+                    editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+                },
+            }),
+            new SlashMenuItem('Lista numerada', {
+                icon: <MdFormatListNumbered />,
+                description: 'Lista ordenada',
+                onSelect: () => {
+                    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+                },
+            }),
             new SlashMenuItem('Checklist', {
                 icon: <MdCheckBox />,
+                description: 'Lista de verificación',
                 onSelect: () => {
                     editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
                 },
             }),
             new SlashMenuItem('Cita', {
                 icon: <MdFormatQuote />,
+                description: 'Bloque de cita',
                 onSelect: () => {
                     editor.update(() => {
                         const selection = $getSelection();
@@ -145,6 +180,36 @@ export default function SlashMenuPlugin() {
                         }
                     });
                 },
+            }),
+            new SlashMenuItem('Separador', {
+                icon: <MdHorizontalRule />,
+                description: 'Línea horizontal',
+                onSelect: () => {
+                    editor.update(() => {
+                        const selection = $getSelection();
+                        if ($isRangeSelection(selection)) {
+                            const anchor = selection.anchor.getNode();
+                            const topLevel = anchor.getTopLevelElement();
+                            if (topLevel) {
+                                const hr = $createParagraphNode();
+                                const hrText = $createTextNode('───────────────────');
+                                hrText.setStyle('color: rgba(255,255,255,0.15); font-size: 10px; letter-spacing: 2px');
+                                hr.append(hrText);
+                                topLevel.insertAfter(hr);
+                                // Add a new paragraph after the separator for continued editing
+                                const newPara = $createParagraphNode();
+                                hr.insertAfter(newPara);
+                                newPara.selectStart();
+                            }
+                        }
+                    });
+                },
+            }),
+            new SlashMenuItem('Consultar a Gemini', {
+                icon: <MdAutoAwesome />,
+                description: 'Asistente IA para tareas',
+                disabled: true,
+                onSelect: () => { },
             }),
         ];
 
@@ -158,6 +223,7 @@ export default function SlashMenuPlugin() {
 
     const onSelectOption = useCallback(
         (selectedOption, nodeToRemove, closeMenu, matchingString) => {
+            if (selectedOption.disabled) return;
             editor.update(() => {
                 if (nodeToRemove) {
                     nodeToRemove.remove();
@@ -173,13 +239,13 @@ export default function SlashMenuPlugin() {
         <LexicalTypeaheadMenuPlugin
             onQueryChange={setQueryString}
             onSelectOption={onSelectOption}
-            triggerMatch={checkTriggerMatch}
+            triggerFn={checkTriggerMatch}
             options={options}
             menuRenderFn={(
                 anchorElementRef,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-            ) =>
-                anchorElementRef.current && options.length
+            ) => {
+                return anchorElementRef.current && options.length
                     ? ReactDOM.createPortal(
                         <div className="typeahead-menu slash-menu">
                             <ul>
@@ -189,6 +255,7 @@ export default function SlashMenuPlugin() {
                                         index={i}
                                         isSelected={selectedIndex === i}
                                         onClick={() => {
+                                            if (option.disabled) return;
                                             setHighlightedIndex(i);
                                             selectOptionAndCleanUp(option);
                                         }}
@@ -202,8 +269,8 @@ export default function SlashMenuPlugin() {
                         </div>,
                         anchorElementRef.current,
                     )
-                    : null
-            }
+                    : null;
+            }}
         />
     );
 }
