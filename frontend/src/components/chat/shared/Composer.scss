@@ -465,3 +465,136 @@
     height: 38px;
   }
 }
+
+/* Link de Conectar Google en el plusMenu */
+.plusMenu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: v.$fh-muted;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+
+  svg {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, .07);
+    color: v.$fh-text;
+  }
+}
+
+/* Modal de pegar link de Google Meet */
+.pasteMeetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.pasteMeetModal {
+  background: #1a222c;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+  padding: 24px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: plusMenuIn .2s ease-out;
+
+  .pasteMeetHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+
+    svg {
+      color: #00897b;
+      font-size: 1.3rem;
+    }
+  }
+
+  .pasteMeetHint {
+    margin: 0;
+    font-size: 0.88rem;
+    color: v.$fh-muted;
+    line-height: 1.5;
+  }
+
+  .pasteMeetInput {
+    width: 100%;
+    background: rgba(0, 0, 0, .25);
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 10px;
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: v.$fh-primary;
+    }
+
+    &::placeholder {
+      color: rgba(255, 255, 255, .3);
+    }
+  }
+
+  .pasteMeetActions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+
+    .cancelBtn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .15);
+      color: v.$fh-muted;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all .15s;
+
+      &:hover {
+        border-color: rgba(255, 255, 255, .3);
+        color: #fff;
+      }
+    }
+
+    .sendBtn {
+      width: auto;
+      height: auto;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+
+      &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

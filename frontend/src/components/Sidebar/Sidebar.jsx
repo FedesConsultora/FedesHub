@@ -15,13 +15,13 @@ const APPS = [
   { code: 'feders', name: 'Feders', to: '/feders' },
   { code: 'asistencia', name: 'Asistencia', to: '/asistencia' },
   { code: 'ausencia', name: 'Ausencias', to: '/ausencias' },
-  { code: 'calendario', name: 'Calendario', to: '/calendario', inDev: true, directivosOnly: true },
+  { code: 'calendario', name: 'Calendario', to: '/calendario' },
   { code: 'tareas', name: 'Tareas', to: '/tareas' },
   { code: 'chat', name: 'Chat', to: '/chat' },
   { code: 'comercial', name: 'Comercial', to: '/comercial/leads', directivosOnly: true },
   { code: 'onboarding', name: 'Onboarding', to: '/onboarding', directivosOnly: true },
   { code: 'clientes', name: 'Clientes', to: '/clientes', directivosOnly: true },
-  { code: 'gastos', name: 'Gastos', to: '/gastos'},
+  { code: 'gastos', name: 'Gastos', to: '/gastos' },
 ]
 
 export default function Sidebar() {

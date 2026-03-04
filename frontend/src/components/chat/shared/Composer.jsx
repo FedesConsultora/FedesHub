@@ -13,6 +13,7 @@ import { ChatActionCtx } from './context'
 import MentionInput from './MentionInput'
 import { CenteredPicker } from './ReactionBar'
 import { fullName, displayName, pickAvatar, getEmail } from '../../../utils/people'
+import { calendarioApi } from '../../../api/calendario'
 import './Composer.scss'
 
 /* ---------------- Helpers menciones ---------------- */
@@ -219,6 +220,9 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     return () => document.removeEventListener('mousedown', handler)
   }, [openPlus])
 
+  const [pasteModal, setPasteModal] = useState(false)
+  const [pasteUrl, setPasteUrl] = useState('')
+
   const handleMeet = async () => {
     setOpenPlus(false)
     try {
@@ -227,12 +231,38 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     } catch (err) {
       const code = err?.response?.data?.code || err?.code
       if (code === 'GOOGLE_NOT_CONNECTED') {
-        // Fallback: abrir meet.google.com/new
-        toast?.info('Abriendo Google Meet… pegá el link acá cuando lo tengas.')
+        // Fallback: abrir meet.google.com/new y pedir que pegue el link
         window.open('https://meet.google.com/new', '_blank')
+        setPasteUrl('')
+        setPasteModal(true)
       } else {
         toast?.error(err?.response?.data?.message || err?.message || 'Error al crear reunión')
       }
+    }
+  }
+
+  const handlePasteMeetLink = async () => {
+    const url = pasteUrl.trim()
+    if (!url || !url.startsWith('http')) {
+      toast?.error('Pegá un link válido de Google Meet')
+      return
+    }
+    try {
+      const payload = {
+        body_text: '📹 Reunión de Google Meet',
+        body_json: {
+          type: 'meeting',
+          meeting: { join_url: url, provider: 'google_meet_manual' }
+        },
+        parent_id: replyTo?.id || null
+      }
+      await send.mutateAsync({ canal_id, body: payload })
+      window.dispatchEvent(new CustomEvent('fh:chat:sent', { detail: { canal_id } }))
+      setPasteModal(false)
+      setPasteUrl('')
+      setReplyTo(null)
+    } catch (err) {
+      toast?.error('Error al enviar el link de reunión')
     }
   }
 
@@ -261,6 +291,18 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
             <button type="button" onClick={handleMeet} disabled={createMeet.isPending}>
               <FiVideo />
               <span>{createMeet.isPending ? 'Creando…' : 'Google Meet'}</span>
+            </button>
+            <button
+              type="button"
+              className="plusMenu-link"
+              onClick={() => {
+                setOpenPlus(false)
+                const url = calendarioApi.google.connectUrl()
+                window.open(url, '_blank', 'width=520,height=640')
+              }}
+            >
+              <FiVideo style={{ opacity: 0.5 }} />
+              <span>Conectar Google</span>
             </button>
           </div>
         )}
@@ -380,6 +422,42 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
             </div>
           </div>
         </CenteredPicker>
+      )}
+
+      {pasteModal && (
+        <div className="pasteMeetOverlay" onClick={() => setPasteModal(false)}>
+          <div className="pasteMeetModal" onClick={e => e.stopPropagation()}>
+            <div className="pasteMeetHeader">
+              <FiVideo />
+              <span>Reunión de Google Meet</span>
+            </div>
+            <p className="pasteMeetHint">
+              Se abrió Google Meet en una nueva pestaña. Copiá el link y pegalo acá:
+            </p>
+            <input
+              type="url"
+              className="pasteMeetInput"
+              placeholder="https://meet.google.com/xxx-xxxx-xxx"
+              value={pasteUrl}
+              onChange={e => setPasteUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handlePasteMeetLink()}
+              autoFocus
+            />
+            <div className="pasteMeetActions">
+              <button type="button" className="cancelBtn" onClick={() => setPasteModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="sendBtn"
+                onClick={handlePasteMeetLink}
+                disabled={!pasteUrl.trim() || send.isPending}
+              >
+                Enviar reunión
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </form>
   )

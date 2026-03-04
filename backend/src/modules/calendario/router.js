@@ -40,7 +40,7 @@ router.post('/google/link', requireAuth, requirePermission('calendario', 'update
 router.post('/google/sync', requireAuth, requirePermission('calendario', 'update'), gcal.syncOne);
 router.post('/google/watch/:id/start', requireAuth, requirePermission('calendario', 'update'), gcal.startWatch);
 router.post('/google/watch/stop', requireAuth, requirePermission('calendario', 'update'), gcal.stopWatch);
-router.get('/google/connect', requireAuth, requirePermission('calendario', 'update'), gcal.connectStart);
+router.get('/google/connect', requireAuth, gcal.connectStart);
 router.get('/google/callback', requireAuth, gcal.connectCallback);
 
 // Webhook público de Google (sin auth)

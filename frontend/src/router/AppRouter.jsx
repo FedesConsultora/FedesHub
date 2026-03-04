@@ -101,7 +101,7 @@ export default function AppRouter() {
           />
           <Route
             path="calendario"
-            element={<RequirePerm modulo="calendario" accion="read"><CalendarioPage /></RequirePerm>}
+            element={<CalendarioPage />}
           />
           <Route
             path="notificaciones"
