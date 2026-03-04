@@ -1,6 +1,5 @@
 // /backend/src/modules/calendario/services/google.service.js
-import pkg from '@googleapis/calendar';
-const { google } = pkg;
+import { google } from 'googleapis';
 
 import { initModels } from '../../../models/registry.js';
 import {
@@ -74,7 +73,7 @@ export async function svcGoogleSyncOne(body, user) {
     if (err?.code === 410) {
       const res = await cal.events.list({
         calendarId: vinc.googleCalendario.google_calendar_id,
-        updatedMin: new Date(Date.now() - 90*24*3600*1000).toISOString(),
+        updatedMin: new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString(),
         showDeleted: true
       });
       const items = res.data.items || [];

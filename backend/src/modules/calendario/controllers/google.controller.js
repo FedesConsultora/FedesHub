@@ -5,9 +5,8 @@ import {
   svcGoogleStartWatch, svcGoogleStopWatch, svcGoogleWebhook
 } from '../services/google.service.js';
 
+import { google } from 'googleapis';
 import { initModels } from '../../../models/registry.js';
-import pkg from '@googleapis/calendar';
-const { google } = pkg;
 
 const m = await initModels();
 
