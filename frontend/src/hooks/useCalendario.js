@@ -1,10 +1,11 @@
 // src/hooks/useCalendario.js
 import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarioApi } from '../api/calendario'
 import { parseApiError } from '../api/client'
 
-const two = (n)=>String(n).padStart(2,'0')
-export const isoDate = (d)=>`${d.getFullYear()}-${two(d.getMonth()+1)}-${two(d.getDate())}`
+const two = (n) => String(n).padStart(2, '0')
+export const isoDate = (d) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Catálogo  (defensivo: si algún endpoint no existe, devuelve [])
@@ -17,34 +18,34 @@ export function useCalendarioCatalog() {
   const [syncDirs, setSyncDirs] = useState([])
   const [error, setError] = useState(null)
 
-  useEffect(()=> {
+  useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        setLoading(true)
+      ; (async () => {
+        try {
+          setLoading(true)
 
-        // Intentamos traer todo; si algo falta, cae en []
-        const [t, v, e, a, s] = await Promise.all([
-          // algunos backends no tienen “calendarioTipos”; lo tratamos como opcional
-          calendarioApi?.catalog?.calendarioTipos?.().catch(()=>[]) ?? [],
-          calendarioApi.catalog.visibilidades().catch(()=>[]),
-          calendarioApi.catalog.eventoTipos().catch(()=>[]),
-          calendarioApi.catalog.asistentesTipos().catch(()=>[]),
-          calendarioApi.catalog.syncDirecciones().catch(()=>[])
-        ])
+          // Intentamos traer todo; si algo falta, cae en []
+          const [t, v, e, a, s] = await Promise.all([
+            // algunos backends no tienen “calendarioTipos”; lo tratamos como opcional
+            calendarioApi?.catalog?.calendarioTipos?.().catch(() => []) ?? [],
+            calendarioApi.catalog.visibilidades().catch(() => []),
+            calendarioApi.catalog.eventoTipos().catch(() => []),
+            calendarioApi.catalog.asistentesTipos().catch(() => []),
+            calendarioApi.catalog.syncDirecciones().catch(() => [])
+          ])
 
-        if (!mounted) return
-        setTipos(t || [])
-        setVis(v || [])
-        setEvtTipos(e || [])
-        setAsisTipos(a || [])
-        setSyncDirs(s || [])
-      } catch (e) {
-        if (mounted) setError(parseApiError(e))
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+          if (!mounted) return
+          setTipos(t || [])
+          setVis(v || [])
+          setEvtTipos(e || [])
+          setAsisTipos(a || [])
+          setSyncDirs(s || [])
+        } catch (e) {
+          if (mounted) setError(parseApiError(e))
+        } finally {
+          if (mounted) setLoading(false)
+        }
+      })()
     return () => { mounted = false }
   }, [])
 
@@ -58,19 +59,19 @@ export function useMisCalendarios(params = {}) {
   const [rows, setRows] = useState([])
   const [error, setError] = useState(null)
 
-  useEffect(()=> {
+  useEffect(() => {
     let mounted = true
-    ;(async ()=>{
-      try {
-        setLoading(true)
-        const data = await calendarioApi.calendars.mine(params)
-        if (mounted) setRows(data?.rows || data || [])
-      } catch (e) {
-        if (mounted) setError(parseApiError(e))
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          setLoading(true)
+          const data = await calendarioApi.calendars.mine(params)
+          if (mounted) setRows(data?.rows || data || [])
+        } catch (e) {
+          if (mounted) setError(parseApiError(e))
+        } finally {
+          if (mounted) setLoading(false)
+        }
+      })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(params)])
 
@@ -114,10 +115,10 @@ export function useEventos({ from, to, calendarIds = [] }) {
 export function useCalendarBoard(initDate = new Date()) {
   const [cursor, setCursor] = useState(new Date(initDate.getFullYear(), initDate.getMonth(), 1))
   const first = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor])
-  const last  = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
+  const last = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
 
   const from = useMemo(() => isoDate(first), [first])
-  const to   = useMemo(() => isoDate(last),  [last])
+  const to = useMemo(() => isoDate(last), [last])
 
   return {
     year: cursor.getFullYear(),
@@ -135,12 +136,12 @@ export function useCalendarBoard(initDate = new Date()) {
 // Nota: tu backend no expone /calendario/google/account; manejamos sólo lo disponible.
 // Si GET /calendario/google/calendars devuelve 400 => “sin cuenta” (lo tratamos suave).
 export function useGoogleBridge(autoLoad = true) {
-  const [loading, setLoading]   = useState(!!autoLoad)
-  const [error, setError]       = useState(null)
+  const [loading, setLoading] = useState(!!autoLoad)
+  const [error, setError] = useState(null)
 
-  const [account, setAccount]   = useState(null)  // { email?, vinculos? } si en el futuro lo exponés
-  const [locals, setLocals]     = useState([])    // calendarios locales del usuario
-  const [remotes, setRemotes]   = useState([])    // calendarios de Google (si hay cuenta)
+  const [account, setAccount] = useState(null)  // { email?, vinculos? } si en el futuro lo exponés
+  const [locals, setLocals] = useState([])    // calendarios locales del usuario
+  const [remotes, setRemotes] = useState([])    // calendarios de Google (si hay cuenta)
   const [vinculos, setVinculos] = useState([])    // canales/watch vinculados (si se expone)
 
   const load = useCallback(async () => {
@@ -189,7 +190,7 @@ export function useGoogleBridge(autoLoad = true) {
   const link = useCallback(async (calLocalId, googleId, direccion_codigo = 'both') => {
     await calendarioApi.google.link({
       calendario_local_id: calLocalId,
-      google_calendar_id:  String(googleId),
+      google_calendar_id: String(googleId),
       direccion_codigo
     })
     await load()
@@ -226,16 +227,37 @@ export function useCalendarios(params = {}) {
 
   useEffect(() => {
     let mounted = true
-    ;(async ()=>{
-      try {
-        setLoading(true)
-        const data = await calendarioApi.calendars.list({ scope:'all', ...params })
-        if (mounted) setRows(data?.rows || data || [])
-      } catch (e) { if (mounted) setError(parseApiError(e)) }
-      finally { if (mounted) setLoading(false) }
-    })()
+      ; (async () => {
+        try {
+          setLoading(true)
+          const data = await calendarioApi.calendars.list({ scope: 'all', ...params })
+          if (mounted) setRows(data?.rows || data || [])
+        } catch (e) { if (mounted) setError(parseApiError(e)) }
+        finally { if (mounted) setLoading(false) }
+      })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(params)])
 
   return { loading, error, rows, setRows }
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Estado de conexión Google (React Query – cacheable desde Composer y Calendario)
+export function useGoogleStatus() {
+  const qc = useQueryClient()
+  const q = useQuery({
+    queryKey: ['google', 'status'],
+    queryFn: () => calendarioApi.google.account(),
+    staleTime: 60_000,
+    retry: 1
+  })
+  const refresh = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['google', 'status'] })
+  }, [qc])
+  return {
+    loading: q.isLoading,
+    connected: q.data?.connected ?? false,
+    email: q.data?.email ?? null,
+    refresh
+  }
 }

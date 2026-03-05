@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef, useState, useContext } from 'react'
 import { FaArrowDown } from 'react-icons/fa'
-import { FiX, FiCheck, FiVideo } from 'react-icons/fi'
+import { FiX, FiCheck, FiVideo, FiCalendar } from 'react-icons/fi'
 import { CiFaceSmile } from "react-icons/ci";
 import { MdOutlineModeEdit } from "react-icons/md";
 import { BsPinAngle } from "react-icons/bs";
@@ -471,13 +471,47 @@ function MessageItem({ m, canal_id, my_user_id, members, statuses, canPin, canRe
                   Unirme a la reunión
                 </a>
               </div>
-            ) : (
+            ) : m.body_json?.type === 'scheduled_meeting' ? (() => {
+              const meeting = m.body_json.meeting;
+              const start = meeting?.starts_at ? new Date(meeting.starts_at) : null;
+              const end = meeting?.ends_at ? new Date(meeting.ends_at) : null;
+              const dStr = start?.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+              const tStr = start ? `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${end?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
+
+              return (
+                <div className="meeting-card scheduled">
+                  <div className="meeting-icon sched">
+                    <FiCalendar />
+                  </div>
+                  <div className="meeting-info">
+                    <div className="meeting-title">{meeting?.titulo || 'Reunión agendada'}</div>
+                    <div className="meeting-subtitle">
+                      {dStr && <span>📆 {dStr}</span>}
+                      {tStr && <span> · ⏰ {tStr}</span>}
+                    </div>
+                  </div>
+                  {meeting?.join_url ? (
+                    <a
+                      href={meeting.join_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="meeting-join-btn"
+                    >
+                      Unirme
+                    </a>
+                  ) : (
+                    <span className="meeting-cal-badge">en calendario</span>
+                  )}
+                </div>
+              );
+            })() : (
+
               <>
                 <div className="txt" dangerouslySetInnerHTML={renderBody(m.body_text || '')} />
               </>
             )}
             {/* MessageAttachments should always render if not deleted/editing, regardless of message type */}
-            {!isDeleted && !isEditing && (m.body_json?.type !== 'sticker' && m.body_json?.type !== 'meeting') && (
+            {!isDeleted && !isEditing && (m.body_json?.type !== 'sticker' && m.body_json?.type !== 'meeting' && m.body_json?.type !== 'scheduled_meeting') && (
               <MessageAttachments items={m.adjuntos || []} isMine={isMine} />
             )}
           </div>

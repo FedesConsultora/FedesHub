@@ -56,6 +56,7 @@ export const calendarioApi = {
 
   google: {
     // si el usuario no conectó Google, este endpoint devuelve 400 → manejalo en el hook
+    account: () => api.get(`${base}/google/account`).then(r => r.data),
     listCalendars: () => api.get(`${base}/google/calendars`).then(r => r.data),
     link: (body) => api.post(`${base}/google/link`, body).then(r => r.data),
     syncOne: (calendario_local_id) => api.post(`${base}/google/sync`, { calendario_local_id }).then(r => r.data),

@@ -3,6 +3,12 @@ import { Op } from 'sequelize';
 import RRulePkg from 'rrule';
 const { RRule } = RRulePkg;
 import { initModels } from '../../../models/registry.js';
+// Importación diferida para evitar ciclos
+let googleService;
+async function getGoogleService() {
+  if (!googleService) googleService = await import('../services/google.service.js');
+  return googleService;
+}
 const m = await initModels();
 
 const SELECT_BASE = {
@@ -161,10 +167,30 @@ export async function upsertEvent(payload, user, t) {
     }, { transaction: t });
   }
 
-  return m.Evento.findByPk(row.id, { ...SELECT_BASE, transaction: t });
+  const finalRow = await m.Evento.findByPk(row.id, { ...SELECT_BASE, transaction: t });
+
+  // Sincronizar con Google (Fuera de la transacción principal para no bloquear)
+  setImmediate(async () => {
+    try {
+      const gSvc = await getGoogleService();
+      await gSvc.svcGoogleUpsertEvent(finalRow, user.id);
+    } catch (err) {
+      console.error('[upsertEvent:sync] Error sync Google:', err.message);
+    }
+  });
+
+  return finalRow;
 }
 
-export async function deleteEvent(id, t) {
+export async function deleteEvent(id, user_id, t) {
+  // Primero avisar a Google antes de borrar localmente (necesitamos los datos de sync)
+  try {
+    const gSvc = await getGoogleService();
+    await gSvc.svcGoogleDeleteEvent(id, user_id);
+  } catch (err) {
+    console.error('[deleteEvent:sync] Error sync Google:', err.message);
+  }
+
   const row = await m.Evento.findByPk(id, { transaction: t });
   if (!row) return 0;
   await m.EventoAsistente.destroy({ where: { evento_id: id }, transaction: t });

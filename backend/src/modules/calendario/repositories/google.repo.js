@@ -1,6 +1,5 @@
 // /backend/src/modules/calendario/repositories/google.repo.js
-import pkg from '@googleapis/calendar';
-const { google } = pkg;
+import { google } from 'googleapis';
 import { initModels } from '../../../models/registry.js';
 const m = await initModels();
 
@@ -86,11 +85,11 @@ export async function deactivateChannelByHeader(channel_id, resource_id) {
 function parseGoogleDate(item) {
   // all-day → date (sin hora); con hora → dateTime
   const ds = item.start?.dateTime || item.start?.date;
-  const de = item.end?.dateTime   || item.end?.date;
+  const de = item.end?.dateTime || item.end?.date;
   const allDay = !!item.start?.date; // si viene 'date' es allDay
   return {
     starts_at: ds ? new Date(ds) : null,
-    ends_at:   de ? new Date(de) : null,
+    ends_at: de ? new Date(de) : null,
     all_day: allDay
   };
 }
@@ -98,7 +97,7 @@ function parseGoogleDate(item) {
 function extractRRule(item) {
   // Google manda recurrence como ['RRULE:FREQ=...;...']
   const r = Array.isArray(item.recurrence) ? item.recurrence.find(s => s.startsWith('RRULE:')) : null;
-  return r ? r.replace(/^RRULE:/,'') : null;
+  return r ? r.replace(/^RRULE:/, '') : null;
 }
 
 /**
@@ -130,7 +129,7 @@ export async function upsertFromGoogleItem(vinc, gItem, t) {
   const { starts_at, ends_at, all_day } = parseGoogleDate(gItem);
   const rrule = extractRRule(gItem);
   const tipo = await m.EventoTipo.findOne({ where: { codigo: 'interno' }, transaction: t });
-  const vis  = await m.VisibilidadTipo.findOne({ where: { codigo: 'organizacion' }, transaction: t });
+  const vis = await m.VisibilidadTipo.findOne({ where: { codigo: 'organizacion' }, transaction: t });
 
   // Si no tenemos tipo/vis, abortamos
   if (!tipo || !vis) throw Object.assign(new Error('Faltan catálogos EventoTipo/VisibilidadTipo'), { status: 500 });
@@ -182,7 +181,7 @@ export async function upsertFromGoogleItem(vinc, gItem, t) {
     ical_uid: gItem.iCalUID || null,
     recurring_event_id: gItem.recurringEventId || null,
     original_start_time: gItem.originalStartTime?.dateTime ? new Date(gItem.originalStartTime.dateTime) :
-                         gItem.originalStartTime?.date ? new Date(gItem.originalStartTime.date) : null,
+      gItem.originalStartTime?.date ? new Date(gItem.originalStartTime.date) : null,
     last_synced_at: new Date(),
     last_error: null,
     is_deleted_remote: false,

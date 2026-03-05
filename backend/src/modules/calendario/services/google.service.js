@@ -144,3 +144,137 @@ export async function svcGoogleWebhook(headers) {
 
   return { ok: true, state };
 }
+
+export async function svcGoogleCreateMeetEvent(user, eventData) {
+  const acct = await m.GoogleCuenta.findOne({ where: { user_id: user.id } });
+  if (!acct) throw Object.assign(new Error('No hay cuenta Google conectada'), { status: 400 });
+
+  const cal = clientForCuenta(acct);
+
+  const googleEvent = {
+    summary: eventData.titulo,
+    description: eventData.descripcion,
+    start: { dateTime: eventData.starts_at },
+    end: { dateTime: eventData.ends_at },
+    attendees: eventData.attendees || [],
+    conferenceData: {
+      createRequest: {
+        requestId: `meet-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' }
+      }
+    }
+  };
+
+  const res = await cal.events.insert({
+    calendarId: 'primary',
+    requestBody: googleEvent,
+    conferenceDataVersion: 1,
+    sendUpdates: 'all'
+  });
+
+  return {
+    id: res.data.id,
+    join_url: res.data.hangoutLink,
+    provider: 'google_meet'
+  };
+}
+
+/**
+ * Agrega o actualiza un evento en Google Calendar (Push Hub -> Google)
+ */
+export async function svcGoogleUpsertEvent(evento, user_id) {
+  const vinc = await m.CalendarioVinculo.findOne({
+    where: { calendario_local_id: evento.calendario_local_id, is_activo: true },
+    include: [{ model: m.GoogleCalendario, as: 'googleCalendario' }]
+  });
+  if (!vinc) return null; // No vinculado, nada que hacer
+
+  const acct = await m.GoogleCuenta.findOne({ where: { user_id } });
+  if (!acct) return null;
+
+  const cal = clientForCuenta(acct);
+  const sync = await m.EventoSync.findOne({ where: { evento_id: evento.id, google_cal_id: vinc.google_cal_id } });
+
+  // Buscar asistentes locales para enviar a Google
+  const asistentes = await m.EventoAsistente.findAll({
+    where: { evento_id: evento.id },
+    include: [{ model: m.Feder, as: 'feder', include: [{ model: m.User, as: 'user' }] }]
+  });
+  const attendees = asistentes.map(a => ({
+    email: a.email_externo || a.feder?.user?.email,
+    displayName: a.nombre || a.feder?.nombre
+  })).filter(a => a.email);
+
+  const gEventBody = {
+    summary: evento.titulo,
+    description: evento.descripcion,
+    location: evento.lugar,
+    start: evento.all_day ? { date: evento.starts_at.split('T')[0] } : { dateTime: evento.starts_at },
+    end: evento.all_day ? { date: evento.ends_at.split('T')[0] } : { dateTime: evento.ends_at },
+    attendees
+  };
+
+  let res;
+  if (sync && sync.google_event_id && !sync.is_deleted_remote) {
+    // Update
+    res = await cal.events.update({
+      calendarId: vinc.googleCalendario.google_calendar_id,
+      eventId: sync.google_event_id,
+      requestBody: gEventBody,
+      sendUpdates: 'all'
+    });
+  } else {
+    // Create
+    res = await cal.events.insert({
+      calendarId: vinc.googleCalendario.google_calendar_id,
+      requestBody: gEventBody,
+      sendUpdates: 'all'
+    });
+  }
+
+  // Actualizar tabla de sincronización
+  const syncData = {
+    evento_id: evento.id,
+    google_cal_id: vinc.google_cal_id,
+    google_event_id: res.data.id,
+    etag: res.data.etag,
+    last_synced_at: new Date(),
+    is_deleted_remote: false
+  };
+
+  if (sync) await sync.update(syncData);
+  else await m.EventoSync.create(syncData);
+
+  return res.data;
+}
+
+/**
+ * Elimina un evento en Google Calendar (Push Hub -> Google)
+ */
+export async function svcGoogleDeleteEvent(evento_id, user_id) {
+  const syncs = await m.EventoSync.findAll({
+    where: { evento_id, is_deleted_remote: false },
+    include: [
+      {
+        model: m.GoogleCalendario, as: 'googleCalendario',
+        include: [{ model: m.GoogleCuenta, as: 'cuenta' }]
+      }
+    ]
+  });
+
+  for (const sync of syncs) {
+    if (sync.googleCalendario?.cuenta?.user_id !== user_id) continue;
+
+    try {
+      const cal = clientForCuenta(sync.googleCalendario.cuenta);
+      await cal.events.delete({
+        calendarId: sync.googleCalendario.google_calendar_id,
+        eventId: sync.google_event_id,
+        sendUpdates: 'all'
+      });
+      await sync.update({ is_deleted_remote: true, last_synced_at: new Date() });
+    } catch (err) {
+      console.error('[svcGoogleDeleteEvent] Error:', err.message);
+    }
+  }
+}

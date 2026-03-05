@@ -17,6 +17,7 @@ import { createInvitation, acceptInvitation, declineInvitation } from '../reposi
 import { scheduleMeeting } from '../repositories/meetings.repo.js';
 
 import { svcCreate as createNotif } from '../../notificaciones/services/notificaciones.service.js';
+import { svcGoogleCreateMeetEvent } from '../../calendario/services/google.service.js';
 import { saveMessageFiles, removeMessageFiles } from '../chat.storage.js';
 
 // 🔊 Publishers SSE (tiempo real)
@@ -561,14 +562,89 @@ export const svcDeclineInvitation = async (token, user) => {
 // -------- Meetings
 export const svcScheduleMeeting = async (canal_id, body, user) => {
   const t = await sequelize.transaction();
-  let evento, meet;
+  let evento, meet, canal;
   try {
+    canal = await getCanalWithMiembro(canal_id, user.id, t);
+    if (!canal) throw Object.assign(new Error('Canal no encontrado'), { status: 404 });
     ({ evento, meet } = await scheduleMeeting(canal_id, body, user.id, t));
+
+    // Si pide Google Meet, intentar generar el link
+    if (body.provider_codigo === 'google_meet') {
+      try {
+        // Colectar emails de los miembros del canal para invitarlos
+        const miembros = await mReg.ChatCanalMiembro.findAll({
+          where: { canal_id },
+          include: [{ model: mReg.User, as: 'user' }],
+          transaction: t
+        });
+        const attendees = miembros
+          .filter(m => m.user?.email)
+          .map(m => ({ email: m.user.email }));
+
+        const gEvent = await svcGoogleCreateMeetEvent(user, {
+          titulo: body.titulo,
+          descripcion: `Reunión agendada desde chat #${canal.slug || canal_id}`,
+          starts_at: body.starts_at,
+          ends_at: body.ends_at,
+          attendees
+        });
+
+        if (gEvent.join_url) {
+          await meet.update({
+            join_url: gEvent.join_url,
+            external_meeting_id: gEvent.id
+          }, { transaction: t });
+        }
+      } catch (err) {
+        console.error('[svcScheduleMeeting] Google Meet error:', err.message);
+        // No bloqueamos el agendado local si falla Google, pero avisamos
+      }
+    }
+
     await t.commit();
-  } catch (e) { await t.rollback(); throw e; }
+  } catch (e) {
+    await t.rollback();
+    console.error('[svcScheduleMeeting] Error al agendar:', e);
+    throw e;
+  }
 
   // 🔊 Real-time: meeting agendado
   try { await publishMeetingScheduled(canal_id, evento, meet); } catch (err) { console.error('sse meeting', err); }
+
+  // 💬 Enviar mensaje en el canal con la info de la reunión
+  let msg;
+  try {
+    const startsAt = new Date(evento.starts_at);
+    const endsAt = new Date(evento.ends_at);
+    const dateStr = startsAt.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const timeStr = `${startsAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} – ${endsAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+
+    const t2 = await sequelize.transaction();
+    try {
+      msg = await createMessage(canal, {
+        body_text: `📅 Reunión agendada: ${evento.titulo}`,
+        body_json: {
+          type: 'scheduled_meeting',
+          meeting: {
+            id: meet.id,
+            evento_id: evento.id,
+            titulo: evento.titulo,
+            starts_at: evento.starts_at,
+            ends_at: evento.ends_at,
+            join_url: meet.join_url || null,
+            provider: meet.provider_codigo || 'none'
+          }
+        }
+      }, user, t2);
+      await meet.update({ mensaje_id: msg.id }, { transaction: t2 });
+      await t2.commit();
+    } catch (e2) { await t2.rollback(); console.error('[svcScheduleMeeting] msg', e2); }
+
+    if (msg) {
+      try { await publishMessageCreated(canal_id, msg, { except_user_id: user.id }); } catch (err) { console.error('sse sched meeting msg', err); }
+      try { await _notifyNewMessage(canal_id, msg, user); } catch (e) { console.error('notif sched meeting', e); }
+    }
+  } catch (e) { console.error('[svcScheduleMeeting] post msg', e); }
 
   // 🔔 Notificar asistentes (todos los miembros con user_id)
   try {
@@ -589,6 +665,7 @@ export const svcScheduleMeeting = async (canal_id, body, user) => {
   return { evento, meet };
 };
 
+
 // -------- Instant Meet (link rápido desde el chat)
 export const svcCreateInstantMeet = async (canal_id, user) => {
   // 1. Verificar membresía
@@ -604,71 +681,44 @@ export const svcCreateInstantMeet = async (canal_id, user) => {
     );
   }
 
-  // 3. Crear evento efímero en Google Calendar para generar Meet link
+  // 3. Crear evento en Google Calendar para generar Meet link
   let join_url, external_meeting_id;
   try {
-    const { default: pkg } = await import('@googleapis/calendar');
-    const { google } = pkg;
-    const { OAuth2 } = google.auth;
-    const auth = new OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-    auth.setCredentials({ refresh_token: acct.refresh_token_enc });
-    const cal = google.calendar({ version: 'v3', auth });
-
-    const now = new Date();
-    const end = new Date(now.getTime() + 60 * 60 * 1000); // 1h
-
-    const canalName = canal.nombre || canal.slug || `Canal #${canal_id}`;
-    const event = await cal.events.insert({
-      calendarId: 'primary',
-      conferenceDataVersion: 1,
-      requestBody: {
-        summary: `Reunión rápida – ${canalName}`,
-        start: { dateTime: now.toISOString() },
-        end: { dateTime: end.toISOString() },
-        conferenceData: {
-          createRequest: {
-            requestId: `fh-meet-${canal_id}-${Date.now()}`,
-            conferenceSolutionKey: { type: 'hangoutsMeet' }
-          }
-        }
-      }
+    const gEvent = await svcGoogleCreateMeetEvent(user, {
+      titulo: `Reunión rápida – ${canal.nombre || canal.slug || canal_id}`,
+      descripcion: `Reunión instantánea iniciada en canal #${canal.slug || canal_id}`,
+      starts_at: new Date().toISOString(),
+      ends_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
     });
 
-    join_url = event.data?.hangoutLink
-      || event.data?.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri
-      || null;
-    external_meeting_id = event.data?.conferenceData?.conferenceId || event.data?.id || null;
+    join_url = gEvent.join_url;
+    external_meeting_id = gEvent.id;
   } catch (err) {
-    console.error('[svcCreateInstantMeet] google api', err?.message || err);
-    throw Object.assign(
-      new Error('Error al crear la reunión de Google Meet. Intentá de nuevo.'),
-      { status: 502 }
-    );
+    console.error('[svcCreateInstantMeet] Google API error:', err.message);
+    throw Object.assign(new Error('Error al conectar con Google Meet: ' + err.message), { status: 500 });
   }
 
   if (!join_url) {
     throw Object.assign(new Error('No se pudo generar el link de Meet'), { status: 502 });
   }
 
-  // 4. Registrar en ChatMeeting
-  const meet = await mReg.ChatMeeting.create({
-    canal_id,
-    provider_codigo: 'google_meet',
-    external_meeting_id,
-    join_url,
-    created_by_user_id: user.id,
-    starts_at: new Date(),
-    ends_at: null,
-    evento_id: null,
-    mensaje_id: null
-  });
-
-  // 5. Enviar como mensaje especial
+  // 4. Registrar en ChatMeeting y enviar mensaje
   const t = await sequelize.transaction();
-  let msg;
   try {
-    msg = await createMessage(canal, {
-      body_text: `📹 Reunión de Google Meet`,
+    const meet = await mReg.ChatMeeting.create({
+      canal_id,
+      provider_codigo: 'google_meet',
+      external_meeting_id,
+      join_url,
+      created_by_user_id: user.id,
+      starts_at: new Date(),
+      ends_at: new Date(Date.now() + 60 * 60 * 1000),
+      evento_id: null,
+      mensaje_id: null
+    }, { transaction: t });
+
+    const msg = await createMessage(canal, {
+      body_text: `📹 Reunión de Google Meet: ${join_url}`,
       body_json: {
         type: 'meeting',
         meeting: {
@@ -679,22 +729,21 @@ export const svcCreateInstantMeet = async (canal_id, user) => {
         }
       }
     }, user, t);
+
     // Actualizar el meeting con el mensaje_id
     await meet.update({ mensaje_id: msg.id }, { transaction: t });
     await t.commit();
-  } catch (e) { await t.rollback(); throw e; }
 
-  // 6. Realtime
-  try { await publishMessageCreated(canal_id, msg, { except_user_id: user.id }); } catch (err) {
-    console.error('sse instant meet', err);
+    // SSE y Notificación (fuera de transacción)
+    try { await publishMessageCreated(canal_id, msg, { except_user_id: user.id }); } catch (err) { console.error('sse instant meet', err); }
+    try { await _notifyNewMessage(canal_id, msg, user); } catch (e) { console.error('notif instant meet', e); }
+
+    return { meet: meet.toJSON?.() ?? meet, message: msg };
+  } catch (err) {
+    await t.rollback();
+    console.error('[svcCreateInstantMeet] db error', err);
+    throw err;
   }
-
-  // 7. Notificar
-  try { await _notifyNewMessage(canal_id, msg, user); } catch (e) {
-    console.error('notif instant meet', e);
-  }
-
-  return { meet: meet.toJSON?.() ?? meet, message: msg };
 };
 
 // -------- Helpers de notificación de mensajes (emails/push)

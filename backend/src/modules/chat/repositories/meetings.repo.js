@@ -8,6 +8,7 @@ async function idByCodigo(model, codigo, t) {
 }
 
 async function resolveCalendarioForCanal(canal, t) {
+  // 1. Si el canal tiene un cliente asociado, buscar calendario de ese cliente
   if (canal.cliente_id) {
     const tipo_id = await idByCodigo(m.CalendarioTipo, 'cliente', t);
     const cal = await m.CalendarioLocal.findOne({
@@ -16,8 +17,39 @@ async function resolveCalendarioForCanal(canal, t) {
     });
     if (cal) return cal;
   }
-  const tipo_id = await idByCodigo(m.CalendarioTipo, 'global', t);
-  return m.CalendarioLocal.findOne({ where: { tipo_id, is_activo: true }, transaction: t });
+
+  // 2. Buscar calendario 'global' (visible para todos)
+  const globalTipo = await m.CalendarioTipo.findOne({ where: { codigo: 'global' }, transaction: t });
+  if (globalTipo) {
+    const cal = await m.CalendarioLocal.findOne({
+      where: { tipo_id: globalTipo.id, is_activo: true },
+      transaction: t
+    });
+    if (cal) return cal;
+  }
+
+  // 3. Buscar cualquier calendario que tenga visibilidad 'equipo' u 'organizacion'
+  // Esto previene que caiga en 'privado' por defecto
+  const visEquipo = await m.VisibilidadTipo.findOne({ where: { codigo: 'equipo' }, transaction: t });
+  const visOrg = await m.VisibilidadTipo.findOne({ where: { codigo: 'organizacion' }, transaction: t });
+  const visIds = [visEquipo?.id, visOrg?.id].filter(Boolean);
+
+  if (visIds.length) {
+    const sharedCal = await m.CalendarioLocal.findOne({
+      where: { visibilidad_id: { [Op.in]: visIds }, is_activo: true },
+      transaction: t
+    });
+    if (sharedCal) return sharedCal;
+  }
+
+  // 4. Fallback final: cualquier calendario activo que NO sea privado si es posible
+  const nonPrivateCal = await m.CalendarioLocal.findOne({
+    where: { is_activo: true, visibilidad_id: { [Op.ne]: 1 } }, // 1 es privado usualmente
+    transaction: t
+  });
+  if (nonPrivateCal) return nonPrivateCal;
+
+  return m.CalendarioLocal.findOne({ where: { is_activo: true }, transaction: t });
 }
 
 export async function scheduleMeeting(canal_id, payload, creator_user_id, t) {
@@ -51,7 +83,7 @@ export async function scheduleMeeting(canal_id, payload, creator_user_id, t) {
     updated_by_user_id: creator_user_id
   }, { transaction: t });
 
-  const asisTipo = await idByCodigo(m.AsistenteTipo, 'feder', t);
+  const asisTipo = await idByCodigo(m.AsistenteTipo, 'obligatorio', t);
 
   // Asistentes: todos los miembros con feder_id
   const miembros = await m.ChatCanalMiembro.findAll({ where: { canal_id }, transaction: t });

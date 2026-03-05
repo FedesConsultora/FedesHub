@@ -35,6 +35,7 @@ router.delete('/events/:id', requireAuth, requirePermission('calendario', 'delet
 router.post('/events/:id/rsvp', requireAuth, requirePermission('calendario', 'update'), cal.postMyRsvp);
 
 // Google: listado remoto, link, sync, watch, webhook
+router.get('/google/account', requireAuth, gcal.getAccount);
 router.get('/google/calendars', requireAuth, requirePermission('calendario', 'read'), gcal.listRemoteCalendars);
 router.post('/google/link', requireAuth, requirePermission('calendario', 'update'), gcal.linkCalendar);
 router.post('/google/sync', requireAuth, requirePermission('calendario', 'update'), gcal.syncOne);

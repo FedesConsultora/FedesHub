@@ -598,3 +598,89 @@
     }
   }
 }
+
+/* Divisor del plusMenu */
+.plusMenu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, .07);
+  margin: 4px 8px;
+}
+
+/* Botón especial "Conectar Google Meet" */
+.plusMenu-connect {
+  color: #34a853 !important;
+
+  svg {
+    color: #34a853 !important;
+  }
+}
+
+/* Modal de Agendar Reunión */
+.scheduleMeetModal {
+  width: 460px;
+  max-width: calc(100vw - 32px);
+
+  .pasteMeetHeader {
+    justify-content: space-between;
+
+    svg:first-child {
+      color: v.$fh-primary;
+    }
+
+    .closeBtn {
+      background: transparent;
+      border: none;
+      color: v.$fh-muted;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 4px;
+      border-radius: 6px;
+      transition: background .15s;
+
+      &:hover {
+        background: rgba(255, 255, 255, .08);
+        color: #fff;
+      }
+    }
+  }
+}
+
+.scheduleMeetForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.smField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: v.$fh-muted;
+  }
+
+  select.pasteMeetInput {
+    cursor: pointer;
+
+    option {
+      background: #1a222c;
+    }
+  }
+}
+
+.smHint {
+  margin: 0;
+  padding: 10px 14px;
+  background: rgba(255, 200, 50, .08);
+  border: 1px solid rgba(255, 200, 50, .18);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: rgba(255, 200, 50, .9);
+  line-height: 1.5;
+}

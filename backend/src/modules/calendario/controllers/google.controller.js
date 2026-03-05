@@ -90,6 +90,18 @@ export const connectCallback = async (req, res, next) => {
 };
 
 /* ========== API Google ========== */
+
+// GET /api/calendario/google/account → estado de conexión del usuario actual
+export const getAccount = async (req, res, next) => {
+  try {
+    const acct = await m.GoogleCuenta.findOne({ where: { user_id: req.user.id } });
+    if (!acct || !acct.refresh_token_enc) {
+      return res.json({ connected: false, email: null });
+    }
+    return res.json({ connected: true, email: acct.email || null });
+  } catch (e) { next(e); }
+};
+
 export const listRemoteCalendars = async (req, res, next) => {
   try {
     const out = await svcGoogleListCalendars(req.user);
