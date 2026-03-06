@@ -10,6 +10,7 @@ import MonthGrid from './MonthGrid'
 import WeekGrid from './WeekGrid'
 import DayDetails from './dialogs/DayDetails'
 import EventForm from './dialogs/EventForm'
+import QuickAddChoice from './dialogs/QuickAddChoice'
 import GoogleConnect from './GoogleConnect'
 import './CalendarBoard.scss'
 
@@ -19,6 +20,7 @@ const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 
 
 export default function CalendarBoard() {
   const modal = useModal()
+  // ... existing hooks
   const { can } = usePermission()
   const canCreate = can('calendario', 'create')
   const canUpdate = can('calendario', 'update')
@@ -43,6 +45,7 @@ export default function CalendarBoard() {
   }, [myCals, calList]);
 
   const [selectedCalIds, setSelectedCalIds] = useState([])
+  const [selectedFederId, setSelectedFederId] = useState(null)
   useEffect(() => {
     if ((selectedCalIds?.length ?? 0) === 0 && (allAvailableCalendars?.length ?? 0) > 0) {
       // Por defecto seleccionar todos (overlay)
@@ -65,7 +68,8 @@ export default function CalendarBoard() {
   const { rows: eventsRows, refetch: refetchEvents } = useEventos({
     from: range.from,
     to: range.to,
-    calendarIds: (selectedCalIds.length ? selectedCalIds : allAvailableCalendars.map(c => c.id))
+    calendarIds: (selectedCalIds.length ? selectedCalIds : allAvailableCalendars.map(c => c.id)),
+    feder_id: selectedFederId
   })
 
   // Mapeo de colores por calendario para los eventos
@@ -99,13 +103,13 @@ export default function CalendarBoard() {
         try {
           if (view !== 'week') { setDayBadges(Array.from({ length: 7 }, () => [])); return }
           const calToFeder = Object.fromEntries(allAvailableCalendars.map(c => [c.id, c.feder_id]).filter(([_, v]) => !!v))
-          const selectedFederIds = new Set(selectedCalIds.map(id => calToFeder[id]).filter(Boolean))
+          const effectiveFederIds = selectedFederId ? new Set([selectedFederId]) : new Set(selectedCalIds.map(id => calToFeder[id]).filter(Boolean))
           const ov = await federsApi.overview({ start: range.from, end: range.to })
           const items = ov?.rows || ov?.dias || ov?.items || []
           const byDay = Array.from({ length: 7 }, () => [])
           items.forEach(it => {
             const fid = it.feder_id ?? it.federId ?? it.id_feder
-            if (selectedFederIds.size && !selectedFederIds.has(fid)) return
+            if (effectiveFederIds.size && !effectiveFederIds.has(fid)) return
             const dateStr = it.date ?? it.fecha ?? it.dia ?? it.day
             if (!dateStr) return
             const d = new Date(dateStr + 'T00:00:00')
@@ -153,13 +157,14 @@ export default function CalendarBoard() {
             close(true)
           }}
           federById={federById}
-          onNew={() => { close(false); openNew(dateStr) }}
+          onNew={() => { close(false); openQuickAddChoice(dateStr) }}
         />
       )
     })
   }, [canUpdate, canDelete, federById, refetchEvents])
 
   const openEdit = (row, parentClose) => {
+    if (row.is_readonly || row.is_synthetic) return
     modal.open({
       title: 'Editar evento',
       width: 760,
@@ -186,8 +191,24 @@ export default function CalendarBoard() {
     })
   }
 
+  const openQuickAddChoice = (dateStr) => {
+    modal.open({
+      title: 'Agregar a mi agenda',
+      width: 480,
+      render: (close) => (
+        <QuickAddChoice
+          onCancel={() => close(false)}
+          onChoose={(type) => {
+            close(true)
+            openNew(dateStr, null, null, type)
+          }}
+        />
+      )
+    })
+  }
+
   // crear nuevo (desde botón o drag)
-  const openNew = (dateStr, startsAt = null, endsAt = null) => {
+  const openNew = (dateStr, startsAt = null, endsAt = null, forcedType = null) => {
     const base = startsAt && endsAt
       ? { starts_at: startsAt, ends_at: endsAt, all_day: false }
       : { starts_at: (dateStr || isoDate(new Date())) + 'T09:00:00', ends_at: (dateStr || isoDate(new Date())) + 'T10:00:00', all_day: false }
@@ -197,12 +218,13 @@ export default function CalendarBoard() {
     const init = calId ? { ...base, calendario_local_id: calId } : base
 
     modal.open({
-      title: 'Nuevo evento',
+      title: forcedType === 'reunion' ? 'Agendar nueva reunión' : (forcedType === 'recordatorio' ? 'Crear recordatorio' : 'Nuevo evento'),
       width: 760,
       render: (close) => (
         <EventForm
           mode="create"
           init={init}
+          forcedType={forcedType}
           calendars={allAvailableCalendars}
           onCancel={() => close(false)}
           onSaved={(row) => {
@@ -211,7 +233,6 @@ export default function CalendarBoard() {
             close(true)
             const d = new Date((row.starts_at || '').toString().replace(' ', 'T'))
             const ds = `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
-            // Abrimos con la versión que SIEMPRE lee la última lista
             setTimeout(() => openDay(ds), 0)
           }}
         />
@@ -245,6 +266,9 @@ export default function CalendarBoard() {
         setMonthIdx={(m) => view === 'week' ? setWeekStart(d => new Date(d.getFullYear(), m, 1)) : board.setMonthIdx(m)}
         calendars={allAvailableCalendars}
         federById={federById}
+        allFeders={feders}
+        selectedFederId={selectedFederId}
+        onFederChange={setSelectedFederId}
         selectedIds={selectedCalIds}
         onToggleCal={(id) => {
           setSelectedCalIds(ids => {
@@ -263,6 +287,7 @@ export default function CalendarBoard() {
           month={board.monthIdx}
           events={allRows}
           onDayClick={openDay}
+          onQuickAdd={openQuickAddChoice}
           onEventClick={(ev) => openEdit(ev)}
         />
       ) : (
@@ -272,6 +297,7 @@ export default function CalendarBoard() {
           dayBadges={dayBadges}
           onCreateRange={onCreateFromDrag}
           onDayClick={openDay}
+          onQuickAdd={openQuickAddChoice}
           onEventClick={(ev) => openEdit(ev)}
         />
       )}

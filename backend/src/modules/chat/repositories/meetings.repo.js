@@ -1,6 +1,8 @@
 // /backend/src/modules/chat/repositories/meetings.repo.js
+import { Op } from 'sequelize';
 import { initModels } from '../../../models/registry.js';
 const m = await initModels();
+
 
 async function idByCodigo(model, codigo, t) {
   const row = await model.findOne({ where: { codigo }, transaction: t });
@@ -85,8 +87,15 @@ export async function scheduleMeeting(canal_id, payload, creator_user_id, t) {
 
   const asisTipo = await idByCodigo(m.AsistenteTipo, 'obligatorio', t);
 
-  // Asistentes: todos los miembros con feder_id
-  const miembros = await m.ChatCanalMiembro.findAll({ where: { canal_id }, transaction: t });
+  // Asistentes: si vienen en el payload, usar esos. Si no, fallback a todos los miembros.
+  const hasSelection = Array.isArray(payload.attendee_user_ids) && payload.attendee_user_ids.length > 0;
+
+  const query = { canal_id };
+  if (hasSelection) {
+    query.user_id = { [Op.in]: payload.attendee_user_ids };
+  }
+
+  const miembros = await m.ChatCanalMiembro.findAll({ where: query, transaction: t });
   for (const mm of miembros) {
     if (!mm.feder_id) continue;
     await m.EventoAsistente.create({

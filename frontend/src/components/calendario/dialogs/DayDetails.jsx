@@ -1,7 +1,7 @@
 import './DayDetails.scss'
 
-export default function DayDetails({ date, items=[], federById={}, canUpdate, canDelete, onEdit, onDelete, onNew }){
-  const fmt = (dt)=> new Date(dt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+export default function DayDetails({ date, items = [], federById = {}, canUpdate, canDelete, onEdit, onDelete, onNew }) {
+  const fmt = (dt) => new Date(dt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   return (
     <div className="cal-day-details">
       <div className="actions">
@@ -10,7 +10,7 @@ export default function DayDetails({ date, items=[], federById={}, canUpdate, ca
 
       {!items.length && <div className="empty">Sin eventos para este día.</div>}
 
-      {items.map(ev=>(
+      {items.map(ev => (
         <div key={ev.id} className="item">
           <div className="left">
             <div className="bar" style={{ background: ev.color || '#7aa' }} />
@@ -22,9 +22,9 @@ export default function DayDetails({ date, items=[], federById={}, canUpdate, ca
               {ev.lugar && <> • {ev.lugar}</>}
               {ev.calendario_nombre && <> • <b>{ev.calendario_nombre}</b></>}
             </div>
-            {ev.asistentes?.length>0 && (
+            {ev.asistentes?.length > 0 && (
               <div className="asist">
-                {ev.asistentes.map(a=>{
+                {ev.asistentes.map(a => {
                   const f = a.feder_id ? federById[a.feder_id] : null
                   const label = f ? `${f.nombre} ${f.apellido}` : (a.nombre || a.email_externo)
                   return <span key={`${a.tipo_id}-${a.feder_id || a.email_externo}`} className="chip">{label}</span>
@@ -33,8 +33,8 @@ export default function DayDetails({ date, items=[], federById={}, canUpdate, ca
             )}
           </div>
           <div className="ops">
-            {canUpdate && <button className="fh-btn ghost" onClick={()=>onEdit?.(ev)}>Editar</button>}
-            {canDelete && <button className="fh-btn danger outline" onClick={()=>onDelete?.(ev.id)}>Eliminar</button>}
+            {canUpdate && !ev.is_readonly && !ev.is_synthetic && <button className="fh-btn ghost" onClick={() => onEdit?.(ev)}>Editar</button>}
+            {canDelete && !ev.is_readonly && !ev.is_synthetic && <button className="fh-btn danger outline" onClick={() => onDelete?.(ev.id)}>Eliminar</button>}
           </div>
         </div>
       ))}

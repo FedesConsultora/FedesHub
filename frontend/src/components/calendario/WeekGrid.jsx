@@ -10,8 +10,8 @@ const H_END = 22
 const TOTAL_MIN = (H_END - H_START) * 60
 
 const LONG_PRESS_MS = 3000
-const DAY_W = 220
-const GUTTER_W = 70
+const DAY_W = 160 // Reduced from 220
+const GUTTER_W = 60 // Reduced from 70
 const GAP_PX = 4
 const PAGE_SIZE = 3
 
@@ -24,7 +24,8 @@ export default function WeekGrid({
   dayBadges = Array.from({ length: 7 }, () => []),
   onCreateRange,
   onDayClick,
-  onEventClick
+  onEventClick,
+  onQuickAdd
 }) {
   const week0 = useMemo(() => startOfWeek(anchor), [anchor])
   const days = useMemo(() => [...Array(7)].map((_, i) => addDays(week0, i)), [week0])
@@ -178,8 +179,8 @@ export default function WeekGrid({
     }
   }, [days, onCreateRange, isDragging])
 
-  const gridWidth = `${GUTTER_W + (7 * DAY_W)}px`
-  const cols = `70px repeat(7, ${DAY_W}px)`
+  const gridWidth = '100%'
+  const cols = `60px repeat(7, 1fr)`
 
   return (
     <div className="week-grid">
@@ -238,6 +239,10 @@ export default function WeekGrid({
                 </div>
 
                 <div className={`hours ${hasLeft ? 'more-left' : ''} ${hasRight ? 'more-right' : ''}`} data-col={i} style={{ height: timelineHeight }} tabIndex={0}>
+                  <button className="quick-add" onClick={(e) => { e.stopPropagation(); onQuickAdd?.(`${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`); }}>
+                    <span>+ Agregar evento</span>
+                  </button>
+
                   {Array.from({ length: (H_END - H_START) + 1 }, (_, h) => (
                     <div key={h} className="hline" style={{ top: (h * 60) * MINUTE_PX }} />
                   ))}

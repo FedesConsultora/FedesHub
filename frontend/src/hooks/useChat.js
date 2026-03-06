@@ -356,6 +356,21 @@ export function useCreateInstantMeet() {
   })
 }
 
+/* ---- Schedule Meeting (agendar reunión desde el chat) */
+export function useScheduleMeeting() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ canal_id, ...body }) => chatApi.meetings.schedule(canal_id, body),
+    onSuccess: (_r, { canal_id }) => {
+      const cid = Number(canal_id)
+      if (cid) {
+        qc.invalidateQueries({ queryKey: ['chat', 'msgs', cid] })
+        qc.invalidateQueries({ queryKey: ['chat', 'channels'] })
+      }
+    }
+  })
+}
+
 export function useDeleteChannel() {
   const qc = useQueryClient()
   return useMutation({

@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import RRulePkg from 'rrule';
 const { RRule } = RRulePkg;
 import { initModels } from '../../../models/registry.js';
+import { feriadosService } from '../../../lib/feriados.service.js';
 // Importación diferida para evitar ciclos
 let googleService;
 async function getGoogleService() {
@@ -72,6 +73,7 @@ export async function listEventsRange(params, user, t) {
     include: [{ model: m.VisibilidadTipo, as: 'visibilidad', attributes: ['codigo'] }],
     transaction: t
   });
+  // visibility filtering...
   const visibleCalIds = calendars
     .filter(c =>
       c.visibilidad?.codigo === 'organizacion' ||
@@ -80,7 +82,13 @@ export async function listEventsRange(params, user, t) {
     )
     .map(c => c.id);
 
-  if (!visibleCalIds.length) return { events: [], overlays: [] };
+  // synthetic events (bdays/hdays) always show up even if no calendars are visible
+  const bdays = await _getBirthdaysInRange(start, end, t, params.feder_id);
+  const hdays = await _getHolidaysInRange(start, end);
+
+  if (!visibleCalIds.length) {
+    return { events: [...bdays, ...hdays], overlays: [] };
+  }
 
   const baseWhere = {
     calendario_local_id: { [Op.in]: visibleCalIds },
@@ -88,16 +96,42 @@ export async function listEventsRange(params, user, t) {
   };
   if (q) baseWhere.titulo = { [Op.iLike]: `%${q}%` };
 
+  // If feder_id filter is present, also filter non-synthetic events
+  if (params.feder_id) {
+    // This is a simple version, might need a join or more complex check if we want strict filtering
+    // For now we'll filter by created_by or attendees if we were to be precise.
+    // But birthdays/holidays are already filtered or global.
+  }
+
   const rows = await m.Evento.findAll({ where: baseWhere, ...SELECT_BASE, transaction: t });
   const expanded = expand_recurrences ? await _expandRecurrences(rows, start, end) : rows;
 
-  let overlays = [];
-  if (include_overlays) {
-    overlays = expanded.filter(e =>
-      ['asistencia', 'ausencia', 'tarea_vencimiento'].includes(e.tipo?.codigo));
+  let finalEvents = [...expanded, ...bdays, ...hdays];
+
+  // Apply feder_id filter if requested
+  if (params.feder_id) {
+    finalEvents = finalEvents.filter(e => {
+      if (e.is_synthetic && e.tipo?.codigo === 'cumpleanos') {
+        // Birthdays are for a specific feder, ID is encoded in our synthetic ID: bday-{f.id}-{y}
+        return e.id.startsWith(`bday-${params.feder_id}-`);
+      }
+      if (e.is_synthetic && e.tipo?.codigo === 'feriado') return true; // Holidays are for everyone
+
+      // Regular events: check attendees
+      if (e.asistentes && Array.isArray(e.asistentes)) {
+        return e.asistentes.some(a => a.feder_id === params.feder_id);
+      }
+      return false;
+    });
   }
 
-  return { events: expanded, overlays };
+  let overlays = [];
+  if (include_overlays) {
+    overlays = finalEvents.filter(e =>
+      ['asistencia', 'ausencia', 'tarea_vencimiento', 'cumpleanos', 'feriado'].includes(e.tipo?.codigo));
+  }
+
+  return { events: finalEvents, overlays };
 }
 
 async function _expandRecurrences(rows, start, end) {
@@ -134,6 +168,7 @@ export async function upsertEvent(payload, user, t) {
     titulo: payload.titulo,
     descripcion: payload.descripcion ?? null,
     lugar: payload.lugar ?? null,
+    google_meet: !!payload.google_meet,
     all_day: !!payload.all_day,
     starts_at: payload.starts_at,
     ends_at: payload.ends_at,
@@ -211,4 +246,97 @@ export async function setMyRsvp(evento_id, user_id, respuesta, t) {
 
   await ea.update({ respuesta }, { transaction: t });
   return ea;
+}
+
+// 🧁 Helper: Cumpleaños en el rango (Sintético)
+async function _getBirthdaysInRange(start, end, t, only_feder_id = null) {
+  const whereFeder = { fecha_nacimiento: { [Op.not]: null }, is_activo: true };
+  if (only_feder_id) whereFeder.id = only_feder_id;
+
+  const feders = await m.Feder.findAll({
+    where: whereFeder,
+    transaction: t
+  });
+  const res = [];
+
+  // Garantizar strings YYYY-MM-DD para comparaciones
+  const rangeStart = (start instanceof Date ? start.toISOString() : String(start)).split('T')[0];
+  const rangeEnd = (end instanceof Date ? end.toISOString() : String(end)).split('T')[0];
+
+  const sYear = parseInt(rangeStart.split('-')[0]);
+  const eYear = parseInt(rangeEnd.split('-')[0]);
+
+  for (const f of feders) {
+    let bMonth, bDay;
+    if (typeof f.fecha_nacimiento === 'string') {
+      const parts = f.fecha_nacimiento.split('-');
+      if (parts.length < 3) continue;
+      bMonth = parts[1];
+      bDay = parts[2];
+    } else if (f.fecha_nacimiento instanceof Date) {
+      bMonth = String(f.fecha_nacimiento.getUTCMonth() + 1).padStart(2, '0');
+      bDay = String(f.fecha_nacimiento.getUTCDate()).padStart(2, '0');
+    } else {
+      continue;
+    }
+
+    for (let y = sYear; y <= eYear; y++) {
+      const dateStr = `${y}-${bMonth}-${bDay}`;
+      if (dateStr >= rangeStart && dateStr <= rangeEnd) {
+        res.push({
+          id: `bday-${f.id}-${y}`,
+          titulo: `🎂 Cumple ${f.nombre} ${f.apellido}`.trim(),
+          all_day: true,
+          starts_at: `${dateStr}T00:00:00`,
+          ends_at: `${dateStr}T23:59:59`,
+          tipo: { codigo: 'cumpleanos', nombre: 'Cumpleaños' },
+          visibilidad: { codigo: 'organizacion' },
+          color: '#ec4899', // pink-500
+          is_readonly: true,
+          is_synthetic: true
+        });
+      }
+    }
+  }
+  return res;
+}
+
+// 🇦🇷 Helper: Feriados en el rango (vía ArgentinaDatos API)
+async function _getHolidaysInRange(start, end) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const sYear = s.getUTCFullYear();
+  const eYear = e.getUTCFullYear();
+  const rangeStartStr = s.toISOString().split('T')[0];
+  const rangeEndStr = e.toISOString().split('T')[0];
+
+  const years = [];
+  for (let y = sYear; y <= eYear; y++) years.push(y);
+
+  const res = [];
+  for (const year of years) {
+    try {
+      const data = await feriadosService.getFeriados(year);
+      // data: [{ fecha, tipo, nombre }]
+      for (const h of data) {
+        if (h.fecha >= rangeStartStr && h.fecha <= rangeEndStr) {
+          res.push({
+            id: `holiday-${h.fecha}-${h.nombre}`,
+            titulo: `🇦🇷 ${h.nombre}`,
+            all_day: true,
+            starts_at: `${h.fecha}T00:00:00`,
+            ends_at: `${h.fecha}T23:59:59`,
+            tipo: { codigo: 'feriado', nombre: 'Feriado' },
+            visibilidad: { codigo: 'organizacion' },
+            color: '#e11d48', // rose-600
+            is_readonly: true,
+            is_synthetic: true
+          });
+        }
+      }
+    } catch (err) {
+      console.error(`[eventos.repo:feriados] Fail for year ${year}:`, err.message);
+    }
+  }
+  return res;
 }

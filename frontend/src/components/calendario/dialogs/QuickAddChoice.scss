@@ -1,0 +1,93 @@
+@use '../../../styles/variables' as *;
+
+.quick-add-choice {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 500px;
+    width: 100%;
+
+    .hint {
+        color: $fh-muted;
+        font-size: 0.95rem;
+        margin: 0;
+        text-align: center;
+    }
+
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .opt-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            cursor: pointer;
+            text-align: left;
+            transition: all .2s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+            .icon {
+                font-size: 1.8rem;
+                width: 44px;
+                height: 44px;
+                background: rgba(255, 255, 255, 0.04);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .text {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+
+                strong {
+                    font-size: 1.1rem;
+                    color: #fff;
+                }
+
+                span {
+                    font-size: 0.85rem;
+                    color: $fh-muted;
+                }
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(255, 255, 255, 0.15);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+                &.meeting {
+                    border-color: rgba(59, 130, 246, 0.4);
+
+                    .icon {
+                        background: rgba(59, 130, 246, 0.1);
+                    }
+                }
+
+                &.reminder {
+                    border-color: rgba(16, 185, 129, 0.4);
+
+                    .icon {
+                        background: rgba(16, 185, 129, 0.1);
+                    }
+                }
+            }
+        }
+    }
+
+    .footer {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+}

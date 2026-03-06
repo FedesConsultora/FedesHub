@@ -153,5 +153,6 @@ export const meetingSchema = z.object({
   provider_codigo: z.string().max(30).default('internal'),
   titulo: z.string().min(1).max(200).default('Reunión de canal'),
   starts_at: asDate,
-  ends_at: asDate
+  ends_at: asDate,
+  attendee_user_ids: z.array(z.number().int().positive()).optional()
 }).refine(v => v.ends_at > v.starts_at, { message: 'ends_at debe ser mayor que starts_at' });

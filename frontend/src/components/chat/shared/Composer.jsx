@@ -1,5 +1,6 @@
-import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useCallback, useEffect } from 'react'
-import { useSendMessage, useChannelMembers, useCreateInstantMeet } from '../../../hooks/useChat'
+import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { useSendMessage, useChannelMembers, useCreateInstantMeet, useScheduleMeeting } from '../../../hooks/useChat'
+import useFeders from '../../../hooks/useFeders'
 import { useGoogleStatus } from '../../../hooks/useCalendario'
 import { useTypingEmitter } from '../../../hooks/useTypingEmitter'
 import { useAuthCtx } from '../../../context/AuthContext.jsx'
@@ -13,7 +14,8 @@ import AudioRecorderModal from './AudioRecorderModal'
 import { ChatActionCtx } from './context'
 import MentionInput from './MentionInput'
 import { CenteredPicker } from './ReactionBar'
-import { fullName, displayName } from '../../../utils/people'
+import { fullName, displayName, pickAvatar, firstInitial } from '../../../utils/people'
+import { resolveMediaUrl } from '../../../utils/media'
 import { calendarioApi } from '../../../api/calendario'
 import { chatApi } from '../../../api/chat'
 import './Composer.scss'
@@ -37,58 +39,94 @@ function normalizeMentions(plainText = '', feders = []) {
   return out
 }
 
+/* ---------------- Helper: próxima media hora desde ahora ---------------- */
+function nextHalfHour() {
+  const now = new Date()
+  // redondear hacia arriba a la siguiente media hora
+  const ms = 30 * 60 * 1000
+  const next = new Date(Math.ceil(now.getTime() / ms) * ms)
+  return next
+}
+function toLocalISO(d) {
+  const off = d.getTimezoneOffset() * 60000
+  return new Date(d.getTime() - off).toISOString().slice(0, 16)
+}
+
 /* ---------------- Modal: Agendar Reunión ---------------- */
-function ScheduleMeetModal({ canal_id, onClose, onSent, googleConnected }) {
+function ScheduleMeetModal({ canal_id, myId, allFeders = [], initialSelected = [], onClose, onSent, googleConnected }) {
   const toast = useToast()
+  const scheduleMeeting = useScheduleMeeting()
+
+  const defaultStart = useMemo(() => nextHalfHour(), [])
+  const defaultEnd = useMemo(() => new Date(defaultStart.getTime() + 30 * 60000), [defaultStart])
+
   const [titulo, setTitulo] = useState('Reunión')
-  const [fecha, setFecha] = useState(() => {
-    const now = new Date();
-    now.setMinutes(0, 0, 0);
-    // Ajustar a ISO local para el input datetime-local
-    const tzOffset = now.getTimezoneOffset() * 60000;
-    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
-  })
-  const [duracion, setDuracion] = useState(60) // minutos
-  const [loading, setLoading] = useState(false)
+  const [startStr, setStartStr] = useState(() => toLocalISO(defaultStart))
+  const [endStr, setEndStr] = useState(() => toLocalISO(defaultEnd))
+
+  // Todos excepto el usuario actual
+  const others = useMemo(() => allFeders.filter(f => f.id !== myId), [allFeders, myId])
+
+  // Inicializar seleccionados una vez que los participantes y los miembros del canal carguen
+  const initialized = useRef(false)
+  const [selectedGuests, setSelectedGuests] = useState([])
+  useEffect(() => {
+    if (!initialized.current && others.length > 0 && initialSelected !== null) {
+      if (initialSelected.length > 0) {
+        const toSelect = initialSelected.filter(id => others.some(f => f.id === id))
+        setSelectedGuests(toSelect)
+      }
+      initialized.current = true
+    }
+  }, [others, initialSelected])
+
+  const toggleGuest = (id) =>
+    setSelectedGuests(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
   const handleSubmit = async () => {
     if (!titulo.trim()) { toast?.error('Escribí un título para la reunión'); return }
-    setLoading(true)
     try {
-      const starts_at = new Date(fecha).toISOString()
-      const ends_at = new Date(new Date(fecha).getTime() + duracion * 60000).toISOString()
-      const result = await chatApi.meetings.schedule(canal_id, {
+      await scheduleMeeting.mutateAsync({
+        canal_id,
         titulo: titulo.trim(),
-        starts_at,
-        ends_at,
-        provider_codigo: googleConnected ? 'google_meet' : 'none'
+        starts_at: new Date(startStr).toISOString(),
+        ends_at: new Date(endStr).toISOString(),
+        provider_codigo: googleConnected ? 'google_meet' : 'none',
+        attendee_user_ids: selectedGuests
       })
-      toast?.success('Reunión agendada y agregada al calendario ✅')
+      toast?.success('Reunión agendada ✅')
+      window.dispatchEvent(new CustomEvent('fh:chat:sent', { detail: { canal_id } }))
+      window.dispatchEvent(new CustomEvent('fh:calendar:refresh'))
       onSent?.()
       onClose()
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Error al agendar la reunión'
-      toast?.error(msg)
-    } finally {
-      setLoading(false)
+      toast?.error(err?.response?.data?.message || err?.message || 'Error al agendar la reunión')
     }
   }
 
   return (
-    <div className="pasteMeetOverlay" onClick={onClose}>
-      <div className="pasteMeetModal scheduleMeetModal" onClick={e => e.stopPropagation()}>
-        <div className="pasteMeetHeader">
-          <FiCalendar />
-          <span>Agendar reunión</span>
-          <button type="button" className="closeBtn" onClick={onClose}><FiX /></button>
+    <div className="smOverlay" onClick={onClose}>
+      <div className="smModal" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="smHeader">
+          <div className="smHeader-icon"><FiCalendar /></div>
+          <div className="smHeader-text">
+            <h3>Agendar reunión</h3>
+            <p>{googleConnected ? 'Con Google Meet' : 'Sin link de Meet'}</p>
+          </div>
+          <button type="button" className="smClose" onClick={onClose}><FiX /></button>
         </div>
 
-        <div className="scheduleMeetForm">
-          <div className="smField">
-            <label>Título</label>
+        {/* Body */}
+        <div className="smBody">
+
+          {/* Título */}
+          <div className="smFormGroup">
+            <label className="smLabel">Título</label>
             <input
               type="text"
-              className="pasteMeetInput"
+              className="smInput"
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               placeholder="ej. Reunión de equipo"
@@ -97,42 +135,71 @@ function ScheduleMeetModal({ canal_id, onClose, onSent, googleConnected }) {
             />
           </div>
 
-          <div className="smField">
-            <label>Fecha y hora inicio</label>
-            <input
-              type="datetime-local"
-              className="pasteMeetInput"
-              value={fecha}
-              onChange={e => setFecha(e.target.value)}
-            />
+          {/* Inicio / Fin en fila */}
+          <div className="smDateRow">
+            <div className="smFormGroup">
+              <label className="smLabel">Inicio</label>
+              <input type="datetime-local" className="smInput smDateInput" value={startStr} onChange={e => setStartStr(e.target.value)} />
+            </div>
+            <div className="smFormGroup">
+              <label className="smLabel">Fin</label>
+              <input type="datetime-local" className="smInput smDateInput" value={endStr} onChange={e => setEndStr(e.target.value)} />
+            </div>
           </div>
 
-          <div className="smField">
-            <label>Duración</label>
-            <select
-              className="pasteMeetInput"
-              value={duracion}
-              onChange={e => setDuracion(Number(e.target.value))}
-            >
-              <option value={30}>30 minutos</option>
-              <option value={60}>1 hora</option>
-              <option value={90}>1h 30min</option>
-              <option value={120}>2 horas</option>
-            </select>
+          {/* Participantes — tile grid */}
+          <div className="smFormGroup">
+            <label className="smLabel">
+              Participantes <span className="smLabelCount">({selectedGuests.length}/{others.length})</span>
+            </label>
+
+            {others.length > 0 ? (
+              <div className="smTileGrid">
+                {others.map(f => {
+                  const name = `${f.nombre || ''} ${f.apellido || ''}`.trim() || f.email || `Usuario ${f.id}`
+                  const firstName = f.nombre || name.split(' ')[0]
+                  const sel = selectedGuests.includes(f.id)
+                  return (
+                    <button
+                      key={String(f.id)}
+                      type="button"
+                      title={`${f.nombre} ${f.apellido}`.trim() || f.email}
+                      className={`smTile${sel ? ' selected' : ''}`}
+                      onClick={() => toggleGuest(f.id)}
+                    >
+                      <div className="smTileAvatarWrapper">
+                        {f.avatar_url ? (
+                          <img src={f.avatar_url} alt={f.nombre} className="smTileAvatar" />
+                        ) : (
+                          <span className="smTileInitial">{firstInitial(f)}</span>
+                        )}
+                        {sel && <span className="smTileCheck">✓</span>}
+                      </div>
+                      <span className="smTileName">{f.nombre || f.email?.split('@')[0]}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="smEmptyHint">Cargando lista de participantes...</p>
+            )}
           </div>
 
           {!googleConnected && (
             <p className="smHint">
-              💡 Para incluir un link de Google Meet, conectá tu cuenta de Google desde el módulo Calendario.
+              💡 Conecta Google Calendar para incluir un link de Meet y enviar invitaciones por email.
             </p>
           )}
 
-          <div className="pasteMeetActions">
-            <button type="button" className="cancelBtn" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="button" className="sendBtn" disabled={loading || !titulo.trim()} onClick={handleSubmit}>
-              {loading ? 'Agendando…' : '📅 Agendar reunión'}
+          <div className="smActions">
+            <button type="button" className="fh-btn ghost" onClick={onClose}>Cancelar</button>
+            <button
+              type="button"
+              className="fh-btn primary"
+              disabled={scheduleMeeting.isPending || !titulo.trim()}
+              onClick={handleSubmit}
+            >
+              {scheduleMeeting.isPending ? 'Agendando…' : '📅 Agendar'}
             </button>
           </div>
         </div>
@@ -140,6 +207,7 @@ function ScheduleMeetModal({ canal_id, onClose, onSent, googleConnected }) {
     </div>
   )
 }
+
 
 /* ---------------- Composer principal ---------------- */
 const Composer = forwardRef(function Composer({ canal_id, canal, disabled = false, reason = '' }, ref) {
@@ -157,9 +225,12 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
   const plusRef = useRef(null)
   const { replyTo, setReplyTo } = useContext(ChatActionCtx)
 
-  const { data: members = [] } = useChannelMembers(canal_id)
+  const { data: members = [], isLoading: membersLoading } = useChannelMembers(canal_id)
   const { user } = useAuthCtx()
   const myId = user?.id
+
+  // Todos los feders para invitar (incluyendo los de DMs, no solo miembros del canal)
+  const { rows: allFedersRaw = [] } = useFeders({ limit: 500, is_activo: 'true' })
 
   // Estado de Google (para mostrar opciones correctas)
   const { connected: googleConnected, loading: googleLoading, refresh: refreshGoogleStatus } = useGoogleStatus()
@@ -188,6 +259,52 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
     email: m?.user?.email || '',
     avatar_url: m?.user?.feder?.avatar_url ?? m?.feder?.avatar_url ?? null
   }))
+
+  // Todos los feders con formato normalizado para el modal
+  const allFeders = useMemo(() => {
+    // 1) Empezar con los miembros del canal (que ya tenemos cargados)
+    const base = members.map(m => {
+      const nom = m?.user?.feder?.nombre ?? m?.feder?.nombre ?? ''
+      const ape = m?.user?.feder?.apellido ?? m?.feder?.apellido ?? ''
+      return {
+        id: m.user_id,
+        nombre: nom,
+        apellido: ape,
+        email: m?.user?.email || '',
+        avatar_url: resolveMediaUrl(pickAvatar(m))
+      }
+    })
+
+    // 2) Agregar los del sistema (500 limit)
+    const extras = allFedersRaw.map(f => {
+      return {
+        id: f.user_id ?? f.id,
+        nombre: f.nombre ?? '',
+        apellido: f.apellido ?? '',
+        email: f.email ?? f.user_email ?? '',
+        avatar_url: resolveMediaUrl(pickAvatar(f))
+      }
+    })
+
+    // 3) De-duplicar por ID (vía Map)
+    const map = new Map()
+    base.forEach(x => { if (x.id) map.set(x.id, x) })
+    extras.forEach(x => {
+      if (x.id && !map.has(x.id)) map.set(x.id, x)
+    })
+
+    return Array.from(map.values())
+  }, [members, allFedersRaw])
+
+  // IDs de miembros del canal (sin el propio usuario) — pre-selección por defecto
+  const channelMemberIds = useMemo(() => {
+    if (membersLoading) return null // Esperar hasta que carguen
+    const othersM = members.map(m => m.user_id).filter(id => id && id !== myId)
+    // "Sólo tiene que estar seleccionado el usuario del chat desde el que creo la reunion"
+    // Interpretación: en un DM, pre-seleccionar al otro. En grupos/canales, dejar vacío para que el usuario elija.
+    if (canal?.tipo_codigo === 'dm') return othersM
+    return []
+  }, [members, myId, canal?.tipo_codigo, membersLoading])
 
   // Capta imágenes del portapapeles
   const addClipboardImages = (e) => {
@@ -514,9 +631,14 @@ const Composer = forwardRef(function Composer({ canal_id, canal, disabled = fals
       {/* Modal fuera del <form> para evitar form anidado */}
       {openSchedule && (
         <ScheduleMeetModal
-          canal_id={canal_id}
-          googleConnected={googleConnected}
+          key={canal_id} // Reset state when channel changes
+          open={openSchedule}
           onClose={() => setOpenSchedule(false)}
+          canal_id={canal_id}
+          initialSelected={channelMemberIds}
+          myId={myId}
+          allFeders={allFeders}
+          googleConnected={googleConnected}
           onSent={() => {
             window.dispatchEvent(new CustomEvent('fh:chat:sent', { detail: { canal_id } }))
             window.dispatchEvent(new CustomEvent('fh:calendar:refresh'))

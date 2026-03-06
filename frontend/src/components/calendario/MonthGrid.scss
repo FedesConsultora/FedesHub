@@ -9,8 +9,9 @@
 
   .title {
     font-weight: 800;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     letter-spacing: .2px;
+    font-size: 0.95rem;
   }
 
   .dow {
@@ -24,19 +25,21 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
   }
 
   .day {
     text-align: left;
-    min-height: 110px;
-    padding: 6px;
+    min-height: 90px;
+    height: 90px; // Fixed height to avoid deformation
+    padding: 4px;
     position: relative;
     background: $fh-card;
     border: 1px solid $border;
-    border-radius: 12px;
+    border-radius: 8px;
     transition: background .18s ease, border-color .18s ease;
+    overflow: hidden; // Critical to prevent deformation
 
     &:hover {
       background: rgba(255, 255, 255, .06);
@@ -46,20 +49,28 @@
       background: linear-gradient(180deg, rgba(255, 255, 255, .02), transparent 45%), $fh-card;
     }
 
-    &.today {
-      box-shadow: 0 0 0 2px rgba($fh-accent, .55) inset;
-    }
+
 
     .num {
-      font-size: .82rem;
+      font-size: 0.75rem;
       opacity: .85;
+      font-weight: 600;
+      background: transparent !important;
+      border: none !important;
+      color: white !important;
+
+      button {
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+      }
     }
 
     .evt {
-      margin-top: 4px;
-      font-size: .86rem;
-      padding: 2px 6px;
-      border-radius: 8px;
+      margin-top: 2px;
+      font-size: 0.78rem; // More compact fonts
+      padding: 1px 4px;
+      border-radius: 4px;
       width: 100%;
       border-left: 3px solid rgba(136, 136, 187, .8);
       background: rgba(255, 255, 255, .04);
@@ -86,6 +97,47 @@
       margin-top: 4px;
       font-size: .82rem;
       color: $fh-muted;
+    }
+
+    .quick-add {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all .2s cubic-bezier(0.165, 0.84, 0.44, 1);
+      background: transparent;
+      color: #26b7df;
+      border: none;
+      padding: 0.5rem;
+      font-size: 0.4rem;
+      font-weight: 400;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      z-index: 10;
+      cursor: pointer;
+
+      &:hover {
+        color: lighten(#56c1ff, 12%);
+      }
+
+      span:first-child {
+        font-size: .6rem;
+        padding: 0rem;
+        font-weight: 400;
+
+        margin-top: .9rem;
+
+
+      }
+    }
+
+    &:hover .quick-add {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
   }
 

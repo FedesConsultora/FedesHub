@@ -567,45 +567,48 @@ export const svcScheduleMeeting = async (canal_id, body, user) => {
     canal = await getCanalWithMiembro(canal_id, user.id, t);
     if (!canal) throw Object.assign(new Error('Canal no encontrado'), { status: 404 });
     ({ evento, meet } = await scheduleMeeting(canal_id, body, user.id, t));
-
-    // Si pide Google Meet, intentar generar el link
-    if (body.provider_codigo === 'google_meet') {
-      try {
-        // Colectar emails de los miembros del canal para invitarlos
-        const miembros = await mReg.ChatCanalMiembro.findAll({
-          where: { canal_id },
-          include: [{ model: mReg.User, as: 'user' }],
-          transaction: t
-        });
-        const attendees = miembros
-          .filter(m => m.user?.email)
-          .map(m => ({ email: m.user.email }));
-
-        const gEvent = await svcGoogleCreateMeetEvent(user, {
-          titulo: body.titulo,
-          descripcion: `Reunión agendada desde chat #${canal.slug || canal_id}`,
-          starts_at: body.starts_at,
-          ends_at: body.ends_at,
-          attendees
-        });
-
-        if (gEvent.join_url) {
-          await meet.update({
-            join_url: gEvent.join_url,
-            external_meeting_id: gEvent.id
-          }, { transaction: t });
-        }
-      } catch (err) {
-        console.error('[svcScheduleMeeting] Google Meet error:', err.message);
-        // No bloqueamos el agendado local si falla Google, pero avisamos
-      }
-    }
-
     await t.commit();
   } catch (e) {
     await t.rollback();
     console.error('[svcScheduleMeeting] Error al agendar:', e);
     throw e;
+  }
+
+  // Si pide Google Meet, intentar generar el link (FUERA de la transacción principal)
+  if (body.provider_codigo === 'google_meet') {
+    try {
+      let attendees = [];
+      if (body.attendee_user_ids && Array.isArray(body.attendee_user_ids) && body.attendee_user_ids.length > 0) {
+        const miembros = await mReg.ChatCanalMiembro.findAll({
+          where: { canal_id, user_id: body.attendee_user_ids },
+          include: [{ model: mReg.User, as: 'user' }]
+        });
+        attendees = miembros.filter(m => m.user?.email).map(m => ({ email: m.user.email }));
+      } else {
+        const miembros = await mReg.ChatCanalMiembro.findAll({
+          where: { canal_id },
+          include: [{ model: mReg.User, as: 'user' }]
+        });
+        attendees = miembros.filter(m => m.user?.email).map(m => ({ email: m.user.email }));
+      }
+
+      const gEvent = await svcGoogleCreateMeetEvent(user, {
+        titulo: body.titulo,
+        descripcion: `Reunión agendada desde chat #${canal.slug || canal_id}`,
+        starts_at: body.starts_at,
+        ends_at: body.ends_at,
+        attendees
+      });
+
+      if (gEvent && (gEvent.join_url || gEvent.hangoutLink)) {
+        await meet.update({
+          join_url: gEvent.join_url || gEvent.hangoutLink,
+          external_meeting_id: gEvent.id
+        });
+      }
+    } catch (err) {
+      console.error('[svcScheduleMeeting] Google Meet error:', err.message);
+    }
   }
 
   // 🔊 Real-time: meeting agendado

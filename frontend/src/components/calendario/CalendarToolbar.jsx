@@ -17,6 +17,7 @@ export default function CalendarToolbar({
   view, onViewChange,
   year, monthIdx, onPrev, onNext, onToday, setMonthIdx,
   calendars = [], federById = {}, selectedIds = [], onToggleCal,
+  allFeders = [], selectedFederId = null, onFederChange,
   bottomRightSlot = null
 }) {
   return (
@@ -36,7 +37,21 @@ export default function CalendarToolbar({
         </div>
         <button className="fh-btn ghost" onClick={onNext}>▶</button>
         <button className="fh-btn" onClick={onToday}>Hoy</button>
+
         <div className="spacer" />
+
+        <div className="feder-filter">
+          <select
+            className="fh-input mini"
+            value={selectedFederId || ''}
+            onChange={e => onFederChange?.(e.target.value ? Number(e.target.value) : null)}
+          >
+            <option value="">Todos los Feders</option>
+            {allFeders.map(f => (
+              <option key={f.id} value={f.id}>{f.nombre} {f.apellido}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* fila inferior */}

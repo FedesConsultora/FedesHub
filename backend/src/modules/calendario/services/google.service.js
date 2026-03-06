@@ -214,6 +214,26 @@ export async function svcGoogleUpsertEvent(evento, user_id) {
     attendees
   };
 
+  // Si es un recordatorio, forzar notificaciones de Google
+  if (evento.tipo?.codigo === 'recordatorio') {
+    gEventBody.reminders = {
+      useDefault: false,
+      overrides: [
+        { method: 'popup', minutes: 30 },
+        { method: 'email', minutes: 30 }
+      ]
+    };
+  }
+
+  const conferenceData = evento.google_meet ? {
+    createRequest: {
+      requestId: `meet-${evento.id}-${Date.now()}`,
+      conferenceSolutionKey: { type: 'hangoutsMeet' }
+    }
+  } : undefined;
+
+  if (conferenceData) gEventBody.conferenceData = conferenceData;
+
   let res;
   if (sync && sync.google_event_id && !sync.is_deleted_remote) {
     // Update
@@ -221,15 +241,23 @@ export async function svcGoogleUpsertEvent(evento, user_id) {
       calendarId: vinc.googleCalendario.google_calendar_id,
       eventId: sync.google_event_id,
       requestBody: gEventBody,
-      sendUpdates: 'all'
+      sendUpdates: 'all',
+      conferenceDataVersion: conferenceData ? 1 : 0
     });
   } else {
     // Create
     res = await cal.events.insert({
       calendarId: vinc.googleCalendario.google_calendar_id,
       requestBody: gEventBody,
-      sendUpdates: 'all'
+      sendUpdates: 'all',
+      conferenceDataVersion: conferenceData ? 1 : 0
     });
+  }
+
+  // Si se generó un link de Meet, guardarlo en el lugar del evento local si está vacío
+  if (res.data.hangoutLink && !evento.lugar) {
+    // Importamos m para actualizar el modelo local
+    await evento.update({ lugar: res.data.hangoutLink });
   }
 
   // Actualizar tabla de sincronización

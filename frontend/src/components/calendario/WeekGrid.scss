@@ -8,28 +8,29 @@
 }
 
 .wk-scroll {
-  overflow-x: auto;
+  overflow-x: hidden; // We now avoid overflow
   overflow-y: hidden;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 .wk-header {
   display: grid;
   gap: 4px;
-  grid-template-columns: 70px repeat(7, 1fr);
+  grid-template-columns: 60px repeat(7, 1fr);
 
   .time-gutter {
-    height: 40px;
+    height: 32px;
   }
 
   .day-h {
     text-align: center;
-    padding: 6px;
+    padding: 4px;
     border: 1px solid $border;
-    border-radius: 10px;
+    border-radius: 8px;
     background: $fh-card;
     font-weight: 800;
     white-space: nowrap;
+    font-size: 0.82rem;
   }
 }
 
@@ -37,16 +38,16 @@
   position: relative;
   display: grid;
   gap: 4px;
-  margin-top: .5rem;
-  grid-template-columns: 70px repeat(7, 1fr);
+  margin-top: .25rem;
+  grid-template-columns: 60px repeat(7, 1fr);
   overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 
   .time-gutter {
     position: relative;
-    background: $fh-card;
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid $border;
-    border-radius: 10px;
+    border-radius: 8px;
 
     &.sticky {
       position: sticky;
@@ -78,11 +79,11 @@
     min-width: 0;
 
     .allday {
-      min-height: 30px;
-      padding: 4px 6px;
-      background: $fh-card;
+      min-height: 24px;
+      padding: 2px 4px;
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid $border;
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
@@ -107,10 +108,50 @@
 
     .hours {
       position: relative;
-      background: $fh-card;
+      background: rgba(255, 255, 255, 0.01);
       border: 1px solid $border;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
+
+      .quick-add {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-2px);
+        transition: all .2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        background: transparent;
+        color: #3b82f6; // Vibrant blue
+        border: none;
+        padding: 0 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        z-index: 10;
+        cursor: pointer;
+        white-space: nowrap;
+
+        &:hover {
+          color: lighten(#3b82f6, 12%);
+          transform: translateY(-2px) scale(1.05);
+        }
+
+        span:first-child {
+          font-size: 1rem;
+          line-height: 1;
+          margin-top: -2px;
+        }
+      }
+
+      &:hover .quick-add {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
 
       .hline {
         position: absolute;

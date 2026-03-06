@@ -44,7 +44,21 @@
   }
 
   .spacer {
-    flex: 1 1 auto
+    flex: 1 1 auto;
+  }
+
+  .feder-filter {
+    display: flex;
+    align-items: center;
+
+    .fh-input.mini {
+      padding: 4px 8px;
+      height: 32px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      min-width: 140px;
+    }
   }
 
   .segmented {

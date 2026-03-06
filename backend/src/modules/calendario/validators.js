@@ -59,10 +59,11 @@ export const eventAttendee = z.object({
 export const upsertEventSchema = z.object({
   id: z.number().int().optional(),
   calendario_local_id: z.number().int().positive(),
-  tipo_codigo: z.enum(['interno', 'asistencia', 'ausencia', 'tarea_vencimiento']).default('interno'),
+  tipo_codigo: z.enum(['interno', 'asistencia', 'ausencia', 'tarea_vencimiento', 'cumpleanos', 'feriado', 'recordatorio']).default('interno'),
   titulo: z.string().min(1).max(200),
   descripcion: z.string().optional(),
   lugar: z.string().max(255).optional(),
+  google_meet: z.boolean().optional().default(false),
   all_day: z.boolean().default(false),
   starts_at: z.coerce.date(),
   ends_at: z.coerce.date(),
